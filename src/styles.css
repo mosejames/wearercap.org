@@ -59,16 +59,66 @@ img {
   color: white;
 }
 
-.hero-image,
+.hero-slides,
 .hero-scrim {
   position: absolute;
   inset: 0;
 }
 
-.hero-image {
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+}
+
+.hero-slide.is-active {
+  opacity: 1;
+}
+
+.hero-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Ken Burns: only the visible slide drifts/zooms; directions alternate. */
+.hero-slide.is-active img {
+  animation: kenburns-in 8s ease-out forwards;
+}
+
+.hero-slide:nth-child(even).is-active img {
+  animation-name: kenburns-out;
+}
+
+@keyframes kenburns-in {
+  from {
+    transform: scale(1.05) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.16) translate3d(-1.6%, -1.6%, 0);
+  }
+}
+
+@keyframes kenburns-out {
+  from {
+    transform: scale(1.16) translate3d(1.4%, 1.2%, 0);
+  }
+  to {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide {
+    transition: opacity 0.6s ease;
+  }
+
+  .hero-slide.is-active img,
+  .hero-slide:nth-child(even).is-active img {
+    animation: none;
+    transform: scale(1.04);
+  }
 }
 
 .hero-scrim {
@@ -188,6 +238,99 @@ img {
 .button.secondary {
   border: 1px solid rgba(255, 255, 255, 0.36);
   color: white;
+}
+
+/* Quick links — prominent, pulled up to overlap the hero base. */
+.quick-links {
+  width: min(1180px, calc(100% - 40px));
+  margin: -64px auto 0;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--blue);
+  border-radius: 10px;
+  box-shadow: 0 18px 38px rgba(8, 13, 18, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.quick-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 46px rgba(8, 13, 18, 0.18);
+}
+
+.quick-link > svg {
+  flex: none;
+  color: var(--blue);
+}
+
+.quick-link-text {
+  flex: 1 1 auto;
+}
+
+.quick-link h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.12;
+}
+
+.quick-link p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.quick-link .quick-arrow {
+  flex: none;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.quick-link:hover .quick-arrow {
+  transform: translate(2px, -2px);
+}
+
+.quick-link.volunteer {
+  border-top-color: var(--green);
+}
+
+.quick-link.volunteer > svg {
+  color: var(--green);
+}
+
+.quick-link.contact {
+  border-top-color: var(--gold);
+}
+
+.quick-link.contact > svg {
+  color: var(--gold);
+}
+
+/* Mission framing above the priority cards. */
+.priorities-intro {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 42px 0 2px;
+}
+
+.priorities-intro h2 {
+  margin: 0;
+  max-width: 820px;
+  color: var(--ink);
+  font-size: clamp(28px, 4.4vw, 50px);
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .intro,
@@ -349,5 +492,17 @@ img {
 
   .priority-card {
     min-height: 0;
+  }
+
+  .quick-links {
+    width: calc(100% - 28px);
+    grid-template-columns: 1fr;
+    margin-top: -40px;
+    gap: 10px;
+  }
+
+  .priorities-intro {
+    width: calc(100% - 28px);
+    padding-top: 30px;
   }
 }
