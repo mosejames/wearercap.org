@@ -21,25 +21,7 @@ const contactHref = `mailto:${contactEmail}`;
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
-
-const heroSlides = [
-  {
-    src: '/images/rcap-hero-parents.jpg',
-    position: 'center center',
-  },
-  {
-    src: '/images/rcap-hero-students.jpg',
-    position: 'center center',
-  },
-  {
-    src: '/images/rcap-hero-campus.jpg',
-    position: 'center center',
-  },
-  {
-    src: '/images/rcap-hero-volunteer.jpg',
-    position: 'center center',
-  },
-];
+const heroPoster = '/images/rcap-video-hero.jpg';
 
 const communityLinks = [
   {
@@ -141,30 +123,6 @@ const resourceNotes = [
   },
 ];
 
-function HeroSlides() {
-  const [active, setActive] = React.useState(0);
-
-  React.useEffect(() => {
-    const id = setInterval(() => {
-      setActive((current) => (current + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="hero-slides" aria-hidden="true">
-      {heroSlides.map((slide, index) => (
-        <div
-          className={`hero-slide${index === active ? ' is-active' : ''}`}
-          key={slide.src}
-        >
-          <img src={slide.src} alt="" style={{ objectPosition: slide.position }} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function VideoModal({ open, onClose }) {
   React.useEffect(() => {
     if (!open) {
@@ -225,7 +183,9 @@ function App() {
   return (
     <main className="site-shell">
       <section className="hero" aria-label="We Are RCAP">
-        <HeroSlides />
+        <div className="hero-poster" aria-hidden="true">
+          <img src={heroPoster} alt="" />
+        </div>
         <div className="hero-scrim" />
 
         <header className="nav">
@@ -239,6 +199,13 @@ function App() {
           </a>
         </header>
 
+        <button className="hero-play-button" type="button" onClick={openVideo}>
+          <span className="play-disc">
+            <PlayCircle size={56} aria-hidden="true" />
+          </span>
+          <span>Watch the RCAP video</span>
+        </button>
+
         <div className="hero-content">
           <p className="kicker">Ron Clark Academy Parents</p>
           <h1 aria-label="We Are RCAP">
@@ -247,18 +214,18 @@ function App() {
             <span>RCAP</span>
           </h1>
           <p className="hero-copy">
-            The parent community of Ron Clark Academy. One place to stay informed,
-            get involved, and support the school, our kids, and one another.
+            The parent community of Ron Clark Academy, showing up for our kids,
+            our school, and one another.
           </p>
           <div className="hero-actions">
-            <a className="button primary" href="#get-involved">
+            <button className="button primary" type="button" onClick={openVideo}>
+              <PlayCircle size={18} aria-hidden="true" />
+              Watch the RCAP video
+            </button>
+            <a className="button secondary" href="#get-involved">
               Get involved
               <ArrowUpRight size={18} aria-hidden="true" />
             </a>
-            <button className="button secondary" type="button" onClick={openVideo}>
-              <PlayCircle size={18} aria-hidden="true" />
-              Watch video
-            </button>
           </div>
         </div>
       </section>
@@ -285,13 +252,11 @@ function App() {
             src="/images/rcap-hero-students.jpg"
             alt="Ron Clark Academy students standing together"
           />
-          <button className="photo-video" type="button" onClick={openVideo}>
-            <img src="/images/rcap-community-table.jpg" alt="" />
-            <span className="video-play">
-              <PlayCircle size={34} aria-hidden="true" />
-            </span>
-            <span className="photo-video-text">Watch the RCAP video</span>
-          </button>
+          <img
+            className="photo-small"
+            src="/images/rcap-hero-volunteer.jpg"
+            alt="RCAP volunteer welcoming families"
+          />
           <img
             className="photo-small"
             src="/images/rcap-volunteer-hours.jpg"
