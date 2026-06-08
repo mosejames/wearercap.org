@@ -46,44 +46,44 @@ const communityLinks = [
     variant: 'announcements',
     icon: Megaphone,
     title: 'Announcements',
-    body: 'Key RCAP updates, reminders, and next steps will have a clear home.',
+    body: 'Important RCAP updates, reminders, and links for families.',
     href: '#announcements',
   },
   {
     variant: 'events',
     icon: CalendarDays,
-    title: 'Events',
-    body: 'Upcoming EXP dates and family moments will be easy to find.',
+    title: 'Upcoming Events',
+    body: 'Known dates, EXP opportunities, and family moments.',
     href: '#events',
   },
   {
     variant: 'volunteer',
     icon: HeartHandshake,
     title: 'Volunteer',
-    body: 'Find ways to pitch in, sign up, and log your service hours.',
+    body: 'Sign up, serve, and log your volunteer hours.',
     href: '#volunteer',
   },
   {
     variant: 'resources',
     icon: ShieldCheck,
     title: 'Family Resources',
-    body: 'Helpful links and parent-only info can grow here with care.',
+    body: 'Helpful parent information, contacts, and school-year links.',
     href: '#resources',
   },
 ];
 
 const announcementFramework = [
   {
-    title: 'Parent updates',
-    body: 'Short, dated announcements with the information families need first.',
+    title: 'News and reminders',
+    body: 'Quick updates for RCAP families, written plainly and easy to scan.',
   },
   {
-    title: 'Upcoming moments',
-    body: 'Pointers to events, deadlines, and school-adjacent opportunities.',
+    title: 'Dates and details',
+    body: 'Event notes, deadlines, and the details families need before they arrive.',
   },
   {
-    title: 'What to do next',
-    body: 'Clear actions, links, contacts, and follow-up when an update needs a response.',
+    title: 'Family actions',
+    body: 'Sign-ups, forms, contacts, and next steps gathered in one place.',
   },
 ];
 
@@ -126,18 +126,18 @@ const volunteerActions = [
 const resourceNotes = [
   {
     icon: ShieldCheck,
-    title: 'Public by design',
-    body: 'The open site should stay focused on welcoming information, announcements, events, and ways to help.',
+    title: 'Family links',
+    body: 'Useful links for staying connected, volunteering, and finding RCAP information quickly.',
   },
   {
     icon: LockKeyhole,
-    title: 'Parent-only later',
-    body: 'Anything that should not sit on the public web can move behind a light family check before it is published.',
+    title: 'Parent-only details',
+    body: 'Sensitive details stay off the public web and are shared through trusted parent channels.',
   },
   {
     icon: Users,
-    title: 'Soft access',
-    body: 'When it is time, access can feel simple and phone-friendly instead of like a heavy portal.',
+    title: 'Questions and ideas',
+    body: 'Parents can reach RCAP with questions, corrections, ideas, and ways to help.',
   },
 ];
 
@@ -255,9 +255,6 @@ function App() {
               Get involved
               <ArrowUpRight size={18} aria-hidden="true" />
             </a>
-            <a className="button secondary" href="#community">
-              Our Community
-            </a>
             <button className="button secondary" type="button" onClick={openVideo}>
               <PlayCircle size={18} aria-hidden="true" />
               Watch video
@@ -266,66 +263,78 @@ function App() {
         </div>
       </section>
 
-      <section id="get-involved" className="quick-links" aria-label="Get involved with RCAP">
-        {communityLinks.map(({ variant, icon: Icon, title, body, href }) => (
-          <a className={`quick-link ${variant}`} key={title} href={href}>
-            <Icon size={26} aria-hidden="true" />
-            <div className="quick-link-text">
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </div>
-            <ArrowUpRight className="quick-arrow" size={20} aria-hidden="true" />
-          </a>
-        ))}
-      </section>
-
-      <section id="community" className="intro">
-        <div>
+      <section id="community" className="community-feature">
+        <div className="community-copy">
           <p className="section-label">Our Community</p>
-          <h2>We Are RCAP, and this is our shared home base.</h2>
-        </div>
-        <p>
-          RCAP is parents and guardians showing up for Ron Clark Academy, our kids,
-          and one another. This site gives families a simple place to look first:
-          announcements, known dates, ways to volunteer, and resources that can grow
-          as the parent community grows.
-        </p>
-      </section>
-
-      <section className="video-callout" aria-label="RCAP video preview">
-        <div className="video-copy">
-          <p className="section-label">Video Preview</p>
-          <h2>See the energy behind RCAP.</h2>
+          <h2>Parents showing up for RCA, our kids, and each other.</h2>
           <p>
-            Watch a quick look at the people and energy behind RCAP. The popup keeps
-            it easy to view on a phone without taking over the page.
+            We Are RCAP is the parent community of Ron Clark Academy. This is where
+            families come to stay connected, celebrate what is happening, and find
+            simple ways to support the school.
           </p>
         </div>
-        <button className="video-card" type="button" onClick={openVideo}>
-          <img src="/images/rcap-community-table.jpg" alt="" />
-          <span className="video-play">
-            <PlayCircle size={34} aria-hidden="true" />
-          </span>
-          <span className="video-card-text">
-            <strong>Watch the RCAP video</strong>
-            <span>Opens in a responsive popup</span>
-          </span>
-        </button>
+
+        <div className="photo-mosaic" aria-label="RCAP parents and students">
+          <img
+            className="photo-large"
+            src="/images/rcap-community-smiles.jpg"
+            alt="RCAP parents smiling together"
+          />
+          <img
+            className="photo-small"
+            src="/images/rcap-hero-students.jpg"
+            alt="Ron Clark Academy students standing together"
+          />
+          <button className="photo-video" type="button" onClick={openVideo}>
+            <img src="/images/rcap-community-table.jpg" alt="" />
+            <span className="video-play">
+              <PlayCircle size={34} aria-hidden="true" />
+            </span>
+            <span className="photo-video-text">Watch the RCAP video</span>
+          </button>
+          <img
+            className="photo-small"
+            src="/images/rcap-volunteer-hours.jpg"
+            alt="RCAP volunteers reviewing materials together"
+          />
+        </div>
       </section>
 
       <section className="image-band" aria-label="RCAP community">
-        <img src="/images/rcap-community-smiles.jpg" alt="RCAP parents smiling together" />
-        <img src="/images/rcap-volunteer-hours.jpg" alt="RCAP volunteers reviewing materials together" />
+        <img src="/images/rcap-hero-campus.jpg" alt="RCA families walking near campus" />
+        <img src="/images/rcap-hero-volunteer.jpg" alt="RCAP volunteer welcoming families" />
+      </section>
+
+      <section id="get-involved" className="content-section get-involved-section">
+        <div className="section-heading">
+          <p className="section-label">Get Involved</p>
+          <h2>Find what you need and jump in.</h2>
+          <p>
+            Start with the most common RCAP needs: updates, dates, volunteer
+            opportunities, and family resources.
+          </p>
+        </div>
+        <div className="quick-links" aria-label="Get involved with RCAP">
+          {communityLinks.map(({ variant, icon: Icon, title, body, href }) => (
+            <a className={`quick-link ${variant}`} key={title} href={href}>
+              <Icon size={26} aria-hidden="true" />
+              <div className="quick-link-text">
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
+              <ArrowUpRight className="quick-arrow" size={20} aria-hidden="true" />
+            </a>
+          ))}
+        </div>
       </section>
 
       <section id="announcements" className="content-section announcements-section">
         <div className="section-heading">
           <p className="section-label">Announcements</p>
-          <h2>Updates will have a clear place to land.</h2>
+          <h2>Stay connected with RCAP.</h2>
           <p>
-            As RCAP announcements are ready to share, this section can become the
-            parent-facing record of what changed, what matters, and what families
-            should do next.
+            Announcements, reminders, and next steps from RCAP live here for
+            families to reference without digging through scattered messages.
           </p>
         </div>
         <div className="framework-grid">
@@ -342,10 +351,9 @@ function App() {
       <section id="events" className="content-section events-section">
         <div className="section-heading">
           <p className="section-label">Upcoming Events</p>
-          <h2>Known EXP dates are the first anchors.</h2>
+          <h2>Upcoming EXP dates.</h2>
           <p>
-            More events can be added as they are confirmed. For now, these are the
-            upcoming EXP dates families can plan around.
+            These are the confirmed upcoming EXP dates families can plan around.
           </p>
         </div>
         <div className="event-grid" aria-label="Known upcoming EXP dates">
@@ -364,8 +372,8 @@ function App() {
           <p className="section-label">Volunteer</p>
           <h2>Pitch in, then log the hours.</h2>
           <p>
-            Use this section when you are ready to volunteer, record hours, or ask
-            where help is needed next.
+            Ready to help? Sign up for current needs, record your hours, or send
+            RCAP a question.
           </p>
         </div>
         <div className="action-list">
@@ -393,11 +401,10 @@ function App() {
       <section id="resources" className="content-section resources-section">
         <div className="section-heading">
           <p className="section-label">Family Resources</p>
-          <h2>Helpful now, protected when it needs to be.</h2>
+          <h2>Resources for RCAP families.</h2>
           <p>
-            The public site can welcome families and make action easy. As deeper
-            parent resources come online, anything sensitive can move behind a soft
-            access step before it is published.
+            Find useful public links here. Family-only details are shared through
+            trusted parent channels.
           </p>
         </div>
         <div className="resource-grid">
@@ -412,11 +419,10 @@ function App() {
       </section>
 
       <section className="closing">
-        <p className="section-label">More to come</p>
-        <h2>The RCAP hub can grow as the community grows.</h2>
+        <p className="section-label">We Are RCAP</p>
+        <h2>Connected families make the community stronger.</h2>
         <p>
-          Announcements, events, volunteer coordination, and family resources now
-          have a foundation. For questions or updates, email{' '}
+          Questions, corrections, ideas, and ways to help are welcome. Email{' '}
           <a href={contactHref}>{contactEmail}</a>.
         </p>
       </section>
