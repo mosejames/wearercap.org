@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
-const contactEmail = 'mose@mosejames.com';
+const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
