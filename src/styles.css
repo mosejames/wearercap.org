@@ -577,23 +577,31 @@ button {
 }
 
 .content-section {
-  padding: 68px 0;
+  padding: 56px 0;
   border-top: 1px solid var(--line);
 }
 
 .section-heading {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.72fr);
-  gap: 46px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.85fr);
+  gap: 16px 46px;
   align-items: start;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+}
+
+.section-heading .section-label {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
 }
 
 .section-heading h2 {
+  grid-column: 1;
   max-width: 720px;
 }
 
 .section-heading p:not(.section-label) {
+  grid-column: 2;
+  align-self: end;
   max-width: 620px;
 }
 
@@ -606,7 +614,7 @@ button {
 
 .framework-card,
 .resource-note {
-  min-height: 210px;
+  min-height: 190px;
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -672,19 +680,12 @@ button {
 }
 
 .volunteer-section {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1fr);
-  gap: 40px;
-  align-items: start;
+  display: block;
 }
 
 .volunteer-section .section-heading {
-  display: block;
-  margin: 0;
-}
-
-.volunteer-section .section-heading p:not(.section-label) {
-  margin-top: 20px;
+  display: grid;
+  margin-bottom: 24px;
 }
 
 .action-list {
@@ -692,8 +693,12 @@ button {
   gap: 12px;
 }
 
+.volunteer-section .action-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .action-link {
-  min-height: 116px;
+  min-height: 148px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
@@ -741,8 +746,19 @@ button {
   white-space: nowrap;
 }
 
+.volunteer-section .action-link {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  align-content: start;
+}
+
+.volunteer-section .action-link em {
+  grid-column: 2;
+  justify-self: start;
+}
+
 .resources-section {
-  padding-bottom: 78px;
+  padding-bottom: 60px;
 }
 
 .resource-note:nth-child(2) svg {
@@ -986,6 +1002,11 @@ button {
     gap: 18px;
   }
 
+  .section-heading h2,
+  .section-heading p:not(.section-label) {
+    grid-column: 1;
+  }
+
   .quick-links {
     width: 100%;
     grid-template-columns: 1fr;
@@ -1003,6 +1024,10 @@ button {
 
   .event-card {
     min-height: 0;
+  }
+
+  .volunteer-section .action-list {
+    grid-template-columns: 1fr;
   }
 
   .action-link {
