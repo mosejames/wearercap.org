@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RCAP — It's That Time Again: Six More Chances to Show Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@1,18,400;1,18,500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1a1613;--ink-soft:#5a4f47;--paper:#faf4ea;--paper-2:#f1e6d4;--line:#e4d6c0;
+    --orange:#f26a1b;--magenta:#e0218a;--gold:#e8a516;--blue:#1f55c0;--red:#d8202d;--green:#1f9d57;
+    --grad:linear-gradient(100deg,#f7a81c 0%,#f26a1b 42%,#e0218a 100%);
+    --radius:16px;
+    --font-display:'Archivo',system-ui,sans-serif;--font-body:'Archivo',system-ui,sans-serif;--font-quote:'Newsreader',Georgia,serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:#cdbfa9;font-family:var(--font-body);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55;}
+  .wrap{max-width:680px;margin:0 auto;background:var(--paper);box-shadow:0 30px 80px rgba(0,0,0,.28);}
+  img{display:block;width:100%;height:100%;object-fit:cover;}
+  a{color:var(--orange);}
+  a:hover{color:var(--magenta);}
+  .masthead{background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 26px;}
+  .brand-mark{font-family:var(--font-display);font-weight:900;font-size:22px;letter-spacing:.06em;line-height:1;}
+  .brand-mark .p{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .brand-sub{font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:#b8a89a;font-weight:600;margin-top:3px;}
+  .masthead .issue{text-align:right;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#b8a89a;font-weight:600;line-height:1.5;}
+  .view-online{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#cdbfa9;text-decoration:none;font-weight:600;border-bottom:1px solid #4a423b;padding-bottom:2px;}
+  .view-online:hover{color:var(--paper);}
+  /* Hero video */
+  .hero{position:relative;display:block;background:var(--ink);text-decoration:none;}
+  .hero .frame{aspect-ratio:16/9;overflow:hidden;}
+  .hero .top-kicker{position:absolute;top:18px;left:26px;right:26px;display:flex;align-items:center;gap:10px;color:#fff;font-size:11px;letter-spacing:.28em;text-transform:uppercase;font-weight:700;text-shadow:0 1px 8px rgba(0,0,0,.4);}
+  .hero .top-kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--orange);}
+  .hero .play{position:absolute;top:74%;left:50%;transform:translate(-50%,-50%);width:74px;height:74px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.45);transition:transform .2s ease;}
+  .hero:hover .play{transform:translate(-50%,-50%) scale(1.08);}
+  .hero .play::after{content:"";display:block;margin-left:6px;border-style:solid;border-width:12px 0 12px 21px;border-color:transparent transparent transparent #fff;}
+  .watch-bar{background:var(--ink);color:#b8a89a;text-align:center;padding:12px 26px 18px;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;}
+  .watch-bar a{color:var(--paper);text-decoration:none;border-bottom:1px solid #4a423b;padding-bottom:2px;}
+  .watch-bar a:hover{color:#ffd9b8;}
+  section{padding:38px 26px;}
+  .greet{font-family:var(--font-quote);font-style:italic;font-size:21px;color:var(--ink);margin:0 0 14px;}
+  p{margin:0 0 16px;font-size:16.5px;color:#2c2520;}
+  p:last-child{margin-bottom:0;}
+  .lede{font-size:18.5px;line-height:1.5;color:var(--ink);}
+  .muted{color:var(--ink-soft);}
+  strong{font-weight:700;}
+  h2{font-family:var(--font-display);font-weight:800;font-size:clamp(26px,6vw,36px);line-height:1.02;letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance;}
+  h2 .hl{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .kicker{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.26em;text-transform:uppercase;font-weight:700;color:var(--orange);margin:0 0 14px;}
+  /* Date cards */
+  /* minmax(0,1fr) keeps the columns even thirds; plain 1fr lets "Wednesday" widen its column and starve the others */
+  .dates-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px;}
+  .dcard{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:18px 12px;text-align:center;display:block;text-decoration:none;color:var(--ink);transition:transform .15s ease,box-shadow .15s ease;}
+  .dcard:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(26,22,19,.12);color:var(--ink);}
+  .dcard .dow{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--orange);white-space:nowrap;}
+  .dcard .day{font-family:var(--font-display);font-weight:900;font-size:38px;line-height:1;letter-spacing:-.02em;margin:6px 0 2px;}
+  .dcard .mon{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);}
+  .dcard .go{font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--orange);margin-top:8px;white-space:nowrap;}
+  .dcard:nth-child(1) .dow{color:var(--blue);}
+  .dcard:nth-child(2) .dow{color:var(--green);}
+  .dcard:nth-child(3) .dow{color:var(--gold);}
+  .dcard:nth-child(4) .dow{color:var(--magenta);}
+  .dcard:nth-child(5) .dow{color:var(--red);}
+  .dcard:nth-child(6) .dow{color:var(--orange);}
+  /* Verbs */
+  .verbs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;}
+  .verbs span{font-size:13px;font-weight:600;letter-spacing:.01em;background:var(--paper-2);color:#3a322b;padding:7px 13px;border-radius:999px;border:1px solid var(--line);}
+  .verbs span b{color:var(--orange);font-weight:800;}
+  /* Photos */
+  figure{margin:0;}
+  .photo{overflow:hidden;border-radius:var(--radius);background:var(--paper-2);}
+  .ratio-wide{aspect-ratio:3/2;}
+  .grid{display:grid;gap:10px;}
+  .g-2{grid-template-columns:1fr 1fr;}
+  .ratio-tall{aspect-ratio:3/4;}
+  .mt{margin-top:18px;}
+  .caption{font-size:12.5px;color:var(--ink-soft);margin-top:9px;line-height:1.45;display:flex;gap:8px;}
+  .caption::before{content:"";flex:0 0 auto;width:16px;height:2px;background:var(--orange);margin-top:8px;border-radius:2px;}
+  /* Band */
+  .band{background:var(--grad);color:#fff;text-align:center;padding:28px 26px;}
+  .band .big{font-family:var(--font-display);font-weight:900;font-size:clamp(28px,7.5vw,44px);line-height:.95;letter-spacing:-.02em;}
+  .band .cap{font-size:13px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin-top:8px;opacity:.95;}
+  /* CTAs */
+  .cta{border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;margin-bottom:14px;background:#fff;}
+  .cta .ct-k{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;font-weight:700;color:var(--ink-soft);margin:0 0 8px;}
+  .cta h3{font-family:var(--font-display);font-weight:800;font-size:21px;letter-spacing:-.01em;margin:0 0 8px;line-height:1.05;text-transform:uppercase;}
+  .cta p{font-size:14.5px;margin:0 0 16px;}
+  .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:14px;text-decoration:none;cursor:pointer;padding:14px 22px;border-radius:999px;border:0;}
+  .btn .arr{transition:transform .2s ease;}
+  .btn:hover .arr{transform:translateX(4px);}
+  .btn-primary{background:var(--grad);color:#fff !important;box-shadow:0 8px 22px rgba(242,106,27,.32);}
+  .btn-dark{background:var(--ink);color:var(--paper) !important;}
+  .btn-ghost{background:transparent;color:var(--ink) !important;border:1.5px solid var(--ink);}
+  .cta.feature{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+  .cta.feature .ct-k{color:#9c8e7f;}
+  .cta.feature h3{color:var(--paper);}
+  .cta.feature p{color:#d9cdbd;}
+  /* Closing */
+  .rule{height:1px;background:var(--line);margin:0 26px;}
+  .closing{background:var(--paper);text-align:center;padding-bottom:30px;}
+  .closing .sig-name{font-family:var(--font-display);font-weight:800;font-size:22px;margin-top:6px;}
+  .closing .sig-role{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-top:4px;}
+  footer{background:var(--ink);color:#b8a89a;text-align:center;padding:32px 26px 40px;}
+  footer .fmark{font-family:var(--font-display);font-weight:900;font-size:20px;color:var(--paper);letter-spacing:.05em;}
+  footer .fmark .p{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  footer .tags{font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin-top:12px;color:#8a7c6e;}
+  footer .small{font-size:11px;margin-top:16px;color:#6f6357;line-height:1.6;}
+  @media (max-width:480px){
+    section{padding:32px 20px;}
+    .masthead{padding:14px 20px;}
+    .hero .top-kicker{left:20px;right:20px;}
+    .hero .play{width:56px;height:56px;}
+    .hero .play::after{border-width:10px 0 10px 18px;margin-left:5px;}
+  }
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7a81c"/><stop offset="0.5" stop-color="#f26a1b"/><stop offset="1" stop-color="#e0218a"/>
+    </linearGradient></defs>
+    <rect width="100" height="100" rx="18" fill="url(#g)"/>
+    <g fill="#fff"><circle cx="50" cy="50" r="20"/></g>
+    <path d="M45 41 L61 50 L45 59 Z" fill="#f26a1b"/>
+  </svg>
+</template>
+<div class="wrap" id="paper">
+
+  <div class="masthead">
+    <div>
+      <div class="brand-mark">RCA<span class="p">P</span></div>
+      <div class="brand-sub">Ron Clark Academy Parents</div>
+    </div>
+    <div class="issue">
+      Six More<br/>Opportunities · July 2026
+    </div>
+  </div>
+
+  <!-- HERO: video -->
+  <a class="hero" href="https://youtu.be/OWesQsXWQdM" target="_blank" rel="noopener" data-screen-label="Hero video">
+    <div class="frame"><img src="uploads/wearercap.jpg" alt="We are RCAP — watch the welcome video" /></div>
+    <div class="top-kicker"><span class="dot"></span> A message for you — press play</div>
+    <div class="play"></div>
+  </a>
+  <div class="watch-bar"><a href="https://youtu.be/OWesQsXWQdM" target="_blank" rel="noopener">▶ Watch the We Are RCAP video</a></div>
+
+  <!-- LETTER -->
+  <section data-screen-label="Letter">
+    <p class="greet">Dear Ron Clark Academy Families,</p>
+    <p class="lede">Six more opportunities to serve this summer. And a whole lot of educators headed our way.</p>
+    <p>You saw what we did together at the first summer EXP — the welcome, the energy, the teamwork. Now it's time to do it again. We need parents at every post: greeting, directing traffic, registration, guiding groups, serving meals, flipping rooms.</p>
+
+    <div class="verbs">
+      <span><b>greeting</b> guests</span>
+      <span><b>directing</b> traffic</span>
+      <span><b>registration</b></span>
+      <span><b>guiding</b> groups</span>
+      <span><b>serving</b> meals</span>
+      <span><b>flipping</b> rooms</span>
+    </div>
+  </section>
+
+  <!-- DATES -->
+  <section style="background:var(--paper-2);padding-top:34px;" data-screen-label="Dates">
+    <p class="kicker" style="color:var(--ink);">Six more opportunities</p>
+    <h2>Pick a day. <span class="hl">Or two.</span></h2>
+    <p class="muted">First-timer or veteran — there's a spot with your name on it. Tap any day to grab it.</p>
+    <div class="dates-grid">
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Saturday</span><span class="day" style="display:block;">18</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Sunday</span><span class="day" style="display:block;">19</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Tuesday</span><span class="day" style="display:block;">21</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Wednesday</span><span class="day" style="display:block;">22</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Friday</span><span class="day" style="display:block;">24</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Saturday</span><span class="day" style="display:block;">25</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+    </div>
+  </section>
+
+  <!-- SIGN UP (primary CTA right after dates) -->
+  <section style="padding-top:30px;padding-bottom:10px;" data-screen-label="Sign up">
+    <div class="cta feature">
+      <p class="ct-k">Step one</p>
+      <h3>Reserve your spot</h3>
+      <p>Grab your shift on SignUpGenius before the slots fill up — some days went fast last time.</p>
+      <a class="btn btn-primary" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener">Reserve my spot <span class="arr">→</span></a>
+    </div>
+  </section>
+
+  <!-- STUDENTS -->
+  <section style="background:var(--paper-2);" data-screen-label="Students">
+    <p class="kicker" style="color:var(--ink);">And the real stars</p>
+    <h2>Your kids will be there — <span class="hl">shining.</span></h2>
+    <p>These are mandatory school days for students, and honestly? They're the best part. Our kids are the reason educators travel from around the world to see this place.</p>
+    <p class="muted" style="font-size:15px;"><strong>The quick rundown:</strong> regular polo uniforms (per Mrs. Bearden — <em>regular!</em>), no bookbags needed, and arrive by 8:00 AM. Dismissal is 4:00 PM on Tuesday &amp; Friday and 3:30 PM all other days. No afterschool sessions.</p>
+    <figure class="mt">
+      <div class="photo ratio-wide"><img src="img/students-group.jpg" alt="Six Ron Clark Academy students in red and blue polos, arms around each other, smiling" /></div>
+      <figcaption class="caption">Freshly washed and ironed polos. Khakis. And smiles for days.</figcaption>
+    </figure>
+  </section>
+
+  <!-- MEMORY -->
+  <section data-screen-label="Last time">
+    <p class="kicker">In case you missed it</p>
+    <h2>This is what showing up <span class="hl">looks like.</span></h2>
+    <div class="grid g-2">
+      <figure><div class="photo ratio-tall"><img src="img/hall-signE.jpg" alt="Volunteer holding a FOLLOW ME group sign" /></div></figure>
+      <figure><div class="photo ratio-tall"><img src="img/joy-trio.jpg" alt="Three volunteers hugging outside" /></div></figure>
+      <figure><div class="photo ratio-tall"><img src="img/reg-handoff.jpg" alt="Volunteer handing materials to a guest at the registration booth" style="object-position:center top;" /></div></figure>
+      <figure><div class="photo ratio-tall"><img src="img/meal-table-2.jpg" alt="Smiling meal-support volunteer in an XPERTS shirt, hands on hips" /></div></figure>
+    </div>
+    <p class="caption" style="margin-top:14px;">From the first summer EXP — over 1,000 educators welcomed by parents like you.</p>
+  </section>
+
+  <!-- BAND -->
+  <div class="band">
+    <div class="big">It only works when we show up.</div>
+    <div class="cap">Every shift matters</div>
+  </div>
+
+  <!-- SECONDARY CTAs -->
+  <section data-screen-label="More actions">
+    <div class="cta">
+      <p class="ct-k">Relive it</p>
+      <h3>View the photo gallery</h3>
+      <p>See every moment from the first summer EXP — and add your own shots.</p>
+      <a class="btn btn-dark" href="https://photos.app.goo.gl/95HnN6KXtEdoDkWJ6" target="_blank" rel="noopener">View &amp; add photos <span class="arr">→</span></a>
+    </div>
+    <div class="cta">
+      <p class="ct-k">Get credit</p>
+      <h3>Log your volunteer hours</h3>
+      <p>Already volunteered? Make sure your hours are counted on Track It Forward.</p>
+      <a class="btn btn-ghost" href="https://www.trackitforward.com/site/the-ron-clark-academy" target="_blank" rel="noopener">Log my hours <span class="arr">→</span></a>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <!-- CLOSING -->
+  <section class="closing" data-screen-label="Closing">
+    <p class="lede" style="max-width:40ch;margin:0 auto 22px;">We'll see you out there. Bring your energy — we'll bring the rest.</p>
+    <p style="font-family:var(--font-quote);font-style:italic;color:var(--ink-soft);margin:0;">With gratitude,</p>
+    <div class="sig-name">Your RCAP Family</div>
+    <div class="sig-role">Ron Clark Academy Parents</div>
+  </section>
+
+  <footer>
+    <div class="fmark">RCA<span class="p">P</span></div>
+    <div class="tags">#RCAEXP · #RCAPINSPIRED · #RONCLARKACADEMY</div>
+    <div class="small">Ron Clark Academy Parents · Atlanta, GA<br/>You're receiving this because you're part of the RCA family.</div>
+  </footer>
+
+</div>
+</body>
+</html>
