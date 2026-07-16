@@ -1072,3 +1072,65 @@ button {
     padding: 14px;
   }
 }
+
+/* ---------------------------------------------------------------
+   Pre-launch gate. Delete this block and COMING_SOON in main.jsx
+   to release the homepage.
+   --------------------------------------------------------------- */
+
+.prelaunch {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* scale() pushes the blur's transparent fringe past the viewport edges */
+.prelaunch-blur {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  filter: blur(18px) saturate(1.05);
+  transform: scale(1.06);
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.prelaunch-notice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  /* Opaque enough that both text colours clear WCAG AA even if the blurred
+     photo behind happens to be near-black. */
+  background: rgba(247, 243, 234, 0.78);
+}
+
+.prelaunch-mark {
+  margin: 0;
+  font-weight: 900;
+  font-size: clamp(32px, 8vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.prelaunch-tld {
+  /* deeper than --red (#c83f38), which only reached 2.68:1 over a dark backdrop */
+  color: #a82f28;
+}
+
+.prelaunch-status {
+  margin: 0;
+  font-size: clamp(11px, 2.4vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  /* darker than --muted, which fell to ~3.4:1 against the scrimmed backdrop */
+  color: #414c55;
+}

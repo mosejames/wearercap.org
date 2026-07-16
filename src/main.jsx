@@ -16,6 +16,13 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
+// Pre-launch gate. Flip to false to release the homepage; nothing else needs
+// changing. Only covers the React homepage — static pages under public/ (e.g.
+// /invite/) are served directly and stay reachable.
+// Note: this is a visual cover, not access control. The markup still ships to
+// the browser and is readable via view-source or with CSS disabled.
+const COMING_SOON = true;
+
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
@@ -397,4 +404,30 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+function ComingSoonGate({ children }) {
+  // inert keeps the blurred site out of the tab order and off screen readers;
+  // the scale hides the blur's transparent fringe at the viewport edges.
+  return (
+    <div className="prelaunch">
+      <div className="prelaunch-blur" inert aria-hidden="true">
+        {children}
+      </div>
+      <div className="prelaunch-notice">
+        <p className="prelaunch-mark">
+          WeAreRCAP<span className="prelaunch-tld">.org</span>
+        </p>
+        <p className="prelaunch-status">Coming soon</p>
+      </div>
+    </div>
+  );
+}
+
+createRoot(document.getElementById('root')).render(
+  COMING_SOON ? (
+    <ComingSoonGate>
+      <App />
+    </ComingSoonGate>
+  ) : (
+    <App />
+  ),
+);
