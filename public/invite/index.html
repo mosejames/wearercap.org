@@ -37,6 +37,14 @@
   .hero .play{position:absolute;top:74%;left:50%;transform:translate(-50%,-50%);width:74px;height:74px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.45);transition:transform .2s ease;}
   .hero:hover .play{transform:translate(-50%,-50%) scale(1.08);}
   .hero .play::after{content:"";display:block;margin-left:6px;border-style:solid;border-width:12px 0 12px 21px;border-color:transparent transparent transparent #fff;}
+  /* Video lightbox — mirrors the homepage VideoModal (embed + Esc + scroll lock) */
+  .vbox{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,8,7,.88);}
+  .vbox[open]{display:flex;}
+  .vbox-inner{position:relative;width:100%;max-width:960px;}
+  .vbox-frame{position:relative;aspect-ratio:16/9;background:#000;border-radius:var(--radius);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5);}
+  .vbox-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .vbox-close{position:absolute;top:-44px;right:0;background:transparent;border:0;color:var(--paper);font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;padding:8px;}
+  .vbox-close:hover{color:var(--orange);}
   .watch-bar{background:var(--ink);color:#b8a89a;text-align:center;padding:12px 26px 18px;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;}
   .watch-bar a{color:var(--paper);text-decoration:none;border-bottom:1px solid #4a423b;padding-bottom:2px;}
   .watch-bar a:hover{color:#ffd9b8;}
@@ -148,6 +156,14 @@
   </a>
   <div class="watch-bar"><a href="https://youtu.be/OWesQsXWQdM" target="_blank" rel="noopener">▶ Watch the We Are RCAP video</a></div>
 
+  <!-- Plays in place. The YouTube hrefs above stay as a no-JS fallback. -->
+  <div class="vbox" id="vbox" role="dialog" aria-modal="true" aria-label="We Are RCAP video">
+    <div class="vbox-inner">
+      <button class="vbox-close" id="vbox-close" type="button">Close &times;</button>
+      <div class="vbox-frame" id="vbox-frame"></div>
+    </div>
+  </div>
+
   <!-- LETTER -->
   <section data-screen-label="Letter">
     <p class="greet">Dear Ron Clark Academy Families,</p>
@@ -253,5 +269,37 @@
   </footer>
 
 </div>
+<script>
+(function () {
+  var VIDEO = 'OWesQsXWQdM';
+  var box = document.getElementById('vbox');
+  var frame = document.getElementById('vbox-frame');
+  var prevOverflow;
+
+  function open(e) {
+    // let modified clicks still open YouTube in a new tab
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    frame.innerHTML = '<iframe src="https://www.youtube.com/embed/' + VIDEO +
+      '?rel=0&modestbranding=1&autoplay=1" title="We Are RCAP" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    box.setAttribute('open', '');
+    prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.getElementById('vbox-close').focus();
+  }
+
+  function close() {
+    box.removeAttribute('open');
+    frame.innerHTML = '';               // stops playback
+    document.body.style.overflow = prevOverflow || '';
+  }
+
+  document.querySelector('.hero').addEventListener('click', open);
+  document.querySelector('.watch-bar a').addEventListener('click', open);
+  document.getElementById('vbox-close').addEventListener('click', close);
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.hasAttribute('open')) close(); });
+})();
+</script>
 </body>
 </html>
