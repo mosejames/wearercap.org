@@ -10,20 +10,26 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
 
     async function load(nextSession) {
-      if (nextSession?.user) {
-        await ensureMemberRow(nextSession.user);
-        const m = await fetchMember(nextSession.user.id);
-        if (!active) return;
-        setMember(m);
-      } else {
-        setMember(null);
+      try {
+        if (nextSession?.user) {
+          await ensureMemberRow(nextSession.user);
+          const m = await fetchMember(nextSession.user.id);
+          if (!active) return;
+          setMember(m);
+        } else {
+          setMember(null);
+        }
+      } catch (e) {
+        if (active) setError(e.message ?? 'Something went wrong.');
+      } finally {
+        if (active) setLoading(false);
       }
-      if (active) setLoading(false);
     }
 
     supabase.auth.getSession().then(({ data }) => {
@@ -45,6 +51,12 @@ export default function App() {
   }, []);
 
   if (loading) return <div className="carpool-shell"><p>Loading…</p></div>;
+  if (error) return (
+    <div className="carpool-shell">
+      <p role="alert">Something went wrong: {error}</p>
+      <button onClick={() => window.location.reload()}>Try again</button>
+    </div>
+  );
 
   const view = resolveView(session, member);
   if (view === 'signed-out') return <SignedOut />;
