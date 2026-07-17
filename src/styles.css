@@ -1153,6 +1153,9 @@ button {
   font-weight: 900;
   letter-spacing: -0.055em;
   -webkit-text-stroke: 0.012em currentColor;
+  /* .prelaunch-notice centers text; words must hug the reel's left edge so
+     short words (RCAP) sit next to "We are" like the prototype */
+  text-align: left;
 }
 
 .prelaunch-word.final {
