@@ -1111,18 +1111,58 @@ button {
   background: rgba(247, 243, 234, 0.78);
 }
 
-.prelaunch-mark {
-  margin: 0;
-  font-weight: 900;
-  font-size: clamp(32px, 8vw, 68px);
+/* "We are [reel]" slot-machine line (SpinLine). Sizing is driven by the
+   component's fit() — it sets font-size and reel width inline. */
+.prelaunch-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.26em;
+  white-space: nowrap;
   line-height: 1;
-  letter-spacing: -0.03em;
+  text-transform: uppercase;
   color: var(--ink);
 }
 
-.prelaunch-tld {
-  /* deeper than --red (#c83f38), which only reached 2.68:1 over a dark backdrop */
-  color: #a82f28;
+.prelaunch-fixed {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: rgba(23, 32, 38, 0.45);
+  transition: color 800ms ease-out;
+}
+
+.prelaunch-line.landed .prelaunch-fixed {
+  color: var(--ink);
+}
+
+.prelaunch-reel {
+  position: relative;
+  height: 1em;
+  overflow: hidden;
+}
+
+.prelaunch-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.prelaunch-word {
+  height: 1em;
+  line-height: 1;
+  white-space: nowrap;
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  -webkit-text-stroke: 0.012em currentColor;
+}
+
+.prelaunch-word.final {
+  letter-spacing: -0.07em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prelaunch-track {
+    transform: none !important;
+  }
 }
 
 .prelaunch-status {

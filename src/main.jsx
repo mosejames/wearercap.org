@@ -404,6 +404,174 @@ function App() {
   );
 }
 
+// "We are [reel] -> RCAP" slot-machine reveal, ported from the standalone
+// we-are-rcap_1.html prototype. The reel spins through the words at constant
+// velocity, then decays smoothly to rest on RCAP — one continuous motion,
+// no discrete steps.
+const SPIN_WORDS = [
+  'Present',
+  'Volunteers',
+  'Support',
+  'Advocates',
+  'Hands',
+  'Here',
+  'Ready',
+  'Backup',
+  'Family',
+  'The Village',
+];
+const SPIN_FINAL = 'RCAP';
+const SPIN_MS = 5200; // total time from first movement to rest
+const SPIN_FLURRY_END = 0.3; // fraction of SPIN_MS spent at full speed
+const SPIN_REVS = 3.2; // times the list rips past before decelerating
+const SPIN_HOLD_FINAL = 2200; // ms RCAP sits before the loop restarts
+
+function SpinLine() {
+  const lineRef = React.useRef(null);
+  const reelRef = React.useRef(null);
+  const trackRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const line = lineRef.current;
+    const reel = reelRef.current;
+    const track = trackRef.current;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let seq = [];
+    let rafId = null;
+    let timerId = null;
+
+    function build() {
+      track.innerHTML = '';
+      if (reduced) {
+        seq = [SPIN_FINAL];
+      } else {
+        seq = [];
+        const passes = Math.ceil(SPIN_REVS) + 1;
+        for (let p = 0; p < passes; p += 1) seq.push(...SPIN_WORDS);
+        seq.push(SPIN_FINAL);
+      }
+      seq.forEach((w, i) => {
+        const el = document.createElement('span');
+        el.className = 'prelaunch-word' + (i === seq.length - 1 ? ' final' : '');
+        el.textContent = w;
+        track.appendChild(el);
+      });
+    }
+
+    function fit() {
+      const REF = 100;
+      line.style.fontSize = REF + 'px';
+      reel.style.width = 'auto';
+
+      let widest = 0;
+      [...track.children].forEach((el) => {
+        widest = Math.max(widest, el.getBoundingClientRect().width);
+      });
+      reel.style.width = widest + 'px';
+
+      const lineW = line.getBoundingClientRect().width;
+      const avail = window.innerWidth * 0.88;
+      const availH = window.innerHeight * 0.5;
+
+      let size = REF * (avail / lineW);
+      size = Math.min(size, availH, 150);
+      size = Math.max(size, 20);
+      line.style.fontSize = size + 'px';
+
+      reel.style.width = 'auto';
+      let w2 = 0;
+      [...track.children].forEach((el) => {
+        w2 = Math.max(w2, el.getBoundingClientRect().width);
+      });
+      reel.style.width = w2 + 'px';
+    }
+
+    // Constant velocity through the flurry, then a cubic velocity decay to
+    // zero; progress(1) === 1 so the reel rests exactly on the final word.
+    function progress(t) {
+      const f = SPIN_FLURRY_END;
+      const decayArea = (1 - f) * 0.25;
+      const total = f + decayArea;
+      if (t <= f) return t / total;
+      const u = (t - f) / (1 - f);
+      const area = (1 - Math.pow(1 - u, 4)) / 4;
+      return (f + area * (1 - f)) / total;
+    }
+
+    function run() {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+      line.classList.remove('landed');
+
+      build();
+      fit();
+
+      if (reduced) {
+        line.classList.add('landed');
+        return;
+      }
+
+      const step = reel.getBoundingClientRect().height;
+      const dist = (seq.length - 1) * step;
+      const start = performance.now() + 220;
+      let landed = false;
+
+      function frame(now) {
+        const t = (now - start) / SPIN_MS;
+        if (t < 0) {
+          track.style.transform = 'translateY(0px)';
+          rafId = requestAnimationFrame(frame);
+          return;
+        }
+        if (t >= 1) {
+          track.style.transform = 'translateY(' + -dist + 'px)';
+          if (!landed) {
+            landed = true;
+            line.classList.add('landed');
+            timerId = setTimeout(run, SPIN_HOLD_FINAL);
+          }
+          return;
+        }
+        track.style.transform = 'translateY(' + -dist * progress(t) + 'px)';
+        rafId = requestAnimationFrame(frame);
+      }
+
+      rafId = requestAnimationFrame(frame);
+    }
+
+    // Background tabs suspend rAF and can report zero-width text during fit();
+    // restart the cycle when the page becomes visible so neither sticks.
+    function onVisible() {
+      if (document.visibilityState === 'visible') run();
+    }
+
+    window.addEventListener('resize', fit);
+    document.addEventListener('visibilitychange', onVisible);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(run);
+    } else {
+      run();
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+      window.removeEventListener('resize', fit);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
+  return (
+    <div className="prelaunch-line" ref={lineRef} aria-label="We are RCAP">
+      <span className="prelaunch-fixed">We are</span>
+      <span className="prelaunch-reel" ref={reelRef} aria-hidden="true">
+        <span className="prelaunch-track" ref={trackRef} />
+      </span>
+    </div>
+  );
+}
+
 function ComingSoonGate({ children }) {
   // inert keeps the blurred site out of the tab order and off screen readers;
   // the scale hides the blur's transparent fringe at the viewport edges.
@@ -413,9 +581,7 @@ function ComingSoonGate({ children }) {
         {children}
       </div>
       <div className="prelaunch-notice">
-        <p className="prelaunch-mark">
-          WeAreRCAP<span className="prelaunch-tld">.org</span>
-        </p>
+        <SpinLine />
         <p className="prelaunch-status">Coming soon</p>
       </div>
     </div>
