@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
 import SignedOut from './views/SignedOut.jsx';
@@ -14,6 +14,7 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
+    let timeoutId = null;
 
     async function load(nextSession) {
       try {
@@ -32,20 +33,22 @@ export default function App() {
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setSession(data.session);
-      load(data.session);
-    });
-
+    // Drive all loading from onAuthStateChange alone. In supabase-js v2,
+    // this fires an INITIAL_SESSION event on subscribe with the current
+    // session (or null), so a separate getSession() call is redundant.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setLoading(true);
-      load(nextSession);
+      // Defer async Supabase calls off the callback's synchronous execution
+      // per supabase-js guidance (the auth client may hold an internal lock).
+      timeoutId = setTimeout(() => {
+        load(nextSession);
+      }, 0);
     });
 
     return () => {
       active = false;
+      if (timeoutId) clearTimeout(timeoutId);
       sub.subscription.unsubscribe();
     };
   }, []);

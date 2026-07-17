@@ -1,4 +1,3 @@
-import React from 'react';
 import { supabase } from '../supabaseClient.js';
 
 export default function Pending() {
