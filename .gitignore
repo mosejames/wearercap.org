@@ -5,3 +5,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# subagent-driven-dev scratch
+.superpowers/
