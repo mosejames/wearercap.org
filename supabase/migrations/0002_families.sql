@@ -13,7 +13,7 @@ create table if not exists public.families (
   area_lng double precision not null,
   area_label text not null,
   direction text not null check (direction in ('am', 'pm', 'both')),
-  weekdays text[] not null check (weekdays <@ array['mon','tue','wed','thu','fri']),
+  weekdays text[] not null check (weekdays <@ array['mon','tue','wed','thu','fri'] and cardinality(weekdays) > 0),
   contact_phone text,
   contact_email text not null,
   created_at timestamptz not null default now(),
