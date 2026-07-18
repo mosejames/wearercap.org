@@ -57,9 +57,18 @@ export default function Onboarding() {
   // reload instead of coming back blank. Deliberately does NOT auto-jump to
   // the code step; starting back on the prefilled form is the safer
   // behavior since we can't know the code was ever sent successfully.
+  // A stash whose SHAPE drifted (e.g. written before a deploy that changed the
+  // payload) would make stashToFormShape throw during render. There is no error
+  // boundary above this component, so that would white-screen the signed-out
+  // entry point and survive a reload, bricking the tab. Discard it instead.
   const [draft, setDraft] = useState(() => {
-    const p = readPendingFamily();
-    return p ? stashToFormShape(p) : null;
+    try {
+      const p = readPendingFamily();
+      return p ? stashToFormShape(p) : null;
+    } catch {
+      clearPendingFamily();
+      return null;
+    }
   });
 
   const [code, setCode] = useState('');
