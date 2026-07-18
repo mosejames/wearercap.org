@@ -25,10 +25,13 @@ grant execute on function public.is_member() to authenticated;
 -- Relax writes: own row + any member (was: own row + approved member).
 drop policy if exists families_insert_self_approved on public.families;
 drop policy if exists families_update_self_approved on public.families;
+drop policy if exists families_insert_self_member on public.families;
 
 create policy families_insert_self_member
   on public.families for insert
   with check (user_id = auth.uid() and public.is_member());
+
+drop policy if exists families_update_self_member on public.families;
 
 create policy families_update_self_member
   on public.families for update
@@ -81,12 +84,12 @@ as $$
       and f.user_id <> auth.uid()
       and public.is_member()
       and 3959 * acos(
-            least(1.0,
+            greatest(-1.0, least(1.0,
               cos(radians(me.area_lat)) * cos(radians(f.area_lat))
               * cos(radians(f.area_lng) - radians(me.area_lng))
               + sin(radians(me.area_lat)) * sin(radians(f.area_lat))
-            )
-          ) <= radius_miles
+            ))
+          ) <= least(50, greatest(0.25, radius_miles))
   ), 0);
 $$;
 
