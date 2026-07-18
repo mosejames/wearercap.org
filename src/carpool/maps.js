@@ -11,6 +11,8 @@ function configure() {
 
 let placesPromise;
 let geocodingPromise;
+let mapsPromise;
+let markerPromise;
 
 export function loadPlaces() {
   // async IIFE so a missing-key throw becomes a rejected promise, not a sync throw
@@ -21,4 +23,14 @@ export function loadPlaces() {
 export function loadGeocoding() {
   if (!geocodingPromise) geocodingPromise = (async () => { configure(); return importLibrary('geocoding'); })();
   return geocodingPromise;
+}
+
+export function loadMaps() {
+  if (!mapsPromise) mapsPromise = (async () => { configure(); return importLibrary('maps'); })();
+  return mapsPromise;
+}
+
+export function loadMarker() {
+  if (!markerPromise) markerPromise = (async () => { configure(); return importLibrary('marker'); })();
+  return markerPromise;
 }

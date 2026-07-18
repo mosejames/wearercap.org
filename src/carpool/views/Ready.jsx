@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient.js';
 import { fetchFamily } from '../family.js';
 import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
+import MapView from './MapView.jsx';
 
 export default function Ready({ isAdmin = false, isPending = false }) {
   const [userId, setUserId] = useState(null);
@@ -84,7 +85,7 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         <p>Area: {family.area_label}</p>
         <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
         <button onClick={() => setEditing(true)}>Edit</button>
-        <p>The map of nearby families arrives next.</p>
+        <MapView family={family} isPending={isPending} />
         <button onClick={() => supabase.auth.signOut()}>Sign out</button>
       </div>
     </>

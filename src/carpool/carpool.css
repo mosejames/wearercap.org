@@ -1,3 +1,6 @@
 :root { color-scheme: light; }
 body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f6f7f8; color: #172026; }
 .carpool-shell { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem; }
+.carpool-map { height: 380px; width: 100%; }
+.carpool-nearby-list { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+.carpool-nearby-list li { padding: 0.6rem 0; border-bottom: 1px solid #e2e5e8; }
