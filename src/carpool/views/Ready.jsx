@@ -4,7 +4,7 @@ import { fetchFamily } from '../family.js';
 import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
 
-export default function Ready({ isAdmin = false }) {
+export default function Ready({ isAdmin = false, isPending = false }) {
   const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
   const [family, setFamily] = useState(null);
@@ -53,9 +53,16 @@ export default function Ready({ isAdmin = false }) {
     </div>
   ) : null;
 
+  const pendingBanner = isPending ? (
+    <div className="carpool-shell" style={{ paddingBottom: 0 }}>
+      <p><strong>You're awaiting approval.</strong> A committee admin has been notified — meanwhile, set up your family below.</p>
+    </div>
+  ) : null;
+
   if (!family || editing) {
     return (
       <>
+        {pendingBanner}
         {adminBar}
         <FamilyForm
           userId={userId}
@@ -69,6 +76,7 @@ export default function Ready({ isAdmin = false }) {
 
   return (
     <>
+      {pendingBanner}
       {adminBar}
       <div className="carpool-shell">
         <h1>Your family</h1>

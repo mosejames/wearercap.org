@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
 import SignedOut from './views/SignedOut.jsx';
-import Pending from './views/Pending.jsx';
 import Ready from './views/Ready.jsx';
 
 export default function App() {
@@ -62,8 +61,7 @@ export default function App() {
 
   const view = resolveView(session, member);
   if (view === 'signed-out') return <SignedOut />;
-  if (view === 'pending') return <Pending />;
-  // Approved parents AND admins land on the family view. Admins get an
-  // in-view link to the approvals queue (they're parents who carpool too).
-  return <Ready isAdmin={view === 'admin'} />;
+  // One-sitting onboarding: pending parents fill their family and see the
+  // map teaser immediately; approval gates only other families' details.
+  return <Ready isAdmin={view === 'admin'} isPending={view === 'pending'} />;
 }
