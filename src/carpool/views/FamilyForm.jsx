@@ -144,7 +144,7 @@ export default function FamilyForm({ family, initialEmail, submitLabel, onSubmit
       return;
     }
     if (!place.postalCode) {
-      setError("That address didn't include a ZIP code — please pick a more specific address.");
+      setError("That address didn't include a ZIP code. Please pick a more specific address.");
       return;
     }
     // Defense-in-depth: the 'input' listener above should have already

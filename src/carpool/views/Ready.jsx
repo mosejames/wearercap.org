@@ -82,7 +82,7 @@ export default function Ready({ isAdmin = false, isPending = false }) {
 
   const pendingBanner = isPending ? (
     <div className="carpool-shell" style={{ paddingBottom: 0 }}>
-      <p><strong>You're awaiting approval.</strong> A committee admin has been notified — meanwhile, set up your family below.</p>
+      <p><strong>You're awaiting approval.</strong> A committee admin has been notified. Meanwhile, set up your family below.</p>
     </div>
   ) : null;
 
@@ -111,7 +111,7 @@ export default function Ready({ isAdmin = false, isPending = false }) {
       {adminBar}
       <div className="carpool-shell">
         <h1>Your family</h1>
-        <p><strong>{family.parent_name}</strong> — {family.child_names}</p>
+        <p><strong>{family.parent_name}</strong>, {family.child_names}</p>
         <p>Area: {family.area_label}</p>
         <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
         <button onClick={() => setEditing(true)}>Edit</button>
