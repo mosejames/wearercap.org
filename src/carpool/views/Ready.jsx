@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
 import { fetchFamily, buildFamilyRecord, saveFamily } from '../family.js';
+import { readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
 import MapView from './MapView.jsx';
@@ -23,8 +24,18 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         if (!active) return;
         setUserId(user?.id ?? null);
         setEmail(user?.email ?? '');
-        const fam = user ? await fetchFamily(user.id) : null;
+        let fam = user ? await fetchFamily(user.id) : null;
         if (!active) return;
+        if (!fam && user) {
+          const pending = readPendingFamily();
+          if (pending) {
+            const record = buildFamilyRecord({ ...pending, userId: user.id });
+            await saveFamily(record);
+            if (!active) return;
+            clearPendingFamily();
+            fam = record;
+          }
+        }
         setFamily(fam);
       } catch (e) {
         if (active) setError(e.message ?? 'Could not load your family.');

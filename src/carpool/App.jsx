@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
-import SignedOut from './views/SignedOut.jsx';
+import Onboarding from './views/Onboarding.jsx';
 import Ready from './views/Ready.jsx';
 
 export default function App() {
@@ -60,7 +60,7 @@ export default function App() {
   );
 
   const view = resolveView(session, member);
-  if (view === 'signed-out') return <SignedOut />;
+  if (view === 'signed-out') return <Onboarding />;
   // One-sitting onboarding: pending parents fill their family and see the
   // map teaser immediately; approval gates only other families' details.
   return <Ready isAdmin={view === 'admin'} isPending={view === 'pending'} />;
