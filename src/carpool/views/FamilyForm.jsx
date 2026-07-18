@@ -6,7 +6,7 @@ const DAYS = [
   { key: 'thu', label: 'Thu' }, { key: 'fri', label: 'Fri' },
 ];
 
-export default function FamilyForm({ family, initialEmail, submitLabel, onSubmitData }) {
+export default function FamilyForm({ family, initialEmail, submitLabel, heading, onSubmitData }) {
   // Container the PlaceAutocompleteElement web component is mounted into.
   // (The legacy google.maps.places.Autocomplete bound to a plain <input> is
   // deprecated; the current widget is its own custom element, not something
@@ -186,7 +186,7 @@ export default function FamilyForm({ family, initialEmail, submitLabel, onSubmit
 
   return (
     <form className="carpool-shell" onSubmit={handleSubmit}>
-      <h1>{family ? 'Edit your family' : 'Add your family'}</h1>
+      <h2>{heading ?? (family ? 'Edit your family' : 'Add your family')}</h2>
 
       <label>Your name
         <input required value={parentName} onChange={(e) => setParentName(e.target.value)} />

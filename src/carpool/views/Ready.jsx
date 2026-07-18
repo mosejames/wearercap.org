@@ -6,6 +6,34 @@ import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
 import MapView from './MapView.jsx';
 
+// Builds a family record from a stashed onboarding/edit payload, saves it,
+// and clears the stash. Used both when the signed-in user has no family row
+// yet (first-time onboarding) and when they already have one (re-onboarding:
+// they forgot they'd signed up, refilled the form, and this stash is their
+// freshest deliberate input — saveFamily upserts, so applying it here is
+// safe either way). There is exactly ONE place that builds/saves/clears so
+// the two callers can't drift.
+//
+// A stash that fails to build into a record (missing/invalid field, e.g.
+// written before a deploy that changed the payload shape) is unusable and
+// would throw identically forever if retried, bricking this view behind a
+// reload loop. Discard it and signal the caller to keep whatever family it
+// already had. A throw from saveFamily itself is different: that's a
+// transient failure (network, RLS, etc.), so the stash must survive it so
+// the save can be retried, and it propagates to the caller uncaught.
+async function applyPendingFamily(pending, userId) {
+  let record;
+  try {
+    record = buildFamilyRecord({ ...pending, userId });
+  } catch {
+    clearPendingFamily();
+    return null;
+  }
+  await saveFamily(record); // a throw here must NOT clear the stash
+  clearPendingFamily();
+  return record;
+}
+
 export default function Ready({ isAdmin = false, isPending = false }) {
   const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
@@ -26,28 +54,23 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         setEmail(user?.email ?? '');
         let fam = user ? await fetchFamily(user.id) : null;
         if (!active) return;
-        if (!fam && user) {
+        if (user) {
           const pending = readPendingFamily();
           if (pending) {
-            // A stash that fails to build into a record (missing/invalid
-            // field, e.g. written before a deploy that changed the payload
-            // shape) is unusable and would throw identically forever if
-            // retried, bricking this view behind a reload loop. Discard it
-            // and fall through to the empty form instead. A throw from
-            // saveFamily itself is different: that's a transient failure
-            // (network, RLS, etc.), so the stash must survive it so the
-            // save can be retried.
-            let record = null;
-            try {
-              record = buildFamilyRecord({ ...pending, userId: user.id });
-            } catch {
-              clearPendingFamily();
-            }
-            if (record) {
-              await saveFamily(record); // a throw here must NOT clear the stash
+            // Shared-computer edge case: tab A stashed a draft and signed
+            // out, tab B signs in as someone else, the Supabase session
+            // broadcasts to tab A. Only consume a stash that belongs to
+            // THIS account. On the intended path these always match, since
+            // onboarding signs in with payload.contactEmail.
+            if (pending.contactEmail?.toLowerCase() === user.email?.toLowerCase()) {
+              const applied = await applyPendingFamily(pending, user.id);
+              // Clearing the stash above is a pure local side effect and is
+              // correct regardless of mount state; only setState needs the
+              // mount guard, so it comes after.
               if (!active) return;
+              if (applied) fam = applied;
+            } else {
               clearPendingFamily();
-              fam = record;
             }
           }
         }

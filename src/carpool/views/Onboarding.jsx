@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
-import { stashPendingFamily, clearPendingFamily } from '../pendingFamily.js';
+import { stashPendingFamily, readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
+
+// Supabase's verifyOtp failure message is "Token has expired or is
+// invalid". Map that specific case to language a parent will actually
+// understand; every other error passes through unchanged.
+function mapVerifyError(message) {
+  const msg = message ?? '';
+  if (/token/i.test(msg) && /expired|invalid/i.test(msg)) {
+    return "That code didn't work. Check the digits, or send a new code.";
+  }
+  return msg || 'That code did not work. Please check it and try again.';
+}
 
 // Converts a stashed onboarding payload (the shape FamilyForm's
 // onSubmitData hands us: { parentName, childNames, place, areaGeocode,
@@ -40,8 +51,16 @@ export default function Onboarding() {
   const [email, setEmail] = useState('');
   // Snapshot of the last-submitted family form, in FamilyForm's `family`
   // prop shape, so returning to the form step (e.g. "Use a different
-  // email") re-mounts it pre-filled instead of blank.
-  const [draft, setDraft] = useState(null);
+  // email") re-mounts it pre-filled instead of blank. Seeded lazily from
+  // any stash left over from a previous mount (e.g. a reload while
+  // switching to the mail app to read the code) so the draft survives that
+  // reload instead of coming back blank. Deliberately does NOT auto-jump to
+  // the code step; starting back on the prefilled form is the safer
+  // behavior since we can't know the code was ever sent successfully.
+  const [draft, setDraft] = useState(() => {
+    const p = readPendingFamily();
+    return p ? stashToFormShape(p) : null;
+  });
 
   const [code, setCode] = useState('');
   const [verifyStatus, setVerifyStatus] = useState('idle'); // idle | verifying | error
@@ -83,25 +102,35 @@ export default function Onboarding() {
     e.preventDefault();
     setSigninStatus('sending');
     setSigninError('');
-    const { error } = await supabase.auth.signInWithOtp({
-      email: signinEmail,
-      options: { shouldCreateUser: false },
-    });
-    if (!mountedRef.current) return;
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: signinEmail,
+        options: { shouldCreateUser: false },
+      });
+      if (!mountedRef.current) return;
+      if (error) {
+        setSigninStatus('error');
+        // Supabase returns something like "Signups not allowed for otp" when
+        // shouldCreateUser: false hits an email with no account. Map that
+        // specific case to language a parent will actually understand; leave
+        // every other error message passing through unchanged.
+        const message = /signups not allowed for otp/i.test(error.message ?? '')
+          ? "We don't have a family under that email. Check the spelling, or start as a new family."
+          : (error.message ?? 'Could not send a code. Please try again.');
+        setSigninError(message);
+        return;
+      }
+      setSigninStatus('idle');
+      goToCode(signinEmail, 'signin-email');
+    } catch (err) {
+      // supabase-js only returns { error } for auth errors; anything else
+      // (e.g. TypeError: Failed to fetch when offline or on flaky mobile)
+      // is thrown. Without this catch the button would stay disabled on
+      // 'sending' forever with no error shown.
+      if (!mountedRef.current) return;
       setSigninStatus('error');
-      // Supabase returns something like "Signups not allowed for otp" when
-      // shouldCreateUser: false hits an email with no account. Map that
-      // specific case to language a parent will actually understand; leave
-      // every other error message passing through unchanged.
-      const message = /signups not allowed for otp/i.test(error.message ?? '')
-        ? "We don't have a family under that email. Check the spelling, or start as a new family."
-        : (error.message ?? 'Could not send a code. Please try again.');
-      setSigninError(message);
-      return;
+      setSigninError(err.message ?? 'Something went wrong. Please try again.');
     }
-    setSigninStatus('idle');
-    goToCode(signinEmail, 'signin-email');
   }
 
   // supabase-js v2's EmailOtpType is 'signup' | 'invite' | 'magiclink' |
@@ -114,33 +143,49 @@ export default function Onboarding() {
     e.preventDefault();
     setVerifyStatus('verifying');
     setVerifyError('');
-    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
-    if (!mountedRef.current) return;
-    if (error) {
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+      if (!mountedRef.current) return;
+      if (error) {
+        setVerifyStatus('error');
+        setVerifyError(mapVerifyError(error.message));
+        return;
+      }
+      setVerifyStatus('idle');
+      // Success: onAuthStateChange in App.jsx re-renders into the signed-in
+      // view. Nothing else to do here.
+    } catch (err) {
+      // A network throw here is the worst case: a parent holding a valid
+      // code on what would otherwise be a dead page (button stuck on
+      // 'verifying' with no error shown). Recover into 'error' so they can
+      // retry.
+      if (!mountedRef.current) return;
       setVerifyStatus('error');
-      setVerifyError(error.message ?? 'That code did not work. Please check it and try again.');
-      return;
+      setVerifyError(err.message ?? 'Something went wrong. Please try again.');
     }
-    setVerifyStatus('idle');
-    // Success: onAuthStateChange in App.jsx re-renders into the signed-in
-    // view. Nothing else to do here.
   }
 
   async function handleResend() {
     setResendStatus('sending');
     setResendMessage('');
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: origin === 'form' },
-    });
-    if (!mountedRef.current) return;
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: origin === 'form' },
+      });
+      if (!mountedRef.current) return;
+      if (error) {
+        setResendStatus('error');
+        setResendMessage(error.message ?? 'Could not send a new code. Please try again.');
+        return;
+      }
+      setResendStatus('sent');
+      setResendMessage('A new code is on its way.');
+    } catch (err) {
+      if (!mountedRef.current) return;
       setResendStatus('error');
-      setResendMessage(error.message ?? 'Could not send a new code. Please try again.');
-      return;
+      setResendMessage(err.message ?? 'Something went wrong. Please try again.');
     }
-    setResendStatus('sent');
-    setResendMessage('A new code is on its way.');
   }
 
   if (step === 'form') {
@@ -148,7 +193,7 @@ export default function Onboarding() {
       <div className="carpool-shell">
         <h1>Welcome to RCA Carpool</h1>
         <p>Add your family and we'll show you who is already carpooling near you.</p>
-        <FamilyForm family={draft} submitLabel="Continue" onSubmitData={handleFamilySubmit} />
+        <FamilyForm family={draft} submitLabel="Continue" heading="Your family" onSubmitData={handleFamilySubmit} />
         <p>
           Already added your family?{' '}
           <button
