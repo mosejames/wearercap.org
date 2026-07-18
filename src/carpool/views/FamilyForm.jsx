@@ -14,6 +14,11 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
   // you attach to an existing input — see task-4-report.md for the docs.)
   const addressContainerRef = useRef(null);
 
+  // Holds the live PlaceAutocompleteElement instance so handleSubmit can
+  // read its current text at submit time (defense-in-depth against a stale
+  // selection when the 'input' listener below doesn't fire).
+  const autocompleteElRef = useRef(null);
+
   // Holds the address the user actually SELECTED from autocomplete:
   // { formattedAddress, lat, lng, postalCode }. Null until a valid pick.
   const selectedPlaceRef = useRef(
@@ -42,6 +47,7 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
     let autocompleteEl = null;
     let onSelect = null;
     let onInput = null;
+    let onError = null;
 
     loadPlaces()
       .then(({ PlaceAutocompleteElement }) => {
@@ -51,6 +57,7 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
         autocompleteEl.placeholder = 'Start typing and pick from the list';
         if (family?.address) autocompleteEl.value = family.address;
         addressContainerRef.current.appendChild(autocompleteEl);
+        autocompleteElRef.current = autocompleteEl;
 
         onSelect = async (event) => {
           try {
@@ -88,6 +95,13 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
           }
         };
         autocompleteEl.addEventListener('input', onInput);
+
+        // Surface runtime errors from the widget itself (e.g. API key/billing
+        // issues, network failures) instead of failing silently.
+        onError = () => {
+          if (!cancelled) setError('Address lookup is unavailable right now.');
+        };
+        autocompleteEl.addEventListener('gmp-error', onError);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message ?? 'Could not load address search.');
@@ -98,8 +112,10 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
       if (autocompleteEl) {
         if (onSelect) autocompleteEl.removeEventListener('gmp-select', onSelect);
         if (onInput) autocompleteEl.removeEventListener('input', onInput);
+        if (onError) autocompleteEl.removeEventListener('gmp-error', onError);
         autocompleteEl.remove();
       }
+      if (autocompleteElRef.current === autocompleteEl) autocompleteElRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -112,8 +128,21 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
     e.preventDefault();
     setError('');
     const place = selectedPlaceRef.current;
-    if (!place || !place.postalCode) {
+    if (!place) {
       setError('Please pick your address from the suggestions so we can locate your area.');
+      return;
+    }
+    if (!place.postalCode) {
+      setError("That address didn't include a ZIP code — please pick a more specific address.");
+      return;
+    }
+    // Defense-in-depth: the 'input' listener above should have already
+    // cleared selectedPlaceRef if the user edited the text after picking a
+    // suggestion, but if that listener didn't fire, catch it here by
+    // comparing the widget's current text against the selected place.
+    const typed = (autocompleteElRef.current?.value ?? '').trim();
+    if (typed && typed !== place.formattedAddress) {
+      setError('Please pick your address from the suggestions again.');
       return;
     }
     setStatus('saving');
