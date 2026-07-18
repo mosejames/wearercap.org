@@ -59,14 +59,27 @@ export default function MapView({ family, isPending }) {
           const directoryRows = await fetchDirectory();
           if (cancelled) return;
           const others = directoryRows.filter((f) => f.user_id !== family.user_id);
-          others.forEach((f, i) => {
-            const pos = jitter(f.area_lat, f.area_lng, i);
-            const pin = new PinElement({ background: '#ea4335', borderColor: '#8f1c11', glyphColor: '#ffffff' });
-            new AdvancedMarkerElement({
-              map,
-              position: pos,
-              content: pin.element,
-              title: f.parent_name,
+
+          // Group by centroid; jitter only families sharing the exact same area coordinates
+          const grouped = {};
+          others.forEach((f) => {
+            const key = `${f.area_lat},${f.area_lng}`;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(f);
+          });
+
+          // Render each group, sorting deterministically by user_id
+          Object.values(grouped).forEach((group) => {
+            group.sort((a, b) => a.user_id.localeCompare(b.user_id));
+            group.forEach((f, withinGroupIndex) => {
+              const pos = jitter(f.area_lat, f.area_lng, withinGroupIndex);
+              const pin = new PinElement({ background: '#ea4335', borderColor: '#8f1c11', glyphColor: '#ffffff' });
+              new AdvancedMarkerElement({
+                map,
+                position: pos,
+                content: pin.element,
+                title: f.parent_name,
+              });
             });
           });
           setRows(rankNearby(family, directoryRows));
@@ -88,7 +101,7 @@ export default function MapView({ family, isPending }) {
       {error && <p role="alert">{error}</p>}
       {loading && !error && <p>Loading map…</p>}
 
-      {!loading && isPending && (
+      {!loading && !error && isPending && (
         <p>
           {count > 0
             ? `${count} famil${count === 1 ? 'y' : 'ies'} already in your area — they'll appear on the map when you're approved.`
@@ -96,7 +109,7 @@ export default function MapView({ family, isPending }) {
         </p>
       )}
 
-      {!loading && !isPending && (
+      {!loading && !error && !isPending && (
         rows.length === 0 ? (
           <p>No other families in your area yet — check back soon.</p>
         ) : (
