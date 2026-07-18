@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
 import { fetchFamily } from '../family.js';
 import FamilyForm from './FamilyForm.jsx';
+import AdminApprovals from './AdminApprovals.jsx';
 
-export default function Ready() {
+export default function Ready({ isAdmin = false }) {
   const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
   const [family, setFamily] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showApprovals, setShowApprovals] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -40,26 +42,43 @@ export default function Ready() {
     </div>
   );
 
+  // Admins can jump to the approvals queue and back, without leaving their family view.
+  if (isAdmin && showApprovals) {
+    return <AdminApprovals onBack={() => setShowApprovals(false)} />;
+  }
+
+  const adminBar = isAdmin ? (
+    <div className="carpool-shell" style={{ paddingBottom: 0 }}>
+      <button onClick={() => setShowApprovals(true)}>Pending approvals →</button>
+    </div>
+  ) : null;
+
   if (!family || editing) {
     return (
-      <FamilyForm
-        userId={userId}
-        email={email}
-        family={family}
-        onSaved={(rec) => { setFamily(rec); setEditing(false); }}
-      />
+      <>
+        {adminBar}
+        <FamilyForm
+          userId={userId}
+          email={email}
+          family={family}
+          onSaved={(rec) => { setFamily(rec); setEditing(false); }}
+        />
+      </>
     );
   }
 
   return (
-    <div className="carpool-shell">
-      <h1>Your family</h1>
-      <p><strong>{family.parent_name}</strong> — {family.child_names}</p>
-      <p>Area: {family.area_label}</p>
-      <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
-      <button onClick={() => setEditing(true)}>Edit</button>
-      <p>The map of nearby families arrives next.</p>
-      <button onClick={() => supabase.auth.signOut()}>Sign out</button>
-    </div>
+    <>
+      {adminBar}
+      <div className="carpool-shell">
+        <h1>Your family</h1>
+        <p><strong>{family.parent_name}</strong> — {family.child_names}</p>
+        <p>Area: {family.area_label}</p>
+        <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
+        <button onClick={() => setEditing(true)}>Edit</button>
+        <p>The map of nearby families arrives next.</p>
+        <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+      </div>
+    </>
   );
 }

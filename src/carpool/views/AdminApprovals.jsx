@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient.js';
 
-export default function AdminApprovals() {
+export default function AdminApprovals({ onBack = null }) {
   const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,6 +31,7 @@ export default function AdminApprovals() {
 
   return (
     <div className="carpool-shell">
+      {onBack && <button onClick={onBack}>← Back to my family</button>}
       <h1>Pending approvals</h1>
       <button onClick={() => supabase.auth.signOut()}>Sign out</button>
       {loading && <p>Loading…</p>}

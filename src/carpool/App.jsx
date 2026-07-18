@@ -4,7 +4,6 @@ import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
 import SignedOut from './views/SignedOut.jsx';
 import Pending from './views/Pending.jsx';
 import Ready from './views/Ready.jsx';
-import AdminApprovals from './views/AdminApprovals.jsx';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -64,6 +63,7 @@ export default function App() {
   const view = resolveView(session, member);
   if (view === 'signed-out') return <SignedOut />;
   if (view === 'pending') return <Pending />;
-  if (view === 'admin') return <AdminApprovals />;
-  return <Ready />;
+  // Approved parents AND admins land on the family view. Admins get an
+  // in-view link to the approvals queue (they're parents who carpool too).
+  return <Ready isAdmin={view === 'admin'} />;
 }
