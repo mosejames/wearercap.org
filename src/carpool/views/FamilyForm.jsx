@@ -25,6 +25,14 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
     family ? { formattedAddress: family.address, lat: family.lat, lng: family.lng, postalCode: family.area_label } : null
   );
 
+  // The text the WIDGET displayed at the moment of selection. This is the
+  // prediction label (e.g. "1950 West Rugby Avenue, College Park, GA, USA"),
+  // which deliberately differs from the Place's canonical formattedAddress
+  // (e.g. "1950 W Rugby Ave, College Park, GA 30337, USA"). The submit-time
+  // stale check must compare against THIS, not formattedAddress, or every
+  // valid selection is rejected.
+  const selectedDisplayRef = useRef(family ? family.address : null);
+
   const [parentName, setParentName] = useState(family?.parent_name ?? '');
   const [childNames, setChildNames] = useState(family?.child_names ?? '');
   // Mirrors the currently CONFIRMED (selected) address for display only.
@@ -72,6 +80,9 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
               lng: place.location ? place.location.lng() : null,
               postalCode,
             };
+            // Capture what the widget is DISPLAYING now (the prediction
+            // label), which is what a later edit would change.
+            selectedDisplayRef.current = autocompleteEl.value ?? '';
             if (cancelled) return;
             setAddressText(place.formattedAddress ?? '');
             setError('');
@@ -91,6 +102,7 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
         onInput = () => {
           if (selectedPlaceRef.current) {
             selectedPlaceRef.current = null;
+            selectedDisplayRef.current = null;
             if (!cancelled) setAddressText('');
           }
         };
@@ -139,9 +151,15 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
     // Defense-in-depth: the 'input' listener above should have already
     // cleared selectedPlaceRef if the user edited the text after picking a
     // suggestion, but if that listener didn't fire, catch it here by
-    // comparing the widget's current text against the selected place.
+    // comparing the widget's current text against the text it displayed at
+    // selection time. NOT against place.formattedAddress — the widget shows
+    // the prediction label ("1950 West Rugby Avenue, College Park, GA, USA")
+    // while formattedAddress is the canonical form ("1950 W Rugby Ave,
+    // College Park, GA 30337, USA"), so comparing those rejects every valid
+    // selection. Only compare when we actually recorded a display value.
     const typed = (autocompleteElRef.current?.value ?? '').trim();
-    if (typed && typed !== place.formattedAddress) {
+    const selectedDisplay = (selectedDisplayRef.current ?? '').trim();
+    if (typed && selectedDisplay && typed !== selectedDisplay) {
       setError('Please pick your address from the suggestions again.');
       return;
     }
