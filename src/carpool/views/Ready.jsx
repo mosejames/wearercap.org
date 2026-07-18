@@ -29,11 +29,26 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         if (!fam && user) {
           const pending = readPendingFamily();
           if (pending) {
-            const record = buildFamilyRecord({ ...pending, userId: user.id });
-            await saveFamily(record);
-            if (!active) return;
-            clearPendingFamily();
-            fam = record;
+            // A stash that fails to build into a record (missing/invalid
+            // field, e.g. written before a deploy that changed the payload
+            // shape) is unusable and would throw identically forever if
+            // retried, bricking this view behind a reload loop. Discard it
+            // and fall through to the empty form instead. A throw from
+            // saveFamily itself is different: that's a transient failure
+            // (network, RLS, etc.), so the stash must survive it so the
+            // save can be retried.
+            let record = null;
+            try {
+              record = buildFamilyRecord({ ...pending, userId: user.id });
+            } catch {
+              clearPendingFamily();
+            }
+            if (record) {
+              await saveFamily(record); // a throw here must NOT clear the stash
+              if (!active) return;
+              clearPendingFamily();
+              fam = record;
+            }
           }
         }
         setFamily(fam);

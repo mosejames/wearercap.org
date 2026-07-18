@@ -1,7 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
-import { stashPendingFamily } from '../pendingFamily.js';
+import { stashPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
+
+// Converts a stashed onboarding payload (the shape FamilyForm's
+// onSubmitData hands us: { parentName, childNames, place, areaGeocode,
+// direction, weekdays, contactPhone, contactEmail }) into the family-record
+// shape FamilyForm's `family` prop expects, so "Use a different email" can
+// re-render the form pre-filled instead of blank.
+function stashToFormShape(p) {
+  return {
+    parent_name: p.parentName,
+    child_names: p.childNames,
+    address: p.place.formattedAddress,
+    lat: p.place.lat,
+    lng: p.place.lng,
+    area_label: p.place.postalCode,   // FamilyForm reads selectedPlaceRef.postalCode from area_label
+    direction: p.direction,
+    weekdays: p.weekdays,
+    contact_phone: p.contactPhone,
+    contact_email: p.contactEmail,
+  };
+}
 
 // Form-first onboarding: a parent fills out the family form, we stash it
 // locally, send an emailed 6-digit code, and verify it inline without ever
@@ -9,12 +29,19 @@ import FamilyForm from './FamilyForm.jsx';
 // the family once auth completes (RLS requires an authenticated user_id).
 export default function Onboarding() {
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const [step, setStep] = useState('form'); // 'form' | 'code' | 'signin-email'
   // Which step "Use a different email" should return to from the code step.
   const [origin, setOrigin] = useState('form');
   const [email, setEmail] = useState('');
+  // Snapshot of the last-submitted family form, in FamilyForm's `family`
+  // prop shape, so returning to the form step (e.g. "Use a different
+  // email") re-mounts it pre-filled instead of blank.
+  const [draft, setDraft] = useState(null);
 
   const [code, setCode] = useState('');
   const [verifyStatus, setVerifyStatus] = useState('idle'); // idle | verifying | error
@@ -43,6 +70,7 @@ export default function Onboarding() {
   // awaits this and shows whatever it throws via its own error slot.
   async function handleFamilySubmit(payload) {
     stashPendingFamily(payload);
+    setDraft(stashToFormShape(payload));
     const { error } = await supabase.auth.signInWithOtp({
       email: payload.contactEmail,
       options: { shouldCreateUser: true },
@@ -62,7 +90,14 @@ export default function Onboarding() {
     if (!mountedRef.current) return;
     if (error) {
       setSigninStatus('error');
-      setSigninError(error.message ?? 'Could not send a code. Please try again.');
+      // Supabase returns something like "Signups not allowed for otp" when
+      // shouldCreateUser: false hits an email with no account. Map that
+      // specific case to language a parent will actually understand; leave
+      // every other error message passing through unchanged.
+      const message = /signups not allowed for otp/i.test(error.message ?? '')
+        ? "We don't have a family under that email. Check the spelling, or start as a new family."
+        : (error.message ?? 'Could not send a code. Please try again.');
+      setSigninError(message);
       return;
     }
     setSigninStatus('idle');
@@ -113,10 +148,18 @@ export default function Onboarding() {
       <div className="carpool-shell">
         <h1>Welcome to RCA Carpool</h1>
         <p>Add your family and we'll show you who is already carpooling near you.</p>
-        <FamilyForm submitLabel="Continue" onSubmitData={handleFamilySubmit} />
+        <FamilyForm family={draft} submitLabel="Continue" onSubmitData={handleFamilySubmit} />
         <p>
           Already added your family?{' '}
-          <button type="button" onClick={() => setStep('signin-email')}>Sign in</button>
+          <button
+            type="button"
+            onClick={() => {
+              // A stash written while filling this form out has no purpose
+              // on the sign-in path; don't let it linger for the tab's life.
+              clearPendingFamily();
+              setStep('signin-email');
+            }}
+          >Sign in</button>
         </p>
       </div>
     );
@@ -159,6 +202,7 @@ export default function Onboarding() {
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
+            minLength={6}
             maxLength={6}
             required
             value={code}
