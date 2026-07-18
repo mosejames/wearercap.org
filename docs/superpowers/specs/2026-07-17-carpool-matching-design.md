@@ -120,7 +120,9 @@ Contact reveal is a consequence of membership: two families sharing a row-set in
 
 ## Key Flows
 
-**New parent:** sign in (magic link) → if new, land in pending until admin approves → fill family form (address entered once via Places autocomplete, geocoded in background into real coords + derived area-center) → map + nearby list → request to join a nearby group **or** create one.
+**New parent (restructured 2026-07-18 — one-sitting onboarding):** sign in (magic link) → **immediately** fill the family form (no waiting on approval; pending members may write their own family row) → land on the map in the same sitting. Approval gates only one thing: **seeing other families' details.** While pending, the map shows the parent's own pin plus a count teaser ("N families are already in your area — they'll appear when you're approved"), never names or pins. Admins are emailed the moment a signup arrives; the parent is emailed the moment they're approved, so neither side sits refreshing. Once approved: full map + nearby list → request to join a nearby group **or** create one.
+
+*Rationale: the original flow had two dead stops (wait for approval, return to fill the form). Parents do all their work up front; the system does its waiting in the background. Decision (Mose): pending users see a count only — instant "this works in my neighborhood" signal without exposing kids' data to unvetted accounts.*
 
 **Create group:** name + direction + weekdays → appears on the map for nearby families → creator approves join requests → on first accepted member, group-mates' contacts unlock for each other.
 
@@ -136,14 +138,14 @@ Contact reveal is a consequence of membership: two families sharing a row-set in
 
 Transactional email at each step of the loop, sent by a Supabase edge function through a free-tier email provider (e.g. Resend); provider choice deferred to the implementation plan. Fire-and-forget: a failed email never blocks the underlying action.
 
-| Event | Who gets emailed |
-|---|---|
-| Signup approved by admin | The new family |
-| Join request submitted | The group's creator |
-| Join request accepted / declined | The requesting family |
-| New family (status `looking`) approved within radius of you | Nearby looking families (batched/throttled so it never spams) |
-| Year rollover opens | All families ("confirm your info for the new year") |
-| New signup pending | Admins |
+| Event | Who gets emailed | Phase |
+|---|---|---|
+| New signup pending | Admins | **2B (pulled forward)** — the approval turnaround is what makes one-sitting onboarding feel instant |
+| Signup approved by admin | The new family | **2B (pulled forward)** |
+| New family appears within radius of you | Nearby looking families (throttled, max ~1/day per recipient) | **2B (pulled forward)** |
+| Join request submitted | The group's creator | 3/4 |
+| Join request accepted / declined | The requesting family | 3/4 |
+| Year rollover opens | All families ("confirm your info for the new year") | 4 |
 
 No marketing email, no digest engine — lifecycle pings only.
 
