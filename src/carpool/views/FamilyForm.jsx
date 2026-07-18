@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadPlaces, loadGeocoding } from '../maps.js';
-import { buildFamilyRecord, saveFamily } from '../family.js';
 
 const DAYS = [
   { key: 'mon', label: 'Mon' }, { key: 'tue', label: 'Tue' }, { key: 'wed', label: 'Wed' },
   { key: 'thu', label: 'Thu' }, { key: 'fri', label: 'Fri' },
 ];
 
-export default function FamilyForm({ userId, email, family, onSaved }) {
+export default function FamilyForm({ family, initialEmail, submitLabel, onSubmitData }) {
   // Container the PlaceAutocompleteElement web component is mounted into.
   // (The legacy google.maps.places.Autocomplete bound to a plain <input> is
   // deprecated; the current widget is its own custom element, not something
@@ -42,7 +41,7 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
   const [direction, setDirection] = useState(family?.direction ?? 'both');
   const [weekdays, setWeekdays] = useState(family?.weekdays ?? ['mon', 'tue', 'wed', 'thu', 'fri']);
   const [contactPhone, setContactPhone] = useState(family?.contact_phone ?? '');
-  const [contactEmail, setContactEmail] = useState(family?.contact_email ?? email ?? '');
+  const [contactEmail, setContactEmail] = useState(family?.contact_email ?? initialEmail ?? '');
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [error, setError] = useState('');
 
@@ -173,13 +172,12 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
       const loc = results[0].geometry.location;
       const areaGeocode = { lat: loc.lat(), lng: loc.lng(), label: place.postalCode };
 
-      const record = buildFamilyRecord({
-        userId, parentName, childNames, place, areaGeocode,
+      const payload = {
+        parentName, childNames, place, areaGeocode,
         direction, weekdays, contactPhone, contactEmail,
-      });
-      await saveFamily(record);
+      };
+      await onSubmitData(payload);
       setStatus('idle');
-      onSaved(record);
     } catch (err) {
       setStatus('error');
       setError(err.message ?? 'Could not save. Please try again.');
@@ -232,7 +230,7 @@ export default function FamilyForm({ userId, email, family, onSaved }) {
 
       {error && <p role="alert">{error}</p>}
       <button type="submit" disabled={status === 'saving'}>
-        {status === 'saving' ? 'Saving…' : family ? 'Save changes' : 'Add my family'}
+        {status === 'saving' ? 'Saving…' : submitLabel ?? (family ? 'Save changes' : 'Add my family')}
       </button>
     </form>
   );

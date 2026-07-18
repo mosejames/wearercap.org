@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
-import { fetchFamily } from '../family.js';
+import { fetchFamily, buildFamilyRecord, saveFamily } from '../family.js';
 import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
 import MapView from './MapView.jsx';
@@ -66,10 +66,14 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         {pendingBanner}
         {adminBar}
         <FamilyForm
-          userId={userId}
-          email={email}
           family={family}
-          onSaved={(rec) => { setFamily(rec); setEditing(false); }}
+          initialEmail={email}
+          onSubmitData={async (payload) => {
+            const record = buildFamilyRecord({ ...payload, userId });
+            await saveFamily(record);
+            setFamily(record);
+            setEditing(false);
+          }}
         />
       </>
     );
