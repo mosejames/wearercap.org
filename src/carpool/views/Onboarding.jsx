@@ -14,6 +14,22 @@ function mapVerifyError(message) {
   return msg || 'That code did not work. Please check it and try again.';
 }
 
+// Supabase surfaces raw operational language for send failures ("email rate
+// limit exceeded", "For security purposes, you can only request this once
+// every 60 seconds"). A parent reads those as "the site is broken" or, worse,
+// "I did something wrong". Translate the two we can actually hit; anything
+// else passes through.
+function mapSendError(message) {
+  const msg = message ?? '';
+  if (/rate limit/i.test(msg)) {
+    return 'We are sending a lot of codes right now. Please wait a minute and try again.';
+  }
+  if (/once every|security purposes/i.test(msg)) {
+    return 'A code was just sent. Please wait about a minute before asking for another.';
+  }
+  return msg || 'We could not send your code. Please try again.';
+}
+
 // Converts a stashed onboarding payload (the shape FamilyForm's
 // onSubmitData hands us: { parentName, childNames, place, areaGeocode,
 // direction, weekdays, contactPhone, contactEmail }) into the family-record
@@ -103,7 +119,7 @@ export default function Onboarding() {
       email: payload.contactEmail,
       options: { shouldCreateUser: true },
     });
-    if (error) throw error;
+    if (error) throw new Error(mapSendError(error.message));
     goToCode(payload.contactEmail, 'form');
   }
 
@@ -125,7 +141,7 @@ export default function Onboarding() {
         // every other error message passing through unchanged.
         const message = /signups not allowed for otp/i.test(error.message ?? '')
           ? "We don't have a family under that email. Check the spelling, or start as a new family."
-          : (error.message ?? 'Could not send a code. Please try again.');
+          : mapSendError(error.message);
         setSigninError(message);
         return;
       }
@@ -185,7 +201,7 @@ export default function Onboarding() {
       if (!mountedRef.current) return;
       if (error) {
         setResendStatus('error');
-        setResendMessage(error.message ?? 'Could not send a new code. Please try again.');
+        setResendMessage(mapSendError(error.message));
         return;
       }
       setResendStatus('sent');
