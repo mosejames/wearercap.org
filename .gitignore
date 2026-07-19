@@ -8,3 +8,6 @@ dist/
 
 # subagent-driven-dev scratch
 .superpowers/
+
+# supabase CLI scratch
+supabase/.temp/
