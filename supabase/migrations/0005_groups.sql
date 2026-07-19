@@ -41,7 +41,7 @@ alter table public.join_requests enable row level security;
 -- Helpers. SECURITY DEFINER so their internal reads bypass RLS and cannot
 -- recurse through the policies that call them (same pattern as is_admin()).
 create or replace function public.is_group_member(gid uuid)
-returns boolean language sql security definer set search_path = public as $$
+returns boolean language sql security definer set search_path = public, pg_temp as $$
   select exists (
     select 1 from public.memberships m
     where m.group_id = gid and m.user_id = auth.uid()
@@ -49,17 +49,35 @@ returns boolean language sql security definer set search_path = public as $$
 $$;
 
 create or replace function public.is_group_organizer(gid uuid)
-returns boolean language sql security definer set search_path = public as $$
+returns boolean language sql security definer set search_path = public, pg_temp as $$
   select exists (
     select 1 from public.groups g
     where g.id = gid and g.created_by = auth.uid()
   );
 $$;
 
+-- CONSENT gate for membership creation: true only if the target user has a
+-- live (pending or accepted) join request for this group. Without this, an
+-- organizer's insert privilege could be used to add ANY user to a group
+-- without that user ever having asked to join. Do not remove.
+create or replace function public.has_open_request(gid uuid, uid uuid)
+returns boolean language sql security definer set search_path = public, pg_temp as $$
+  select exists (
+    select 1 from public.join_requests r
+    where r.group_id = gid and r.user_id = uid
+      and r.status in ('pending', 'accepted')
+  );
+$$;
+
 revoke all on function public.is_group_member(uuid) from public;
 revoke all on function public.is_group_organizer(uuid) from public;
+revoke all on function public.has_open_request(uuid, uuid) from public;
+revoke execute on function public.is_group_member(uuid) from anon;
+revoke execute on function public.is_group_organizer(uuid) from anon;
+revoke execute on function public.has_open_request(uuid, uuid) from anon;
 grant execute on function public.is_group_member(uuid) to authenticated;
 grant execute on function public.is_group_organizer(uuid) to authenticated;
+grant execute on function public.has_open_request(uuid, uuid) to authenticated;
 
 -- GROUPS
 -- Read: any approved member may browse groups (no PII here: a group is a
@@ -81,6 +99,13 @@ create policy groups_update_organizer
   using (created_by = auth.uid() and public.is_approved_member())
   with check (created_by = auth.uid() and public.is_approved_member());
 
+-- Delete: the organizer can take down their own group, or an admin can
+-- take down any group. A children's-safety product needs a moderation path.
+drop policy if exists groups_delete_organizer_or_admin on public.groups;
+create policy groups_delete_organizer_or_admin
+  on public.groups for delete
+  using (created_by = auth.uid() or public.is_admin());
+
 -- MEMBERSHIPS
 -- Read: your own rows, plus every row of a group you belong to (so you can
 -- see who your group-mates are), plus admins.
@@ -91,15 +116,21 @@ create policy memberships_select_own_or_group
 
 -- Insert: the ORGANIZER adds members (this is how a join request is accepted),
 -- or a creator seeds their own membership at creation time. A requester can
--- never insert themselves into someone else's group.
+-- never insert themselves into someone else's group. The has_open_request()
+-- clause is the CONSENT gate: it ensures the organizer can only add a target
+-- user who actually asked to join (or is the organizer seeding their own
+-- row). Without it, any approved member could create a group and bulk-add
+-- arbitrary users pulled from family_directory(), then harvest their contact
+-- info via group_roster(). Do not remove this clause.
 drop policy if exists memberships_insert_organizer_or_self_create on public.memberships;
 create policy memberships_insert_organizer_or_self_create
   on public.memberships for insert
   with check (
     public.is_approved_member()
+    and public.is_group_organizer(group_id)
     and (
-      public.is_group_organizer(group_id)
-      or (user_id = auth.uid() and public.is_group_organizer(group_id))
+      user_id = auth.uid()                                  -- organizer seeds their own row
+      or public.has_open_request(group_id, user_id)         -- target actually asked to join
     )
   );
 
@@ -153,7 +184,7 @@ returns table (
   contact_email text,
   contact_phone text
 )
-language sql security definer set search_path = public as $$
+language sql security definer set search_path = public, pg_temp as $$
   select f.user_id, f.parent_name, f.child_names, f.area_label,
          f.direction, f.weekdays, f.contact_email, f.contact_phone
   from public.memberships m
@@ -164,6 +195,7 @@ language sql security definer set search_path = public as $$
 $$;
 
 revoke all on function public.group_roster(uuid) from public;
+revoke execute on function public.group_roster(uuid) from anon;
 grant execute on function public.group_roster(uuid) to authenticated;
 
 -- Requester-facing view of a join request's people is NOT provided: an
@@ -179,7 +211,7 @@ returns table (
   direction text,
   weekdays text[]
 )
-language sql security definer set search_path = public as $$
+language sql security definer set search_path = public, pg_temp as $$
   select r.id, f.user_id, f.parent_name, f.child_names, f.area_label,
          f.direction, f.weekdays
   from public.join_requests r
@@ -190,4 +222,33 @@ language sql security definer set search_path = public as $$
 $$;
 
 revoke all on function public.pending_requesters(uuid) from public;
+revoke execute on function public.pending_requesters(uuid) from anon;
 grant execute on function public.pending_requesters(uuid) to authenticated;
+
+-- AREA ENFORCEMENT. groups.area_lat/area_lng/area_label must never be
+-- client-supplied: groups is readable by every approved member, so a buggy
+-- or hostile client writing an exact coordinate here would defeat the point
+-- of families.lat/lng being private. This trigger always overwrites the
+-- incoming area_* values with the creator's own family area, ignoring
+-- whatever the client sent.
+create or replace function public.groups_force_creator_area()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+declare fam public.families%rowtype;
+begin
+  select * into fam from public.families where user_id = new.created_by;
+  if not found then
+    raise exception 'Add your family before creating a group';
+  end if;
+  new.area_lat := fam.area_lat;
+  new.area_lng := fam.area_lng;
+  new.area_label := fam.area_label;
+  return new;
+end
+$$;
+revoke all on function public.groups_force_creator_area() from public;
+revoke execute on function public.groups_force_creator_area() from anon;
+
+drop trigger if exists groups_area_from_creator on public.groups;
+create trigger groups_area_from_creator
+  before insert or update on public.groups
+  for each row execute function public.groups_force_creator_area();
