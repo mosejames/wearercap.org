@@ -14,6 +14,7 @@ import {
   decideRequest,
   fetchRoster,
   leaveGroup,
+  withdrawRequest,
 } from './groups.js';
 import { supabase } from './supabaseClient.js';
 
@@ -476,5 +477,46 @@ describe('leaveGroup', () => {
   it('throws the database message', async () => {
     supabase.from.mockReturnValue(chain({ error: { message: 'nope' } }));
     await expect(leaveGroup('g1', 'u1')).rejects.toThrow('nope');
+  });
+});
+
+describe('withdrawRequest', () => {
+  it('deletes the caller own join request row', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await withdrawRequest('r1', 'u1');
+    expect(supabase.from).toHaveBeenCalledWith('join_requests');
+    expect(q.calls).toContainEqual(['delete']);
+    expect(q.calls).toContainEqual(['eq', 'id', 'r1']);
+  });
+
+  // The userId eq is the point of the two-argument signature. If somebody
+  // "simplifies" this to a requestId-only delete, only the RLS policy is left
+  // scoping the statement, and this test is what notices.
+  it('scopes the delete to the caller', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await withdrawRequest('r1', 'u1');
+    expect(q.calls).toContainEqual(['eq', 'user_id', 'u1']);
+  });
+
+  it('refuses to run without both ids', async () => {
+    await expect(withdrawRequest('r1')).rejects.toThrow();
+    await expect(withdrawRequest(undefined, 'u1')).rejects.toThrow();
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  // Withdraw is a plain table delete, not an RPC: there is no
+  // withdraw_join_request() function, and inventing one would mean a fourth
+  // SECURITY DEFINER surface for something the policy already covers exactly.
+  it('never goes through an RPC', async () => {
+    supabase.from.mockReturnValue(chain({ error: null }));
+    await withdrawRequest('r1', 'u1');
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ error: { message: 'nope' } }));
+    await expect(withdrawRequest('r1', 'u1')).rejects.toThrow('nope');
   });
 });

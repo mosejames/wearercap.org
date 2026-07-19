@@ -13,12 +13,39 @@ import {
   requestToJoin,
   decideRequest,
   leaveGroup,
+  withdrawRequest,
 } from '../groups.js';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
+// PostgREST and the browser surface their own operational language when a call
+// never reaches the tables we expect: "Could not find the table 'public.groups'
+// in the schema cache" when a migration has not been applied, "Failed to fetch"
+// when the connection drops. A parent reads those as either gibberish or "I
+// broke it". Translate those two classes; everything else passes through.
+//
+// Passing everything else through is the important half. The messages most
+// likely to reach a parent here are the ones migration 0005 raises on purpose
+// ("That request has already been decided", "That family is no longer an
+// approved member", "Add your family before creating a group"), and those are
+// already written for parents. Do not add a catch-all branch that swallows
+// them into something generic.
+//
+// Note the schema-cache test is deliberately narrow. A bare /does not exist/
+// would also catch request_to_join's own "That group does not exist", which is
+// a deliberate message that must survive.
+function mapGroupsError(message, fallback) {
+  const msg = message ?? '';
+  if (/schema cache/i.test(msg) || /relation .* does not exist/i.test(msg)) {
+    return 'Carpool groups are not ready on our side yet. Please try again later.';
+  }
+  if (/failed to fetch|networkerror|network request failed|load failed/i.test(msg)) {
+    return 'We could not reach the server. Check your connection, then try again.';
+  }
+  return msg || fallback;
+}
+
 const EMPTY = {
-  groups: [],
   myGroups: [],
   organizedGroups: [],
   orphanGroups: [],
@@ -100,8 +127,12 @@ export default function Groups({ family, userId }) {
       // already reflected in memberships, and a 'declined' one must leave the
       // group re-requestable, because request_to_join clears the old row and
       // files a fresh one.
-      const pendingRequestGroupIds = new Set(
-        myRequests.filter((r) => r.status === 'pending').map((r) => r.group_id),
+      //
+      // Keyed by group so the card can carry its own request id: withdrawing
+      // targets the request row, not the group. unique(group_id, user_id) on
+      // join_requests means there is at most one row per group to key on.
+      const pendingByGroup = new Map(
+        myRequests.filter((r) => r.status === 'pending').map((r) => [r.group_id, r.id]),
       );
 
       const [rosterPairs, requesterPairs] = await Promise.all([
@@ -119,17 +150,18 @@ export default function Groups({ family, userId }) {
       const nearby = rankGroups(
         family,
         allGroups.filter(
-          (g) => !memberIds.has(g.id) && !pendingRequestGroupIds.has(g.id) && g.created_by !== me,
+          (g) => !memberIds.has(g.id) && !pendingByGroup.has(g.id) && g.created_by !== me,
         ),
       );
 
       if (!current()) return;
       setData({
-        groups: allGroups,
         myGroups,
         organizedGroups,
         orphanGroups,
-        pendingSent: allGroups.filter((g) => pendingRequestGroupIds.has(g.id)),
+        pendingSent: allGroups
+          .filter((g) => pendingByGroup.has(g.id))
+          .map((g) => ({ ...g, requestId: pendingByGroup.get(g.id) })),
         nearby,
         rosters: Object.fromEntries(rosterPairs),
         requesters: Object.fromEntries(requesterPairs),
@@ -144,7 +176,7 @@ export default function Groups({ family, userId }) {
       if (current()) {
         setData(EMPTY);
         setLoaded(false);
-        setLoadError(e?.message || 'Could not load groups.');
+        setLoadError(mapGroupsError(e?.message, 'Could not load groups.'));
       }
     } finally {
       if (current()) setLoading(false);
@@ -185,7 +217,9 @@ export default function Groups({ family, userId }) {
       await work();
       if (mountedRef.current && successMessage) setNotice(successMessage);
     } catch (e) {
-      if (mountedRef.current) setActionError(e?.message || 'Something went wrong. Please try again.');
+      if (mountedRef.current) {
+        setActionError(mapGroupsError(e?.message, 'Something went wrong. Please try again.'));
+      }
     } finally {
       // Free the button before refetching. supabase-js sets no request
       // timeout, so a fetch that never settles would otherwise leave every
@@ -251,13 +285,20 @@ export default function Groups({ family, userId }) {
       <p>
         A group is a small set of families sharing rides. When you join one, your name, your
         children's names, your general area, your schedule, your email, and your phone become
-        visible to the other families in that group. Nothing outside the group changes.
+        visible to the other families in that group. The group can also grow after you join. The
+        organizer decides who else comes in, and every family they accept later sees those same
+        details. You are not asked again each time. Leaving the group ends that sharing. Nothing
+        outside the group changes.
       </p>
 
       {loading && <p>Loading your groups…</p>}
       {loadError && (
+        // No "Could not load groups:" prefix any more. Every message reaching
+        // here is already a complete sentence, either from mapGroupsError or
+        // from the fetchers' own fallbacks ("Could not load the group
+        // roster."), so a prefix would double it up.
         <p role="alert">
-          Could not load groups: {loadError}{' '}
+          {loadError}{' '}
           <button type="button" onClick={() => { setLoading(true); load(); }}>Try again</button>
         </p>
       )}
@@ -305,6 +346,18 @@ export default function Groups({ family, userId }) {
       <h3>My groups</h3>
       {showEmptyStates && data.myGroups.length === 0 && (
         <p>You are not in a group yet. Ask to join one below, or start your own.</p>
+      )}
+      {/* The roster below is a snapshot, not a fixed list, and the parent has
+          no say in how it changes. Say so where they are actually looking at
+          it, not only at the moment they asked to join. */}
+      {data.myGroups.length > 0 && (
+        <p>
+          These lists can grow. In a group you organize, you decide who joins. In a group someone
+          else organizes, they decide, and they can keep adding families for as long as the group
+          exists. Each family they accept can see your name, your children's names, your general
+          area, your schedule, your email, and your phone. You are not asked first, and you do not
+          get a veto. If that stops working for you, leave the group.
+        </p>
       )}
       {data.myGroups.map((g) => {
         const roster = data.rosters[g.id] ?? [];
@@ -403,7 +456,28 @@ export default function Groups({ family, userId }) {
                 <br />
                 Request sent. The organizer can see your name, your children's names, your general
                 area, and your schedule while they decide. Your email and phone stay private unless
-                they accept.
+                they accept. There is no time limit on their answer, so this request stays open
+                until they act on it or you withdraw it.
+                <br />
+                {/* A pending request is a live consent token: the organizer can
+                    accept it at any point, including months from now, and that
+                    accept is what releases contact details. Withdrawing is the
+                    only way to take it back, so the control belongs right here
+                    next to the request rather than buried in a settings page. */}
+                <button
+                  type="button"
+                  disabled={busyKey === `withdraw:${g.requestId}`}
+                  onClick={() => run(
+                    `withdraw:${g.requestId}`,
+                    () => withdrawRequest(g.requestId, me),
+                    // Not "nothing was shared": while the request was open the
+                    // organizer could already see this family through
+                    // pending_requesters. Only the contact details never left.
+                    `Your request to join ${g.name} is withdrawn. Your email and phone were never shared.`,
+                  )}
+                >
+                  {busyKey === `withdraw:${g.requestId}` ? 'Withdrawing…' : 'Withdraw request'}
+                </button>
               </li>
             ))}
           </ul>
@@ -426,7 +500,10 @@ export default function Groups({ family, userId }) {
               <small>
                 Asking to join shows this organizer your name, your children's names, your general
                 area, and your schedule right away. Your email and phone are shared only if they
-                accept.
+                accept. If they do, this organizer alone decides who else joins after that, for as
+                long as the group exists. Every family they accept later can see the same details,
+                including your email and phone. You are not asked first. You can leave the group
+                whenever you want.
               </small>
               <br />
               <button

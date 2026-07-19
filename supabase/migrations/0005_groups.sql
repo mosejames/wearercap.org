@@ -354,7 +354,17 @@ language sql security definer set search_path = public, pg_temp as $$
   join public.families f on f.user_id = m.user_id
   where m.group_id = gid
     and public.is_group_member(gid)
-    and public.is_approved_member();
+    and public.is_approved_member()
+    -- The row SUBJECT must still be approved, not just the caller.
+    -- is_group_member()/is_approved_member() above only ever test the CALLER,
+    -- so without this an admin who un-approves family A stops A from reading
+    -- anything while A's email, phone, and children's names keep flowing to
+    -- A's group-mates. Same predicate accept_join_request() applies to the
+    -- requester at accept time; this is the already-seated-member case.
+    and exists (
+      select 1 from public.members am
+      where am.user_id = f.user_id and am.approval = 'approved'
+    );
 $$;
 
 revoke all on function public.group_roster(uuid) from public;

@@ -42,6 +42,11 @@ export function rankGroups(me, groups, { limit = 20 } = {}) {
 }
 
 // Do two schedules line up? 'both' covers am and pm, so it matches anything.
+//
+// NOT DEAD CODE, despite having no caller in Phase 3A. This is the scoring
+// primitive Phase 3B's suggestion engine is built on ("groups near you that
+// actually run on your days"), and it is fully tested. Kept deliberately.
+// If Phase 3B is ever cut, delete this and its tests together.
 export function scheduleOverlap(a, b) {
   const directionMatches =
     a.direction === 'both' || b.direction === 'both' || a.direction === b.direction;
@@ -227,4 +232,29 @@ export async function leaveGroup(groupId, userId) {
     .eq('group_id', groupId)
     .eq('user_id', userId);
   if (error) throw raise(error, 'Could not leave the group.');
+}
+
+// Take back a request the organizer has not answered yet, via the
+// join_requests_delete_self policy. This is the only way to revoke one: until
+// it is decided, a pending request is a live consent token that the organizer
+// may accept at any moment, months later, pulling this family's contact
+// details into the group. Without a withdraw the family cannot say "never
+// mind" once they have asked.
+//
+// userId is mandatory for the same reason it is on leaveGroup, though the
+// blast radius differs. join_requests_delete_self already scopes DELETE to
+// user_id = auth.uid(), so the database will not let this touch another
+// family's request no matter what is passed. The eq is here so the statement
+// is narrow on its face rather than relying on the policy to be the only
+// thing standing between a stray call and a wider delete, and so the two
+// delete helpers in this file read the same way. Do not drop it to a
+// requestId-only signature.
+export async function withdrawRequest(requestId, userId) {
+  if (!requestId || !userId) throw new Error('withdrawRequest needs both a requestId and a userId');
+  const { error } = await supabase
+    .from('join_requests')
+    .delete()
+    .eq('id', requestId)
+    .eq('user_id', userId);
+  if (error) throw raise(error, 'Could not withdraw your request.');
 }
