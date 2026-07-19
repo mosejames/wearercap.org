@@ -66,17 +66,25 @@ begin
     raise exception 'That family is approved; un-approve them first';
   end if;
 
-  -- Cleanup, most-dependent first. memberships and join_requests are cleared
-  -- here even though a pending member normally has none (approval gates both
-  -- paths in 0005): a member who was approved, joined groups, was un-approved,
-  -- and is now being declined may have left stale rows behind — and because
-  -- those rows key on auth.users, they would OUTLIVE this delete. If the same
-  -- person later re-signs up (same auth account, so same user_id) and is
-  -- approved, stale membership rows would silently seat them back in their
-  -- old groups with no fresh consent from anyone, and stale pending
-  -- join_requests would be acceptable by an organizer as if just filed. That
-  -- is exactly the consent-resurrection failure 0005's design closes off, so
-  -- both tables are swept here.
+  -- Cleanup: every table keyed on this auth.users uuid, because auth.users
+  -- itself survives a decline. Five tables carry that key (members, families,
+  -- memberships, join_requests, groups.created_by) and ALL five are swept —
+  -- review round 1 of this file swept four and believed itself complete,
+  -- which is how consent bugs ship. If the same person later re-signs up
+  -- (same auth account, so same user_id) and is approved, any surviving row
+  -- re-attaches to them: stale memberships would silently seat them back in
+  -- old groups, stale join_requests would be acceptable as if just filed,
+  -- and a surviving group would hand them back organizer control of families
+  -- who never re-consented, one self-seed away from reading every member's
+  -- contacts and children's names via group_roster(). That is exactly the
+  -- consent-resurrection failure 0005's design closes off.
+  --
+  -- Deleting the target's groups also removes those groups for their other
+  -- members (cascade). Deliberate: a declined organizer's group is already
+  -- broken (leaderless, uneditable — the area trigger raises once the family
+  -- row is gone), and the alternative of leaving it standing preserves a
+  -- shell at the cost of the consent guarantee above.
+  delete from public.groups where created_by = target;
   delete from public.join_requests where user_id = target;
   delete from public.memberships where user_id = target;
   delete from public.families where user_id = target;
@@ -145,3 +153,42 @@ $$;
 revoke all on function public.unapprove_member(uuid) from public;
 revoke execute on function public.unapprove_member(uuid) from anon;
 grant execute on function public.unapprove_member(uuid) to authenticated;
+
+-- ROLE ESCALATION LOCKDOWN. 0001's members_update_admin_only policy is
+-- is_admin() with NO column restriction, so any admin could PATCH
+-- role = 'admin' onto any row via PostgREST: mint a puppet admin that
+-- survives their own removal, or demote a peer to 'parent' and then feed
+-- them straight through this migration's admin-target guards. The spec's
+-- rule is that admin promote/demote stays manual SQL only. Two independent
+-- layers close this, mirroring 0005's join_requests lockdown, because
+-- either one alone is fragile to a future migration.
+
+-- Layer 1 — column grants: through the API, authenticated may write ONLY
+-- approval, never role or email. RLS still decides WHICH rows; this decides
+-- WHICH columns. (The client's approve flow updates approval alone, and the
+-- RPCs above are SECURITY DEFINER, so neither is affected.)
+revoke update on public.members from authenticated;
+grant  update (approval) on public.members to authenticated;
+revoke update on public.members from anon;
+
+-- Layer 2 — defensive trigger: if a future migration re-runs a broad
+-- `grant update` and silently undoes layer 1, a role change is still
+-- refused for any request carrying a JWT (auth.uid() non-null). The SQL
+-- editor and service-role connections carry no JWT, so manual SQL keeps
+-- working as the one promotion path.
+create or replace function public.members_pin_role()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if new.role is distinct from old.role and auth.uid() is not null then
+    raise exception 'Member role can only be changed via manual SQL';
+  end if;
+  return new;
+end
+$$;
+revoke all on function public.members_pin_role() from public;
+revoke execute on function public.members_pin_role() from anon;
+
+drop trigger if exists members_role_immutable on public.members;
+create trigger members_role_immutable
+  before update on public.members
+  for each row execute function public.members_pin_role();
