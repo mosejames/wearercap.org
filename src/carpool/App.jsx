@@ -3,6 +3,20 @@ import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
 import Onboarding from './views/Onboarding.jsx';
 import Ready from './views/Ready.jsx';
+import SharingExplainer from './views/SharingExplainer.jsx';
+
+// Tiny hash "router" for the one standalone page. #sharing works signed in
+// or out (a parent deciding whether to sign up deserves the same answer),
+// survives reload, and the browser back button closes it for free.
+function useSharingPage() {
+  const [open, setOpen] = useState(window.location.hash === '#sharing');
+  useEffect(() => {
+    const onHash = () => setOpen(window.location.hash === '#sharing');
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  return open;
+}
 
 // Presentational only. Wraps whichever view App already decided to render so
 // the masthead and footer are identical on every screen.
@@ -30,6 +44,7 @@ export default function App() {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const sharingOpen = useSharingPage();
 
   useEffect(() => {
     let active = true;
@@ -71,6 +86,25 @@ export default function App() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  // The sharing page renders INSTEAD of the current view, not on top of it,
+  // and before the loading gate so it is readable even mid-auth. Back = clear
+  // the hash; history.back() would leave the app if #sharing was the entry
+  // URL someone was sent by a friend.
+  if (sharingOpen) {
+    return (
+      <Shell>
+        <SharingExplainer onBack={() => {
+          // Clearing location.hash leaves a trailing '#' in the URL, which is
+          // harmless but ugly; replaceState drops it without adding a history
+          // entry, then the hashchange listener needs a manual nudge because
+          // replaceState does not fire one.
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          window.dispatchEvent(new HashChangeEvent('hashchange'));
+        }} />
+      </Shell>
+    );
+  }
 
   if (loading) return (
     <Shell>

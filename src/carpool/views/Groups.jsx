@@ -284,15 +284,17 @@ export default function Groups({ family, userId }) {
     <section className="cp-subblock">
       <p className="cp-label cp-label--bar">Carpool groups</p>
       <h2 className="cp-h2">Ride <span className="cp-hl">together.</span></h2>
+      {/* Warmed at Mose's direction (2026-07-19): the systemic detail lives
+          on the #sharing page; each decision point keeps one short TRUE line
+          about what that click shares, plus the link. When editing any of
+          these, the rule is the same as ever: warmer is fine, less true is
+          not. */}
       <div className="cp-consent">
-        <p className="cp-label cp-label--muted cp-label--bar">Before you join, read this</p>
         <p>
-          A group is a small set of families sharing rides. When you join one, your name, your
-          children's names, your general area, your schedule, your email, and your phone become
-          visible to the other families in that group. The group can also grow after you join. The
-          organizer decides who else comes in, and every family they accept later sees those same
-          details. You are not asked again each time. Leaving the group ends that sharing. Nothing
-          outside the group changes.
+          A group is a few families who share the ride and can see each
+          other's contact details, so planning is easy. Groups can welcome
+          more families over time.{' '}
+          <a href="#sharing">How sharing works</a>
         </p>
       </div>
 
@@ -361,13 +363,10 @@ export default function Groups({ family, userId }) {
           it, not only at the moment they asked to join. */}
       {data.myGroups.length > 0 && (
         <div className="cp-consent">
-          <p className="cp-label cp-label--muted cp-label--bar">Who can see your details</p>
           <p>
-            These lists can grow. In a group you organize, you decide who joins. In a group someone
-            else organizes, they decide, and they can keep adding families for as long as the group
-            exists. Each family they accept can see your name, your children's names, your general
-            area, your schedule, your email, and your phone. You are not asked first, and you do not
-            get a veto. If that stops working for you, leave the group.
+            The families listed here can see your contact details, and new
+            families can be welcomed in over time.{' '}
+            <a href="#sharing">How sharing works</a>
           </p>
         </div>
       )}
@@ -483,10 +482,9 @@ export default function Groups({ family, userId }) {
                 <p className="cp-item-meta">{g.area_label}</p>
                 <div className="cp-consent cp-consent--inline">
                   <p>
-                    Request sent. The organizer can see your name, your children's names, your general
-                    area, and your schedule while they decide. Your email and phone stay private unless
-                    they accept. There is no time limit on their answer, so this request stays open
-                    until they act on it or you withdraw it.
+                    Request sent. Your email and phone stay private unless the
+                    organizer accepts, and you can withdraw any time.{' '}
+                    <a href="#sharing">How sharing works</a>
                   </p>
                 </div>
                 {/* A pending request is a live consent token: the organizer can
@@ -534,12 +532,10 @@ export default function Groups({ family, userId }) {
               {g.meeting_point && <p className="cp-item-meta">Meeting point: {g.meeting_point}</p>}
               <div className="cp-consent cp-consent--inline">
                 <p>
-                  Asking to join shows this organizer your name, your children's names, your general
-                  area, and your schedule right away. Your email and phone are shared only if they
-                  accept. If they do, this organizer alone decides who else joins after that, for as
-                  long as the group exists. Every family they accept later can see the same details,
-                  including your email and phone. You are not asked first. You can leave the group
-                  whenever you want.
+                  Asking shares your name, children's names, area, and schedule
+                  with the organizer. Your email and phone stay private unless
+                  they accept.{' '}
+                  <a href="#sharing">How sharing works</a>
                 </p>
               </div>
               <div className="cp-item-actions">

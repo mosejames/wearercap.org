@@ -504,6 +504,14 @@ body {
   margin: 0;
 }
 .cp-consent p + p { margin-top: 10px; }
+/* The "How sharing works" link inside consent notes. Same darkened orange as
+   other small text on paper-2 (--orange fails AA at this size), underlined so
+   it reads as a link without relying on color alone. */
+.cp-consent a {
+  color: var(--orange-text);
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
 .cp-consent .cp-label { margin: 0 0 12px; }
 .cp-consent .cp-label + p { margin-top: 0; }
 .cp-consent--inline {

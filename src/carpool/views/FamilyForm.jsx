@@ -273,7 +273,7 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
             should know why the address is being asked for BEFORE they type
             it, not discover the explanation as fine print afterward. */}
         <div className="cp-consent cp-consent--inline">
-          <p>We ask for your address so we can group you with families nearby. It is never shared. Other families only ever see your approximate area, not your address.</p>
+          <p>We ask for your address so we can group you with families nearby. It is never shared. Other families only ever see your approximate area, not your address. <a href="#sharing">How sharing works</a></p>
         </div>
         <div className="cp-place">
           <input
