@@ -5,6 +5,7 @@ import { readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
 import AdminApprovals from './AdminApprovals.jsx';
 import MapView from './MapView.jsx';
+import Groups from './Groups.jsx';
 
 // Builds a family record from a stashed onboarding/edit payload, saves it,
 // and clears the stash. Used both when the signed-in user has no family row
@@ -139,6 +140,10 @@ export default function Ready({ isAdmin = false, isPending = false }) {
         <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
         <button onClick={() => setEditing(true)}>Edit</button>
         <MapView family={family} isPending={isPending} />
+        {/* Same branch as MapView, so family (and therefore
+            family.area_lat/area_lng) is always present: rankGroups measures
+            every distance against it. Approved members only. */}
+        {!isPending && <Groups family={family} userId={userId} />}
         <button onClick={() => supabase.auth.signOut()}>Sign out</button>
       </div>
     </>
