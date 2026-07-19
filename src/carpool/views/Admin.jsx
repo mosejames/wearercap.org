@@ -292,7 +292,7 @@ export default function Admin({ onBack = null }) {
                 type="button"
                 disabled={busyKey === `decline:${signup.userId}`}
                 onClick={() => {
-                  if (!window.confirm(`Decline ${displayName}? Their signup and any family details will be deleted. They can sign up again later.`)) return;
+                  if (!window.confirm(`Decline ${displayName}? Their signup and any family details will be deleted, and any group they created will be closed for its other families. They can sign up again later.`)) return;
                   run(
                     `decline:${signup.userId}`,
                     () => declineSignup(signup.userId),
