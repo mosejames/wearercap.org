@@ -24,13 +24,34 @@
   --ink-soft: #5a4f47;
   --on-dark: #faf4ea;
   --on-dark-muted: #b8a89a;
-  --on-dark-dim: #6f6357;
+  /* APP EXTENSION — the newsletter's #6f6357 is 3.08:1 on ink, which is fine
+     for its display sizes but not for the 13px footer body this app renders in
+     it. Lifted to 4.52:1. */
+  --on-dark-dim: #8c7d6e;
 
   /* lines + accent */
   --line: #e4d6c0;
+  /* APP EXTENSION — --line is 1.43:1 on white: correct for a decorative
+     divider, far short of the 3:1 a form field's border needs as a UI
+     component. This is the same warm tan family, darkened to 3.62:1 on white,
+     and it is used ONLY on inputs, selects, textareas and the address widget.
+     Cards, rules, notes and dividers keep --line. */
+  --line-input: #9c8263;
   --line-dark: #3a322b;
   --orange: #f26a1b;
+  /* APP EXTENSION — --orange is 2.80:1 on paper and 3.06:1 on white, so it
+     cannot carry the 11px labels and 10.5px tags this app sets in it. This is
+     the same hue, darkened to 5.12:1 on paper / 5.60:1 on white / 4.52:1 on
+     paper-2, and it still clears 3:1 on ink for the .cp-hl fallback in the
+     masthead. TEXT ONLY — rules, borders, fills and focus rings keep --orange
+     so the accent itself does not shift. */
+  --orange-text: #b0470a;
   --grad: linear-gradient(100deg, #f7a81c 0%, #f26a1b 42%, #e0218a 100%);
+  /* APP EXTENSION — the button ramp. Identical to --grad except the magenta
+     end, lifted #e0218a -> #ec4d97 so an INK label clears 4.5:1 across the
+     whole span (amber 9.6, orange 5.2, magenta 4.6). See .cp-btn--primary for
+     why the label is ink rather than the newsletter's white. */
+  --grad-btn: linear-gradient(100deg, #f7a81c 0%, #f26a1b 42%, #ec4d97 100%);
 
   /* semantic */
   --green: #1f9d57;
@@ -113,7 +134,19 @@ body {
 /* FamilyForm is a .carpool-shell that is sometimes nested inside another. */
 .carpool-shell .carpool-shell { padding: 0; }
 
-.cp-stack > * + * { margin-top: var(--gap-block); }
+/* A slim band stacked ABOVE the view it belongs to — the admin's approvals
+   button, the pending-approval banner. It is a .carpool-shell, so the sibling
+   rule above already strips the next shell's top padding; without a bottom
+   padding of its own the band's content ends up flush against the heading
+   below it (0px, which is what shipped). Own the gap here rather than with an
+   inline paddingBottom, and collapse the band's last child margin so a banner
+   with its own margin-bottom does not double it. */
+.cp-bar { padding-bottom: var(--gap-block); }
+.cp-bar > :last-child { margin-bottom: 0; }
+
+/* A back link sitting above a view's own label and heading. .cp-btn--quiet is
+   inline, so nothing separates it from the block that follows it. */
+.cp-backlink { margin-bottom: var(--gap-block); }
 
 /* ------------------------------------------------------------- masthead -- */
 
@@ -170,6 +203,7 @@ body {
   margin: 0 0 8px;
 }
 .cp-footer p {
+  /* 13px body on ink, so 4.5:1 — see --on-dark-dim. */
   font-size: 13px;
   line-height: 1.6;
   color: var(--on-dark-dim);
@@ -186,7 +220,10 @@ body {
   color: transparent;
 }
 @supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  .cp-hl { color: var(--orange); }
+  /* Display-size text, so 3:1. --orange gives 2.80:1 on paper; --orange-text
+     gives 5.12:1 there and still 3.21:1 on the ink masthead and footer, where
+     the same fallback lands on .cp-brand and .cp-fmark. */
+  .cp-hl { color: var(--orange-text); }
 }
 
 /* ------------------------------------------------- signature move no. 3 --
@@ -201,13 +238,14 @@ body {
   font-weight: 700;
   letter-spacing: var(--track-kicker);
   text-transform: uppercase;
-  color: var(--orange);
+  /* 11px, so this is small text and needs 4.5:1. */
+  color: var(--orange-text);
   margin: 0 0 14px;
 }
 .cp-label--muted { color: var(--ink-soft); letter-spacing: var(--track-label); }
-.cp-label--on-dark { color: var(--on-dark-muted); letter-spacing: var(--track-label); }
 
-/* signature move no. 2 — the short orange rule as a label prefix */
+/* signature move no. 2 — the short orange rule as a label prefix. The rule is
+   a graphic, not text, so it keeps the undarkened --orange. */
 .cp-label--bar::before {
   content: "";
   flex: 0 0 auto;
@@ -216,8 +254,7 @@ body {
   border-radius: 2px;
   background: var(--orange);
 }
-.cp-label--muted.cp-label--bar::before,
-.cp-label--on-dark.cp-label--bar::before { background: var(--orange); }
+.cp-label--muted.cp-label--bar::before { background: var(--orange); }
 
 .cp-num {
   flex: 0 0 auto;
@@ -265,6 +302,10 @@ body {
   text-transform: uppercase;
   margin: 0 0 10px;
 }
+/* An h3 that opens a new block partway down a section that is already running
+   (My groups, Groups near you, Start a group). It needs air above it that the
+   first heading in a section does not. */
+.cp-h3--section { margin-top: 28px; }
 .cp-h4 {
   font-family: var(--font-display);
   font-weight: 800;
@@ -284,7 +325,6 @@ body {
   color: var(--ink);
   max-width: 46ch;
 }
-.cp-muted { color: var(--ink-soft); }
 .cp-fine {
   font-size: 13.5px;
   line-height: 1.55;
@@ -349,9 +389,18 @@ body {
 }
 .cp-btn--block { display: flex; width: 100%; }
 
+/* The one place the gradient sits BEHIND text. The newsletter sets white on
+   the bright ramp, which measures 1.99:1 at the amber end. That is survivable
+   for one decorative link in an email and not for the primary action on every
+   screen of a form.
+   Darkening the ramp until white passes turns the amber end olive and the
+   whole button muddy, so the fix runs the other way: keep the ramp bright and
+   set the label in ink. Amber 9.6:1, orange 5.2:1. Only the magenta end moves,
+   #e0218a -> #ec4d97, the minimum lift that clears 4.5:1. Reads more vivid
+   than the original, not less. */
 .cp-btn--primary {
-  background: var(--grad);
-  color: #fff;
+  background: var(--grad-btn);
+  color: var(--ink);
   box-shadow: var(--shadow-primary);
 }
 .cp-btn--dark { background: var(--ink); color: var(--paper); }
@@ -427,14 +476,6 @@ body {
   margin-bottom: 14px;
 }
 .cp-card:last-child { margin-bottom: 0; }
-.cp-card--feature {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-}
-.cp-card--feature p { color: var(--on-dark-muted); }
-.cp-card--feature .cp-h3,
-.cp-card--feature .cp-h4 { color: var(--paper); }
 
 .cp-note {
   background: var(--paper-2);
@@ -488,8 +529,7 @@ body {
 /* role="alert" is styled globally so no error can render unstyled. */
 .carpool-shell p[role="alert"],
 .carpool-shell li[role="alert"],
-.carpool-shell div[role="alert"],
-.cp-banner--error {
+.carpool-shell div[role="alert"] {
   background: var(--red-wash);
   border: 1px solid rgba(216, 32, 45, .35);
   border-left: 3px solid var(--red);
@@ -506,8 +546,7 @@ body {
   font-weight: 700;
 }
 .carpool-shell p[role="status"],
-.carpool-shell div[role="status"],
-.cp-banner--success {
+.carpool-shell div[role="status"] {
   background: var(--green-wash);
   border: 1px solid rgba(31, 157, 87, .35);
   border-left: 3px solid var(--green);
@@ -608,7 +647,10 @@ body {
   line-height: 1.4;
   color: var(--ink);
   background: var(--card);
-  border: 1px solid var(--line);
+  /* A form field's border is the only thing marking where the control is, so
+     it is a UI component and needs 3:1, not the 1.43:1 a decorative --line
+     divider gets away with. */
+  border: 1px solid var(--line-input);
   border-radius: var(--radius);
   appearance: none;
   transition: border-color var(--dur) var(--ease);
@@ -621,8 +663,9 @@ body {
   background-repeat: no-repeat;
   padding-right: 42px;
 }
+/* #9a8d82 was 3.23:1 on the white field. Same hue, 4.53:1. */
 .carpool-shell input::placeholder,
-.carpool-shell textarea::placeholder { color: #9a8d82; }
+.carpool-shell textarea::placeholder { color: #817469; }
 .carpool-shell input:focus-visible,
 .carpool-shell select:focus-visible,
 .carpool-shell textarea:focus-visible {
@@ -698,7 +741,6 @@ body {
 .cp-choices--stack { flex-direction: column; }
 .cp-choices--stack .cp-choice { width: 100%; }
 
-.cp-choice--stack { flex: 1 1 auto; justify-content: flex-start; }
 .cp-choice--day { text-transform: capitalize; }
 
 /* Google's PlaceAutocompleteElement mounts here. It is a web component with a
@@ -710,14 +752,16 @@ body {
   width: 100%;
   min-height: var(--tap);
   background: var(--card);
-  border: 1px solid var(--line);
+  /* Same UI-component 3:1 as the native fields above — this IS the address
+     field, it just happens to be a web component. */
+  border: 1px solid var(--line-input);
   border-radius: var(--radius);
   font-family: var(--font-body);
   font-size: 16px;
   color: var(--ink);
   --gmp-mat-color-surface: var(--card);
   --gmp-mat-color-on-surface: var(--ink);
-  --gmp-mat-color-outline: var(--line);
+  --gmp-mat-color-outline: var(--line-input);
   --gmp-mat-color-primary: var(--orange);
 }
 .cp-place > *:focus-within {
@@ -760,6 +804,30 @@ body {
 }
 @media (min-width: 481px) { .carpool-map { height: 380px; } }
 
+/* The block that follows the map. Four different components land in that one
+   slot depending on state — the loading line, the pending-approval teaser, the
+   empty state, the nearby list — and they all take the same gap. */
+.cp-after-map { margin-top: 16px; }
+
+/* ------------------------------------------------- user content wrapping --
+   Everything below renders a string a parent typed or an address Google
+   returned: roster emails, group names, child-name lists, meeting points, the
+   confirmed-address echo. #carpool-root sets overflow-x: hidden, so anything
+   too wide for the 375px column is not scrolled to — it is clipped, silently,
+   with no visual cue that text is missing. On the roster that is the whole
+   point of the screen: a parent would read a truncated email address as the
+   real one. `anywhere` rather than `break-word` so the break can also land
+   mid-token, which is what a long local-part or an unspaced name needs. */
+.cp-item-name,
+.cp-item-meta,
+.cp-item-contact a,
+.cp-confirmed,
+.cp-card p,
+.cp-h4 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 /* ---------------------------------------------------------------- lists -- */
 
 .carpool-nearby-list {
@@ -801,6 +869,7 @@ body {
 .cp-item-contact a {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 44px;
   padding: 10px 14px;
   background: var(--paper-2);
@@ -835,7 +904,8 @@ body {
   font-weight: 700;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
-  color: var(--orange);
+  /* 10.5px, so small text: 4.5:1 against the white card it sits on. */
+  color: var(--orange-text);
   margin-left: 8px;
   white-space: nowrap;
 }

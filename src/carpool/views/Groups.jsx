@@ -350,7 +350,7 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
-      <h3 className="cp-h3" style={{ marginTop: '28px' }}>My groups</h3>
+      <h3 className="cp-h3 cp-h3--section">My groups</h3>
       {showEmptyStates && data.myGroups.length === 0 && (
         <div className="cp-empty">
           <p>You are not in a group yet. Ask to join one below, or start your own.</p>
@@ -400,7 +400,6 @@ export default function Groups({ family, userId }) {
                     <p className="cp-item-meta">{m.area_label} · {summarizeSchedule(m)}</p>
                     <p className="cp-item-contact">
                       {m.contact_email && <a href={`mailto:${m.contact_email}`}>{m.contact_email}</a>}
-                      {m.contact_email && m.contact_phone ? ' ' : ''}
                       {m.contact_phone && <a href={`tel:${m.contact_phone}`}>{m.contact_phone}</a>}
                     </p>
                   </li>
@@ -425,30 +424,30 @@ export default function Groups({ family, userId }) {
                         <p className="cp-item-meta">{r.child_names}</p>
                         <p className="cp-item-meta">{r.area_label} · {summarizeSchedule(r)}</p>
                         <div className="cp-item-actions">
-                        <button
-                          className="cp-btn cp-btn--dark cp-btn--sm"
-                          type="button"
-                          disabled={busyKey === `accept:${r.request_id}`}
-                          onClick={() => run(
-                            `accept:${r.request_id}`,
-                            () => decideRequest({ requestId: r.request_id, accept: true }),
-                            `${r.parent_name} is now in ${g.name}. You can both see each other's contact details.`,
-                          )}
-                        >
-                          {busyKey === `accept:${r.request_id}` ? 'Accepting…' : 'Accept'}
-                        </button>{' '}
-                        <button
-                          className="cp-btn cp-btn--ghost cp-btn--sm"
-                          type="button"
-                          disabled={busyKey === `decline:${r.request_id}`}
-                          onClick={() => run(
-                            `decline:${r.request_id}`,
-                            () => decideRequest({ requestId: r.request_id, accept: false }),
-                            `You declined the request from ${r.parent_name}. No contact details were shared.`,
-                          )}
-                        >
-                          {busyKey === `decline:${r.request_id}` ? 'Declining…' : 'Decline'}
-                        </button>
+                          <button
+                            className="cp-btn cp-btn--dark cp-btn--sm"
+                            type="button"
+                            disabled={busyKey === `accept:${r.request_id}`}
+                            onClick={() => run(
+                              `accept:${r.request_id}`,
+                              () => decideRequest({ requestId: r.request_id, accept: true }),
+                              `${r.parent_name} is now in ${g.name}. You can both see each other's contact details.`,
+                            )}
+                          >
+                            {busyKey === `accept:${r.request_id}` ? 'Accepting…' : 'Accept'}
+                          </button>{' '}
+                          <button
+                            className="cp-btn cp-btn--ghost cp-btn--sm"
+                            type="button"
+                            disabled={busyKey === `decline:${r.request_id}`}
+                            onClick={() => run(
+                              `decline:${r.request_id}`,
+                              () => decideRequest({ requestId: r.request_id, accept: false }),
+                              `You declined the request from ${r.parent_name}. No contact details were shared.`,
+                            )}
+                          >
+                            {busyKey === `decline:${r.request_id}` ? 'Declining…' : 'Decline'}
+                          </button>
                         </div>
                       </li>
                     ))}
@@ -496,21 +495,21 @@ export default function Groups({ family, userId }) {
                     only way to take it back, so the control belongs right here
                     next to the request rather than buried in a settings page. */}
                 <div className="cp-item-actions">
-                <button
-                  className="cp-btn cp-btn--danger cp-btn--sm"
-                  type="button"
-                  disabled={busyKey === `withdraw:${g.requestId}`}
-                  onClick={() => run(
-                    `withdraw:${g.requestId}`,
-                    () => withdrawRequest(g.requestId, me),
-                    // Not "nothing was shared": while the request was open the
-                    // organizer could already see this family through
-                    // pending_requesters. Only the contact details never left.
-                    `Your request to join ${g.name} is withdrawn. Your email and phone were never shared.`,
-                  )}
-                >
-                  {busyKey === `withdraw:${g.requestId}` ? 'Withdrawing…' : 'Withdraw request'}
-                </button>
+                  <button
+                    className="cp-btn cp-btn--danger cp-btn--sm"
+                    type="button"
+                    disabled={busyKey === `withdraw:${g.requestId}`}
+                    onClick={() => run(
+                      `withdraw:${g.requestId}`,
+                      () => withdrawRequest(g.requestId, me),
+                      // Not "nothing was shared": while the request was open the
+                      // organizer could already see this family through
+                      // pending_requesters. Only the contact details never left.
+                      `Your request to join ${g.name} is withdrawn. Your email and phone were never shared.`,
+                    )}
+                  >
+                    {busyKey === `withdraw:${g.requestId}` ? 'Withdrawing…' : 'Withdraw request'}
+                  </button>
                 </div>
               </li>
             ))}
@@ -518,7 +517,7 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
-      <h3 className="cp-h3" style={{ marginTop: '28px' }}>Groups near you</h3>
+      <h3 className="cp-h3 cp-h3--section">Groups near you</h3>
       {showEmptyStates && data.nearby.length === 0 && (
         <div className="cp-empty">
           <p>No other groups to join right now. You can start one below.</p>
@@ -544,26 +543,26 @@ export default function Groups({ family, userId }) {
                 </p>
               </div>
               <div className="cp-item-actions">
-              <button
-                className="cp-btn cp-btn--dark cp-btn--block"
-                type="button"
-                disabled={busyKey === `request:${g.id}`}
-                onClick={() => run(
-                  `request:${g.id}`,
-                  () => requestToJoin(g.id),
-                  `Your request to join ${g.name} is on its way to the organizer.`,
-                )}
-              >
-                {busyKey === `request:${g.id}` ? 'Sending…' : 'Request to join'}
-                <span className="cp-arr" aria-hidden="true">→</span>
-              </button>
+                <button
+                  className="cp-btn cp-btn--dark cp-btn--block"
+                  type="button"
+                  disabled={busyKey === `request:${g.id}`}
+                  onClick={() => run(
+                    `request:${g.id}`,
+                    () => requestToJoin(g.id),
+                    `Your request to join ${g.name} is on its way to the organizer.`,
+                  )}
+                >
+                  {busyKey === `request:${g.id}` ? 'Sending…' : 'Request to join'}
+                  <span className="cp-arr" aria-hidden="true">→</span>
+                </button>
               </div>
             </li>
           ))}
         </ul>
       )}
 
-      <h3 className="cp-h3" style={{ marginTop: '28px' }}>Start a group</h3>
+      <h3 className="cp-h3 cp-h3--section">Start a group</h3>
       <p className="cp-fine">
         Your group uses the general area you already gave us, never your street address. You become
         its first member and you decide who joins.

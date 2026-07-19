@@ -102,7 +102,7 @@ export default function Ready({ isAdmin = false, isPending = false }) {
   }
 
   const adminBar = isAdmin ? (
-    <div className="carpool-shell" style={{ paddingBottom: 0 }}>
+    <div className="carpool-shell cp-bar">
       <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => setShowApprovals(true)}>
         Pending approvals <span className="cp-arr" aria-hidden="true">→</span>
       </button>
@@ -110,7 +110,7 @@ export default function Ready({ isAdmin = false, isPending = false }) {
   ) : null;
 
   const pendingBanner = isPending ? (
-    <div className="carpool-shell" style={{ paddingBottom: 0 }}>
+    <div className="carpool-shell cp-bar">
       <div className="cp-banner cp-banner--info">
         <strong>You're awaiting approval.</strong> A committee admin has been notified. Meanwhile, set up your family below.
       </div>

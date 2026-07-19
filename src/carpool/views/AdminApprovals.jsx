@@ -31,7 +31,7 @@ export default function AdminApprovals({ onBack = null }) {
 
   return (
     <div className="carpool-shell">
-      {onBack && <button className="cp-btn cp-btn--quiet" onClick={onBack}>← Back to my family</button>}
+      {onBack && <button className="cp-btn cp-btn--quiet cp-backlink" onClick={onBack}>← Back to my family</button>}
       <p className="cp-label cp-label--bar">Committee</p>
       <h1 className="cp-h1">Pending <span className="cp-hl">approvals.</span></h1>
       {loading && <p className="cp-loading">Loading the queue</p>}

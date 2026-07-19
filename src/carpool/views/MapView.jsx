@@ -100,10 +100,10 @@ export default function MapView({ family, isPending }) {
       <p className="cp-label cp-label--bar">Families near you</p>
       <div ref={mapContainerRef} className="carpool-map" />
       {error && <p role="alert">{error}</p>}
-      {loading && !error && <p className="cp-loading" style={{ marginTop: '16px' }}>Loading the map</p>}
+      {loading && !error && <p className="cp-loading cp-after-map">Loading the map</p>}
 
       {!loading && !error && isPending && (
-        <div className="cp-note" style={{ marginTop: '16px' }}>
+        <div className="cp-note cp-after-map">
           <p>
             {count > 0
               ? `${count} famil${count === 1 ? 'y' : 'ies'} already in your area. They'll appear on the map once you're approved.`
@@ -114,11 +114,11 @@ export default function MapView({ family, isPending }) {
 
       {!loading && !error && !isPending && (
         rows.length === 0 ? (
-          <div className="cp-empty" style={{ marginTop: '16px' }}>
+          <div className="cp-empty cp-after-map">
             <p>No other families in your area yet. Check back soon.</p>
           </div>
         ) : (
-          <ul className="carpool-nearby-list" style={{ marginTop: '16px' }}>
+          <ul className="carpool-nearby-list cp-after-map">
             {rows.map((f) => (
               <li key={f.user_id}>
                 <p className="cp-item-name">{f.parent_name}</p>

@@ -61,9 +61,19 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
         if (cancelled || !addressContainerRef.current) return;
 
         autocompleteEl = new PlaceAutocompleteElement();
-        // Short on purpose: the widget's internal input clips rather than
-        // wraps, and the longer version was cut off mid-sentence on a phone.
-        autocompleteEl.placeholder = 'Start typing your address';
+        // Load-bearing, not decoration: typing an address is not enough, you
+        // have to PICK a suggestion or handleSubmit rejects the form (no
+        // lat/lng is ever populated otherwise). "Start typing your address"
+        // dropped that instruction and left the rejection unexplainable.
+        //
+        // It also has to survive the widget's internal input, which clips
+        // rather than wraps. At a 375px viewport that input renders ~214px of
+        // text before the trailing affordance cuts it off; this string
+        // measures ~192px in Archivo 16px, verified rendered in the widget
+        // rather than estimated. "Start typing, then pick a suggestion" was
+        // the first choice and was measured clipping at "...pick a sugge".
+        // Re-measure in the browser before lengthening it.
+        autocompleteEl.placeholder = 'Type and pick a suggestion';
         if (family?.address) autocompleteEl.value = family.address;
         addressContainerRef.current.appendChild(autocompleteEl);
         autocompleteElRef.current = autocompleteEl;
@@ -187,7 +197,7 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
   }
 
   return (
-    <form className="carpool-shell cp-form" onSubmit={handleSubmit}>
+    <form className="carpool-shell" onSubmit={handleSubmit}>
       <h2 className="cp-h2">{heading ?? (family ? 'Edit your family' : 'Add your family')}</h2>
 
       <div className="cp-field">
@@ -201,8 +211,32 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
       </div>
 
       <div className="cp-field">
-        <span className="cp-field-label" id="family-address-label">Home address</span>
-        <div className="cp-place" ref={addressContainerRef} aria-labelledby="family-address-label" />
+        {/* Keep this text and the container's aria-label below in sync — they
+            are the same label, and WCAG 2.5.3 wants them to match exactly. */}
+        <span className="cp-field-label">Home address</span>
+        {/* Both attributes here are load-bearing, not decoration.
+
+            Google's PlaceAutocompleteElement composes its own <input> inside a
+            CLOSED shadow root, so that input cannot be labelled from here at
+            all. Naming the container is the only reach we have. A bare <div>
+            maps to role="generic", which ARIA forbids naming, so the name was
+            being dropped outright and the address field — the one field on
+            this form that a parent cannot complete by typing alone — reached
+            screen readers with no accessible name. role="group" is nameable.
+
+            aria-label rather than aria-labelledby pointing at the span above:
+            aria-labelledby is the more usual pattern and avoids the duplicated
+            string, but it produced NO computed name in either accessibility
+            tree available here, on this container or on a plain control used
+            as a control probe, while aria-label produced one in both. Given
+            the choice between the tidier form and the form that is observably
+            producing a name, take the one that is verifiably announced. */}
+        <div
+          className="cp-place"
+          role="group"
+          aria-label="Home address"
+          ref={addressContainerRef}
+        />
         {addressText && <p className="cp-confirmed">Confirmed: {addressText}</p>}
         <div className="cp-consent cp-consent--inline">
           <p>We use your address only to match you by area. Other families see just your general area, never your exact address.</p>
