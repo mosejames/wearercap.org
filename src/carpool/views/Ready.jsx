@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient.js';
 import { fetchFamily, buildFamilyRecord, saveFamily } from '../family.js';
 import { readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
-import AdminApprovals from './AdminApprovals.jsx';
+import Admin from './Admin.jsx';
 import MapView from './MapView.jsx';
 import Groups from './Groups.jsx';
 
@@ -96,15 +96,15 @@ export default function Ready({ isAdmin = false, isPending = false }) {
     </div>
   );
 
-  // Admins can jump to the approvals queue and back, without leaving their family view.
+  // Admins can jump to the admin panel and back, without leaving their family view.
   if (isAdmin && showApprovals) {
-    return <AdminApprovals onBack={() => setShowApprovals(false)} />;
+    return <Admin onBack={() => setShowApprovals(false)} />;
   }
 
   const adminBar = isAdmin ? (
     <div className="carpool-shell cp-bar">
       <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => setShowApprovals(true)}>
-        Pending approvals <span className="cp-arr" aria-hidden="true">→</span>
+        Admin <span className="cp-arr" aria-hidden="true">→</span>
       </button>
     </div>
   ) : null;
