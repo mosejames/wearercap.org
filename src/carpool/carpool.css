@@ -209,6 +209,21 @@ body {
   color: var(--on-dark-dim);
   margin: 0;
 }
+/* The independence note. Quieter than the line above it but still AA at this
+   size, and its link has to be legible on ink, where --orange-text (tuned for
+   paper) would not be. */
+/* Scoped to beat `.cp-footer p { margin: 0 }` on specificity rather than
+   with !important. */
+.cp-footer .cp-fnote {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-dark);
+}
+.cp-fnote a {
+  color: var(--on-dark-muted);
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
 
 /* ------------------------------------------------- signature move no. 1 --
    The gradient-clipped payload word. One word per heading, never a phrase. */
