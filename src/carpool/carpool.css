@@ -679,10 +679,10 @@ body {
   cursor: not-allowed;
 }
 
-/* A field that failed validation reads as an error, not just a red message. */
+/* A field that failed validation reads as an error, not just a red message.
+   (.cp-place's input is a plain input now, so the generic selector covers it.) */
 .cp-field--invalid input,
-.cp-field--invalid select,
-.cp-field--invalid .cp-place > * {
+.cp-field--invalid select {
   border-color: var(--red);
   box-shadow: inset 0 0 0 1px var(--red);
 }
@@ -743,35 +743,66 @@ body {
 
 .cp-choice--day { text-transform: capitalize; }
 
-/* Google's PlaceAutocompleteElement mounts here. It is a web component with a
-   shadow root, so only the host is reliably reachable; style the host to match
-   the other fields and let the internal input inherit the box. */
-.cp-place { display: block; }
-.cp-place > * {
-  display: block;
-  width: 100%;
-  min-height: var(--tap);
+/* The address autocomplete: our own input + suggestion list on the Places
+   Autocomplete Data API. (Google's PlaceAutocompleteElement widget used to
+   mount here — retired because its suggestion list goes fullscreen on phones,
+   covering the form. The old host, --gmp-mat token and ::part rules went
+   with it.)
+   The input itself is a plain <input type="text"> and inherits the shared
+   field styling above; these rules are the dropdown. */
+.cp-place { position: relative; display: block; }
+.cp-place-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
   background: var(--card);
-  /* Same UI-component 3:1 as the native fields above — this IS the address
-     field, it just happens to be a web component. */
-  border: 1px solid var(--line-input);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  font-family: var(--font-body);
-  font-size: 16px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .16);
+  overflow: hidden;
+}
+.cp-place-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  /* ~5 rows of 48px, then scroll INSIDE the list. The dropdown never owns
+     the screen — that is the whole reason it exists. */
+  max-height: 248px;
+  overflow-y: auto;
+}
+.cp-place-opt {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-height: 48px; /* tap target */
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.cp-place-opt--active,
+.cp-place-opt:hover {
+  background: var(--paper-2);
+}
+.cp-place-main {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
   color: var(--ink);
-  --gmp-mat-color-surface: var(--card);
-  --gmp-mat-color-on-surface: var(--ink);
-  --gmp-mat-color-outline: var(--line-input);
-  --gmp-mat-color-primary: var(--orange);
 }
-.cp-place > *:focus-within {
-  border-color: var(--orange);
+.cp-place-secondary {
+  font-size: 13.5px;
+  line-height: 1.3;
+  color: var(--ink-soft);
 }
-.cp-place gmp-place-autocomplete::part(input) {
-  font-family: var(--font-body);
-  font-size: 16px;
-  padding: 13px 16px;
-  min-height: var(--tap);
+/* Google requires attribution when predictions are shown without a map. */
+.cp-place-attrib {
+  padding: 7px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-align: right;
 }
 
 .cp-confirmed {

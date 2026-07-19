@@ -6,38 +6,57 @@ const DAYS = [
   { key: 'thu', label: 'Thu' }, { key: 'fri', label: 'Fri' },
 ];
 
-export default function FamilyForm({ family, initialEmail, submitLabel, heading, onSubmitData }) {
-  // Container the PlaceAutocompleteElement web component is mounted into.
-  // (The legacy google.maps.places.Autocomplete bound to a plain <input> is
-  // deprecated; the current widget is its own custom element, not something
-  // you attach to an existing input — see task-4-report.md for the docs.)
-  const addressContainerRef = useRef(null);
+// Autocomplete tuning. 250ms debounce keeps us under Google's rate ceiling
+// without feeling laggy; 3 chars is the floor below which predictions are
+// noise (and each request still bills).
+const DEBOUNCE_MS = 250;
+const MIN_CHARS = 3;
 
-  // Holds the live PlaceAutocompleteElement instance so handleSubmit can
-  // read its current text at submit time (defense-in-depth against a stale
-  // selection when the 'input' listener below doesn't fire).
-  const autocompleteElRef = useRef(null);
+export default function FamilyForm({ family, initialEmail, submitLabel, heading, onSubmitData }) {
+  // The address field is OUR OWN input + suggestion list built on the Places
+  // Autocomplete Data API (AutocompleteSuggestion.fetchAutocompleteSuggestions),
+  // NOT Google's PlaceAutocompleteElement widget. The widget was tried and
+  // shipped first: on phones it enters a built-in fullscreen mode where the
+  // suggestion list covers the entire viewport with its own back arrow,
+  // hiding the form. No documented option disables it and its shadow root is
+  // closed. Keeping Google's data and owning the UI fixes that, and also lets
+  // the input be properly labelled (the widget's internal input could not be).
 
   // Holds the address the user actually SELECTED from autocomplete:
   // { formattedAddress, lat, lng, postalCode }. Null until a valid pick.
+  // Security invariant (six review rounds sit behind this): it is set in
+  // exactly one place — pickSuggestion, after fetchFields succeeds — and any
+  // edit to the input clears it, so a typed-but-not-picked address can never
+  // be saved with someone else's coordinates.
   const selectedPlaceRef = useRef(
     family ? { formattedAddress: family.address, lat: family.lat, lng: family.lng, postalCode: family.area_label } : null
   );
 
-  // The text the WIDGET displayed at the moment of selection. This is the
-  // prediction label (e.g. "1950 West Rugby Avenue, College Park, GA, USA"),
-  // which deliberately differs from the Place's canonical formattedAddress
-  // (e.g. "1950 W Rugby Ave, College Park, GA 30337, USA"). The submit-time
-  // stale check must compare against THIS, not formattedAddress, or every
-  // valid selection is rejected.
-  const selectedDisplayRef = useRef(family ? family.address : null);
+  // Places Autocomplete session token. One session = N suggestion fetches +
+  // one Place details fetch, billed as a unit. Created lazily on the first
+  // fetch, cleared after a successful fetchFields so the NEXT keystroke run
+  // starts a fresh session (reusing a consumed token bills every request
+  // individually). Kept on fetchFields failure — the session is still open.
+  const sessionTokenRef = useRef(null);
+
+  // Monotonic sequence for suggestion fetches. A response only lands if its
+  // sequence still matches; anything else is stale (a slow response arriving
+  // after a newer keystroke, after the field was cleared below MIN_CHARS,
+  // after a pick, or after unmount must not repopulate the list).
+  const fetchSeqRef = useRef(0);
+  const debounceRef = useRef(null);
 
   const [parentName, setParentName] = useState(family?.parent_name ?? '');
   const [childNames, setChildNames] = useState(family?.child_names ?? '');
-  // Mirrors the currently CONFIRMED (selected) address for display only.
-  // The autocomplete widget owns its own internal input text; this is not
-  // a controlled input value.
+  // The text in the address input. Controlled — we own it now, which is what
+  // makes selection invalidation on edit direct instead of best-effort.
+  const [addressInput, setAddressInput] = useState(family?.address ?? '');
+  // Mirrors the currently CONFIRMED (selected) address for display only
+  // (the "Confirmed:" line under the field).
   const [addressText, setAddressText] = useState(family?.address ?? '');
+  const [suggestions, setSuggestions] = useState([]); // [{ prediction, full, main, secondary }]
+  const [listOpen, setListOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1); // keyboard highlight; -1 = none
   const [direction, setDirection] = useState(family?.direction ?? 'both');
   const [weekdays, setWeekdays] = useState(family?.weekdays ?? ['mon', 'tue', 'wed', 'thu', 'fri']);
   const [contactPhone, setContactPhone] = useState(family?.contact_phone ?? '');
@@ -45,103 +64,148 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
   const [status, setStatus] = useState('idle'); // idle | saving | error
   const [error, setError] = useState('');
 
-  // Attach Google's PlaceAutocompleteElement (the current, non-deprecated
-  // widget) to the container div. On a valid selection, fetch
-  // formattedAddress + location + postal code and store them in
-  // selectedPlaceRef; mirror the confirmed text into addressText.
   useEffect(() => {
-    let cancelled = false;
-    let autocompleteEl = null;
-    let onSelect = null;
-    let onInput = null;
-    let onError = null;
-
-    loadPlaces()
-      .then(({ PlaceAutocompleteElement }) => {
-        if (cancelled || !addressContainerRef.current) return;
-
-        autocompleteEl = new PlaceAutocompleteElement();
-        // Load-bearing, not decoration: typing an address is not enough, you
-        // have to PICK a suggestion or handleSubmit rejects the form (no
-        // lat/lng is ever populated otherwise). "Start typing your address"
-        // dropped that instruction and left the rejection unexplainable.
-        //
-        // It also has to survive the widget's internal input, which clips
-        // rather than wraps. At a 375px viewport that input renders ~214px of
-        // text before the trailing affordance cuts it off; this string
-        // measures ~192px in Archivo 16px, verified rendered in the widget
-        // rather than estimated. "Start typing, then pick a suggestion" was
-        // the first choice and was measured clipping at "...pick a sugge".
-        // Re-measure in the browser before lengthening it.
-        autocompleteEl.placeholder = 'Type and pick a suggestion';
-        if (family?.address) autocompleteEl.value = family.address;
-        addressContainerRef.current.appendChild(autocompleteEl);
-        autocompleteElRef.current = autocompleteEl;
-
-        onSelect = async (event) => {
-          try {
-            const place = event.placePrediction.toPlace();
-            await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
-            const postalCode = place.addressComponents
-              ?.find((c) => c.types.includes('postal_code'))
-              ?.longText ?? null;
-            selectedPlaceRef.current = {
-              formattedAddress: place.formattedAddress ?? '',
-              lat: place.location ? place.location.lat() : null,
-              lng: place.location ? place.location.lng() : null,
-              postalCode,
-            };
-            // Capture what the widget is DISPLAYING now (the prediction
-            // label), which is what a later edit would change.
-            selectedDisplayRef.current = autocompleteEl.value ?? '';
-            if (cancelled) return;
-            setAddressText(place.formattedAddress ?? '');
-            setError('');
-          } catch (err) {
-            if (!cancelled) setError(err.message ?? 'Could not read that address. Please try selecting it again.');
-          }
-        };
-        autocompleteEl.addEventListener('gmp-select', onSelect);
-
-        // Best-effort guard: if the user edits the address after picking one
-        // (without choosing a new suggestion), invalidate the stale
-        // selection so it can't be silently saved. PlaceAutocompleteElement
-        // is form-associated and composes a real <input> internally, so a
-        // native 'input' event is expected to bubble out of it; if it
-        // doesn't in some browser, the "pick from suggestions" check at
-        // submit time still catches an unset selection.
-        onInput = () => {
-          if (selectedPlaceRef.current) {
-            selectedPlaceRef.current = null;
-            selectedDisplayRef.current = null;
-            if (!cancelled) setAddressText('');
-          }
-        };
-        autocompleteEl.addEventListener('input', onInput);
-
-        // Surface runtime errors from the widget itself (e.g. API key/billing
-        // issues, network failures) instead of failing silently.
-        onError = () => {
-          if (!cancelled) setError('Address lookup is unavailable right now.');
-        };
-        autocompleteEl.addEventListener('gmp-error', onError);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message ?? 'Could not load address search.');
-      });
-
     return () => {
-      cancelled = true;
-      if (autocompleteEl) {
-        if (onSelect) autocompleteEl.removeEventListener('gmp-select', onSelect);
-        if (onInput) autocompleteEl.removeEventListener('input', onInput);
-        if (onError) autocompleteEl.removeEventListener('gmp-error', onError);
-        autocompleteEl.remove();
-      }
-      if (autocompleteElRef.current === autocompleteEl) autocompleteElRef.current = null;
+      // Invalidate any in-flight fetch and pending debounce on unmount.
+      fetchSeqRef.current += 1;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function closeList() {
+    setSuggestions([]);
+    setListOpen(false);
+    setActiveIndex(-1);
+  }
+
+  async function fetchSuggestions(input) {
+    const seq = ++fetchSeqRef.current;
+    try {
+      const { AutocompleteSuggestion, AutocompleteSessionToken } = await loadPlaces();
+      if (!sessionTokenRef.current) sessionTokenRef.current = new AutocompleteSessionToken();
+      const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input,
+        sessionToken: sessionTokenRef.current,
+        region: 'us',
+      });
+      if (seq !== fetchSeqRef.current) return; // stale — a newer keystroke owns the list
+      const items = (results ?? [])
+        .filter((s) => s.placePrediction)
+        .map((s) => {
+          const p = s.placePrediction;
+          // mainText/secondaryText are FormattableText objects (verified at
+          // runtime); .text is the always-present fallback.
+          const full = p.text?.toString() ?? '';
+          return {
+            prediction: p,
+            full,
+            main: p.mainText?.toString() || full,
+            secondary: p.secondaryText?.toString() || '',
+          };
+        });
+      setSuggestions(items);
+      setListOpen(items.length > 0);
+      setActiveIndex(-1);
+    } catch (err) {
+      if (seq !== fetchSeqRef.current) return;
+      closeList();
+      // Surface API/network failures in the existing error slot — never a
+      // white screen, never silence.
+      setError('Address lookup is unavailable right now. Please try again in a moment.');
+    }
+  }
+
+  function handleAddressChange(e) {
+    const value = e.target.value;
+    setAddressInput(value);
+    // EVERY edit bumps the sequence, unconditionally and synchronously. This
+    // is what invalidates a pickSuggestion whose fetchFields is still in
+    // flight: during that window selectedPlaceRef is still null, so the clear
+    // below does nothing, and without this bump the late resolution would
+    // write the abandoned pick's coordinates over the user's edit (review
+    // finding, 2026-07-19). The debounced fetch bumps again when it runs.
+    fetchSeqRef.current += 1;
+    // ANY edit invalidates a previous pick. Direct, not best-effort: we own
+    // onChange, so there is no widget event that can fail to fire.
+    if (selectedPlaceRef.current) {
+      selectedPlaceRef.current = null;
+      setAddressText('');
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = value.trim();
+    if (trimmed.length < MIN_CHARS) {
+      closeList();
+      return;
+    }
+    debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), DEBOUNCE_MS);
+  }
+
+  async function pickSuggestion(item) {
+    // A pick ends the current suggestion cycle: cancel pending/in-flight
+    // fetches so a slow response can't reopen the list over the confirmation.
+    fetchSeqRef.current += 1;
+    // Capture our claim on the sequence. If the user edits the input while
+    // fetchFields is in flight, handleAddressChange bumps the sequence and
+    // this pick is abandoned: the edit wins, not the network.
+    const seq = fetchSeqRef.current;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    closeList();
+    setAddressInput(item.full);
+    try {
+      const place = item.prediction.toPlace();
+      // The session token is attached to the Place by the prediction; this
+      // details call closes the billing session.
+      await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
+      // The session is consumed by a successful details call whether or not
+      // this pick still stands; keep the null before the staleness return or
+      // the next keystroke run reuses a spent token and bills per request.
+      sessionTokenRef.current = null;
+      if (seq !== fetchSeqRef.current) return; // user edited mid-fetch — abandoned
+      const postalCode = place.addressComponents
+        ?.find((c) => c.types.includes('postal_code'))
+        ?.longText ?? null;
+      selectedPlaceRef.current = {
+        formattedAddress: place.formattedAddress ?? '',
+        lat: place.location ? place.location.lat() : null,
+        lng: place.location ? place.location.lng() : null,
+        postalCode,
+      };
+      setAddressText(place.formattedAddress ?? '');
+      setError('');
+    } catch (err) {
+      if (seq !== fetchSeqRef.current) return; // abandoned pick; the edit owns the field now
+      selectedPlaceRef.current = null;
+      setError(err.message ?? 'Could not read that address. Please try selecting it again.');
+    }
+  }
+
+  function handleAddressKeyDown(e) {
+    if (e.key === 'ArrowDown') {
+      if (suggestions.length > 0) {
+        e.preventDefault();
+        setListOpen(true);
+        setActiveIndex((i) => (i + 1) % suggestions.length);
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (suggestions.length > 0) {
+        e.preventDefault();
+        setListOpen(true);
+        setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+      }
+    } else if (e.key === 'Enter') {
+      // Only intercept Enter when an option is highlighted; otherwise let the
+      // form submit (and the "pick from suggestions" check explain itself).
+      if (listOpen && activeIndex >= 0 && activeIndex < suggestions.length) {
+        e.preventDefault();
+        pickSuggestion(suggestions[activeIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      if (listOpen) {
+        e.preventDefault();
+        closeList();
+      }
+    }
+  }
 
   function toggleDay(key) {
     setWeekdays((cur) => (cur.includes(key) ? cur.filter((d) => d !== key) : [...cur, key]));
@@ -150,6 +214,11 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    // The old widget needed a submit-time display-text comparison as
+    // defense-in-depth against its 'input' event not firing. With a
+    // controlled input, handleAddressChange clears the selection on any edit
+    // directly, so the only submit-time checks needed are: a live selection
+    // exists, and it carries a postal code.
     const place = selectedPlaceRef.current;
     if (!place) {
       setError('Please pick your address from the suggestions so we can locate your area.');
@@ -157,21 +226,6 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
     }
     if (!place.postalCode) {
       setError("That address didn't include a ZIP code. Please pick a more specific address.");
-      return;
-    }
-    // Defense-in-depth: the 'input' listener above should have already
-    // cleared selectedPlaceRef if the user edited the text after picking a
-    // suggestion, but if that listener didn't fire, catch it here by
-    // comparing the widget's current text against the text it displayed at
-    // selection time. NOT against place.formattedAddress — the widget shows
-    // the prediction label ("1950 West Rugby Avenue, College Park, GA, USA")
-    // while formattedAddress is the canonical form ("1950 W Rugby Ave,
-    // College Park, GA 30337, USA"), so comparing those rejects every valid
-    // selection. Only compare when we actually recorded a display value.
-    const typed = (autocompleteElRef.current?.value ?? '').trim();
-    const selectedDisplay = (selectedDisplayRef.current ?? '').trim();
-    if (typed && selectedDisplay && typed !== selectedDisplay) {
-      setError('Please pick your address from the suggestions again.');
       return;
     }
     setStatus('saving');
@@ -211,36 +265,65 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
       </div>
 
       <div className="cp-field">
-        {/* Keep this text and the container's aria-label below in sync — they
-            are the same label, and WCAG 2.5.3 wants them to match exactly. */}
-        <span className="cp-field-label">Home address</span>
-        {/* Both attributes here are load-bearing, not decoration.
-
-            Google's PlaceAutocompleteElement composes its own <input> inside a
-            CLOSED shadow root, so that input cannot be labelled from here at
-            all. Naming the container is the only reach we have. A bare <div>
-            maps to role="generic", which ARIA forbids naming, so the name was
-            being dropped outright and the address field — the one field on
-            this form that a parent cannot complete by typing alone — reached
-            screen readers with no accessible name. role="group" is nameable.
-
-            aria-label rather than aria-labelledby pointing at the span above:
-            aria-labelledby is the more usual pattern and avoids the duplicated
-            string, but it produced NO computed name in either accessibility
-            tree available here, on this container or on a plain control used
-            as a control probe, while aria-label produced one in both. Given
-            the choice between the tidier form and the form that is observably
-            producing a name, take the one that is verifiably announced. */}
-        <div
-          className="cp-place"
-          role="group"
-          aria-label="Home address"
-          ref={addressContainerRef}
-        />
-        {addressText && <p className="cp-confirmed">Confirmed: {addressText}</p>}
+        {/* A real label at last: the old Google widget hid its input inside a
+            closed shadow root, so the field could only be named via aria-label
+            on a role="group" container. Our own input takes htmlFor. */}
+        <label className="cp-field-label" htmlFor="family-address">Home address</label>
+        {/* Above the field, not below it, at Mose's direction: a parent
+            should know why the address is being asked for BEFORE they type
+            it, not discover the explanation as fine print afterward. */}
         <div className="cp-consent cp-consent--inline">
-          <p>We use your address only to match you by area. Other families see just your general area, never your exact address.</p>
+          <p>We ask for your address so we can group you with families nearby. It is never shared. Other families only ever see your approximate area, not your address.</p>
         </div>
+        <div className="cp-place">
+          <input
+            id="family-address"
+            type="text"
+            role="combobox"
+            aria-expanded={listOpen}
+            aria-controls="family-address-listbox"
+            aria-activedescendant={activeIndex >= 0 ? `family-address-option-${activeIndex}` : undefined}
+            aria-autocomplete="list"
+            autoComplete="off"
+            value={addressInput}
+            onChange={handleAddressChange}
+            onKeyDown={handleAddressKeyDown}
+            onBlur={closeList}
+            /* Load-bearing, not decoration: typing an address is not enough,
+               you have to PICK a suggestion or handleSubmit rejects the form
+               (no lat/lng is ever populated otherwise). The instruction that
+               a suggestion must be picked stays visible here. */
+            placeholder="Type your address, then pick a suggestion"
+          />
+          {listOpen && (
+            <div className="cp-place-pop">
+              <ul className="cp-place-list" role="listbox" id="family-address-listbox" aria-label="Address suggestions">
+                {suggestions.map((s, i) => (
+                  <li
+                    key={s.prediction.placeId ?? s.full + i}
+                    id={`family-address-option-${i}`}
+                    role="option"
+                    aria-selected={i === activeIndex}
+                    className={`cp-place-opt${i === activeIndex ? ' cp-place-opt--active' : ''}`}
+                    /* Select on mousedown, not click: mousedown fires BEFORE
+                       the input's blur (which closes the list), so acting here
+                       beats the race outright — on touch too, where the
+                       compatibility mousedown precedes blur the same way.
+                       preventDefault keeps focus on the input as a bonus. */
+                    onMouseDown={(ev) => { ev.preventDefault(); pickSuggestion(s); }}
+                  >
+                    <span className="cp-place-main">{s.main}</span>
+                    {s.secondary && <span className="cp-place-secondary">{s.secondary}</span>}
+                  </li>
+                ))}
+              </ul>
+              {/* Required by Google's Places terms when predictions are shown
+                  without a Google map: attribution must accompany the list. */}
+              <div className="cp-place-attrib">powered by Google</div>
+            </div>
+          )}
+        </div>
+        {addressText && <p className="cp-confirmed">Confirmed: {addressText}</p>}
       </div>
 
       <fieldset>
