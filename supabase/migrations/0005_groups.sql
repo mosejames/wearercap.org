@@ -56,53 +56,40 @@ returns boolean language sql security definer set search_path = public, pg_temp 
   );
 $$;
 
--- CONSENT gate for membership creation: true only if the target user has a
--- live PENDING join request for this group. Without this, an organizer's
--- insert privilege could be used to add ANY user to a group without that
--- user ever having asked to join. Do not remove.
+-- There is deliberately NO consent-gate function here, and the memberships
+-- INSERT policy deliberately has NO "the target asked to join" branch.
 --
--- Restricted to status = 'pending' only (not 'accepted'): a request that has
--- already been accepted is stale consent, not live consent. If it stayed
--- valid after acceptance, a parent who joins and later leaves (deleting
--- their own membership) would leave behind an 'accepted' request that lets
--- the organizer silently re-add them forever with no fresh ask.
+-- An earlier revision had has_open_request(gid, uid), letting an organizer
+-- insert a membership row directly whenever the target had a pending
+-- request. Once acceptance moved into accept_join_request() (SECURITY
+-- DEFINER, which bypasses RLS anyway), that branch stopped being the path
+-- anyone actually used and became a live hole: an organizer could insert the
+-- membership directly and simply never decide the request, leaving it
+-- 'pending' forever. The family leaves; the request is still pending; the
+-- organizer re-adds them, repeatedly, with no fresh ask. That is exactly the
+-- harm the gate existed to prevent.
 --
--- Acceptance goes through accept_join_request(request_id), a single
--- SECURITY DEFINER call that inserts the membership row and marks the
--- request 'accepted' in one transaction, so there is no client-visible
--- ordering to get right or wrong. Decisions are terminal: once a request is
--- 'accepted' or 'declined' it can never move again (enforced by both
--- join_requests_update_organizer's WITH CHECK and the
--- join_requests_pin_identity trigger), so a family whose request was
--- declined, or who joined and later left, must file a fresh request via
+-- The fix is to make the RPC the ONLY way a family is added to a group.
+-- Direct INSERT is now organizer-self-seed only (see the policy below), so
+-- pending -> accepted is unskippable and every membership traces to a
+-- decision the organizer actually made on a request the family actually
+-- filed. Decisions are terminal (join_requests_update_organizer's WITH CHECK
+-- plus the join_requests_pin_identity trigger), so a family who was declined,
+-- or who joined and later left, must file a fresh request via
 -- request_to_join() to be considered again.
 --
--- Also gated on the caller: has_open_request() is granted to all
--- `authenticated` (see memberships_insert_organizer_or_self_create, which
--- calls it as SECURITY DEFINER), so without a caller check it would be an
--- ungated oracle letting any logged-in user, approved or not, probe
--- "did family X ask to join group Y" for arbitrary gid/uid pairs, routing
--- around the join_requests SELECT policy entirely. Requiring the caller to
--- organize gid keeps that probe restricted to people who could already see
--- pending requests for that group via pending_requesters()/the SELECT policy.
-create or replace function public.has_open_request(gid uuid, uid uuid)
-returns boolean language sql security definer set search_path = public, pg_temp as $$
-  select public.is_group_organizer(gid) and exists (
-    select 1 from public.join_requests r
-    where r.group_id = gid and r.user_id = uid
-      and r.status = 'pending'
-  );
-$$;
+-- The function is dropped explicitly (down at the memberships policy, which
+-- has to be dropped first or the dependency blocks it) rather than merely
+-- deleted from this file: an earlier draft may have created it, and leaving
+-- it behind would leave a SECURITY DEFINER oracle granted to every
+-- authenticated user, letting anyone probe "did family X ask to join group Y".
 
 revoke all on function public.is_group_member(uuid) from public;
 revoke all on function public.is_group_organizer(uuid) from public;
-revoke all on function public.has_open_request(uuid, uuid) from public;
 revoke execute on function public.is_group_member(uuid) from anon;
 revoke execute on function public.is_group_organizer(uuid) from anon;
-revoke execute on function public.has_open_request(uuid, uuid) from anon;
 grant execute on function public.is_group_member(uuid) to authenticated;
 grant execute on function public.is_group_organizer(uuid) to authenticated;
-grant execute on function public.has_open_request(uuid, uuid) to authenticated;
 
 -- GROUPS
 -- Read: any approved member may browse groups (no PII here: a group is a
@@ -139,24 +126,29 @@ create policy memberships_select_own_or_group
   on public.memberships for select
   using (user_id = auth.uid() or public.is_group_member(group_id) or public.is_admin());
 
--- Insert: the ORGANIZER adds members (this is how a join request is accepted),
--- or a creator seeds their own membership at creation time. A requester can
--- never insert themselves into someone else's group. The has_open_request()
--- clause is the CONSENT gate: it ensures the organizer can only add a target
--- user who actually asked to join (or is the organizer seeding their own
--- row). Without it, any approved member could create a group and bulk-add
--- arbitrary users pulled from family_directory(), then harvest their contact
--- info via group_roster(). Do not remove this clause.
+-- Insert: SELF-SEED ONLY. The only membership row anyone may create by a
+-- direct table write is their own, in a group they organize (i.e. a creator
+-- seeding themselves at creation time). Adding ANOTHER family goes through
+-- accept_join_request(), never through here.
+--
+-- `user_id = auth.uid()` is the CONSENT gate. Without it, any approved member
+-- could create a group, bulk-add arbitrary users pulled from
+-- family_directory(), and harvest their contact info and children's names via
+-- group_roster(). Do not widen this clause. In particular, do not re-add a
+-- "the target has a pending request" branch: a pending request is not a
+-- decision, so that branch let an organizer insert the membership and never
+-- decide the request, keeping the consent token live forever and allowing
+-- silent re-adds after the family left.
 drop policy if exists memberships_insert_organizer_or_self_create on public.memberships;
+-- Must follow the drop above: the policy referenced this function, and that
+-- dependency would block the drop. See the note at the top of this file.
+drop function if exists public.has_open_request(uuid, uuid);
 create policy memberships_insert_organizer_or_self_create
   on public.memberships for insert
   with check (
     public.is_approved_member()
     and public.is_group_organizer(group_id)
-    and (
-      user_id = auth.uid()                                  -- organizer seeds their own row
-      or public.has_open_request(group_id, user_id)         -- target actually asked to join
-    )
+    and user_id = auth.uid()                                -- organizer seeds their own row
   );
 
 -- Leave: you may remove yourself; the organizer may remove anyone.
@@ -195,7 +187,14 @@ drop policy if exists join_requests_update_organizer on public.join_requests;
 create policy join_requests_update_organizer
   on public.join_requests for update
   using (public.is_group_organizer(group_id) and public.is_approved_member())
-  with check (public.is_group_organizer(group_id) and status in ('accepted', 'declined'));
+  -- is_approved_member() is repeated here rather than left to USING alone.
+  -- USING already gates every UPDATE, so this is redundant today; it is here
+  -- so the two halves can't drift into disagreeing about who may write.
+  with check (
+    public.is_group_organizer(group_id)
+    and public.is_approved_member()
+    and status in ('accepted', 'declined')
+  );
 
 drop policy if exists join_requests_delete_self on public.join_requests;
 create policy join_requests_delete_self
@@ -250,7 +249,13 @@ returns void language plpgsql security definer set search_path = public, pg_temp
 declare
   r public.join_requests%rowtype;
 begin
-  select * into r from public.join_requests where id = request_id;
+  -- FOR UPDATE, not a bare select: two organizers double-clicking Accept
+  -- would otherwise both read 'pending', and the loser's UPDATE would trip
+  -- the terminal-decision trigger with "A decided join request cannot be
+  -- reopened" — technically safe, but nonsense to the person reading it.
+  -- Locking makes the loser re-read the committed row (READ COMMITTED) and
+  -- fall into the clean "already been decided" branch below.
+  select * into r from public.join_requests where id = request_id for update;
   if not found then
     raise exception 'Join request not found';
   end if;
@@ -261,6 +266,18 @@ begin
 
   if r.status <> 'pending' then
     raise exception 'That request has already been decided';
+  end if;
+
+  -- The requester was approved when they filed, but an admin may have
+  -- removed or un-approved them since. Accepting anyway would reveal their
+  -- contacts and children's names via group_roster() to a group they can no
+  -- longer be vouched for in. Checked here rather than via
+  -- is_approved_member(), which only ever tests the CALLER.
+  if not exists (
+    select 1 from public.members m
+    where m.user_id = r.user_id and m.approval = 'approved'
+  ) then
+    raise exception 'That family is no longer an approved member';
   end if;
 
   insert into public.memberships (group_id, user_id)
@@ -401,15 +418,15 @@ revoke execute on function public.is_approved_member() from anon;
 revoke execute on function public.is_admin() from anon;
 
 -- IDENTITY LOCKDOWN for join_requests. A join request is a CONSENT RECORD:
--- memberships_insert_organizer_or_self_create trusts it to prove the target
--- asked to join. If its identity (who asked, for which group) could be
--- changed after the fact, an organizer could repoint one legitimate request
--- at any victim in turn via join_requests_update_organizer (which lets an
--- organizer UPDATE any request in their own group with no column
--- restriction) and re-run the has_open_request() consent gate against a
--- target who never asked, re-enabling the exact contact-harvest that gate
--- was built to stop. Two independent layers close this, because either one
--- alone is fragile to a future change:
+-- accept_join_request() reads user_id off the row and inserts exactly that
+-- family into the group, as SECURITY DEFINER. If its identity (who asked, for
+-- which group) could be changed after the fact, an organizer could repoint
+-- one legitimate request at any victim in turn via
+-- join_requests_update_organizer (which lets an organizer UPDATE any request
+-- in their own group with no column restriction) and then accept it, adding a
+-- family that never asked and exposing their contacts and children's names
+-- through group_roster(). Two independent layers close this, because either
+-- one alone is fragile to a future change:
 --
 -- 1. Column-level grants: app JWTs (the `authenticated` role) can write only
 --    status/decided_at, never user_id/group_id, at the grant level.
