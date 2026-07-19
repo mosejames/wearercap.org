@@ -151,11 +151,18 @@ create policy memberships_insert_organizer_or_self_create
     and user_id = auth.uid()                                -- organizer seeds their own row
   );
 
--- Leave: you may remove yourself; the organizer may remove anyone.
+-- Leave: you may remove yourself; the organizer may remove anyone; a
+-- committee admin may remove anyone. The admin branch matters because this
+-- is a product about children: an admin who can delete an entire group but
+-- cannot remove one family from it has the wrong tool for a safety report.
 drop policy if exists memberships_delete_self_or_organizer on public.memberships;
 create policy memberships_delete_self_or_organizer
   on public.memberships for delete
-  using (user_id = auth.uid() or (public.is_group_organizer(group_id) and public.is_approved_member()));
+  using (
+    user_id = auth.uid()
+    or (public.is_group_organizer(group_id) and public.is_approved_member())
+    or public.is_admin()
+  );
 
 -- JOIN REQUESTS
 -- Read: the requester sees their own; the organizer sees requests for theirs.
@@ -300,7 +307,11 @@ returns void language plpgsql security definer set search_path = public, pg_temp
 declare
   r public.join_requests%rowtype;
 begin
-  select * into r from public.join_requests where id = request_id;
+  -- FOR UPDATE for the same reason as accept_join_request: without it, an
+  -- accept and a decline racing each other leave the loser tripping the
+  -- terminal-decision trigger and reading "cannot be reopened" instead of
+  -- "already decided". Keep the two functions symmetric.
+  select * into r from public.join_requests where id = request_id for update;
   if not found then
     raise exception 'Join request not found';
   end if;
