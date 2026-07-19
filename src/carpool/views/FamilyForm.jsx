@@ -61,7 +61,9 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
         if (cancelled || !addressContainerRef.current) return;
 
         autocompleteEl = new PlaceAutocompleteElement();
-        autocompleteEl.placeholder = 'Start typing and pick from the list';
+        // Short on purpose: the widget's internal input clips rather than
+        // wraps, and the longer version was cut off mid-sentence on a phone.
+        autocompleteEl.placeholder = 'Start typing your address';
         if (family?.address) autocompleteEl.value = family.address;
         addressContainerRef.current.appendChild(autocompleteEl);
         autocompleteElRef.current = autocompleteEl;
@@ -185,52 +187,68 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
   }
 
   return (
-    <form className="carpool-shell" onSubmit={handleSubmit}>
-      <h2>{heading ?? (family ? 'Edit your family' : 'Add your family')}</h2>
+    <form className="carpool-shell cp-form" onSubmit={handleSubmit}>
+      <h2 className="cp-h2">{heading ?? (family ? 'Edit your family' : 'Add your family')}</h2>
 
-      <label>Your name
-        <input required value={parentName} onChange={(e) => setParentName(e.target.value)} />
-      </label>
+      <div className="cp-field">
+        <label className="cp-field-label" htmlFor="family-parent-name">Your name</label>
+        <input id="family-parent-name" required value={parentName} onChange={(e) => setParentName(e.target.value)} />
+      </div>
 
-      <label>Child name(s)
-        <input required value={childNames} onChange={(e) => setChildNames(e.target.value)} placeholder="e.g. Jordan, Riley" />
-      </label>
+      <div className="cp-field">
+        <label className="cp-field-label" htmlFor="family-child-names">Child name(s)</label>
+        <input id="family-child-names" required value={childNames} onChange={(e) => setChildNames(e.target.value)} placeholder="e.g. Jordan, Riley" />
+      </div>
 
-      <label>Home address</label>
-      <div ref={addressContainerRef} />
-      {addressText && <p>Confirmed: {addressText}</p>}
-      <p>We use your address only to match you by area. Other families see just your general area, never your exact address.</p>
+      <div className="cp-field">
+        <span className="cp-field-label" id="family-address-label">Home address</span>
+        <div className="cp-place" ref={addressContainerRef} aria-labelledby="family-address-label" />
+        {addressText && <p className="cp-confirmed">Confirmed: {addressText}</p>}
+        <div className="cp-consent cp-consent--inline">
+          <p>We use your address only to match you by area. Other families see just your general area, never your exact address.</p>
+        </div>
+      </div>
 
       <fieldset>
         <legend>When do you need carpool?</legend>
-        {['am', 'pm', 'both'].map((d) => (
-          <label key={d}>
-            <input type="radio" name="direction" value={d} checked={direction === d} onChange={() => setDirection(d)} />
-            {d === 'am' ? 'Morning drop-off' : d === 'pm' ? 'Afternoon pickup' : 'Both'}
-          </label>
-        ))}
+        {/* Stacked, not wrapped: these three are one mutually exclusive set,
+            and their labels differ enough in width that wrapping them leaves
+            a ragged two-then-one shape that reads as a layout accident. */}
+        <div className="cp-choices cp-choices--stack">
+          {['am', 'pm', 'both'].map((d) => (
+            <label className="cp-choice" key={d}>
+              <input type="radio" name="direction" value={d} checked={direction === d} onChange={() => setDirection(d)} />
+              {d === 'am' ? 'Morning drop-off' : d === 'pm' ? 'Afternoon pickup' : 'Both'}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Which days?</legend>
-        {DAYS.map((d) => (
-          <label key={d.key}>
-            <input type="checkbox" checked={weekdays.includes(d.key)} onChange={() => toggleDay(d.key)} />
-            {d.label}
-          </label>
-        ))}
+        <div className="cp-choices">
+          {DAYS.map((d) => (
+            <label className="cp-choice" key={d.key}>
+              <input type="checkbox" checked={weekdays.includes(d.key)} onChange={() => toggleDay(d.key)} />
+              {d.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
-      <label>Phone (optional)
-        <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
-      </label>
-      <label>Contact email
-        <input type="email" required value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
-      </label>
+      <div className="cp-field">
+        <label className="cp-field-label" htmlFor="family-phone">Phone (optional)</label>
+        <input id="family-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+      </div>
+      <div className="cp-field">
+        <label className="cp-field-label" htmlFor="family-email">Contact email</label>
+        <input id="family-email" type="email" required value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+      </div>
 
       {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={status === 'saving'}>
+      <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={status === 'saving'}>
         {status === 'saving' ? 'Saving…' : submitLabel ?? (family ? 'Save changes' : 'Add my family')}
+        <span className="cp-arr" aria-hidden="true">→</span>
       </button>
     </form>
   );

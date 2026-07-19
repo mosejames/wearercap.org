@@ -4,6 +4,27 @@ import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
 import Onboarding from './views/Onboarding.jsx';
 import Ready from './views/Ready.jsx';
 
+// Presentational only. Wraps whichever view App already decided to render so
+// the masthead and footer are identical on every screen.
+function Shell({ children }) {
+  return (
+    <>
+      <header className="cp-masthead">
+        <p className="cp-brand">
+          RCA<span className="cp-hl">P</span>
+          <span className="cp-brand-sub">We Are RCAP</span>
+        </p>
+        <p className="cp-issue">Carpool</p>
+      </header>
+      {children}
+      <footer className="cp-footer">
+        <p className="cp-fmark">RCA<span className="cp-hl">P</span></p>
+        <p>A parent-run carpool board for Ron Clark Academy families.</p>
+      </footer>
+    </>
+  );
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [member, setMember] = useState(null);
@@ -51,17 +72,26 @@ export default function App() {
     };
   }, []);
 
-  if (loading) return <div className="carpool-shell"><p>Loading…</p></div>;
+  if (loading) return (
+    <Shell>
+      <div className="carpool-shell"><p className="cp-loading">Loading your carpool</p></div>
+    </Shell>
+  );
   if (error) return (
-    <div className="carpool-shell">
-      <p role="alert">Something went wrong: {error}</p>
-      <button onClick={() => window.location.reload()}>Try again</button>
-    </div>
+    <Shell>
+      <div className="carpool-shell">
+        <p className="cp-label cp-label--bar">Something went wrong</p>
+        <p role="alert">{error}</p>
+        <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => window.location.reload()}>
+          Try again <span className="cp-arr" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </Shell>
   );
 
   const view = resolveView(session, member);
-  if (view === 'signed-out') return <Onboarding />;
+  if (view === 'signed-out') return <Shell><Onboarding /></Shell>;
   // One-sitting onboarding: pending parents fill their family and see the
   // map teaser immediately; approval gates only other families' details.
-  return <Ready isAdmin={view === 'admin'} isPending={view === 'pending'} />;
+  return <Shell><Ready isAdmin={view === 'admin'} isPending={view === 'pending'} /></Shell>;
 }

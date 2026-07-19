@@ -263,15 +263,16 @@ export default function Groups({ family, userId }) {
   if (!me) {
     // Never say "you are not in any groups" before we know who you are.
     return (
-      <section>
-        <h2>Carpool groups</h2>
+      <section className="cp-subblock">
+        <p className="cp-label cp-label--bar">Carpool groups</p>
+        <h2 className="cp-h2">Ride <span className="cp-hl">together.</span></h2>
         {identityStalled ? (
           <p role="alert">
             We could not confirm your sign in, so your groups did not load. Please refresh the page.
             If that does not work, sign out and sign back in.
           </p>
         ) : (
-          <p>Loading your groups…</p>
+          <p className="cp-loading">Loading your groups</p>
         )}
       </section>
     );
@@ -280,18 +281,22 @@ export default function Groups({ family, userId }) {
   const showEmptyStates = loaded && !loading;
 
   return (
-    <section>
-      <h2>Carpool groups</h2>
-      <p>
-        A group is a small set of families sharing rides. When you join one, your name, your
-        children's names, your general area, your schedule, your email, and your phone become
-        visible to the other families in that group. The group can also grow after you join. The
-        organizer decides who else comes in, and every family they accept later sees those same
-        details. You are not asked again each time. Leaving the group ends that sharing. Nothing
-        outside the group changes.
-      </p>
+    <section className="cp-subblock">
+      <p className="cp-label cp-label--bar">Carpool groups</p>
+      <h2 className="cp-h2">Ride <span className="cp-hl">together.</span></h2>
+      <div className="cp-consent">
+        <p className="cp-label cp-label--muted cp-label--bar">Before you join, read this</p>
+        <p>
+          A group is a small set of families sharing rides. When you join one, your name, your
+          children's names, your general area, your schedule, your email, and your phone become
+          visible to the other families in that group. The group can also grow after you join. The
+          organizer decides who else comes in, and every family they accept later sees those same
+          details. You are not asked again each time. Leaving the group ends that sharing. Nothing
+          outside the group changes.
+        </p>
+      </div>
 
-      {loading && <p>Loading your groups…</p>}
+      {loading && <p className="cp-loading">Loading your groups</p>}
       {loadError && (
         // No "Could not load groups:" prefix any more. Every message reaching
         // here is already a complete sentence, either from mapGroupsError or
@@ -299,7 +304,7 @@ export default function Groups({ family, userId }) {
         // roster."), so a prefix would double it up.
         <p role="alert">
           {loadError}{' '}
-          <button type="button" onClick={() => { setLoading(true); load(); }}>Try again</button>
+          <button className="cp-btn cp-btn--quiet" type="button" onClick={() => { setLoading(true); load(); }}>Try again</button>
         </p>
       )}
       {actionError && <p role="alert">{actionError}</p>}
@@ -308,8 +313,8 @@ export default function Groups({ family, userId }) {
       {/* A group whose creator never got their own membership row. The fix is
           always to retry the membership, never to create the group again. */}
       {data.orphanGroups.length > 0 && (
-        <div>
-          <h3>Finish setting up</h3>
+        <div className="cp-subblock">
+          <h3 className="cp-h3">Finish setting up</h3>
           {data.orphanGroups.map((g) => {
             // Families can already be asking to join a group you have not
             // finished setting up. The accept and decline controls live inside
@@ -317,13 +322,13 @@ export default function Groups({ family, userId }) {
             // somewhere this parent cannot see.
             const waiting = (data.requesters[g.id] ?? []).length;
             return (
-            <div key={g.id}>
+            <div className="cp-card" key={g.id}>
               <p>
                 <strong>{g.name}</strong> was created, but you were not added to it. Add yourself to
                 finish. Please do not create the group again.
               </p>
               {waiting > 0 && (
-                <p>
+                <p className="cp-fine">
                   {waiting === 1
                     ? '1 family is already asking to join.'
                     : `${waiting} families are already asking to join.`}{' '}
@@ -331,11 +336,13 @@ export default function Groups({ family, userId }) {
                 </p>
               )}
               <button
+                className="cp-btn cp-btn--dark cp-btn--block"
                 type="button"
                 disabled={busyKey === `seed:${g.id}`}
                 onClick={() => run(`seed:${g.id}`, () => seedOwnMembership(g.id, me), `You are now in ${g.name}.`)}
               >
                 {busyKey === `seed:${g.id}` ? 'Adding…' : 'Add me to this group'}
+                <span className="cp-arr" aria-hidden="true">→</span>
               </button>
             </div>
             );
@@ -343,67 +350,83 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
-      <h3>My groups</h3>
+      <h3 className="cp-h3" style={{ marginTop: '28px' }}>My groups</h3>
       {showEmptyStates && data.myGroups.length === 0 && (
-        <p>You are not in a group yet. Ask to join one below, or start your own.</p>
+        <div className="cp-empty">
+          <p>You are not in a group yet. Ask to join one below, or start your own.</p>
+        </div>
       )}
       {/* The roster below is a snapshot, not a fixed list, and the parent has
           no say in how it changes. Say so where they are actually looking at
           it, not only at the moment they asked to join. */}
       {data.myGroups.length > 0 && (
-        <p>
-          These lists can grow. In a group you organize, you decide who joins. In a group someone
-          else organizes, they decide, and they can keep adding families for as long as the group
-          exists. Each family they accept can see your name, your children's names, your general
-          area, your schedule, your email, and your phone. You are not asked first, and you do not
-          get a veto. If that stops working for you, leave the group.
-        </p>
+        <div className="cp-consent">
+          <p className="cp-label cp-label--muted cp-label--bar">Who can see your details</p>
+          <p>
+            These lists can grow. In a group you organize, you decide who joins. In a group someone
+            else organizes, they decide, and they can keep adding families for as long as the group
+            exists. Each family they accept can see your name, your children's names, your general
+            area, your schedule, your email, and your phone. You are not asked first, and you do not
+            get a veto. If that stops working for you, leave the group.
+          </p>
+        </div>
       )}
       {data.myGroups.map((g) => {
         const roster = data.rosters[g.id] ?? [];
         const requesters = data.requesters[g.id] ?? [];
         const isOrganizer = g.created_by === me;
         return (
-          <div key={g.id}>
-            <h4>{g.name}{isOrganizer ? ' (you organize this)' : ''}</h4>
-            <p>{g.area_label} · {summarizeSchedule(g)}</p>
-            {g.meeting_point && <p>Meeting point: {g.meeting_point}</p>}
+          <div className="cp-group" key={g.id}>
+            <div className="cp-group-head">
+              <h4 className="cp-h4">
+                {g.name}
+                {isOrganizer ? <span className="cp-tag">You organize this</span> : ''}
+              </h4>
+              <p className="cp-item-meta">{g.area_label} · {summarizeSchedule(g)}</p>
+              {g.meeting_point && <p className="cp-item-meta">Meeting point: {g.meeting_point}</p>}
+            </div>
 
-            <p><strong>Families in this group</strong></p>
+            <p className="cp-label cp-label--muted cp-label--bar">Families in this group</p>
             {roster.length === 0 ? (
-              <p>No members loaded yet.</p>
+              <div className="cp-empty">
+                <p>No members loaded yet.</p>
+              </div>
             ) : (
               <ul className="carpool-nearby-list">
                 {roster.map((m) => (
                   <li key={m.user_id}>
-                    <strong>{m.parent_name}</strong>, {m.child_names}
-                    <br />
-                    {m.area_label} · {summarizeSchedule(m)}
-                    <br />
-                    {m.contact_email && <a href={`mailto:${m.contact_email}`}>{m.contact_email}</a>}
-                    {m.contact_email && m.contact_phone ? ' · ' : ''}
-                    {m.contact_phone && <a href={`tel:${m.contact_phone}`}>{m.contact_phone}</a>}
+                    <p className="cp-item-name">{m.parent_name}</p>
+                    <p className="cp-item-meta">{m.child_names}</p>
+                    <p className="cp-item-meta">{m.area_label} · {summarizeSchedule(m)}</p>
+                    <p className="cp-item-contact">
+                      {m.contact_email && <a href={`mailto:${m.contact_email}`}>{m.contact_email}</a>}
+                      {m.contact_email && m.contact_phone ? ' ' : ''}
+                      {m.contact_phone && <a href={`tel:${m.contact_phone}`}>{m.contact_phone}</a>}
+                    </p>
                   </li>
                 ))}
               </ul>
             )}
 
             {isOrganizer && (
-              <div>
-                <p><strong>Families asking to join</strong></p>
+              <div className="cp-subblock">
+                <p className="cp-label cp-label--muted cp-label--bar">Families asking to join</p>
                 {requesters.length === 0 ? (
-                  <p>No one is waiting right now.</p>
+                  <div className="cp-empty">
+                    <p>No one is waiting right now.</p>
+                  </div>
                 ) : (
                   <ul className="carpool-nearby-list">
                     {/* pending_requesters carries no contact columns on
                         purpose. Contact details unlock only after an accept. */}
                     {requesters.map((r) => (
                       <li key={r.request_id}>
-                        <strong>{r.parent_name}</strong>, {r.child_names}
-                        <br />
-                        {r.area_label} · {summarizeSchedule(r)}
-                        <br />
+                        <p className="cp-item-name">{r.parent_name}</p>
+                        <p className="cp-item-meta">{r.child_names}</p>
+                        <p className="cp-item-meta">{r.area_label} · {summarizeSchedule(r)}</p>
+                        <div className="cp-item-actions">
                         <button
+                          className="cp-btn cp-btn--dark cp-btn--sm"
                           type="button"
                           disabled={busyKey === `accept:${r.request_id}`}
                           onClick={() => run(
@@ -415,6 +438,7 @@ export default function Groups({ family, userId }) {
                           {busyKey === `accept:${r.request_id}` ? 'Accepting…' : 'Accept'}
                         </button>{' '}
                         <button
+                          className="cp-btn cp-btn--ghost cp-btn--sm"
                           type="button"
                           disabled={busyKey === `decline:${r.request_id}`}
                           onClick={() => run(
@@ -425,6 +449,7 @@ export default function Groups({ family, userId }) {
                         >
                           {busyKey === `decline:${r.request_id}` ? 'Declining…' : 'Decline'}
                         </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -432,39 +457,47 @@ export default function Groups({ family, userId }) {
               </div>
             )}
 
-            <button
-              type="button"
-              disabled={busyKey === `leave:${g.id}`}
-              onClick={() => {
-                if (!window.confirm(`Leave ${g.name}? The other families will no longer see your contact details.`)) return;
-                run(`leave:${g.id}`, () => leaveGroup(g.id, me), `You left ${g.name}.`);
-              }}
-            >
-              {busyKey === `leave:${g.id}` ? 'Leaving…' : 'Leave group'}
-            </button>
+            <div className="cp-actions">
+              <button
+                className="cp-btn cp-btn--danger cp-btn--sm"
+                type="button"
+                disabled={busyKey === `leave:${g.id}`}
+                onClick={() => {
+                  if (!window.confirm(`Leave ${g.name}? The other families will no longer see your contact details.`)) return;
+                  run(`leave:${g.id}`, () => leaveGroup(g.id, me), `You left ${g.name}.`);
+                }}
+              >
+                {busyKey === `leave:${g.id}` ? 'Leaving…' : 'Leave group'}
+              </button>
+            </div>
           </div>
         );
       })}
 
       {data.pendingSent.length > 0 && (
-        <div>
-          <h3>Requests you sent</h3>
+        <div className="cp-subblock">
+          <h3 className="cp-h3">Requests you sent</h3>
           <ul className="carpool-nearby-list">
             {data.pendingSent.map((g) => (
               <li key={g.id}>
-                <strong>{g.name}</strong> · {g.area_label}
-                <br />
-                Request sent. The organizer can see your name, your children's names, your general
-                area, and your schedule while they decide. Your email and phone stay private unless
-                they accept. There is no time limit on their answer, so this request stays open
-                until they act on it or you withdraw it.
-                <br />
+                <p className="cp-item-name">{g.name}</p>
+                <p className="cp-item-meta">{g.area_label}</p>
+                <div className="cp-consent cp-consent--inline">
+                  <p>
+                    Request sent. The organizer can see your name, your children's names, your general
+                    area, and your schedule while they decide. Your email and phone stay private unless
+                    they accept. There is no time limit on their answer, so this request stays open
+                    until they act on it or you withdraw it.
+                  </p>
+                </div>
                 {/* A pending request is a live consent token: the organizer can
                     accept it at any point, including months from now, and that
                     accept is what releases contact details. Withdrawing is the
                     only way to take it back, so the control belongs right here
                     next to the request rather than buried in a settings page. */}
+                <div className="cp-item-actions">
                 <button
+                  className="cp-btn cp-btn--danger cp-btn--sm"
                   type="button"
                   disabled={busyKey === `withdraw:${g.requestId}`}
                   onClick={() => run(
@@ -478,35 +511,41 @@ export default function Groups({ family, userId }) {
                 >
                   {busyKey === `withdraw:${g.requestId}` ? 'Withdrawing…' : 'Withdraw request'}
                 </button>
+                </div>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      <h3>Groups near you</h3>
+      <h3 className="cp-h3" style={{ marginTop: '28px' }}>Groups near you</h3>
       {showEmptyStates && data.nearby.length === 0 && (
-        <p>No other groups to join right now. You can start one below.</p>
+        <div className="cp-empty">
+          <p>No other groups to join right now. You can start one below.</p>
+        </div>
       )}
       {data.nearby.length > 0 && (
         <ul className="carpool-nearby-list">
           {data.nearby.map((g) => (
             <li key={g.id}>
-              <strong>{g.name}</strong>
-              <br />
-              {g.area_label} · {summarizeSchedule(g)} · {g.distanceMiles.toFixed(1)} mi
-              {g.meeting_point && <><br />Meeting point: {g.meeting_point}</>}
-              <br />
-              <small>
-                Asking to join shows this organizer your name, your children's names, your general
-                area, and your schedule right away. Your email and phone are shared only if they
-                accept. If they do, this organizer alone decides who else joins after that, for as
-                long as the group exists. Every family they accept later can see the same details,
-                including your email and phone. You are not asked first. You can leave the group
-                whenever you want.
-              </small>
-              <br />
+              <p className="cp-item-name">{g.name}</p>
+              <p className="cp-item-meta">
+                {g.area_label} · {summarizeSchedule(g)} · {g.distanceMiles.toFixed(1)} mi
+              </p>
+              {g.meeting_point && <p className="cp-item-meta">Meeting point: {g.meeting_point}</p>}
+              <div className="cp-consent cp-consent--inline">
+                <p>
+                  Asking to join shows this organizer your name, your children's names, your general
+                  area, and your schedule right away. Your email and phone are shared only if they
+                  accept. If they do, this organizer alone decides who else joins after that, for as
+                  long as the group exists. Every family they accept later can see the same details,
+                  including your email and phone. You are not asked first. You can leave the group
+                  whenever you want.
+                </p>
+              </div>
+              <div className="cp-item-actions">
               <button
+                className="cp-btn cp-btn--dark cp-btn--block"
                 type="button"
                 disabled={busyKey === `request:${g.id}`}
                 onClick={() => run(
@@ -516,21 +555,22 @@ export default function Groups({ family, userId }) {
                 )}
               >
                 {busyKey === `request:${g.id}` ? 'Sending…' : 'Request to join'}
+                <span className="cp-arr" aria-hidden="true">→</span>
               </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <h3>Start a group</h3>
-      <p>
+      <h3 className="cp-h3" style={{ marginTop: '28px' }}>Start a group</h3>
+      <p className="cp-fine">
         Your group uses the general area you already gave us, never your street address. You become
         its first member and you decide who joins.
       </p>
       <form onSubmit={handleCreate}>
-        <p>
-          <label htmlFor="group-name">Group name</label>
-          <br />
+        <div className="cp-field">
+          <label className="cp-field-label" htmlFor="group-name">Group name</label>
           <input
             id="group-name"
             type="text"
@@ -539,36 +579,36 @@ export default function Groups({ family, userId }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Morning riders, west side"
           />
-        </p>
+        </div>
 
-        <p>
-          <label htmlFor="group-direction">Rides needed</label>
-          <br />
+        <div className="cp-field">
+          <label className="cp-field-label" htmlFor="group-direction">Rides needed</label>
           <select id="group-direction" value={direction} onChange={(e) => setDirection(e.target.value)}>
             <option value="both">Morning and afternoon</option>
             <option value="am">Morning</option>
             <option value="pm">Afternoon</option>
           </select>
-        </p>
+        </div>
 
         <fieldset>
           <legend>Days</legend>
-          {WEEKDAYS.map((day) => (
-            <label key={day} htmlFor={`group-day-${day}`} style={{ marginRight: '0.75rem' }}>
-              <input
-                id={`group-day-${day}`}
-                type="checkbox"
-                checked={weekdays.includes(day)}
-                onChange={() => toggleWeekday(day)}
-              />{' '}
-              {day}
-            </label>
-          ))}
+          <div className="cp-choices">
+            {WEEKDAYS.map((day) => (
+              <label className="cp-choice cp-choice--day" key={day} htmlFor={`group-day-${day}`}>
+                <input
+                  id={`group-day-${day}`}
+                  type="checkbox"
+                  checked={weekdays.includes(day)}
+                  onChange={() => toggleWeekday(day)}
+                />{' '}
+                {day}
+              </label>
+            ))}
+          </div>
         </fieldset>
 
-        <p>
-          <label htmlFor="group-meeting">Meeting point (optional)</label>
-          <br />
+        <div className="cp-field">
+          <label className="cp-field-label" htmlFor="group-meeting">Meeting point (optional)</label>
           <input
             id="group-meeting"
             type="text"
@@ -576,12 +616,12 @@ export default function Groups({ family, userId }) {
             onChange={(e) => setMeetingPoint(e.target.value)}
             placeholder="A public spot such as a library lot"
           />
-          <br />
-          <small>Pick somewhere public. Please do not put a home address here.</small>
-        </p>
+          <p className="cp-help">Pick somewhere public. Please do not put a home address here.</p>
+        </div>
 
-        <button type="submit" disabled={busyKey === 'create'}>
+        <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={busyKey === 'create'}>
           {busyKey === 'create' ? 'Creating…' : 'Create group'}
+          <span className="cp-arr" aria-hidden="true">→</span>
         </button>
       </form>
     </section>

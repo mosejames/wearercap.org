@@ -216,12 +216,15 @@ export default function Onboarding() {
   if (step === 'form') {
     return (
       <div className="carpool-shell">
-        <h1>Welcome to RCA Carpool</h1>
-        <p>Add your family and we'll show you who is already carpooling near you.</p>
+        <p className="cp-label"><span className="cp-num">01</span>Start here</p>
+        <h1 className="cp-h1">RCA Carpool for <span className="cp-hl">families.</span></h1>
+        <p className="cp-lede">Add your family and we will show you who is already carpooling near you.</p>
         <FamilyForm family={draft} submitLabel="Continue" heading="Your family" onSubmitData={handleFamilySubmit} />
-        <p>
+        <hr className="cp-rule" />
+        <p className="cp-fine">
           Already added your family?{' '}
           <button
+            className="cp-btn cp-btn--quiet"
             type="button"
             onClick={() => {
               // A stash written while filling this form out has no purpose
@@ -238,24 +241,30 @@ export default function Onboarding() {
   if (step === 'signin-email') {
     return (
       <div className="carpool-shell">
-        <h1>Sign in</h1>
-        <p>Enter the email you used to add your family and we'll send you a code.</p>
+        <p className="cp-label cp-label--bar">Welcome back</p>
+        <h1 className="cp-h1">Sign <span className="cp-hl">in.</span></h1>
+        <p className="cp-lede">Enter the email you used to add your family and we will send you a code.</p>
         <form onSubmit={handleSigninSubmit}>
-          <label>Email
+          <div className={signinError ? 'cp-field cp-field--invalid' : 'cp-field'}>
+            <label className="cp-field-label" htmlFor="signin-email">Email</label>
             <input
+              id="signin-email"
               type="email"
               required
               value={signinEmail}
               onChange={(e) => setSigninEmail(e.target.value)}
             />
-          </label>
+          </div>
           {signinError && <p role="alert">{signinError}</p>}
-          <button type="submit" disabled={signinStatus === 'sending'}>
+          <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={signinStatus === 'sending'}>
             {signinStatus === 'sending' ? 'Sending…' : 'Send me a code'}
+            <span className="cp-arr" aria-hidden="true">→</span>
           </button>
         </form>
-        <p>
-          <button type="button" onClick={() => setStep('form')}>I'm new here</button>
+        <hr className="cp-rule" />
+        <p className="cp-fine">
+          New to carpool?{' '}
+          <button className="cp-btn cp-btn--quiet" type="button" onClick={() => setStep('form')}>Add your family</button>
         </p>
       </div>
     );
@@ -264,11 +273,15 @@ export default function Onboarding() {
   // step === 'code'
   return (
     <div className="carpool-shell">
-      <h1>Check your email</h1>
-      <p>We sent a 6-digit code to {email}.</p>
+      <p className="cp-label"><span className="cp-num">02</span>Almost there</p>
+      <h1 className="cp-h1">Check your <span className="cp-hl">email.</span></h1>
+      <p className="cp-lede">We sent a 6-digit code to {email}.</p>
       <form onSubmit={handleVerify}>
-        <label>Code
+        <div className={verifyError ? 'cp-field cp-field--invalid' : 'cp-field'}>
+          <label className="cp-field-label" htmlFor="otp-code">Your 6-digit code</label>
           <input
+            id="otp-code"
+            className="cp-code-input"
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -278,21 +291,23 @@ export default function Onboarding() {
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
           />
-        </label>
+        </div>
         {verifyError && <p role="alert">{verifyError}</p>}
-        <button type="submit" disabled={verifyStatus === 'verifying'}>
-          {verifyStatus === 'verifying' ? 'Verifying…' : 'Verify'}
+        <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={verifyStatus === 'verifying'}>
+          {verifyStatus === 'verifying' ? 'Verifying…' : 'Verify my code'}
+          <span className="cp-arr" aria-hidden="true">→</span>
         </button>
       </form>
-      <p>
-        <button type="button" onClick={handleResend} disabled={resendStatus === 'sending'}>
+      <hr className="cp-rule" />
+      <p className="cp-fine">
+        <button className="cp-btn cp-btn--quiet" type="button" onClick={handleResend} disabled={resendStatus === 'sending'}>
           {resendStatus === 'sending' ? 'Sending…' : 'Send a new code'}
         </button>
-        {resendStatus === 'sent' && <span> {resendMessage}</span>}
+        {resendStatus === 'sent' && <span className="cp-serif"> {resendMessage}</span>}
         {resendStatus === 'error' && <span role="alert"> {resendMessage}</span>}
       </p>
-      <p>
-        <button type="button" onClick={() => setStep(origin)}>Use a different email</button>
+      <p className="cp-fine">
+        <button className="cp-btn cp-btn--quiet" type="button" onClick={() => setStep(origin)}>Use a different email</button>
       </p>
     </div>
   );

@@ -96,34 +96,39 @@ export default function MapView({ family, isPending }) {
   }, [family.user_id, isPending]);
 
   return (
-    <div>
+    <section className="cp-subblock">
+      <p className="cp-label cp-label--bar">Families near you</p>
       <div ref={mapContainerRef} className="carpool-map" />
       {error && <p role="alert">{error}</p>}
-      {loading && !error && <p>Loading map…</p>}
+      {loading && !error && <p className="cp-loading" style={{ marginTop: '16px' }}>Loading the map</p>}
 
       {!loading && !error && isPending && (
-        <p>
-          {count > 0
-            ? `${count} famil${count === 1 ? 'y' : 'ies'} already in your area. They'll appear on the map when you're approved.`
-            : "You're the first in your area. Invite a neighbor!"}
-        </p>
+        <div className="cp-note" style={{ marginTop: '16px' }}>
+          <p>
+            {count > 0
+              ? `${count} famil${count === 1 ? 'y' : 'ies'} already in your area. They'll appear on the map once you're approved.`
+              : "You're the first family in your area. Invite a neighbor."}
+          </p>
+        </div>
       )}
 
       {!loading && !error && !isPending && (
         rows.length === 0 ? (
-          <p>No other families in your area yet. Check back soon.</p>
+          <div className="cp-empty" style={{ marginTop: '16px' }}>
+            <p>No other families in your area yet. Check back soon.</p>
+          </div>
         ) : (
-          <ul className="carpool-nearby-list">
+          <ul className="carpool-nearby-list" style={{ marginTop: '16px' }}>
             {rows.map((f) => (
               <li key={f.user_id}>
-                <strong>{f.parent_name}</strong>, {f.child_names}
-                <br />
-                {f.area_label} · {scheduleText(f)} · {f.distanceMiles.toFixed(1)} mi
+                <p className="cp-item-name">{f.parent_name}</p>
+                <p className="cp-item-meta">{f.child_names}</p>
+                <p className="cp-item-meta">{f.area_label} · {scheduleText(f)} · {f.distanceMiles.toFixed(1)} mi</p>
               </li>
             ))}
           </ul>
         )
       )}
-    </div>
+    </section>
   );
 }

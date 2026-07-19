@@ -31,20 +31,28 @@ export default function AdminApprovals({ onBack = null }) {
 
   return (
     <div className="carpool-shell">
-      {onBack && <button onClick={onBack}>← Back to my family</button>}
-      <h1>Pending approvals</h1>
-      <button onClick={() => supabase.auth.signOut()}>Sign out</button>
-      {loading && <p>Loading…</p>}
+      {onBack && <button className="cp-btn cp-btn--quiet" onClick={onBack}>← Back to my family</button>}
+      <p className="cp-label cp-label--bar">Committee</p>
+      <h1 className="cp-h1">Pending <span className="cp-hl">approvals.</span></h1>
+      {loading && <p className="cp-loading">Loading the queue</p>}
       {error && <p role="alert">{error}</p>}
-      {!loading && pending.length === 0 && <p>No one waiting. All caught up.</p>}
-      <ul>
+      {!loading && pending.length === 0 && (
+        <div className="cp-empty">
+          <p>No one is waiting. All caught up.</p>
+        </div>
+      )}
+      <ul className="carpool-nearby-list">
         {pending.map((m) => (
           <li key={m.user_id}>
-            {m.email}
-            <button onClick={() => approve(m.user_id)}>Approve</button>
+            <p className="cp-item-name">{m.email}</p>
+            <div className="cp-item-actions">
+              <button className="cp-btn cp-btn--dark cp-btn--sm" onClick={() => approve(m.user_id)}>Approve</button>
+            </div>
           </li>
         ))}
       </ul>
+      <hr className="cp-rule" />
+      <button className="cp-btn cp-btn--quiet" onClick={() => supabase.auth.signOut()}>Sign out</button>
     </div>
   );
 }

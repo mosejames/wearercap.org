@@ -85,11 +85,14 @@ export default function Ready({ isAdmin = false, isPending = false }) {
     return () => { active = false; };
   }, []);
 
-  if (loading) return <div className="carpool-shell"><p>Loading…</p></div>;
+  if (loading) return <div className="carpool-shell"><p className="cp-loading">Loading your family</p></div>;
   if (error) return (
     <div className="carpool-shell">
-      <p role="alert">Something went wrong: {error}</p>
-      <button onClick={() => window.location.reload()}>Try again</button>
+      <p className="cp-label cp-label--bar">Something went wrong</p>
+      <p role="alert">{error}</p>
+      <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => window.location.reload()}>
+        Try again <span className="cp-arr" aria-hidden="true">→</span>
+      </button>
     </div>
   );
 
@@ -100,13 +103,17 @@ export default function Ready({ isAdmin = false, isPending = false }) {
 
   const adminBar = isAdmin ? (
     <div className="carpool-shell" style={{ paddingBottom: 0 }}>
-      <button onClick={() => setShowApprovals(true)}>Pending approvals →</button>
+      <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => setShowApprovals(true)}>
+        Pending approvals <span className="cp-arr" aria-hidden="true">→</span>
+      </button>
     </div>
   ) : null;
 
   const pendingBanner = isPending ? (
     <div className="carpool-shell" style={{ paddingBottom: 0 }}>
-      <p><strong>You're awaiting approval.</strong> A committee admin has been notified. Meanwhile, set up your family below.</p>
+      <div className="cp-banner cp-banner--info">
+        <strong>You're awaiting approval.</strong> A committee admin has been notified. Meanwhile, set up your family below.
+      </div>
     </div>
   ) : null;
 
@@ -134,17 +141,26 @@ export default function Ready({ isAdmin = false, isPending = false }) {
       {pendingBanner}
       {adminBar}
       <div className="carpool-shell">
-        <h1>Your family</h1>
-        <p><strong>{family.parent_name}</strong>, {family.child_names}</p>
-        <p>Area: {family.area_label}</p>
-        <p>Needs: {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}</p>
-        <button onClick={() => setEditing(true)}>Edit</button>
+        <p className="cp-label cp-label--bar">Your account</p>
+        <h1 className="cp-h1">Your <span className="cp-hl">family.</span></h1>
+        <div className="cp-card">
+          <p className="cp-item-name">{family.parent_name}</p>
+          <p className="cp-item-meta">{family.child_names}</p>
+          <p className="cp-item-meta">Area {family.area_label}</p>
+          <p className="cp-item-meta">
+            {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}
+          </p>
+          <div className="cp-item-actions">
+            <button className="cp-btn cp-btn--ghost cp-btn--sm" onClick={() => setEditing(true)}>Edit my family</button>
+          </div>
+        </div>
         <MapView family={family} isPending={isPending} />
         {/* Same branch as MapView, so family (and therefore
             family.area_lat/area_lng) is always present: rankGroups measures
             every distance against it. Approved members only. */}
         {!isPending && <Groups family={family} userId={userId} />}
-        <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+        <hr className="cp-rule" />
+        <button className="cp-btn cp-btn--quiet" onClick={() => supabase.auth.signOut()}>Sign out</button>
       </div>
     </>
   );
