@@ -217,7 +217,11 @@ export default function Onboarding() {
     return (
       <div className="carpool-shell">
         <p className="cp-label"><span className="cp-num">01</span>Start here</p>
-        <h1 className="cp-h1">RCA Carpool for <span className="cp-hl">families.</span></h1>
+        {/* "RCAP Carpool", never "RCA Carpool": RCAP is the parent community's
+            own brand, and this tool is parent-run. Naming it after the school
+            implies the school sponsors it, which it does not (Mose,
+            2026-07-19). Same rule for every email subject and sender name. */}
+        <h1 className="cp-h1">RCAP Carpool for <span className="cp-hl">families.</span></h1>
         <p className="cp-lede">Add your family and we will show you who is already carpooling near you.</p>
         <FamilyForm family={draft} submitLabel="Continue" heading="Your family" onSubmitData={handleFamilySubmit} />
         <hr className="cp-rule" />

@@ -27,7 +27,7 @@ export default function SharingExplainer({ onBack }) {
 
       <h3 className="cp-h3 cp-h3--section">On the family map</h3>
       <p>
-        Once your family is approved, other approved RCA families can see
+        Once your family is approved, other approved RCAP families can see
         your name, your children's names, your general area, and your
         schedule. That is what makes finding each other possible. Your email
         and phone are not part of the map.
@@ -70,6 +70,12 @@ export default function SharingExplainer({ onBack }) {
         can step in if something is wrong. They see what approved parents
         see, plus the signup queue. Questions or concerns reach a person at{' '}
         <a href="mailto:carpool@wearercap.org">carpool@wearercap.org</a>.
+      </p>
+      <p>
+        RCAP Carpool is organized independently by parent volunteers. It is
+        not sponsored by, run by, or affiliated with Ron Clark Academy. The
+        school does not see this site's information and is not responsible
+        for the carpools families arrange here.
       </p>
     </div>
   );

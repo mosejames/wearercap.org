@@ -22,7 +22,7 @@
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  - auto-injected by the platform
 //   WEBHOOK_SECRET                            - shared secret, set via `supabase secrets set`
 //   RESEND_API_KEY                            - Resend API key
-//   NOTIFY_FROM                               - verified "From" address, e.g. "RCA Carpool <carpool@wearercap.org>"
+//   NOTIFY_FROM                               - verified "From" address, e.g. "RCAP Carpool <carpool@wearercap.org>"
 //   SITE_URL                                  - e.g. "https://wearercap.org/carpool"
 
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -122,7 +122,7 @@ async function handleMemberInsert(
 
   const subject = "New carpool signup awaiting approval";
   const html = `
-    <p>${newEmail} just signed up for RCA Carpool and is waiting for approval.</p>
+    <p>${newEmail} just signed up for RCAP Carpool and is waiting for approval.</p>
     ${siteLinkParagraph()}
   `;
 
@@ -142,9 +142,9 @@ async function handleMemberApproved(
   const email = String(record.email ?? "");
   if (!email) return [];
 
-  const subject = "You're approved — your carpool map is live";
+  const subject = "You're approved. Your carpool map is live";
   const html = `
-    <p>You're approved for RCA Carpool. Your carpool map is live.</p>
+    <p>You're approved for RCAP Carpool. Your carpool map is live.</p>
     ${siteLinkParagraph()}
   `;
 
