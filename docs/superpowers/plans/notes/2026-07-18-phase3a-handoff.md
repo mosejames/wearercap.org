@@ -1,7 +1,8 @@
 # Phase 3A handoff (groups) — 2026-07-18
 
-Branch `carpool-phase3a` is finished and reviewed. **Not merged, on purpose.** Two
-steps, in this order.
+**DONE 2026-07-19: 0005 applied, branch merged, live in production.** The admin
+panel followed the same day (0006 + 0007 applied, `carpool-admin` merged). This
+note is kept for the acceptance script and the product decisions below.
 
 ## Step 1: apply the migration (you have to do this, I can't)
 
