@@ -65,11 +65,17 @@ $$;
 -- already been accepted is stale consent, not live consent. If it stayed
 -- valid after acceptance, a parent who joins and later leaves (deleting
 -- their own membership) would leave behind an 'accepted' request that lets
--- the organizer silently re-add them forever with no fresh ask. The intended
--- accept flow is therefore ORDER-DEPENDENT: the client must INSERT the
--- membership row (which this function gates) WHILE the request is still
--- 'pending', and only AFTER that insert succeeds mark the request
--- 'accepted'. Flipping that order breaks the accept flow by design.
+-- the organizer silently re-add them forever with no fresh ask.
+--
+-- Acceptance goes through accept_join_request(request_id), a single
+-- SECURITY DEFINER call that inserts the membership row and marks the
+-- request 'accepted' in one transaction, so there is no client-visible
+-- ordering to get right or wrong. Decisions are terminal: once a request is
+-- 'accepted' or 'declined' it can never move again (enforced by both
+-- join_requests_update_organizer's WITH CHECK and the
+-- join_requests_pin_identity trigger), so a family whose request was
+-- declined, or who joined and later left, must file a fresh request via
+-- request_to_join() to be considered again.
 --
 -- Also gated on the caller: has_open_request() is granted to all
 -- `authenticated` (see memberships_insert_organizer_or_self_create, which
@@ -157,14 +163,14 @@ create policy memberships_insert_organizer_or_self_create
 drop policy if exists memberships_delete_self_or_organizer on public.memberships;
 create policy memberships_delete_self_or_organizer
   on public.memberships for delete
-  using (user_id = auth.uid() or public.is_group_organizer(group_id));
+  using (user_id = auth.uid() or (public.is_group_organizer(group_id) and public.is_approved_member()));
 
 -- JOIN REQUESTS
 -- Read: the requester sees their own; the organizer sees requests for theirs.
 drop policy if exists join_requests_select_self_or_organizer on public.join_requests;
 create policy join_requests_select_self_or_organizer
   on public.join_requests for select
-  using (user_id = auth.uid() or public.is_group_organizer(group_id) or public.is_admin());
+  using (user_id = auth.uid() or (public.is_group_organizer(group_id) and public.is_approved_member()) or public.is_admin());
 
 -- Insert: only for yourself, only as pending, only if approved, and not if
 -- you are already in that group.
@@ -178,17 +184,127 @@ create policy join_requests_insert_self
     and not public.is_group_member(group_id)
   );
 
--- Update: ONLY the organizer decides. (A requester withdrawing is a delete.)
+-- Update: ONLY the organizer decides, and only ever INTO a decided state.
+-- 'pending' can never be written by this policy (it can only ever come from
+-- the requester's own INSERT via join_requests_insert_self), so a decision
+-- is terminal: an organizer cannot PATCH an already-decided request back to
+-- 'pending' to silently re-add a family who left. See the
+-- join_requests_pin_identity trigger below for a second, independent layer
+-- of the same rule.
 drop policy if exists join_requests_update_organizer on public.join_requests;
 create policy join_requests_update_organizer
   on public.join_requests for update
-  using (public.is_group_organizer(group_id))
-  with check (public.is_group_organizer(group_id));
+  using (public.is_group_organizer(group_id) and public.is_approved_member())
+  with check (public.is_group_organizer(group_id) and status in ('accepted', 'declined'));
 
 drop policy if exists join_requests_delete_self on public.join_requests;
 create policy join_requests_delete_self
   on public.join_requests for delete
   using (user_id = auth.uid());
+
+-- CONSENT LIFECYCLE RPCs. These three SECURITY DEFINER functions are the
+-- intended route for every join-request state change; the direct-table
+-- policies above remain as defense in depth, not the primary path.
+--
+-- request_to_join(): lets an approved member file (or re-file) a request.
+-- Deleting any existing row for (gid, auth.uid()) before inserting a fresh
+-- 'pending' row means a family whose earlier request was accepted or
+-- declined (or who joined and later left) is never stuck behind the
+-- unique(group_id, user_id) constraint with no way back in.
+create or replace function public.request_to_join(gid uuid)
+returns uuid language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  new_id uuid;
+begin
+  if not public.is_approved_member() then
+    raise exception 'Only approved members can request to join';
+  end if;
+
+  if not exists (select 1 from public.groups g where g.id = gid) then
+    raise exception 'That group does not exist';
+  end if;
+
+  if public.is_group_member(gid) then
+    raise exception 'You are already in this group';
+  end if;
+
+  delete from public.join_requests where group_id = gid and user_id = auth.uid();
+
+  insert into public.join_requests (group_id, user_id, status)
+  values (gid, auth.uid(), 'pending')
+  returning id into new_id;
+
+  return new_id;
+end
+$$;
+
+revoke all on function public.request_to_join(uuid) from public;
+revoke execute on function public.request_to_join(uuid) from anon;
+grant execute on function public.request_to_join(uuid) to authenticated;
+
+-- accept_join_request(): inserts the membership row and marks the request
+-- 'accepted' in ONE call, so there is no window where a half-completed
+-- accept leaves a member whose request is still 'pending'.
+create or replace function public.accept_join_request(request_id uuid)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  r public.join_requests%rowtype;
+begin
+  select * into r from public.join_requests where id = request_id;
+  if not found then
+    raise exception 'Join request not found';
+  end if;
+
+  if not (public.is_group_organizer(r.group_id) and public.is_approved_member()) then
+    raise exception 'Only the group organizer can accept requests';
+  end if;
+
+  if r.status <> 'pending' then
+    raise exception 'That request has already been decided';
+  end if;
+
+  insert into public.memberships (group_id, user_id)
+  values (r.group_id, r.user_id)
+  on conflict do nothing;
+
+  update public.join_requests
+  set status = 'accepted', decided_at = now()
+  where id = r.id;
+end
+$$;
+
+revoke all on function public.accept_join_request(uuid) from public;
+revoke execute on function public.accept_join_request(uuid) from anon;
+grant execute on function public.accept_join_request(uuid) to authenticated;
+
+-- decline_join_request(): same guards as accept, no membership side effect.
+create or replace function public.decline_join_request(request_id uuid)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  r public.join_requests%rowtype;
+begin
+  select * into r from public.join_requests where id = request_id;
+  if not found then
+    raise exception 'Join request not found';
+  end if;
+
+  if not (public.is_group_organizer(r.group_id) and public.is_approved_member()) then
+    raise exception 'Only the group organizer can decline requests';
+  end if;
+
+  if r.status <> 'pending' then
+    raise exception 'That request has already been decided';
+  end if;
+
+  update public.join_requests
+  set status = 'declined', decided_at = now()
+  where id = r.id;
+end
+$$;
+
+revoke all on function public.decline_join_request(uuid) from public;
+revoke execute on function public.decline_join_request(uuid) from anon;
+grant execute on function public.decline_join_request(uuid) to authenticated;
 
 -- CONTACT REVEAL. The ONE sanctioned path to another family's contact info.
 -- SECURITY DEFINER bypasses the families RLS; is_group_member() is the gate.
@@ -237,7 +353,8 @@ language sql security definer set search_path = public, pg_temp as $$
   join public.families f on f.user_id = r.user_id
   where r.group_id = gid
     and r.status = 'pending'
-    and public.is_group_organizer(gid);
+    and public.is_group_organizer(gid)
+    and public.is_approved_member();
 $$;
 
 revoke all on function public.pending_requesters(uuid) from public;
@@ -304,18 +421,38 @@ grant update (status, decided_at) on public.join_requests to authenticated;
 --    column list) on join_requests and silently undoes step 1 above, this
 --    trigger still blocks any attempt to move a request to a different
 --    user_id or group_id after creation.
+-- Also enforces that a decision is terminal: once old.status is 'accepted'
+-- or 'declined', no further update to that row is permitted, regardless of
+-- which columns it touches. This is the second, independent layer for the
+-- same invariant join_requests_update_organizer's WITH CHECK enforces above
+-- (I1): even a future broad `grant update` that reopens the column-level
+-- grants, or a bug in that policy, still cannot resurrect a decided request
+-- into 'pending' through this trigger. accept_join_request() and
+-- decline_join_request() only ever move a row OUT of 'pending' once, so
+-- they always pass (old.status = 'pending' at the moment they run).
 create or replace function public.join_requests_pin_identity()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
   if new.user_id is distinct from old.user_id or new.group_id is distinct from old.group_id then
     raise exception 'A join request cannot be reassigned to another family or group';
   end if;
+
+  if old.status <> 'pending' then
+    raise exception 'A decided join request cannot be reopened; the family must ask again';
+  end if;
+
   return new;
 end
 $$;
 revoke all on function public.join_requests_pin_identity() from public;
+revoke execute on function public.join_requests_pin_identity() from anon;
 
 drop trigger if exists join_requests_identity_immutable on public.join_requests;
 create trigger join_requests_identity_immutable
   before update on public.join_requests
   for each row execute function public.join_requests_pin_identity();
+
+-- M2: close the anon gap on the table-level UPDATE grant too. Step 1 above
+-- narrows `authenticated` to (status, decided_at); anon should have none of
+-- it, since anon has no business updating join_requests at all.
+revoke update on public.join_requests from anon;
