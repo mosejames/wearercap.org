@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
 import { stashPendingFamily, readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
+import { GOOGLE_CLIENT_ID, loadGoogleIdentity, createGoogleNonce } from '../googleIdentity.js';
 import FamilyForm from './FamilyForm.jsx';
 
 // Supabase's verifyOtp failure message is "Token has expired or is
@@ -108,75 +109,175 @@ function GoogleMark() {
   );
 }
 
-// Form-first onboarding: a parent fills out the family form, we stash it
-// locally, send an emailed 6-digit code, and verify it inline without ever
-// sending them off the page. Task 3 makes Ready pick up the stash and save
-// the family once auth completes (RLS requires an authenticated user_id).
-export default function Onboarding() {
+// The Google option, in one self-contained piece so the two signed-out steps
+// cannot ever disagree about which path they are on.
+//
+// TWO PATHS, ONE BUTTON'S WORTH OF SPACE.
+//
+// Primary is Google Identity Services: we get the ID token in the browser and
+// hand it to Supabase, so Google's own screen names wearercap.org instead of
+// the project's supabase.co host. Google renders that button itself, inside an
+// iframe, which is why nothing here tries to restyle it beyond width. Fighting
+// an iframe you do not control ends with a button that looks wrong or does not
+// work, and this is the control the whole screen depends on.
+//
+// Fallback is the original signInWithOAuth redirect, unchanged. It is not a
+// nicety. Branding is the thing we would like; a working way in is the thing a
+// parent came for. Anything that stops GIS from putting a real, tappable button
+// on the screen drops us to the redirect button instead:
+//
+//   1. VITE_GOOGLE_CLIENT_ID missing or empty (most likely a build that never
+//      got the var). Decided synchronously, so no script is ever requested.
+//   2. The gsi/client script fails to load, or hangs (8s timeout in
+//      loadGoogleIdentity, because a hung request never fires onerror).
+//   3. It loads but window.google.accounts.id is not there.
+//   4. initialize or renderButton throws, or Web Crypto is unavailable so the
+//      nonce cannot be built.
+//   5. THE SILENT ONE: GIS loads, initialize and renderButton both return
+//      without complaint, and the container stays empty. That is what an
+//      unauthorized JavaScript origin looks like from the page's side, and it
+//      is the failure most likely to reach production, because it depends on
+//      Google Cloud config rather than on any code here. Nothing throws, so we
+//      watch the container instead and only call the path healthy once a child
+//      element with real height is in it.
+//   6. The credential comes back but signInWithIdToken rejects it.
+//
+// Cases 1 to 5 swap the button before the parent ever touches it. Case 6 is
+// the only one they see happen, so it says so and leaves them the button.
+function GoogleSignIn() {
   const mountedRef = useRef(true);
+  const buttonRef = useRef(null);
+  const nonceRef = useRef('');
+
+  // 'probing'  GIS is being set up; the container is on screen but empty.
+  // 'gis'      Google's own button is rendered and measured.
+  // 'fallback' our redirect button.
+  const [path, setPath] = useState(GOOGLE_CLIENT_ID ? 'probing' : 'fallback');
+  const [googleStatus, setGoogleStatus] = useState('idle'); // idle | redirecting | verifying
+  const [googleError, setGoogleError] = useState('');
+
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
-  const [step, setStep] = useState('form'); // 'form' | 'code' | 'signin-email'
-  // Which step "Use a different email" should return to from the code step.
-  const [origin, setOrigin] = useState('form');
-  const [email, setEmail] = useState('');
-  // Snapshot of the last-submitted family form, in FamilyForm's `family`
-  // prop shape, so returning to the form step (e.g. "Use a different
-  // email") re-mounts it pre-filled instead of blank. Seeded lazily from
-  // any stash left over from a previous mount (e.g. a reload while
-  // switching to the mail app to read the code) so the draft survives that
-  // reload instead of coming back blank. Deliberately does NOT auto-jump to
-  // the code step; starting back on the prefilled form is the safer
-  // behavior since we can't know the code was ever sent successfully.
-  // A stash whose SHAPE drifted (e.g. written before a deploy that changed the
-  // payload) would make stashToFormShape throw during render. There is no error
-  // boundary above this component, so that would white-screen the signed-out
-  // entry point and survive a reload, bricking the tab. Discard it instead.
-  const [draft, setDraft] = useState(() => {
-    try {
-      const p = readPendingFamily();
-      return p ? stashToFormShape(p) : null;
-    } catch {
-      clearPendingFamily();
-      return null;
-    }
-  });
-
-  const [code, setCode] = useState('');
-  const [verifyStatus, setVerifyStatus] = useState('idle'); // idle | verifying | error
-  const [verifyError, setVerifyError] = useState('');
-  const [resendStatus, setResendStatus] = useState('idle'); // idle | sending | sent | error
-  const [resendMessage, setResendMessage] = useState('');
-
-  const [googleStatus, setGoogleStatus] = useState('idle'); // idle | redirecting
-  const [googleError, setGoogleError] = useState('');
-
-  const [signinEmail, setSigninEmail] = useState('');
-  const [signinStatus, setSigninStatus] = useState('idle'); // idle | sending | error
-  const [signinError, setSigninError] = useState('');
-
-  function goToCode(nextEmail, nextOrigin) {
+  // Google hands the credential straight to this. Declared as a function so it
+  // is hoisted above the effect that registers it.
+  async function handleCredential(response) {
     if (!mountedRef.current) return;
-    setEmail(nextEmail);
-    setOrigin(nextOrigin);
-    setCode('');
-    setVerifyStatus('idle');
-    setVerifyError('');
-    setResendStatus('idle');
-    setResendMessage('');
-    setStep('code');
+    setGoogleError('');
+    setGoogleStatus('verifying');
+    try {
+      // The unhashed nonce goes here; Google got the hashed one. Same auth
+      // event as the redirect path, same freshly minted JWT, so App.jsx's
+      // withClockSkewRetry still covers the "issued at future" case.
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: response?.credential,
+        nonce: nonceRef.current,
+      });
+      if (!mountedRef.current) return;
+      if (error) {
+        setGoogleStatus('idle');
+        setPath('fallback');
+        setGoogleError('We could not finish signing you in with Google. Please try the button above, or use your email below.');
+        return;
+      }
+      // Success: onAuthStateChange in App.jsx re-renders into the signed-in
+      // view. Nothing else to do here.
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setGoogleStatus('idle');
+      setPath('fallback');
+      setGoogleError('We could not finish signing you in with Google. Please try the button above, or use your email below.');
+      console.warn('[carpool] signInWithIdToken threw', err);
+    }
   }
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) {
+      console.info('[carpool] Google sign in path: fallback (no VITE_GOOGLE_CLIENT_ID)');
+      return undefined;
+    }
+    let cancelled = false;
+    let pollTimer = null;
+    const toFallback = (reason) => {
+      if (cancelled || !mountedRef.current) return;
+      console.info('[carpool] Google sign in path: fallback (%s)', reason);
+      setPath('fallback');
+    };
+
+    (async () => {
+      try {
+        const [gis, { nonce, hashedNonce }] = await Promise.all([
+          loadGoogleIdentity(),
+          createGoogleNonce(),
+        ]);
+        if (cancelled || !mountedRef.current) return;
+        nonceRef.current = nonce;
+        gis.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredential,
+          nonce: hashedNonce,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        const host = buttonRef.current;
+        if (!host) { toFallback('no container'); return; }
+        host.innerHTML = '';
+        // Width is the ONLY thing we tell Google about appearance. Its own
+        // limits are 200 to 400, and the shell is narrower than 400 on a phone.
+        const measured = Math.round(host.getBoundingClientRect().width) || 320;
+        gis.renderButton(host, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'pill',
+          logo_alignment: 'left',
+          width: Math.max(200, Math.min(400, measured)),
+        });
+
+        // renderButton returns before anything is painted, and returns just as
+        // quietly when it will never paint at all. Poll until a real child with
+        // height shows up, or give up and use the redirect button.
+        const deadline = Date.now() + 2500;
+        const check = () => {
+          if (cancelled || !mountedRef.current) return;
+          const el = buttonRef.current;
+          const rendered = !!el && el.childElementCount > 0 && el.getBoundingClientRect().height > 0;
+          if (rendered) {
+            console.info('[carpool] Google sign in path: gis (button rendered)');
+            setPath('gis');
+            return;
+          }
+          if (Date.now() >= deadline) {
+            toFallback('GIS rendered nothing, check the authorized JavaScript origins');
+            return;
+          }
+          pollTimer = setTimeout(check, 150);
+        };
+        check();
+      } catch (e) {
+        toFallback(e?.message ?? 'setup failed');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // AUTH FIRST, and that is the whole point of the design. The email path is
   // form first: fill the family in, stash it, verify a code, and Ready applies
   // the stash. Google inverts that. The parent taps this before typing
   // anything, so there is no payload to stash and stashPendingFamily is never
-  // called on this path. They come back authenticated with no family row,
-  // Ready renders FamilyForm, and FamilyForm's own onSubmitData saves it
-  // directly. The stash and its matching rules are simply not in the picture.
+  // called on this path, on EITHER of the two Google flows. They come back
+  // authenticated with no family row, Ready renders FamilyForm, and
+  // FamilyForm's own onSubmitData saves it directly. The stash and its matching
+  // rules are simply not in the picture.
   //
   // redirectTo is computed here rather than read from an env var so the same
   // build works on localhost:5173 and on wearercap.org. It must be the carpool
@@ -256,23 +357,84 @@ export default function Onboarding() {
     }
   }
 
-  // Rendered on both signed-out steps, so a parent meets the same quick path
-  // whether they are new or returning on a new device. One handler, one status,
-  // one error: only one step is ever mounted, so they cannot disagree.
-  const googleBlock = (
+  return (
     <>
-      <button
-        className="cp-btn cp-btn--ghost cp-btn--block"
-        type="button"
-        onClick={handleGoogle}
-        disabled={googleStatus === 'redirecting'}
-      >
-        <GoogleMark />
-        {googleStatus === 'redirecting' ? 'Opening Google' : 'Continue with Google'}
-      </button>
+      <div ref={buttonRef} className={path === 'fallback' ? 'cp-gsi cp-gsi--off' : 'cp-gsi'} />
+      {path === 'fallback' && (
+        <button
+          className="cp-btn cp-btn--ghost cp-btn--block"
+          type="button"
+          onClick={handleGoogle}
+          disabled={googleStatus === 'redirecting'}
+        >
+          <GoogleMark />
+          {googleStatus === 'redirecting' ? 'Opening Google' : 'Continue with Google'}
+        </button>
+      )}
+      {googleStatus === 'verifying' && <p className="cp-help">Signing you in with Google</p>}
       {googleError && <p className="cp-google-alert" role="alert">{googleError}</p>}
     </>
   );
+}
+
+// Form-first onboarding: a parent fills out the family form, we stash it
+// locally, send an emailed 6-digit code, and verify it inline without ever
+// sending them off the page. Task 3 makes Ready pick up the stash and save
+// the family once auth completes (RLS requires an authenticated user_id).
+export default function Onboarding() {
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const [step, setStep] = useState('form'); // 'form' | 'code' | 'signin-email'
+  // Which step "Use a different email" should return to from the code step.
+  const [origin, setOrigin] = useState('form');
+  const [email, setEmail] = useState('');
+  // Snapshot of the last-submitted family form, in FamilyForm's `family`
+  // prop shape, so returning to the form step (e.g. "Use a different
+  // email") re-mounts it pre-filled instead of blank. Seeded lazily from
+  // any stash left over from a previous mount (e.g. a reload while
+  // switching to the mail app to read the code) so the draft survives that
+  // reload instead of coming back blank. Deliberately does NOT auto-jump to
+  // the code step; starting back on the prefilled form is the safer
+  // behavior since we can't know the code was ever sent successfully.
+  // A stash whose SHAPE drifted (e.g. written before a deploy that changed the
+  // payload) would make stashToFormShape throw during render. There is no error
+  // boundary above this component, so that would white-screen the signed-out
+  // entry point and survive a reload, bricking the tab. Discard it instead.
+  const [draft, setDraft] = useState(() => {
+    try {
+      const p = readPendingFamily();
+      return p ? stashToFormShape(p) : null;
+    } catch {
+      clearPendingFamily();
+      return null;
+    }
+  });
+
+  const [code, setCode] = useState('');
+  const [verifyStatus, setVerifyStatus] = useState('idle'); // idle | verifying | error
+  const [verifyError, setVerifyError] = useState('');
+  const [resendStatus, setResendStatus] = useState('idle'); // idle | sending | sent | error
+  const [resendMessage, setResendMessage] = useState('');
+
+  const [signinEmail, setSigninEmail] = useState('');
+  const [signinStatus, setSigninStatus] = useState('idle'); // idle | sending | error
+  const [signinError, setSigninError] = useState('');
+
+  function goToCode(nextEmail, nextOrigin) {
+    if (!mountedRef.current) return;
+    setEmail(nextEmail);
+    setOrigin(nextOrigin);
+    setCode('');
+    setVerifyStatus('idle');
+    setVerifyError('');
+    setResendStatus('idle');
+    setResendMessage('');
+    setStep('code');
+  }
 
   // Stash the family locally first (so nothing is lost if the email send
   // fails), then send the code. Errors are NOT swallowed here: FamilyForm
@@ -392,7 +554,7 @@ export default function Onboarding() {
             field and then taps it loses all of that typing to the redirect, so
             the choice has to come before the investment, not after it. */}
         <p className="cp-help">Quickest way in. No code to wait for.</p>
-        {googleBlock}
+        <GoogleSignIn />
         <p className="cp-or">Or use your email</p>
         <FamilyForm family={draft} submitLabel="Continue" heading="Your family" onSubmitData={handleFamilySubmit} />
         <hr className="cp-rule" />
@@ -419,7 +581,7 @@ export default function Onboarding() {
         <p className="cp-label cp-label--bar">Welcome back</p>
         <h1 className="cp-h1">Sign <span className="cp-hl">in.</span></h1>
         <p className="cp-lede">Enter the email you used to add your family and we will send you a code.</p>
-        {googleBlock}
+        <GoogleSignIn />
         <p className="cp-or">Or use your email</p>
         <form onSubmit={handleSigninSubmit}>
           <div className={signinError ? 'cp-field cp-field--invalid' : 'cp-field'}>

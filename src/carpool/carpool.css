@@ -486,6 +486,22 @@ body {
    float. Dim the whole mark with the label instead of recoloring it. */
 .cp-btn:disabled .cp-gmark { opacity: .55; }
 
+/* APP EXTENSION — the slot Google renders its OWN sign in button into. Google
+   draws that button inside an iframe it controls, so this rule stops at the
+   box around it: center it, and hold a row of height while the script is still
+   arriving so the "or" divider underneath does not jump when it lands. No
+   attempt is made to restyle what is inside. An iframe will not take our type
+   or our pill radius, and a half-restyled Google button reads as a fake one,
+   which is the opposite of what this whole path is for. */
+.cp-gsi {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+/* Kept mounted but out of flow once we have decided GIS cannot work, so the
+   ref stays valid and the redirect button below is the only thing on screen. */
+.cp-gsi--off { display: none; }
+
 /* Every other alert in the app follows the control it belongs to and is
    followed by more form, so the shared p[role="alert"] rule carries its margin
    underneath. This one sits between a button and the "or" divider, which
