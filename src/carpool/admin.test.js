@@ -220,12 +220,16 @@ describe('fetchAutoApprove', () => {
 });
 
 describe('setAutoApprove', () => {
-  it('updates only the flag, scoped to the single row', async () => {
+  it('updates only the flag and its timestamp, scoped to the single row', async () => {
     const q = chain({ error: null });
     supabase.from.mockReturnValue(q);
     await setAutoApprove(false);
     expect(supabase.from).toHaveBeenCalledWith('settings');
-    expect(q.calls).toContainEqual(['update', { auto_approve_signups: false }]);
+    const [, payload] = q.calls.find((c) => c[0] === 'update');
+    // Pin the key SET, not just the flag: settings is granted table-wide
+    // UPDATE, so a stray column added here would be accepted silently.
+    expect(Object.keys(payload).sort()).toEqual(['auto_approve_signups', 'updated_at']);
+    expect(payload.auto_approve_signups).toBe(false);
     expect(q.calls).toContainEqual(['eq', 'id', true]);
   });
 
@@ -250,7 +254,8 @@ describe('setAutoApprove', () => {
     const q = chain({ error: null });
     supabase.from.mockReturnValue(q);
     await expect(setAutoApprove(false)).resolves.toBeUndefined();
-    expect(q.calls).toContainEqual(['update', { auto_approve_signups: false }]);
+    const [, payload] = q.calls.find((c) => c[0] === 'update');
+    expect(payload.auto_approve_signups).toBe(false);
   });
 
   it('throws the database message', async () => {
