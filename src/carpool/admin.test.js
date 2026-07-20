@@ -4,7 +4,7 @@ import {
   fetchAllFamilies,
   fetchAllGroups,
   fetchAutoApprove,
-  fetchOrganizerFlags,
+  fetchAllMembers,
   approveMember,
   declineSignup,
   unapproveMember,
@@ -264,32 +264,72 @@ describe('setAutoApprove', () => {
   });
 });
 
-describe('fetchOrganizerFlags', () => {
-  it('reads the flag and the role from members', async () => {
-    const q = chain({ data: [{ user_id: 'u1', role: 'parent', can_organize: true }], error: null });
+describe('fetchAllMembers', () => {
+  const row = {
+    user_id: 'u1',
+    email: 'a@example.com',
+    role: 'parent',
+    approval: 'approved',
+    can_organize: true,
+    created_at: '2026-07-01',
+  };
+
+  it('selects every column the roster needs from members', async () => {
+    const q = chain({ data: [row], error: null });
     supabase.from.mockReturnValue(q);
-    const rows = await fetchOrganizerFlags();
+    const rows = await fetchAllMembers();
     expect(supabase.from).toHaveBeenCalledWith('members');
-    expect(q.calls).toContainEqual(['select', 'user_id, role, can_organize']);
-    expect(rows).toHaveLength(1);
+    expect(q.calls).toContainEqual([
+      'select',
+      'user_id, email, role, approval, can_organize, created_at',
+    ]);
+    expect(rows).toEqual([row]);
+  });
+
+  // 0001's members_select_self_or_admin is a ROW predicate (user_id =
+  // auth.uid() or is_admin()) with no column restriction, so every column
+  // above is readable by an admin. Pin the four the roster actually reasons
+  // with, so a future trim cannot quietly break the union: approval decides
+  // which accounts belong in the roster rather than the queue, email is the
+  // only handle on an account with no family row, role tells an admin apart
+  // from a parent, and can_organize drives the toggle.
+  it('asks for approval and email, not just the organizer flag', async () => {
+    const q = chain({ data: [], error: null });
+    supabase.from.mockReturnValue(q);
+    await fetchAllMembers();
+    const [, selected] = q.calls.find((c) => c[0] === 'select');
+    for (const column of ['approval', 'email', 'role', 'can_organize']) {
+      expect(selected).toContain(column);
+    }
+  });
+
+  // Read-only, and no filter: an account with no family row is exactly what
+  // this call exists to surface, and an .eq('approval', ...) here would hide
+  // half of them again.
+  it('reads every row and writes nothing', async () => {
+    const q = chain({ data: [], error: null });
+    supabase.from.mockReturnValue(q);
+    await fetchAllMembers();
+    const names = q.calls.map((c) => c[0]);
+    expect(names).toEqual(['select']);
   });
 
   // family_directory() is called by every parent, so the admin-only flag must
   // never be added to it. This read is what keeps the two apart.
   it('never goes through the family_directory RPC', async () => {
     supabase.from.mockReturnValue(chain({ data: [], error: null }));
-    await fetchOrganizerFlags();
+    await fetchAllMembers();
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
   it('returns an empty array when data is null', async () => {
     supabase.from.mockReturnValue(chain({ data: null, error: null }));
-    await expect(fetchOrganizerFlags()).resolves.toEqual([]);
+    await expect(fetchAllMembers()).resolves.toEqual([]);
   });
 
   it('throws the database message', async () => {
     supabase.from.mockReturnValue(chain({ data: null, error: { message: 'nope' } }));
-    await expect(fetchOrganizerFlags()).rejects.toThrow('nope');
+    await expect(fetchAllMembers()).rejects.toThrow('nope');
   });
 });
 

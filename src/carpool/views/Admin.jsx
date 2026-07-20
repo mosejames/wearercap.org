@@ -4,7 +4,7 @@ import {
   fetchAllFamilies,
   fetchAllGroups,
   fetchAutoApprove,
-  fetchOrganizerFlags,
+  fetchAllMembers,
   approveMember,
   declineSignup,
   unapproveMember,
@@ -70,7 +70,57 @@ function pinPositions(families) {
 // setting cannot be read (auto_approve_enabled() coalesces to true, and the
 // column default matches it). The Settings card only renders once loaded is
 // true, so this value is never actually shown before a real read lands.
-const EMPTY = { queue: [], families: [], groups: [], organizers: [], autoApprove: true };
+const EMPTY = { queue: [], families: [], groups: [], members: [], autoApprove: true };
+
+// The roster is the UNION of families and accounts, not the family list.
+// family_directory() only returns rows that HAVE a families row (0008's
+// reciprocal-disclosure rule), so somebody who signs in and abandons the
+// family form is in no roster and, under auto-approve, in no queue either:
+// invisible to the admin and impossible to remove from the UI. This is what
+// puts them back on screen.
+//
+// Row shape is { userId, family, email }. family is the directory row or null.
+// email is carried on EVERY row because the search box matches it, but it is
+// only ever RENDERED where family is null: the roster is deliberately "what
+// approved parents already see about each other", and an address is not part
+// of that. It shows up only where there is no other way to name the person.
+//
+// Pending accounts are left out on purpose. They belong to the queue above,
+// which already has a card for a pending member with no family details, and
+// listing them twice would give one account two sets of buttons.
+export function buildRoster(families, members) {
+  const memberByUser = new Map(members.map((m) => [m.user_id, m]));
+  const familyUserIds = new Set(families.map((f) => f.user_id));
+
+  // Families first, in the order the directory returned them, so the common
+  // case reads exactly as it did before this section grew.
+  const withFamily = families.map((f) => ({
+    userId: f.user_id,
+    family: f,
+    email: memberByUser.get(f.user_id)?.email ?? null,
+  }));
+
+  // Then the accounts with nothing behind them, oldest signup first (email as
+  // a tiebreak so the order is stable when created_at is missing or shared).
+  const withoutFamily = members
+    .filter((m) => m.approval === 'approved' && !familyUserIds.has(m.user_id))
+    .sort((a, b) =>
+      (a.created_at ?? '').localeCompare(b.created_at ?? '')
+      || (a.email ?? '').localeCompare(b.email ?? ''),
+    )
+    .map((m) => ({ userId: m.user_id, family: null, email: m.email ?? null }));
+
+  return [...withFamily, ...withoutFamily];
+}
+
+// Search over a roster row. email is in the haystack so a family-less account
+// is findable at all; for a row that has a family it is a quiet extra way to
+// find someone, and still never rendered.
+export function rosterMatches(row, query) {
+  if (!query) return true;
+  return [row.family?.parent_name, row.family?.child_names, row.family?.area_label, row.email]
+    .some((v) => (v ?? '').toLowerCase().includes(query));
+}
 
 export default function Admin({ onBack = null }) {
   const mountedRef = useRef(true);
@@ -121,16 +171,18 @@ export default function Admin({ onBack = null }) {
       // still remove a family is worth more than a toggle that renders.
       // Degraded values match the defaults their consumers already assume:
       // auto-approve reads as on (same as the DB's coalesce), and an absent
-      // organizer flag renders as "cannot start groups".
-      const [queue, families, groups, autoApprove, organizers] = await Promise.all([
+      // members row renders as "cannot start groups". A failed members read
+      // also costs the roster its family-less accounts, which is the same
+      // blind spot the panel had before this list existed, not a new one.
+      const [queue, families, groups, autoApprove, members] = await Promise.all([
         fetchPendingSignups(),
         fetchAllFamilies(),
         fetchAllGroups(),
         fetchAutoApprove().catch(() => true),
-        fetchOrganizerFlags().catch(() => []),
+        fetchAllMembers().catch(() => []),
       ]);
       if (!current()) return;
-      setData({ queue, families, groups, autoApprove, organizers });
+      setData({ queue, families, groups, autoApprove, members });
       setLoadError('');
       setLoaded(true);
     } catch (e) {
@@ -242,17 +294,15 @@ export default function Admin({ onBack = null }) {
     }
   }
 
-  // The organizer flags, joined to the roster by user_id. A family with no
-  // members row here is a row the flags query has not caught up with; it reads
-  // as "cannot start groups", which is the database's own default.
-  const organizerByUser = new Map(data.organizers.map((m) => [m.user_id, m]));
+  // The members rows, joined to the roster by user_id. A family with no
+  // members row here is a row the members query has not caught up with; it
+  // reads as "cannot start groups", which is the database's own default.
+  const memberByUser = new Map(data.members.map((m) => [m.user_id, m]));
 
+  // Every approved account: families first, then the ones with no family row.
+  const roster = buildRoster(data.families, data.members);
   const query = search.trim().toLowerCase();
-  const visibleFamilies = query
-    ? data.families.filter((f) =>
-        [f.parent_name, f.child_names, f.area_label].some((v) => (v ?? '').toLowerCase().includes(query)),
-      )
-    : data.families;
+  const visibleRoster = query ? roster.filter((row) => rosterMatches(row, query)) : roster;
 
   const showEmptyStates = loaded && !loading;
 
@@ -395,53 +445,79 @@ export default function Admin({ onBack = null }) {
       <h3 className="cp-h3 cp-h3--section">Families</h3>
       <p className="cp-fine">
         {data.autoApprove
-          ? 'Every family that joins is approved right away, so this is where you review them.'
-          : 'Every family you have approved is here, so this is where you review them.'}{' '}
-        Read through the list and un-approve anyone who does not belong. Pins sit on general
-        areas, not home addresses. This list shows exactly what approved parents already see
-        about each other.
+          ? 'Every account that joins is approved right away, so this is where you review them.'
+          : 'Every account you have approved is here, so this is where you review them.'}{' '}
+        Families come first, then anyone who signed in without adding a family. Read through the
+        list and un-approve anyone who does not belong. Pins sit on general areas, not home
+        addresses. The family details here are exactly what approved parents already see about
+        each other.
       </p>
-      {showEmptyStates && data.families.length === 0 && (
+      {showEmptyStates && roster.length === 0 && (
         <div className="cp-empty">
-          <p>No approved families yet.</p>
+          <p>No approved accounts yet.</p>
         </div>
       )}
-      {data.families.length > 0 && (
+      {roster.length > 0 && (
         <>
-          <div ref={mapContainerRef} className="carpool-map" />
-          {mapError && <p className="cp-after-map" role="alert">{mapError}</p>}
+          {/* The map is families only: a family-less account has no area to
+              pin. It still renders whenever there is at least one family,
+              which is what the map effect's own guard keys on. */}
+          {data.families.length > 0 && (
+            <>
+              <div ref={mapContainerRef} className="carpool-map" />
+              {mapError && <p className="cp-after-map" role="alert">{mapError}</p>}
+            </>
+          )}
           <div className="cp-field cp-after-map">
-            <label className="cp-field-label" htmlFor="admin-family-search">Search families</label>
+            <label className="cp-field-label" htmlFor="admin-family-search">Search the list</label>
             <input
               id="admin-family-search"
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Parent, child, or area"
+              placeholder="Parent, child, area, or email"
             />
           </div>
-          {visibleFamilies.length === 0 ? (
+          {visibleRoster.length === 0 ? (
             <div className="cp-empty">
-              <p>No family matches that search.</p>
+              <p>Nothing in the list matches that search.</p>
             </div>
           ) : (
             <ul className="carpool-nearby-list">
-              {visibleFamilies.map((f) => {
-                const groupNames = groupNamesByUser.get(f.user_id) ?? [];
-                const member = organizerByUser.get(f.user_id);
+              {visibleRoster.map((row) => {
+                const f = row.family;
+                const groupNames = groupNamesByUser.get(row.userId) ?? [];
+                const member = memberByUser.get(row.userId);
                 // can_organize() in the database is true for any admin
                 // regardless of the column, so an admin gets a statement of
                 // fact rather than a switch that would change nothing.
                 const isAdminFamily = member?.role === 'admin';
                 const canOrganize = member?.can_organize === true;
+                // The email is the only handle on an account with no family
+                // row, so it doubles as the name in every confirm and notice.
+                const displayName = f?.parent_name || row.email || 'this account';
                 return (
-                  <li key={f.user_id}>
-                    <p className="cp-item-name">{f.parent_name}</p>
-                    <p className="cp-item-meta">{f.child_names}</p>
-                    <p className="cp-item-meta">{f.area_label} · {summarizeSchedule(f)}</p>
-                    <p className="cp-item-meta">
-                      {groupNames.length > 0 ? `Groups: ${groupNames.join(', ')}` : 'Not in any group'}
-                    </p>
+                  <li key={row.userId}>
+                    <p className="cp-item-name">{displayName}</p>
+                    {f ? (
+                      <>
+                        <p className="cp-item-meta">{f.child_names}</p>
+                        <p className="cp-item-meta">{f.area_label} · {summarizeSchedule(f)}</p>
+                        <p className="cp-item-meta">
+                          {groupNames.length > 0 ? `Groups: ${groupNames.join(', ')}` : 'Not in any group'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="cp-fine">No family details yet. They signed in but have not filled in the family form.</p>
+                        {/* Only worth a line when it is not empty. A
+                            family-less account should not be in a group at
+                            all, so if one is, say so rather than hide it. */}
+                        {groupNames.length > 0 && (
+                          <p className="cp-item-meta">Groups: {groupNames.join(', ')}</p>
+                        )}
+                      </>
+                    )}
                     <p className="cp-item-meta">
                       {isAdminFamily
                         ? 'Committee admin, so they can always start groups'
@@ -454,22 +530,22 @@ export default function Admin({ onBack = null }) {
                         <button
                           className={canOrganize ? 'cp-btn cp-btn--ghost cp-btn--sm' : 'cp-btn cp-btn--dark cp-btn--sm'}
                           type="button"
-                          disabled={busyKey === `organize:${f.user_id}`}
+                          disabled={busyKey === `organize:${row.userId}`}
                           onClick={() => {
                             // Confirm only when granting. Taking it back is
                             // the safe direction, and the success message
                             // below says what it does not undo.
-                            if (!canOrganize && !window.confirm(`Let ${f.parent_name} start carpool groups? Whoever runs a group can see the name, children's names, email, and phone of every family they accept into it.`)) return;
+                            if (!canOrganize && !window.confirm(`Let ${displayName} start carpool groups? Whoever runs a group can see the name, children's names, email, and phone of every family they accept into it.`)) return;
                             run(
-                              `organize:${f.user_id}`,
-                              () => setCanOrganize(f.user_id, !canOrganize),
+                              `organize:${row.userId}`,
+                              () => setCanOrganize(row.userId, !canOrganize),
                               canOrganize
-                                ? `${f.parent_name} can no longer start new groups. Any group they already run keeps going.`
-                                : `${f.parent_name} can now start a group.`,
+                                ? `${displayName} can no longer start new groups. Any group they already run keeps going.`
+                                : `${displayName} can now start a group.`,
                             );
                           }}
                         >
-                          {busyKey === `organize:${f.user_id}`
+                          {busyKey === `organize:${row.userId}`
                             ? 'Saving…'
                             : canOrganize
                               ? 'Stop letting them start groups'
@@ -479,17 +555,17 @@ export default function Admin({ onBack = null }) {
                       <button
                         className="cp-btn cp-btn--danger cp-btn--sm"
                         type="button"
-                        disabled={busyKey === `unapprove:${f.user_id}`}
+                        disabled={busyKey === `unapprove:${row.userId}`}
                         onClick={() => {
-                          if (!window.confirm(`Un-approve ${f.parent_name}? They will go back to the pending queue and be removed from all of their groups.`)) return;
+                          if (!window.confirm(`Un-approve ${displayName}? They will go back to the pending queue and be removed from all of their groups.`)) return;
                           run(
-                            `unapprove:${f.user_id}`,
-                            () => unapproveMember(f.user_id),
-                            `${f.parent_name} is back in the pending queue and out of their groups.`,
+                            `unapprove:${row.userId}`,
+                            () => unapproveMember(row.userId),
+                            `${displayName} is back in the pending queue and out of their groups.`,
                           );
                         }}
                       >
-                        {busyKey === `unapprove:${f.user_id}` ? 'Un-approving…' : 'Un-approve'}
+                        {busyKey === `unapprove:${row.userId}` ? 'Un-approving…' : 'Un-approve'}
                       </button>
                     </div>
                   </li>

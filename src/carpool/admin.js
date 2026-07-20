@@ -107,21 +107,37 @@ export async function setAutoApprove(enabled) {
   if (error) throw raise(error, 'Could not change the signup setting.');
 }
 
-// Who is allowed to START a group (0008). family_directory() does NOT carry
-// can_organize and must not be widened to carry it: every parent calls that
-// same function, and an admin-only flag has no business travelling to every
-// parent's map. So the flags are fetched separately from members, which the
-// admin may select in full under 0001's members_select_self_or_admin, and the
-// view joins the two by user_id the same way it already joins group names.
+// Every account, which is a different thing from every family. Two jobs that
+// used to be one:
 //
-// role rides along because the roster has to tell an admin apart from a
-// parent: can_organize() is true for admins whatever the column says, so
-// rendering them a toggle would show a switch that changes nothing.
-export async function fetchOrganizerFlags() {
+//   1. Who is allowed to START a group (0008). family_directory() does NOT
+//      carry can_organize and must not be widened to carry it: every parent
+//      calls that same function, and an admin-only flag has no business
+//      travelling to every parent's map. So the flags are fetched separately
+//      from members and the view joins the two by user_id, the same way it
+//      already joins group names. role rides along because the roster has to
+//      tell an admin apart from a parent: can_organize() is true for admins
+//      whatever the column says, so rendering them a toggle would show a
+//      switch that changes nothing.
+//
+//   2. Who EXISTS. Since 0008's reciprocal-disclosure rule, family_directory()
+//      only returns rows that have a families row, so an account that signed
+//      in and never filled in the family form appears in no roster at all, and
+//      once auto-approve puts it straight to 'approved' it is in no queue
+//      either. That is an account nobody can see and nobody can remove. The
+//      roster unions these rows in so the panel shows every account, not every
+//      family.
+//
+// The whole column list is legitimately readable here: 0001's
+// members_select_self_or_admin is `using (user_id = auth.uid() or
+// public.is_admin())`, a ROW predicate with no column restriction, so an admin
+// selects any column of any members row. (The narrow grants in 0006 and 0008
+// are UPDATE grants; they do not touch SELECT.)
+export async function fetchAllMembers() {
   const { data, error } = await supabase
     .from('members')
-    .select('user_id, role, can_organize');
-  if (error) throw raise(error, 'Could not load who can start groups.');
+    .select('user_id, email, role, approval, can_organize, created_at');
+  if (error) throw raise(error, 'Could not load the member list.');
   return data ?? [];
 }
 
