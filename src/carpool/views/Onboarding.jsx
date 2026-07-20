@@ -30,6 +30,23 @@ function mapSendError(message) {
   return msg || 'We could not send your code. Please try again.';
 }
 
+// The Google provider is not configured in Supabase yet, so the failure a
+// parent will actually hit is the provider being off, which GoTrue words as
+// "Unsupported provider: provider is not enabled". Read literally that tells a
+// parent the site is broken, when in fact the email path directly underneath
+// the button works perfectly. Point them at it.
+//
+// Unlike mapSendError, nothing passes through raw. A send error can be
+// actionable ("wait a minute"); a refusal from /authorize never is. Whatever
+// the reason, the parent's only move is the email option, so say that and keep
+// GoTrue's operational language off the screen.
+function mapOAuthError(message) {
+  if (/provider is not enabled|unsupported provider|provider.*disabled/i.test(message ?? '')) {
+    return 'Google sign in is not available yet. Please use the email option below.';
+  }
+  return 'We could not open Google just now. Please use the email option below.';
+}
+
 // Converts a stashed onboarding payload (the shape FamilyForm's
 // onSubmitData hands us: { parentName, childNames, place, areaGeocode,
 // direction, weekdays, contactPhone, contactEmail }) into the family-record
@@ -48,6 +65,47 @@ function stashToFormShape(p) {
     contact_phone: p.contactPhone,
     contact_email: p.contactEmail,
   };
+}
+
+// Asks GoTrue's /authorize whether it will actually serve this provider,
+// WITHOUT sending the parent there. Returns the provider's own error text if
+// the answer is no, or null to mean "go ahead" (see the long note on
+// handleGoogle for why this exists and why it fails open).
+//
+// redirect:'manual' is the whole trick: a healthy provider answers with a 302
+// toward Google, which the browser hands back as an unreadable opaqueredirect
+// instead of following, so probing costs one request and never touches Google.
+// A refusal is a plain 400 with a readable JSON body, because GoTrue sends
+// permissive CORS headers. Every other outcome returns null on purpose.
+async function describeProviderFailure(authorizeUrl) {
+  let res;
+  try {
+    res = await fetch(authorizeUrl, { method: 'GET', redirect: 'manual' });
+  } catch {
+    return null; // probe could not run; let the real redirect try
+  }
+  // opaqueredirect (type 'opaqueredirect', status 0) is the healthy answer.
+  if (res.type === 'opaqueredirect' || res.status === 0 || res.status < 400) return null;
+  try {
+    const body = await res.json();
+    return body?.msg || body?.error_description || body?.error || 'unavailable';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+// The Google "G", drawn inline. No network fetch, no external file: this has
+// to render on a school parking lot with one bar of signal, and a missing
+// image next to the label would read as a broken button.
+function GoogleMark() {
+  return (
+    <svg className="cp-gmark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
+      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
+      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
+    </svg>
+  );
 }
 
 // Form-first onboarding: a parent fills out the family form, we stash it
@@ -93,6 +151,9 @@ export default function Onboarding() {
   const [resendStatus, setResendStatus] = useState('idle'); // idle | sending | sent | error
   const [resendMessage, setResendMessage] = useState('');
 
+  const [googleStatus, setGoogleStatus] = useState('idle'); // idle | redirecting
+  const [googleError, setGoogleError] = useState('');
+
   const [signinEmail, setSigninEmail] = useState('');
   const [signinStatus, setSigninStatus] = useState('idle'); // idle | sending | error
   const [signinError, setSigninError] = useState('');
@@ -108,6 +169,110 @@ export default function Onboarding() {
     setResendMessage('');
     setStep('code');
   }
+
+  // AUTH FIRST, and that is the whole point of the design. The email path is
+  // form first: fill the family in, stash it, verify a code, and Ready applies
+  // the stash. Google inverts that. The parent taps this before typing
+  // anything, so there is no payload to stash and stashPendingFamily is never
+  // called on this path. They come back authenticated with no family row,
+  // Ready renders FamilyForm, and FamilyForm's own onSubmitData saves it
+  // directly. The stash and its matching rules are simply not in the picture.
+  //
+  // redirectTo is computed here rather than read from an env var so the same
+  // build works on localhost:5173 and on wearercap.org. It must be the carpool
+  // page itself: '/carpool/' is a separate Vite entry, and landing on '/' would
+  // drop the parent on the marketing site holding a fresh session.
+  //
+  // WHY THERE IS A PREFLIGHT HERE, verified live against the real project on
+  // 2026-07-20 while the provider was still disabled:
+  //
+  // signInWithOAuth never talks to the server. It builds the /authorize URL on
+  // the client and calls window.location.assign, then returns { error: null }
+  // unconditionally. So a disabled provider does NOT come back as an error we
+  // can map, and it does NOT redirect back to us with error params either. The
+  // parent is navigated off site and left staring at raw JSON on a
+  // supabase.co URL with no way back:
+  //
+  //   {"code":400,"error_code":"validation_failed",
+  //    "msg":"Unsupported provider: provider is not enabled"}
+  //
+  // That is the actual dormant behavior, and it is worse than a crash because
+  // it happens on someone else's domain. So we ask /authorize the question
+  // before we send anyone there. skipBrowserRedirect gives us the exact URL the
+  // SDK would have navigated to and nothing else: _handleProviderSignIn does
+  // not pass that flag down to _getUrlForProvider, so the URL comes back clean,
+  // with no skip_http_redirect param riding along, and the PKCE verifier (if
+  // flowType ever moves off the current default of implicit) is still stored as
+  // a side effect exactly as it would be normally.
+  //
+  // The probe is FAIL OPEN by design. GoTrue sends permissive CORS, so a
+  // disabled provider gives us a readable 400 body. A working provider gives a
+  // 302 toward Google, which under redirect:'manual' surfaces as an
+  // opaqueredirect we deliberately do not follow. Anything else, including the
+  // probe throwing on a flaky phone connection or a proxy eating it, falls
+  // through to the real redirect: a parent must never be blocked from signing
+  // in by a diagnostic. Only a body we positively read as an error stops them.
+  //
+  // The finally clause is load bearing. supabase-js returns { error } only for
+  // auth errors and THROWS everything else (a network failure mid-tap on a
+  // phone), and this codebase has shipped buttons stranded in their busy state
+  // that way before. The button re-enables on every exit path except the one
+  // where the browser is genuinely on its way to Google.
+  async function handleGoogle() {
+    setGoogleStatus('redirecting');
+    setGoogleError('');
+    let leaving = false;
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/carpool/',
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        if (mountedRef.current) setGoogleError(mapOAuthError(error.message));
+        return;
+      }
+      if (!data?.url) {
+        if (mountedRef.current) setGoogleError(mapOAuthError(''));
+        return;
+      }
+
+      const blocked = await describeProviderFailure(data.url);
+      if (blocked) {
+        if (mountedRef.current) setGoogleError(mapOAuthError(blocked));
+        return;
+      }
+
+      leaving = true;
+      window.location.assign(data.url);
+    } catch (err) {
+      if (mountedRef.current) {
+        setGoogleError(err.message ?? 'Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mountedRef.current && !leaving) setGoogleStatus('idle');
+    }
+  }
+
+  // Rendered on both signed-out steps, so a parent meets the same quick path
+  // whether they are new or returning on a new device. One handler, one status,
+  // one error: only one step is ever mounted, so they cannot disagree.
+  const googleBlock = (
+    <>
+      <button
+        className="cp-btn cp-btn--ghost cp-btn--block"
+        type="button"
+        onClick={handleGoogle}
+        disabled={googleStatus === 'redirecting'}
+      >
+        <GoogleMark />
+        {googleStatus === 'redirecting' ? 'Opening Google' : 'Continue with Google'}
+      </button>
+      {googleError && <p className="cp-google-alert" role="alert">{googleError}</p>}
+    </>
+  );
 
   // Stash the family locally first (so nothing is lost if the email send
   // fails), then send the code. Errors are NOT swallowed here: FamilyForm
@@ -223,6 +388,12 @@ export default function Onboarding() {
             2026-07-19). Same rule for every email subject and sender name. */}
         <h1 className="cp-h1">RCAP Carpool for <span className="cp-hl">families.</span></h1>
         <p className="cp-lede">Add your family and we will show you who is already carpooling near you.</p>
+        {/* Google goes ABOVE the form on purpose. A parent who fills in every
+            field and then taps it loses all of that typing to the redirect, so
+            the choice has to come before the investment, not after it. */}
+        <p className="cp-help">Quickest way in. No code to wait for.</p>
+        {googleBlock}
+        <p className="cp-or">Or use your email</p>
         <FamilyForm family={draft} submitLabel="Continue" heading="Your family" onSubmitData={handleFamilySubmit} />
         <hr className="cp-rule" />
         <p className="cp-fine">
@@ -248,6 +419,8 @@ export default function Onboarding() {
         <p className="cp-label cp-label--bar">Welcome back</p>
         <h1 className="cp-h1">Sign <span className="cp-hl">in.</span></h1>
         <p className="cp-lede">Enter the email you used to add your family and we will send you a code.</p>
+        {googleBlock}
+        <p className="cp-or">Or use your email</p>
         <form onSubmit={handleSigninSubmit}>
           <div className={signinError ? 'cp-field cp-field--invalid' : 'cp-field'}>
             <label className="cp-field-label" htmlFor="signin-email">Email</label>

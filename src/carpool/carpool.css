@@ -379,6 +379,32 @@ body {
   margin: 28px 0;
 }
 
+/* APP EXTENSION — a labelled divider separating two ways of doing the same
+   thing. The newsletter only has .cp-rule, a bare line; this is that same 1px
+   --line, split around a tracked micro-caps word (signature move no. 3). The
+   word is --ink-soft rather than --orange-text because it is connective
+   tissue, not a section label, and a screen already carrying an orange kicker
+   should not sprout a second accent. --ink-soft measures 7.0:1 on --paper. */
+.cp-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--track-kicker);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.cp-or::before,
+.cp-or::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--line);
+}
+
 /* -------------------------------------------------------------- buttons -- */
 
 .cp-btn {
@@ -444,6 +470,27 @@ body {
 }
 .cp-btn--quiet:hover { color: var(--ink); }
 .cp-btn--sm { min-height: 44px; padding: 11px 18px; font-size: 12.5px; }
+
+/* APP EXTENSION — the Google mark. Inline SVG only, never a hosted asset: a
+   blocked CDN must not leave this button showing a broken image beside its
+   label, and the button must render identically offline. Fixed box so the
+   mark never scales with the uppercase label beside it. The four brand colors
+   are the mark's own and are exempt from the text contrast rules; the label
+   carries the meaning, so the icon is aria-hidden. */
+.cp-gmark {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+/* The disabled fill is --paper-2, so the white counter inside the mark would
+   float. Dim the whole mark with the label instead of recoloring it. */
+.cp-btn:disabled .cp-gmark { opacity: .55; }
+
+/* Every other alert in the app follows the control it belongs to and is
+   followed by more form, so the shared p[role="alert"] rule carries its margin
+   underneath. This one sits between a button and the "or" divider, which
+   brings its own 24px, so the space it needs is above instead. */
+.carpool-shell p.cp-google-alert { margin: 12px 0 0; }
 
 /* The arrow is the whole hover budget — nothing else moves. */
 .cp-arr { transition: transform var(--dur) var(--ease); }
