@@ -1,0 +1,132 @@
+<!doctype html>
+<!--
+  Source for public/carpool-og.png (the link preview when the carpool is
+  shared). Kept in the repo rather than treated as a binary that appeared from
+  nowhere, so the next person can change a word and re-render instead of
+  reverse-engineering a PNG.
+
+  Re-render with:
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      --headless --disable-gpu --hide-scrollbars \
+      --window-size=1200,630 --virtual-time-budget=12000 \
+      --screenshot=public/carpool-og.png \
+      "file://$PWD/docs/design/og-carpool.html"
+
+  Design follows docs/design/newsletter-system.md: warm paper, ink band,
+  Archivo 900 display with ONE gradient-clipped word, the 2px orange rule as a
+  label prefix, tracked micro-caps. 1200x630 is the OG standard, and everything
+  here is sized so the hero still reads at the ~300px wide thumbnail a text
+  message actually renders.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    background: #faf4ea;
+    font-family: 'Archivo', system-ui, sans-serif;
+    color: #1a1613;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  .body-pad { padding: 74px 80px 0; }
+
+  /* Signature move: 2px rounded orange rule as a label prefix. */
+  .kicker {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: #b0470a;           /* --orange-text: AA on paper at this size */
+  }
+  .kicker::before {
+    content: '';
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    background: #f26a1b;
+    flex: 0 0 auto;
+  }
+
+  h1 {
+    font-size: 132px;
+    font-weight: 900;
+    line-height: .92;
+    letter-spacing: -.02em;
+    margin-top: 30px;
+    text-transform: uppercase;
+  }
+  /* Exactly one gradient word, never a phrase. */
+  .hl {
+    background: linear-gradient(100deg, #f7a81c 0%, #f26a1b 42%, #e0218a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Two lines, not three: at 20ch this wrapped to a third line that sat hard
+     against the ink band with no breathing room. Wider measure plus an
+     explicit gap keeps the paper area calm. */
+  p.sub {
+    margin-top: 28px;
+    margin-bottom: 44px;
+    font-size: 33px;
+    line-height: 1.35;
+    font-weight: 500;
+    color: #5a4f47;
+    max-width: 30ch;
+  }
+
+  /* Ink band, the same bracket the app itself uses top and bottom. */
+  .band {
+    background: #1a1613;
+    color: #faf4ea;
+    padding: 30px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  .url {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: .01em;
+  }
+  .url .p { color: #f26a1b; }
+  /* The independence line rides along with every share, which is the whole
+     point of putting it here rather than only on the page. */
+  .note {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #b8a89a;
+    text-align: right;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+  <div class="body-pad">
+    <p class="kicker">We Are RCAP</p>
+    <h1>Ride<br /><span class="hl">together.</span></h1>
+    <p class="sub">Find Ron Clark Academy families near you and share the driving.</p>
+  </div>
+
+  <div class="band">
+    <p class="url">wearercap.org/carpool</p>
+    <p class="note">Organized by<br />parent volunteers</p>
+  </div>
+</body>
+</html>
