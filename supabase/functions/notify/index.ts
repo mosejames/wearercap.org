@@ -96,12 +96,16 @@ async function sendEmail(
   }
 }
 
-function siteLinkParagraph(): string {
-  return `<p><a href="${SITE_URL}">${SITE_URL}</a></p>`;
+// Defaults to the plain site link. Callers that want a deep link (the admin
+// notification wants the panel, not the front door) pass their own href.
+function siteLinkParagraph(href: string = SITE_URL): string {
+  return `<p><a href="${href}">${href}</a></p>`;
 }
 
 // ---------------------------------------------------------------------------
-// members INSERT -> tell approved admins a new signup is waiting.
+// members INSERT -> tell approved admins a new family joined. Signups are
+// auto-approved now, so this is a heads-up for review after the fact, not a
+// request to unblock anyone.
 async function handleMemberInsert(
   // deno-lint-ignore no-explicit-any
   supabase: SupabaseClient<any, any, any>,
@@ -120,10 +124,14 @@ async function handleMemberInsert(
     return [];
   }
 
-  const subject = "New carpool signup awaiting approval";
+  // Same zero-PII rule as the nearby-family email: nothing about the new
+  // family beyond the address that was already here. Details live behind the
+  // admin panel, which is what the link opens.
+  const subject = "A new family joined RCAP Carpool";
   const html = `
-    <p>${newEmail} just signed up for RCAP Carpool and is waiting for approval.</p>
-    ${siteLinkParagraph()}
+    <p>${newEmail} just joined RCAP Carpool. New families are approved automatically, so nothing is waiting on you.</p>
+    <p>Open the admin panel when you have a moment to look them over.</p>
+    ${siteLinkParagraph(`${SITE_URL}#admin`)}
   `;
 
   const results = await Promise.all(

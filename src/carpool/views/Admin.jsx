@@ -249,10 +249,10 @@ export default function Admin({ onBack = null }) {
       {notice && <p role="status">{notice}</p>}
 
       {/* ------------------------------------------------------- queue -- */}
-      <h3 className="cp-h3">Waiting for approval</h3>
+      <h3 className="cp-h3">Un-approved families</h3>
       {showEmptyStates && data.queue.length === 0 && (
         <div className="cp-empty">
-          <p>No one is waiting.</p>
+          <p>Nothing here, which is the normal state. Families are approved when they join, so this list only fills up when you un-approve someone.</p>
         </div>
       )}
       {data.queue.map((signup) => {
@@ -310,8 +310,10 @@ export default function Admin({ onBack = null }) {
       {/* ---------------------------------------------------- families -- */}
       <h3 className="cp-h3 cp-h3--section">Families</h3>
       <p className="cp-fine">
-        Pins sit on general areas, not home addresses. This list shows exactly what approved
-        parents already see about each other.
+        Every family that joins is approved right away, so this is where you review them.
+        Read through the list and un-approve anyone who does not belong. Pins sit on general
+        areas, not home addresses. This list shows exactly what approved parents already see
+        about each other.
       </p>
       {showEmptyStates && data.families.length === 0 && (
         <div className="cp-empty">

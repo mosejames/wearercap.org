@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient.js';
+import { clearHash } from '../hashRoute.js';
 import { fetchFamily, buildFamilyRecord, saveFamily } from '../family.js';
 import { readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
@@ -35,14 +36,25 @@ async function applyPendingFamily(pending, userId) {
   return record;
 }
 
-export default function Ready({ isAdmin = false, isPending = false }) {
+export default function Ready({ isAdmin = false, isPending = false, openAdmin = false }) {
   const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
   const [family, setFamily] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [showApprovals, setShowApprovals] = useState(false);
+  // Two ways in, one piece of state. The Admin button sets this directly;
+  // the #admin deep link arrives as openAdmin once App has confirmed the
+  // visitor really is an admin (it is never true otherwise, so this cannot
+  // open the panel for anyone else). Opening only, never closing, so the
+  // Back button below still works while the hash is still on the URL.
+  const [showApprovals, setShowApprovals] = useState(openAdmin);
   const [error, setError] = useState('');
+
+  // Late arrival: the hash was on the URL before auth resolved, so openAdmin
+  // can flip to true after this component has already mounted.
+  useEffect(() => {
+    if (openAdmin) setShowApprovals(true);
+  }, [openAdmin]);
 
   useEffect(() => {
     let active = true;
@@ -97,8 +109,10 @@ export default function Ready({ isAdmin = false, isPending = false }) {
   );
 
   // Admins can jump to the admin panel and back, without leaving their family view.
+  // Back also drops the #admin hash, so a reload (or another Back) does not
+  // land the admin right back in the panel they just left.
   if (isAdmin && showApprovals) {
-    return <Admin onBack={() => setShowApprovals(false)} />;
+    return <Admin onBack={() => { setShowApprovals(false); clearHash(); }} />;
   }
 
   const adminBar = isAdmin ? (

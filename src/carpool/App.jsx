@@ -1,22 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
+import { useHashRoute, clearHash } from './hashRoute.js';
 import Onboarding from './views/Onboarding.jsx';
 import Ready from './views/Ready.jsx';
 import SharingExplainer from './views/SharingExplainer.jsx';
-
-// Tiny hash "router" for the one standalone page. #sharing works signed in
-// or out (a parent deciding whether to sign up deserves the same answer),
-// survives reload, and the browser back button closes it for free.
-function useSharingPage() {
-  const [open, setOpen] = useState(window.location.hash === '#sharing');
-  useEffect(() => {
-    const onHash = () => setOpen(window.location.hash === '#sharing');
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
-  return open;
-}
 
 // Presentational only. Wraps whichever view App already decided to render so
 // the masthead and footer are identical on every screen.
@@ -51,7 +39,12 @@ export default function App() {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const sharingOpen = useSharingPage();
+  const hash = useHashRoute();
+  // #sharing works signed in or out (a parent deciding whether to sign up
+  // deserves the same answer). #admin is gated below, once the session and
+  // member row have actually resolved.
+  const sharingOpen = hash === '#sharing';
+  const adminHash = hash === '#admin';
 
   useEffect(() => {
     let active = true;
@@ -101,14 +94,7 @@ export default function App() {
   if (sharingOpen) {
     return (
       <Shell>
-        <SharingExplainer onBack={() => {
-          // Clearing location.hash leaves a trailing '#' in the URL, which is
-          // harmless but ugly; replaceState drops it without adding a history
-          // entry, then the hashchange listener needs a manual nudge because
-          // replaceState does not fire one.
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          window.dispatchEvent(new HashChangeEvent('hashchange'));
-        }} />
+        <SharingExplainer onBack={clearHash} />
       </Shell>
     );
   }
@@ -134,5 +120,17 @@ export default function App() {
   if (view === 'signed-out') return <Shell><Onboarding /></Shell>;
   // One-sitting onboarding: pending parents fill their family and see the
   // map teaser immediately; approval gates only other families' details.
-  return <Shell><Ready isAdmin={view === 'admin'} isPending={view === 'pending'} /></Shell>;
+  //
+  // #admin is honoured only once we are past the loading gate above and the
+  // resolved view is 'admin'. A signed-out or non-admin visitor on that URL
+  // gets their normal screen and no error: the hash is simply ignored.
+  return (
+    <Shell>
+      <Ready
+        isAdmin={view === 'admin'}
+        isPending={view === 'pending'}
+        openAdmin={adminHash && view === 'admin'}
+      />
+    </Shell>
+  );
 }
