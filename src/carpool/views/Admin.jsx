@@ -3,9 +3,13 @@ import {
   fetchPendingSignups,
   fetchAllFamilies,
   fetchAllGroups,
+  fetchAutoApprove,
+  fetchOrganizerFlags,
   approveMember,
   declineSignup,
   unapproveMember,
+  setAutoApprove,
+  setCanOrganize,
   removeFromGroup,
   deleteGroup,
 } from '../admin.js';
@@ -62,7 +66,11 @@ function pinPositions(families) {
   return pins;
 }
 
-const EMPTY = { queue: [], families: [], groups: [] };
+// autoApprove starts true because that is what the database does when the
+// setting cannot be read (auto_approve_enabled() coalesces to true, and the
+// column default matches it). The Settings card only renders once loaded is
+// true, so this value is never actually shown before a real read lands.
+const EMPTY = { queue: [], families: [], groups: [], organizers: [], autoApprove: true };
 
 export default function Admin({ onBack = null }) {
   const mountedRef = useRef(true);
@@ -105,13 +113,15 @@ export default function Admin({ onBack = null }) {
     const seq = ++loadSeqRef.current;
     const current = () => mountedRef.current && seq === loadSeqRef.current;
     try {
-      const [queue, families, groups] = await Promise.all([
+      const [queue, families, groups, autoApprove, organizers] = await Promise.all([
         fetchPendingSignups(),
         fetchAllFamilies(),
         fetchAllGroups(),
+        fetchAutoApprove(),
+        fetchOrganizerFlags(),
       ]);
       if (!current()) return;
-      setData({ queue, families, groups });
+      setData({ queue, families, groups, autoApprove, organizers });
       setLoadError('');
       setLoaded(true);
     } catch (e) {
@@ -223,6 +233,11 @@ export default function Admin({ onBack = null }) {
     }
   }
 
+  // The organizer flags, joined to the roster by user_id. A family with no
+  // members row here is a row the flags query has not caught up with; it reads
+  // as "cannot start groups", which is the database's own default.
+  const organizerByUser = new Map(data.organizers.map((m) => [m.user_id, m]));
+
   const query = search.trim().toLowerCase();
   const visibleFamilies = query
     ? data.families.filter((f) =>
@@ -248,11 +263,71 @@ export default function Admin({ onBack = null }) {
       {actionError && <p role="alert">{actionError}</p>}
       {notice && <p role="status">{notice}</p>}
 
+      {/* ---------------------------------------------------- settings -- */}
+      {/* First on the page on purpose: this switch decides what the list
+          below it even means. Reading the queue without knowing which way
+          this is set tells an admin nothing. */}
+      {loaded && (
+        <>
+          <h3 className="cp-h3">Settings</h3>
+          <div className="cp-card">
+            <p className="cp-item-name">
+              New signups: {data.autoApprove ? 'approved automatically' : 'held for review'}
+            </p>
+            <p className="cp-fine">
+              {data.autoApprove
+                ? 'A family that signs up can see the family map straight away, without waiting for anyone. The list below stays empty unless you un-approve someone.'
+                : 'A family that signs up waits in the list below and cannot see the family map until someone approves them. That means this page needs checking, because nobody gets in while it is not.'}
+            </p>
+            <p className="cp-fine">
+              Either way, starting a group is a separate decision that stays with you. You hand
+              that out one family at a time in the list further down.
+            </p>
+            <div className="cp-item-actions">
+              <button
+                className="cp-btn cp-btn--dark cp-btn--sm"
+                type="button"
+                disabled={busyKey === 'autoApprove'}
+                onClick={() => {
+                  const next = !data.autoApprove;
+                  // Confirm only when loosening. Turning the review step back
+                  // on is the safe direction and should not be nagged at.
+                  if (next && !window.confirm('Approve new signups automatically? Anyone who confirms an email address will see the family map, with every family\'s name, children\'s names, and general area, without a person checking first.')) return;
+                  run(
+                    'autoApprove',
+                    () => setAutoApprove(next),
+                    next
+                      ? 'New families are now approved as soon as they sign up.'
+                      : 'New families now wait in the list below until someone approves them.',
+                  );
+                }}
+              >
+                {busyKey === 'autoApprove'
+                  ? 'Saving…'
+                  : data.autoApprove
+                    ? 'Switch to holding signups for review'
+                    : 'Switch to approving signups automatically'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ------------------------------------------------------- queue -- */}
-      <h3 className="cp-h3">Un-approved families</h3>
+      <h3 className="cp-h3 cp-h3--section">
+        {data.autoApprove ? 'Un-approved families' : 'Waiting for approval'}
+      </h3>
       {showEmptyStates && data.queue.length === 0 && (
         <div className="cp-empty">
-          <p>Nothing here, which is the normal state. Families are approved when they join, so this list only fills up when you un-approve someone.</p>
+          {/* The "empty is normal" line is only true while signups are
+              approved automatically. With the switch off this list is the
+              front door, and an empty one means nobody new has arrived yet,
+              not that there is nothing to do. */}
+          <p>
+            {data.autoApprove
+              ? 'Nothing here, which is the normal state. Families are approved when they join, so this list only fills up when you un-approve someone.'
+              : 'No one is waiting right now. While signups are held for review, every new family lands here first and stays locked out until someone approves them, so check back.'}
+          </p>
         </div>
       )}
       {data.queue.map((signup) => {
@@ -310,7 +385,9 @@ export default function Admin({ onBack = null }) {
       {/* ---------------------------------------------------- families -- */}
       <h3 className="cp-h3 cp-h3--section">Families</h3>
       <p className="cp-fine">
-        Every family that joins is approved right away, so this is where you review them.
+        {data.autoApprove
+          ? 'Every family that joins is approved right away, so this is where you review them.'
+          : 'Every family you have approved is here, so this is where you review them.'}{' '}
         Read through the list and un-approve anyone who does not belong. Pins sit on general
         areas, not home addresses. This list shows exactly what approved parents already see
         about each other.
@@ -342,6 +419,12 @@ export default function Admin({ onBack = null }) {
             <ul className="carpool-nearby-list">
               {visibleFamilies.map((f) => {
                 const groupNames = groupNamesByUser.get(f.user_id) ?? [];
+                const member = organizerByUser.get(f.user_id);
+                // can_organize() in the database is true for any admin
+                // regardless of the column, so an admin gets a statement of
+                // fact rather than a switch that would change nothing.
+                const isAdminFamily = member?.role === 'admin';
+                const canOrganize = member?.can_organize === true;
                 return (
                   <li key={f.user_id}>
                     <p className="cp-item-name">{f.parent_name}</p>
@@ -350,7 +433,40 @@ export default function Admin({ onBack = null }) {
                     <p className="cp-item-meta">
                       {groupNames.length > 0 ? `Groups: ${groupNames.join(', ')}` : 'Not in any group'}
                     </p>
+                    <p className="cp-item-meta">
+                      {isAdminFamily
+                        ? 'Committee admin, so they can always start groups'
+                        : canOrganize
+                          ? 'Can start groups: yes'
+                          : 'Can start groups: no'}
+                    </p>
                     <div className="cp-item-actions">
+                      {!isAdminFamily && (
+                        <button
+                          className={canOrganize ? 'cp-btn cp-btn--ghost cp-btn--sm' : 'cp-btn cp-btn--dark cp-btn--sm'}
+                          type="button"
+                          disabled={busyKey === `organize:${f.user_id}`}
+                          onClick={() => {
+                            // Confirm only when granting. Taking it back is
+                            // the safe direction, and the success message
+                            // below says what it does not undo.
+                            if (!canOrganize && !window.confirm(`Let ${f.parent_name} start carpool groups? Whoever runs a group can see the name, children's names, email, and phone of every family they accept into it.`)) return;
+                            run(
+                              `organize:${f.user_id}`,
+                              () => setCanOrganize(f.user_id, !canOrganize),
+                              canOrganize
+                                ? `${f.parent_name} can no longer start new groups. Any group they already run keeps going.`
+                                : `${f.parent_name} can now start a group.`,
+                            );
+                          }}
+                        >
+                          {busyKey === `organize:${f.user_id}`
+                            ? 'Saving…'
+                            : canOrganize
+                              ? 'Stop letting them start groups'
+                              : 'Let them start groups'}
+                        </button>
+                      )}
                       <button
                         className="cp-btn cp-btn--danger cp-btn--sm"
                         type="button"

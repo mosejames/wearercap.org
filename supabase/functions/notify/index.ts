@@ -124,13 +124,38 @@ async function handleMemberInsert(
     return [];
   }
 
+  // The urgency of this email depends on a setting an admin can flip at any
+  // time (0008's public.settings.auto_approve_signups). With auto-approve on,
+  // nothing is blocked and this is a heads-up. With it off, the new family is
+  // locked out until somebody acts, and saying "nothing is waiting on you"
+  // would be a lie that strands them. Read the flag rather than guessing.
+  // Failure to read it falls back to the more urgent wording, because
+  // over-prompting an admin is a smaller harm than a family waiting unseen.
+  let autoApprove = false;
+  const { data: settings, error: settingsError } = await supabase
+    .from("settings")
+    .select("auto_approve_signups")
+    .maybeSingle();
+  if (settingsError) {
+    console.error("notify: failed to read settings, assuming review mode:", settingsError);
+  } else {
+    autoApprove = settings?.auto_approve_signups === true;
+  }
+
   // Same zero-PII rule as the nearby-family email: nothing about the new
   // family beyond the address that was already here. Details live behind the
   // admin panel, which is what the link opens.
-  const subject = "A new family joined RCAP Carpool";
-  const html = `
+  const subject = autoApprove
+    ? "A new family joined RCAP Carpool"
+    : "A new family is waiting for approval";
+  const html = autoApprove
+    ? `
     <p>${newEmail} just joined RCAP Carpool. New families are approved automatically, so nothing is waiting on you.</p>
     <p>Open the admin panel when you have a moment to look them over.</p>
+    ${siteLinkParagraph(`${SITE_URL}#admin`)}
+  `
+    : `
+    <p>${newEmail} just signed up for RCAP Carpool. Signups are being held for review, so they cannot see anything until someone approves them.</p>
     ${siteLinkParagraph(`${SITE_URL}#admin`)}
   `;
 

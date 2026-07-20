@@ -123,6 +123,29 @@ export async function fetchMyRequests(userId) {
   return data ?? [];
 }
 
+// May the caller start a group? Mirrors 0008's public.can_organize() exactly:
+// an admin always may, anyone else needs to be an approved member carrying the
+// can_organize flag. Read from the caller's OWN members row, which 0001's
+// members_select_self_or_admin has always allowed (user_id = auth.uid()).
+//
+// This is a UX read, not a guard. The groups INSERT policy is the only thing
+// that actually decides, and it re-checks on every insert. It exists so a
+// parent meets a sentence explaining the rule instead of a raw RLS violation
+// after filling in the whole form. Callers treat a failure as "show the form"
+// and let the database answer, so a missing column before 0008 is applied
+// cannot lock out a parent who is perfectly entitled to organize.
+export async function fetchCanOrganize(userId) {
+  if (!userId) return false;
+  const { data, error } = await supabase
+    .from('members')
+    .select('role, approval, can_organize')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw raise(error, 'Could not check whether you can start a group.');
+  if (!data) return false;
+  return data.role === 'admin' || (data.approval === 'approved' && data.can_organize === true);
+}
+
 // Organizer's view of who is asking. Deliberately carries NO contact columns:
 // contact details unlock only once a family is actually in the group.
 export async function fetchPendingRequesters(groupId) {

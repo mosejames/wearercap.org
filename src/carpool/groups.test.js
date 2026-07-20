@@ -13,6 +13,7 @@ import {
   fetchPendingRequesters,
   decideRequest,
   fetchRoster,
+  fetchCanOrganize,
   leaveGroup,
   withdrawRequest,
 } from './groups.js';
@@ -37,6 +38,7 @@ function chain(result) {
     delete: link('delete'),
     eq: link('eq'),
     single: link('single'),
+    maybeSingle: link('maybeSingle'),
     then: (onOk, onErr) => Promise.resolve(result).then(onOk, onErr),
   };
   return builder;
@@ -518,5 +520,55 @@ describe('withdrawRequest', () => {
   it('throws the database message', async () => {
     supabase.from.mockReturnValue(chain({ error: { message: 'nope' } }));
     await expect(withdrawRequest('r1', 'u1')).rejects.toThrow('nope');
+  });
+});
+
+describe('fetchCanOrganize', () => {
+  function mockMember(row) {
+    const q = chain({ data: row, error: null });
+    supabase.from.mockReturnValue(q);
+    return q;
+  }
+
+  it('reads the caller own members row', async () => {
+    const q = mockMember({ role: 'parent', approval: 'approved', can_organize: true });
+    await expect(fetchCanOrganize('u1')).resolves.toBe(true);
+    expect(supabase.from).toHaveBeenCalledWith('members');
+    expect(q.calls).toContainEqual(['eq', 'user_id', 'u1']);
+  });
+
+  // Mirrors can_organize() in 0008: an admin may organize whatever the column
+  // says, so the panel never has to set the flag on itself.
+  it('says yes for an admin whose flag is off', async () => {
+    mockMember({ role: 'admin', approval: 'approved', can_organize: false });
+    await expect(fetchCanOrganize('u1')).resolves.toBe(true);
+  });
+
+  it('says no for an approved parent without the flag', async () => {
+    mockMember({ role: 'parent', approval: 'approved', can_organize: false });
+    await expect(fetchCanOrganize('u1')).resolves.toBe(false);
+  });
+
+  // The database branch requires approval = 'approved' as well as the flag.
+  it('says no for a pending parent even with the flag set', async () => {
+    mockMember({ role: 'parent', approval: 'pending', can_organize: true });
+    await expect(fetchCanOrganize('u1')).resolves.toBe(false);
+  });
+
+  it('says no when there is no members row', async () => {
+    mockMember(null);
+    await expect(fetchCanOrganize('u1')).resolves.toBe(false);
+  });
+
+  it('says no without a user id, before any network call', async () => {
+    await expect(fetchCanOrganize()).resolves.toBe(false);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  // The caller in Groups.jsx catches this and shows the form anyway, so the
+  // throw has to be a real Error carrying the database message.
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ data: null, error: { message: 'nope' } }));
+    await expect(fetchCanOrganize('u1')).rejects.toThrow('nope');
   });
 });

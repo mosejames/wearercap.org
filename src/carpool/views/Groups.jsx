@@ -8,6 +8,7 @@ import {
   fetchMyRequests,
   fetchPendingRequesters,
   fetchRoster,
+  fetchCanOrganize,
   createGroup,
   seedOwnMembership,
   requestToJoin,
@@ -53,6 +54,12 @@ const EMPTY = {
   nearby: [],
   rosters: {},
   requesters: {},
+  // Optimistic on purpose. The groups INSERT policy is the real authority, so
+  // the worst case here is that a parent sees the form and gets an error on
+  // submit, which is exactly the behaviour before this flag existed. The
+  // opposite default would hide the form from an entitled organizer whenever
+  // the lookup failed.
+  canOrganize: true,
 };
 
 export default function Groups({ family, userId }) {
@@ -109,10 +116,16 @@ export default function Groups({ family, userId }) {
     const seq = ++loadSeqRef.current;
     const current = () => mountedRef.current && seq === loadSeqRef.current;
     try {
-      const [allGroups, memberships, myRequests] = await Promise.all([
+      // canOrganize is caught rather than allowed to reject the whole load.
+      // It only decides whether one form is on screen, and members.can_organize
+      // does not exist until migration 0008 is applied; a missing column must
+      // not take the entire groups view down with it. Falling back to true
+      // leaves this view behaving exactly as it did before the column existed.
+      const [allGroups, memberships, myRequests, canOrganize] = await Promise.all([
         fetchGroups(),
         fetchMyMemberships(me),
         fetchMyRequests(me),
+        fetchCanOrganize(me).catch(() => true),
       ]);
 
       const memberIds = new Set(memberships.map((m) => m.group_id));
@@ -165,6 +178,7 @@ export default function Groups({ family, userId }) {
         nearby,
         rosters: Object.fromEntries(rosterPairs),
         requesters: Object.fromEntries(requesterPairs),
+        canOrganize,
       });
       setLoadError('');
       setLoaded(true);
@@ -355,7 +369,11 @@ export default function Groups({ family, userId }) {
       <h3 className="cp-h3 cp-h3--section">My groups</h3>
       {showEmptyStates && data.myGroups.length === 0 && (
         <div className="cp-empty">
-          <p>You are not in a group yet. Ask to join one below, or start your own.</p>
+          <p>
+            {data.canOrganize
+              ? 'You are not in a group yet. Ask to join one below, or start your own.'
+              : 'You are not in a group yet. Ask to join one below.'}
+          </p>
         </div>
       )}
       {/* The roster below is a snapshot, not a fixed list, and the parent has
@@ -518,7 +536,11 @@ export default function Groups({ family, userId }) {
       <h3 className="cp-h3 cp-h3--section">Groups near you</h3>
       {showEmptyStates && data.nearby.length === 0 && (
         <div className="cp-empty">
-          <p>No other groups to join right now. You can start one below.</p>
+          <p>
+            {data.canOrganize
+              ? 'No other groups to join right now. You can start one below.'
+              : 'No other groups to join right now. New ones appear here as families set them up.'}
+          </p>
         </div>
       )}
       {data.nearby.length > 0 && (
@@ -559,6 +581,27 @@ export default function Groups({ family, userId }) {
       )}
 
       <h3 className="cp-h3 cp-h3--section">Start a group</h3>
+      {/* The database decides this (0008: creating a group needs can_organize).
+          Without this branch a parent fills in the whole form and meets a raw
+          permission error on submit, with nothing telling them what to do
+          about it. The form is replaced rather than disabled so there is no
+          work to lose. */}
+      {!data.canOrganize ? (
+        <div className="cp-card">
+          <p>
+            Running a group is switched on one family at a time, because whoever
+            runs one can see the name, children's names, email, and phone of
+            every family they welcome in. Someone on the carpool committee turns
+            it on, and then this is where you start your group.
+          </p>
+          <p className="cp-fine">
+            Ask at <a href="mailto:carpool@wearercap.org">carpool@wearercap.org</a> and a parent
+            volunteer will get back to you. You can join any group above in the
+            meantime, and you do not need this to be switched on for that.
+          </p>
+        </div>
+      ) : (
+      <>
       <p className="cp-fine">
         Your group uses the general area you already gave us, never your street address. You become
         its first member and you decide who joins.
@@ -619,6 +662,8 @@ export default function Groups({ family, userId }) {
           <span className="cp-arr" aria-hidden="true">→</span>
         </button>
       </form>
+      </>
+      )}
     </section>
   );
 }

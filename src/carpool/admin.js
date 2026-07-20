@@ -69,6 +69,59 @@ export async function fetchPendingSignups() {
   });
 }
 
+// The auto-approve switch (0008). One row, id = true; the check constraint on
+// that column makes a second row impossible. Any signed-in user may READ it,
+// so this is a plain select rather than an RPC.
+//
+// The `?? true` is not a guess: auto_approve_enabled() in the database
+// coalesces a missing row to true and the column default matches, so an
+// unreadable or absent row really does behave as "on". Reporting anything else
+// here would put a lie on the admin's screen.
+export async function fetchAutoApprove() {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('auto_approve_signups')
+    .eq('id', true)
+    .maybeSingle();
+  if (error) throw raise(error, 'Could not load the signup setting.');
+  return data?.auto_approve_signups ?? true;
+}
+
+// UPDATE only, never an insert or an upsert. 0008 deliberately defines no
+// INSERT and no DELETE policy on settings, so with RLS on, both are denied for
+// everyone; an upsert here would fail the moment the row was somehow absent,
+// which is exactly when an admin would be trying to fix things.
+//
+// The boolean guard is not ceremony either. A stray string would be sent
+// through as-is and Postgres would coerce 'false' or reject it, so pin the
+// type on this side where the message is readable.
+export async function setAutoApprove(enabled) {
+  if (typeof enabled !== 'boolean') throw new Error('setAutoApprove needs a boolean');
+  const { error } = await supabase
+    .from('settings')
+    .update({ auto_approve_signups: enabled })
+    .eq('id', true);
+  if (error) throw raise(error, 'Could not change the signup setting.');
+}
+
+// Who is allowed to START a group (0008). family_directory() does NOT carry
+// can_organize and must not be widened to carry it: every parent calls that
+// same function, and an admin-only flag has no business travelling to every
+// parent's map. So the flags are fetched separately from members, which the
+// admin may select in full under 0001's members_select_self_or_admin, and the
+// view joins the two by user_id the same way it already joins group names.
+//
+// role rides along because the roster has to tell an admin apart from a
+// parent: can_organize() is true for admins whatever the column says, so
+// rendering them a toggle would show a switch that changes nothing.
+export async function fetchOrganizerFlags() {
+  const { data, error } = await supabase
+    .from('members')
+    .select('user_id, role, can_organize');
+  if (error) throw raise(error, 'Could not load who can start groups.');
+  return data ?? [];
+}
+
 // The roster and master map show exactly what approved parents already see:
 // family_directory()'s safe columns (centroid, no address, no contact info).
 // Admin privacy = parent privacy; do not replace this with a families select.
@@ -113,6 +166,25 @@ export async function approveMember(userId) {
     .update({ approval: 'approved' })
     .eq('user_id', userId);
   if (error) throw raise(error, 'Could not approve that member.');
+}
+
+// The second column 0008's grant opens to authenticated: can_organize. Keep
+// the payload to that single key. approval belongs to approveMember and
+// unapprove_member(), and putting it in here would let one click that was only
+// meant to hand out group creating quietly re-approve a family an admin had
+// just removed. role is unwritable through the API at all.
+//
+// enabled is required and must be a real boolean: an undefined would become a
+// null and violate the column's NOT NULL, and a missing argument must never be
+// read as "turn it off".
+export async function setCanOrganize(userId, enabled) {
+  if (!userId) throw new Error('setCanOrganize needs a userId');
+  if (typeof enabled !== 'boolean') throw new Error('setCanOrganize needs a boolean');
+  const { error } = await supabase
+    .from('members')
+    .update({ can_organize: enabled })
+    .eq('user_id', userId);
+  if (error) throw raise(error, 'Could not change who can start groups.');
 }
 
 // Always the RPC, NEVER a direct members/families delete. The schema defines

@@ -3,9 +3,13 @@ import {
   fetchPendingSignups,
   fetchAllFamilies,
   fetchAllGroups,
+  fetchAutoApprove,
+  fetchOrganizerFlags,
   approveMember,
   declineSignup,
   unapproveMember,
+  setAutoApprove,
+  setCanOrganize,
   removeFromGroup,
   deleteGroup,
 } from './admin.js';
@@ -31,6 +35,7 @@ function chain(result) {
     in: link('in'),
     order: link('order'),
     single: link('single'),
+    maybeSingle: link('maybeSingle'),
     then: (onOk, onErr) => Promise.resolve(result).then(onOk, onErr),
   };
   return builder;
@@ -187,6 +192,148 @@ describe('fetchAllFamilies', () => {
   it('throws the database message', async () => {
     supabase.rpc.mockResolvedValue({ data: null, error: { message: 'nope' } });
     await expect(fetchAllFamilies()).rejects.toThrow('nope');
+  });
+});
+
+describe('fetchAutoApprove', () => {
+  it('reads the one settings row and returns the flag', async () => {
+    const q = chain({ data: { auto_approve_signups: false }, error: null });
+    supabase.from.mockReturnValue(q);
+    await expect(fetchAutoApprove()).resolves.toBe(false);
+    expect(supabase.from).toHaveBeenCalledWith('settings');
+    expect(q.calls).toContainEqual(['select', 'auto_approve_signups']);
+    expect(q.calls).toContainEqual(['eq', 'id', true]);
+  });
+
+  // auto_approve_enabled() in the database coalesces a missing row to true and
+  // the column default matches it, so an absent row really does behave as on.
+  // Reporting false here would put a lie on the admin's screen.
+  it('reports true when there is no settings row', async () => {
+    supabase.from.mockReturnValue(chain({ data: null, error: null }));
+    await expect(fetchAutoApprove()).resolves.toBe(true);
+  });
+
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ data: null, error: { message: 'nope' } }));
+    await expect(fetchAutoApprove()).rejects.toThrow('nope');
+  });
+});
+
+describe('setAutoApprove', () => {
+  it('updates only the flag, scoped to the single row', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await setAutoApprove(false);
+    expect(supabase.from).toHaveBeenCalledWith('settings');
+    expect(q.calls).toContainEqual(['update', { auto_approve_signups: false }]);
+    expect(q.calls).toContainEqual(['eq', 'id', true]);
+  });
+
+  // 0008 defines no INSERT and no DELETE policy on settings on purpose, so
+  // with RLS on both are denied for everyone. An insert or upsert here would
+  // fail exactly when an admin was trying to fix a missing row.
+  it('never inserts or deletes', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await setAutoApprove(true);
+    expect(q.calls.map((c) => c[0])).not.toContain('insert');
+    expect(q.calls.map((c) => c[0])).not.toContain('delete');
+  });
+
+  it('refuses a non-boolean before any network call', async () => {
+    await expect(setAutoApprove('true')).rejects.toThrow();
+    await expect(setAutoApprove()).rejects.toThrow();
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('treats false as a real value, not a missing argument', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await expect(setAutoApprove(false)).resolves.toBeUndefined();
+    expect(q.calls).toContainEqual(['update', { auto_approve_signups: false }]);
+  });
+
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ error: { message: 'nope' } }));
+    await expect(setAutoApprove(true)).rejects.toThrow('nope');
+  });
+});
+
+describe('fetchOrganizerFlags', () => {
+  it('reads the flag and the role from members', async () => {
+    const q = chain({ data: [{ user_id: 'u1', role: 'parent', can_organize: true }], error: null });
+    supabase.from.mockReturnValue(q);
+    const rows = await fetchOrganizerFlags();
+    expect(supabase.from).toHaveBeenCalledWith('members');
+    expect(q.calls).toContainEqual(['select', 'user_id, role, can_organize']);
+    expect(rows).toHaveLength(1);
+  });
+
+  // family_directory() is called by every parent, so the admin-only flag must
+  // never be added to it. This read is what keeps the two apart.
+  it('never goes through the family_directory RPC', async () => {
+    supabase.from.mockReturnValue(chain({ data: [], error: null }));
+    await fetchOrganizerFlags();
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty array when data is null', async () => {
+    supabase.from.mockReturnValue(chain({ data: null, error: null }));
+    await expect(fetchOrganizerFlags()).resolves.toEqual([]);
+  });
+
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ data: null, error: { message: 'nope' } }));
+    await expect(fetchOrganizerFlags()).rejects.toThrow('nope');
+  });
+});
+
+describe('setCanOrganize', () => {
+  it('updates can_organize, scoped to the target', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await setCanOrganize('u1', true);
+    expect(supabase.from).toHaveBeenCalledWith('members');
+    expect(q.calls).toContainEqual(['update', { can_organize: true }]);
+    expect(q.calls).toContainEqual(['eq', 'user_id', 'u1']);
+  });
+
+  // 0008 widened authenticated's column grant to (approval, can_organize), so
+  // an approval key in this payload would be ACCEPTED by the database: one
+  // click meant only to hand out group creating would quietly re-approve a
+  // family an admin had just removed. Pin the payload to the one key, exactly
+  // as approveMember's payload is pinned.
+  it('never writes approval or role', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await setCanOrganize('u1', false);
+    const [, payload] = q.calls.find((c) => c[0] === 'update');
+    expect(Object.keys(payload)).toEqual(['can_organize']);
+  });
+
+  it('refuses to run without a user id, before any network call', async () => {
+    await expect(setCanOrganize(undefined, true)).rejects.toThrow();
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  // An undefined would be sent as null and violate the column's NOT NULL, and
+  // a missing argument must never be read as "turn it off".
+  it('refuses a non-boolean before any network call', async () => {
+    await expect(setCanOrganize('u1')).rejects.toThrow();
+    await expect(setCanOrganize('u1', 'yes')).rejects.toThrow();
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('treats false as a real value, not a missing argument', async () => {
+    const q = chain({ error: null });
+    supabase.from.mockReturnValue(q);
+    await expect(setCanOrganize('u1', false)).resolves.toBeUndefined();
+    expect(q.calls).toContainEqual(['update', { can_organize: false }]);
+  });
+
+  it('throws the database message', async () => {
+    supabase.from.mockReturnValue(chain({ error: { message: 'nope' } }));
+    await expect(setCanOrganize('u1', true)).rejects.toThrow('nope');
   });
 });
 
