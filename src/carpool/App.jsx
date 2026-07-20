@@ -6,6 +6,36 @@ import Onboarding from './views/Onboarding.jsx';
 import Ready from './views/Ready.jsx';
 import SharingExplainer from './views/SharingExplainer.jsx';
 
+// A token minted THIS instant can look like it came from the future.
+//
+// Seen live on the first Google sign-in (2026-07-20): Supabase issued the JWT,
+// the very next request carried it, and the validator rejected it with "JWT
+// issued at future", dumping a parent on the fatal error screen at the exact
+// moment they were joining. Mose's machine clock measured zero skew against
+// the server, because whole-second granularity hides the sub-second difference
+// that actually causes this: if the browser is a fraction of a second behind
+// whoever issues the token, an iat of "now" reads as later than now.
+//
+// It resolves itself within a second or two (the same token validated fine on
+// the next page load), so the answer is to wait and retry rather than to widen
+// any tolerance. Matched narrowly on purpose: every OTHER error must still
+// reach the error screen immediately, because a real failure that silently
+// retries three times is worse than one that shows up.
+function isClockSkewError(e) {
+  return /issued at future|token used before issued/i.test(e?.message ?? '');
+}
+
+async function withClockSkewRetry(fn, attempts = 3, delayMs = 700) {
+  for (let i = 0; ; i += 1) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= attempts - 1 || !isClockSkewError(e)) throw e;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
 // Presentational only. Wraps whichever view App already decided to render so
 // the masthead and footer are identical on every screen.
 function Shell({ children }) {
@@ -53,8 +83,8 @@ export default function App() {
     async function load(nextSession) {
       try {
         if (nextSession?.user) {
-          await ensureMemberRow(nextSession.user);
-          const m = await fetchMember(nextSession.user.id);
+          await withClockSkewRetry(() => ensureMemberRow(nextSession.user));
+          const m = await withClockSkewRetry(() => fetchMember(nextSession.user.id));
           if (!active) return;
           setMember(m);
         } else {
