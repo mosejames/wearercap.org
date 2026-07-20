@@ -405,5 +405,11 @@ grant execute on function public.unapprove_member(uuid) to authenticated;
 
 -- Explicit grants on settings, matching the convention every other object in
 -- 0005 onward follows rather than relying on Supabase's default privileges.
+-- Two layers here as everywhere else: RLS already denies INSERT and DELETE
+-- (no policy exists for either), and this revoke removes the privilege
+-- outright so the policy is not the only thing standing in the way. Supabase
+-- grants ALL on new public tables by default, so without the revoke the grant
+-- below would be purely additive and INSERT/DELETE would stay granted.
 revoke all on public.settings from anon;
+revoke all on public.settings from authenticated;
 grant select, update on public.settings to authenticated;

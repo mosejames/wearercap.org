@@ -113,12 +113,21 @@ export default function Admin({ onBack = null }) {
     const seq = ++loadSeqRef.current;
     const current = () => mountedRef.current && seq === loadSeqRef.current;
     try {
+      // The last two read objects that migration 0008 creates. They are
+      // caught individually rather than allowed to reject the whole load,
+      // because without this a not-yet-applied 0008 takes the ENTIRE panel
+      // down: no queue, no roster, no moderation buttons, just one error.
+      // That would make the deploy order load-bearing, and a panel that can
+      // still remove a family is worth more than a toggle that renders.
+      // Degraded values match the defaults their consumers already assume:
+      // auto-approve reads as on (same as the DB's coalesce), and an absent
+      // organizer flag renders as "cannot start groups".
       const [queue, families, groups, autoApprove, organizers] = await Promise.all([
         fetchPendingSignups(),
         fetchAllFamilies(),
         fetchAllGroups(),
-        fetchAutoApprove(),
-        fetchOrganizerFlags(),
+        fetchAutoApprove().catch(() => true),
+        fetchOrganizerFlags().catch(() => []),
       ]);
       if (!current()) return;
       setData({ queue, families, groups, autoApprove, organizers });

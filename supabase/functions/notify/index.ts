@@ -139,7 +139,11 @@ async function handleMemberInsert(
   if (settingsError) {
     console.error("notify: failed to read settings, assuming review mode:", settingsError);
   } else {
-    autoApprove = settings?.auto_approve_signups === true;
+    // ?? true, not === true. A missing row must read the same way here as it
+    // does in auto_approve_enabled()'s coalesce and admin.js's fetch, or the
+    // email would tell an admin a family is locked out while the database is
+    // actually letting everyone in.
+    autoApprove = settings?.auto_approve_signups ?? true;
   }
 
   // Same zero-PII rule as the nearby-family email: nothing about the new

@@ -99,7 +99,10 @@ export async function setAutoApprove(enabled) {
   if (typeof enabled !== 'boolean') throw new Error('setAutoApprove needs a boolean');
   const { error } = await supabase
     .from('settings')
-    .update({ auto_approve_signups: enabled })
+    // updated_at is stamped here rather than by a trigger. Without it the
+    // column would permanently read as the migration timestamp and mislead
+    // whoever looks at the table trying to work out when the switch last moved.
+    .update({ auto_approve_signups: enabled, updated_at: new Date().toISOString() })
     .eq('id', true);
   if (error) throw raise(error, 'Could not change the signup setting.');
 }
