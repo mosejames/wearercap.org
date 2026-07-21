@@ -22,6 +22,8 @@ import {
   groupTextHref,
   groupEmailHref,
 } from '../groupHandoff.js';
+import { fetchNearby, isMissingRpcError } from '../directory.js';
+import { suggestCrew } from '../crews.js';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -58,6 +60,7 @@ const EMPTY = {
   orphanGroups: [],
   pendingSent: [],
   nearby: [],
+  crew: null,
   rosters: {},
   requesters: {},
   // Optimistic on purpose. The groups INSERT policy is the real authority, so
@@ -189,6 +192,10 @@ export default function Groups({ family, userId }) {
     return () => { mountedRef.current = false; };
   }, []);
 
+  // The create-group form, so the "Start a group with these families" button on
+  // the suggested-crew card can scroll it into view after prefilling its name.
+  const createFormRef = useRef(null);
+
   // Bumped on every entry to load(). A load only writes state if its own
   // sequence number is still the newest, so a slow earlier fetch can never
   // land on top of a newer one and resurrect a group the parent just left.
@@ -235,11 +242,25 @@ export default function Groups({ family, userId }) {
       // does not exist until migration 0008 is applied; a missing column must
       // not take the entire groups view down with it. Falling back to true
       // leaves this view behaving exactly as it did before the column existed.
-      const [allGroups, memberships, myRequests, canOrganize] = await Promise.all([
+      const [allGroups, memberships, myRequests, canOrganize, nearbyRows] = await Promise.all([
         fetchGroups(),
         fetchMyMemberships(me),
         fetchMyRequests(me),
         fetchCanOrganize(me).catch(() => true),
+        // The suggested crew is purely additive to this view. Its fetch must
+        // never take group loading down with it, so it is contained here rather
+        // than allowed to reject the Promise.all. The realistic failure is the
+        // pre-0009 missing RPC (nearby_families() not in the schema cache),
+        // matched the same narrow way MapView matches it; that case degrades
+        // silently to no crew. Any other error is also swallowed to [] on
+        // purpose (a warn is left for debugging), because the groups the parent
+        // came here for must still render even if the crew cannot be computed.
+        fetchNearby().catch((err) => {
+          if (!isMissingRpcError(err) && typeof console !== 'undefined') {
+            console.warn('Suggested crew unavailable:', err?.message ?? err);
+          }
+          return [];
+        }),
       ]);
 
       const memberIds = new Set(memberships.map((m) => m.group_id));
@@ -290,6 +311,11 @@ export default function Groups({ family, userId }) {
           .filter((g) => pendingByGroup.has(g.id))
           .map((g) => ({ ...g, requestId: pendingByGroup.get(g.id) })),
         nearby,
+        // Viewer-centric crew suggestion: the families closest to the caller,
+        // presented as a startable group. suggestCrew returns null when nobody
+        // sits inside the tight crew radius, in which case the card below does
+        // not render.
+        crew: suggestCrew(nearbyRows),
         rosters: Object.fromEntries(rosterPairs),
         requesters: Object.fromEntries(requesterPairs),
         canOrganize,
@@ -701,6 +727,60 @@ export default function Groups({ family, userId }) {
       )}
 
       <h3 className="cp-h3 cp-h3--section">Start a group</h3>
+
+      {/* Suggested crew: the families closest to the caller, offered as a
+          startable group. It sits above the create form so the "Start a group
+          with these families" button can prefill the form's name and scroll
+          down to it. It renders only when suggestCrew found families inside the
+          tight crew radius (data.crew is null otherwise). It carries NO contact
+          details: the nearby rows behind it never held any, and none are added.
+          Starting the group does not auto-create anything and does not add these
+          families; they discover the finished group through their own
+          radius-scoped "Groups near you" and ask to join via the 0005 flow. */}
+      {data.crew && (
+        <div className="cp-card">
+          <p className="cp-label cp-label--muted cp-label--bar">Suggested crew</p>
+          <h4 className="cp-h4">{data.crew.label}</h4>
+          <p className="cp-fine">
+            These are the families closest to you. You could start a carpool with them.
+          </p>
+          <ul className="carpool-nearby-list">
+            {data.crew.families.map((f) => (
+              <li key={f.user_id}>
+                <p className="cp-item-name">{f.parent_name}</p>
+                <p className="cp-item-meta">
+                  {f.area_label} · {summarizeSchedule(f)} · {f.distance_miles.toFixed(1)} mi
+                </p>
+              </li>
+            ))}
+          </ul>
+          {data.canOrganize ? (
+            <>
+              <button
+                className="cp-btn cp-btn--primary cp-btn--block"
+                type="button"
+                onClick={() => {
+                  setName(data.crew.label);
+                  createFormRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Start a group with these families
+                <span className="cp-arr" aria-hidden="true">→</span>
+              </button>
+              <p className="cp-fine">
+                We will name it for you. The families nearby will see it and can ask to join.
+              </p>
+            </>
+          ) : (
+            <p className="cp-fine">
+              Running a group is switched on one family at a time. Ask at{' '}
+              <a href="mailto:carpool@wearercap.org">carpool@wearercap.org</a> and a parent
+              volunteer will get back to you. You can still join any group above in the meantime.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* The database decides this (0008: creating a group needs can_organize).
           Without this branch a parent fills in the whole form and meets a raw
           permission error on submit, with nothing telling them what to do
@@ -726,7 +806,7 @@ export default function Groups({ family, userId }) {
         Your group uses the general area you already gave us, never your street address. You become
         its first member and you decide who joins.
       </p>
-      <form onSubmit={handleCreate}>
+      <form ref={createFormRef} onSubmit={handleCreate}>
         <div className="cp-field">
           <label className="cp-field-label" htmlFor="group-name">Group name</label>
           <input
