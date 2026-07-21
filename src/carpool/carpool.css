@@ -1015,6 +1015,67 @@ body {
 .cp-group-head { margin-bottom: 14px; }
 .cp-subblock { margin-top: 18px; }
 
+/* APP EXTENSION — the "Getting started" handoff panel. Sits below the roster
+   inside a group card, separated by the same 1px --line the roster's own
+   contact strip uses, so it reads as one more attached section of the card
+   rather than a new surface. */
+.cp-handoff {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.cp-handoff-intro {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 14px;
+}
+/* Stacked full width: the text button is the primary action, the copy button
+   its guaranteed fallback, and stacking keeps the hierarchy unambiguous on a
+   phone rather than letting them sit as two co-equal columns. */
+.cp-handoff-actions {
+  display: grid;
+  gap: 10px;
+}
+/* The email path is deliberately subordinate to texting: a quiet inline link,
+   not a third block button. */
+.cp-handoff-email { margin-top: 12px; }
+.cp-handoff-hint {
+  display: block;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+/* Static reference, no checkboxes and no state. Each line carries the short
+   orange 2px rule (signature move no. 2), the same prefix used on captions and
+   helper text elsewhere. */
+.cp-checklist {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.cp-checklist li {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.cp-checklist li::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--orange);
+  margin-top: 9px;
+}
+
 .cp-tag {
   display: inline-block;
   font-size: 10.5px;

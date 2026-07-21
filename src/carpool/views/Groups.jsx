@@ -16,6 +16,12 @@ import {
   leaveGroup,
   withdrawRequest,
 } from '../groups.js';
+import {
+  detectPlatform,
+  starterMessage,
+  groupTextHref,
+  groupEmailHref,
+} from '../groupHandoff.js';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -61,6 +67,114 @@ const EMPTY = {
   // the lookup failed.
   canOrganize: true,
 };
+
+// The persistent "Getting started" panel on each of My groups. It reuses only
+// the roster the view already fetched (data.rosters[g.id]) and the group object,
+// so it adds no fetch and no new data exposure: everything it acts on is already
+// on screen in the roster above it. All of the logic lives in groupHandoff.js;
+// this component just wires those helpers to the roster and owns the one bit of
+// state, the clipboard confirmation.
+//
+// It is its own component so the "Copied" state is local to one group rather
+// than a map of states on the parent, and so its copy-timeout cleanup is scoped
+// to its own mount.
+function GroupHandoff({ group, roster }) {
+  // idle | copied | failed. Not color-only: the button label and a hint line
+  // both change, so the confirmation is never carried by styling alone.
+  const [copyState, setCopyState] = useState('idle');
+  const timerRef = useRef(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const platform = detectPlatform(typeof navigator !== 'undefined' ? navigator.userAgent : '');
+
+  // Organizer's first name for the starter line: the group carries created_by,
+  // matched to that member's roster row, first token of their parent_name. When
+  // the roster has not loaded, or the creator has since left, no row matches and
+  // starterMessage drops the "[name] set it up" clause on its own.
+  const organizerRow = roster.find((m) => m.user_id === group.created_by);
+  const organizerName = organizerRow?.parent_name
+    ? organizerRow.parent_name.trim().split(/\s+/)[0]
+    : '';
+  const message = starterMessage(organizerName);
+
+  // Phone was optional on the family form, so skip blanks. Email is required, so
+  // in practice emails is empty only before the roster loads.
+  const phones = roster.map((m) => m.contact_phone).filter(Boolean);
+  const emails = roster.map((m) => m.contact_email).filter(Boolean);
+
+  const textHref = groupTextHref({ phones, message, platform });
+  const emailHref = groupEmailHref({ emails, subject: 'Our RCA carpool group', body: message });
+
+  async function handleCopy() {
+    let ok = true;
+    try {
+      await navigator.clipboard.writeText(message);
+    } catch {
+      // Older phones and any non-secure context expose no clipboard API, and the
+      // property access itself can throw synchronously, which lands here too.
+      // Fall back to a note pointing at the numbers already listed above rather
+      // than leaving the button stuck mid-action.
+      ok = false;
+    }
+    // The card can unmount during the await (the parent refetches on any group
+    // action); guard the setState the same way the rest of this file does.
+    if (!mountedRef.current) return;
+    setCopyState(ok ? 'copied' : 'failed');
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopyState('idle'), 4000);
+  }
+
+  return (
+    <div className="cp-handoff">
+      <p className="cp-label cp-label--muted cp-label--bar">Getting started</p>
+      <p className="cp-handoff-intro">You are a carpool now. Here is how to begin.</p>
+
+      <div className="cp-handoff-actions">
+        {textHref && (
+          <a className="cp-btn cp-btn--primary cp-btn--block" href={textHref}>
+            Start our group text
+            <span className="cp-arr" aria-hidden="true">→</span>
+          </a>
+        )}
+        <button className="cp-btn cp-btn--dark cp-btn--block" type="button" onClick={handleCopy}>
+          {copyState === 'copied' ? 'Copied' : 'Copy the starter message'}
+        </button>
+      </div>
+      {copyState === 'copied' && (
+        <span className="cp-handoff-hint" role="status">
+          Starter message copied. Paste it into your group text.
+        </span>
+      )}
+      {copyState === 'failed' && (
+        <span className="cp-handoff-hint" role="status">
+          We could not copy it here. You can still text the numbers listed above.
+        </span>
+      )}
+      {emailHref && (
+        <a className="cp-btn cp-btn--quiet cp-handoff-email" href={emailHref}>
+          Email the group instead
+        </a>
+      )}
+
+      <ul className="cp-checklist">
+        <li>Settle who drives which days.</li>
+        <li>
+          {group.meeting_point
+            ? `Confirm the pickup time, and the spot: ${group.meeting_point}.`
+            : 'Confirm the pickup time and spot.'}
+        </li>
+        <li>Agree on a backup plan for a day someone cannot drive.</li>
+      </ul>
+    </div>
+  );
+}
 
 export default function Groups({ family, userId }) {
   // family.user_id is the same person as userId; userId is passed in
@@ -423,6 +537,12 @@ export default function Groups({ family, userId }) {
                 ))}
               </ul>
             )}
+
+            {/* The persistent handoff panel, directly below the roster it leans
+                on. Rendered for every member, not just the organizer, so any
+                parent can start the group text. Degrades to just the checklist
+                when the roster has not loaded (no phones, no emails yet). */}
+            <GroupHandoff group={g} roster={roster} />
 
             {isOrganizer && (
               <div className="cp-subblock">
