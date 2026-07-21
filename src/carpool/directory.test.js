@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { milesBetween, rankNearby } from './directory.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { milesBetween, rankNearby, fetchNearby, isMissingRpcError } from './directory.js';
+import { supabase } from './supabaseClient.js';
+
+vi.mock('./supabaseClient.js', () => ({
+  supabase: { rpc: vi.fn() },
+}));
 
 const CP = { lat: 33.6534, lng: -84.4494 };   // College Park
 const DECATUR = { lat: 33.7748, lng: -84.2963 };
@@ -37,5 +42,44 @@ describe('rankNearby', () => {
   });
   it('handles empty input', () => {
     expect(rankNearby(me, [])).toEqual([]);
+  });
+});
+
+describe('fetchNearby', () => {
+  beforeEach(() => { supabase.rpc.mockReset(); });
+
+  it('calls the nearby_families RPC and returns its rows', async () => {
+    const rows = [{ user_id: 'a', distance_miles: 2, distance_to_school_miles: 6 }];
+    supabase.rpc.mockResolvedValue({ data: rows, error: null });
+    expect(await fetchNearby()).toEqual(rows);
+    expect(supabase.rpc).toHaveBeenCalledWith('nearby_families');
+  });
+
+  it('returns an empty array when the RPC yields null data', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: null });
+    expect(await fetchNearby()).toEqual([]);
+  });
+
+  it('throws when the RPC returns an error', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    await expect(fetchNearby()).rejects.toEqual({ message: 'boom' });
+  });
+});
+
+describe('isMissingRpcError', () => {
+  it('matches the PostgREST missing-function code', () => {
+    expect(isMissingRpcError({ code: 'PGRST202' })).toBe(true);
+  });
+  it('matches a "could not find the function ... schema cache" message', () => {
+    expect(isMissingRpcError({
+      message: 'Could not find the function public.nearby_families without parameters in the schema cache',
+    })).toBe(true);
+  });
+  it('does not match an unrelated error', () => {
+    expect(isMissingRpcError({ code: 'PGRST301', message: 'permission denied' })).toBe(false);
+  });
+  it('does not match a null/absent error', () => {
+    expect(isMissingRpcError(null)).toBe(false);
+    expect(isMissingRpcError(undefined)).toBe(false);
   });
 });

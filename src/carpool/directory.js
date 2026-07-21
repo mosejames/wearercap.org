@@ -24,6 +24,32 @@ export async function fetchDirectory() {
   return data ?? [];
 }
 
+// The radius-scoped near-you list (migration 0009). nearby_families() returns
+// the caller's in-radius families already filtered to their effective radius
+// and ordered nearest-first, each row carrying distance_miles (caller -> that
+// family) and distance_to_school_miles (that family -> Ron Clark Academy).
+// fetchDirectory above is intentionally kept: admin.js still reads the full,
+// unscoped family_directory().
+export async function fetchNearby() {
+  const { data, error } = await supabase.rpc('nearby_families');
+  if (error) throw error;
+  return data ?? [];
+}
+
+// TEMPORARY BRIDGE — remove once migration 0009 is applied to the database.
+// Until then nearby_families() does not exist, so calling it fails. This
+// predicate matches ONLY that narrow case (PostgREST returns code PGRST202 and
+// a "Could not find the function ... in the schema cache" message for a missing
+// RPC) so MapView can fall back to the pre-0009 flat directory rather than show
+// a blank map. Any other error (permissions, network, a real RPC failure) does
+// not match and still surfaces to the user as before.
+export function isMissingRpcError(error) {
+  if (!error) return false;
+  if (error.code === 'PGRST202') return true;
+  const msg = (error.message ?? '').toLowerCase();
+  return msg.includes('could not find the function') || msg.includes('schema cache');
+}
+
 export async function fetchAreaCount() {
   const { data, error } = await supabase.rpc('area_family_count');
   if (error) throw error;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadMaps, loadMarker } from '../maps.js';
-import { fetchDirectory, fetchAreaCount, rankNearby } from '../directory.js';
+import { fetchDirectory, fetchNearby, fetchAreaCount, rankNearby, isMissingRpcError } from '../directory.js';
 
 const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID ?? 'DEMO_MAP_ID';
 
@@ -21,7 +21,7 @@ function scheduleText(family) {
   return `${when} · ${family.weekdays.join(', ')}`;
 }
 
-export default function MapView({ family, isPending }) {
+export default function MapView({ family, isPending, reloadKey = 0 }) {
   const mapContainerRef = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -56,13 +56,42 @@ export default function MapView({ family, isPending }) {
           if (cancelled) return;
           setCount(n);
         } else {
-          const directoryRows = await fetchDirectory();
-          if (cancelled) return;
-          const others = directoryRows.filter((f) => f.user_id !== family.user_id);
+          // Approved parent: the radius-scoped near-you list. Prefer the
+          // server-ranked nearby_families() RPC (migration 0009): rows arrive
+          // already filtered to the caller's effective radius and sorted
+          // nearest-first, each carrying distance_miles and
+          // distance_to_school_miles. listRows feed the list; pinFamilies are
+          // plotted on the map.
+          let listRows;
+          let pinFamilies;
+          try {
+            const scoped = await fetchNearby();
+            if (cancelled) return;
+            listRows = scoped.map((f) => ({
+              ...f,
+              distanceMiles: f.distance_miles,
+              schoolMiles: f.distance_to_school_miles,
+            }));
+            // The RPC already excludes the caller and everything outside radius,
+            // so the in-radius list IS what belongs on the map.
+            pinFamilies = listRows;
+          } catch (err) {
+            // TEMPORARY BRIDGE — remove once migration 0009 is applied. Until
+            // the RPC exists, fetchNearby throws; fall back to the pre-0009
+            // behavior (flat family_directory() + client-side rankNearby) so
+            // the map is not blank in the window between shipping this code and
+            // applying the migration. Only the narrow missing-function case
+            // degrades; every other error still surfaces as today.
+            if (!isMissingRpcError(err)) throw err;
+            const directoryRows = await fetchDirectory();
+            if (cancelled) return;
+            pinFamilies = directoryRows.filter((f) => f.user_id !== family.user_id);
+            listRows = rankNearby(family, directoryRows);
+          }
 
           // Group by centroid; jitter only families sharing the exact same area coordinates
           const grouped = {};
-          others.forEach((f) => {
+          pinFamilies.forEach((f) => {
             const key = `${f.area_lat},${f.area_lng}`;
             if (!grouped[key]) grouped[key] = [];
             grouped[key].push(f);
@@ -82,7 +111,7 @@ export default function MapView({ family, isPending }) {
               });
             });
           });
-          setRows(rankNearby(family, directoryRows));
+          setRows(listRows);
         }
       } catch (err) {
         if (!cancelled) setError(err.message ?? 'Could not load the map.');
@@ -92,8 +121,10 @@ export default function MapView({ family, isPending }) {
     })();
 
     return () => { cancelled = true; };
+    // reloadKey lets the parent force a refetch (e.g. after the radius changes)
+    // so the scoped list and pins reflect the new radius immediately.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [family.user_id, isPending]);
+  }, [family.user_id, isPending, reloadKey]);
 
   return (
     <section className="cp-subblock">
@@ -115,7 +146,7 @@ export default function MapView({ family, isPending }) {
       {!loading && !error && !isPending && (
         rows.length === 0 ? (
           <div className="cp-empty cp-after-map">
-            <p>No other families in your area yet. Check back soon.</p>
+            <p>No families within your area yet. As more RCA families join nearby, they will show up here.</p>
           </div>
         ) : (
           <ul className="carpool-nearby-list cp-after-map">
@@ -123,7 +154,10 @@ export default function MapView({ family, isPending }) {
               <li key={f.user_id}>
                 <p className="cp-item-name">{f.parent_name}</p>
                 <p className="cp-item-meta">{f.child_names}</p>
-                <p className="cp-item-meta">{f.area_label} · {scheduleText(f)} · {f.distanceMiles.toFixed(1)} mi</p>
+                <p className="cp-item-meta">
+                  {f.area_label} · {scheduleText(f)} · {f.distanceMiles.toFixed(1)} mi
+                  {f.schoolMiles != null && ` · ${f.schoolMiles.toFixed(0)} mi from school`}
+                </p>
               </li>
             ))}
           </ul>

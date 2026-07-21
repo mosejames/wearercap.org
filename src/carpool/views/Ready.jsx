@@ -6,6 +6,7 @@ import { readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import FamilyForm from './FamilyForm.jsx';
 import Admin from './Admin.jsx';
 import MapView from './MapView.jsx';
+import RadiusControl from './RadiusControl.jsx';
 import Groups from './Groups.jsx';
 
 // Builds a family record from a stashed onboarding/edit payload, saves it,
@@ -49,6 +50,9 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
   // Back button below still works while the hash is still on the URL.
   const [showApprovals, setShowApprovals] = useState(openAdmin);
   const [error, setError] = useState('');
+  // Bumped when the parent changes their radius, so MapView refetches the
+  // scoped near-you list and its pins reflect the new radius immediately.
+  const [nearbyReloadKey, setNearbyReloadKey] = useState(0);
 
   // Late arrival: the hash was on the URL before auth resolved, so openAdmin
   // can flip to true after this component has already mounted.
@@ -167,8 +171,15 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
           <div className="cp-item-actions">
             <button className="cp-btn cp-btn--ghost cp-btn--sm" onClick={() => setEditing(true)}>Edit my family</button>
           </div>
+          <RadiusControl
+            family={family}
+            onSaved={(radiusMiles) => {
+              setFamily((f) => ({ ...f, radius_miles: radiusMiles }));
+              setNearbyReloadKey((k) => k + 1);
+            }}
+          />
         </div>
-        <MapView family={family} isPending={isPending} />
+        <MapView family={family} isPending={isPending} reloadKey={nearbyReloadKey} />
         {/* Same branch as MapView, so family (and therefore
             family.area_lat/area_lng) is always present: rankGroups measures
             every distance against it. Approved members only. */}

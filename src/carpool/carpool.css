@@ -829,6 +829,41 @@ body {
 
 .cp-choice--day { text-transform: capitalize; }
 
+/* Radius preference (Phase A proximity). A quick inline slider in the family
+   summary, attached to the card with the same 1px --line the roster uses so it
+   reads as one more section of the card rather than a new surface. */
+.cp-radius {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.cp-radius-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+.cp-radius input[type="range"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap);
+  accent-color: var(--orange);
+  cursor: pointer;
+}
+.cp-radius input[type="range"]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.cp-radius-value {
+  flex: 0 0 auto;
+  min-width: 84px;
+  text-align: right;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+}
+
 /* The address autocomplete: our own input + suggestion list on the Places
    Autocomplete Data API. (Google's PlaceAutocompleteElement widget used to
    mount here — retired because its suggestion list goes fullscreen on phones,
