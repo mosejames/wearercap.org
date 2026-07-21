@@ -24,6 +24,7 @@ import {
 } from '../groupHandoff.js';
 import { fetchNearby, isMissingRpcError } from '../directory.js';
 import { suggestCrew } from '../crews.js';
+import Collapsible from './Collapsible.jsx';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -195,6 +196,24 @@ export default function Groups({ family, userId }) {
   // The create-group form, so the "Start a group with these families" button on
   // the suggested-crew card can scroll it into view after prefilling its name.
   const createFormRef = useRef(null);
+
+  // "Start a group" is a controlled collapsible: the suggested-crew button
+  // (which sits outside it, always visible) must be able to force it open. The
+  // nonce drives the scroll: bumping it after setStartOpen(true) runs the
+  // effect below on the next commit, once the form is actually mounted, so the
+  // scroll lands on the expanded section rather than its collapsed position.
+  const [startOpen, setStartOpen] = useState(false);
+  const [scrollNonce, setScrollNonce] = useState(0);
+  useEffect(() => {
+    if (scrollNonce === 0) return undefined;
+    // Effects fire after the DOM is committed, so the just-expanded form is
+    // already mounted here. rAF waits one more frame for layout to settle so
+    // the smooth scroll targets the final position.
+    const raf = requestAnimationFrame(() => {
+      createFormRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [scrollNonce]);
 
   // Bumped on every entry to load(). A load only writes state if its own
   // sequence number is still the newest, so a slow earlier fetch can never
@@ -506,7 +525,9 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
-      <h3 className="cp-h3 cp-h3--section">My groups</h3>
+      {/* Collapsed by default. Count tells a parent they are in at least one
+          group without opening it. */}
+      <Collapsible id="cp-mygroups" title="My groups" count={data.myGroups.length}>
       {showEmptyStates && data.myGroups.length === 0 && (
         <div className="cp-empty">
           <p>
@@ -635,10 +656,11 @@ export default function Groups({ family, userId }) {
           </div>
         );
       })}
+      </Collapsible>
 
+      {/* Only rendered when there is something outstanding, as before. */}
       {data.pendingSent.length > 0 && (
-        <div className="cp-subblock">
-          <h3 className="cp-h3">Requests you sent</h3>
+        <Collapsible id="cp-requests" title="Requests you sent" count={data.pendingSent.length}>
           <ul className="carpool-nearby-list">
             {data.pendingSent.map((g) => (
               <li key={g.id}>
@@ -676,10 +698,11 @@ export default function Groups({ family, userId }) {
               </li>
             ))}
           </ul>
-        </div>
+        </Collapsible>
       )}
 
-      <h3 className="cp-h3 cp-h3--section">Groups near you</h3>
+      {/* Collapsed by default. Count advertises how many groups are joinable. */}
+      <Collapsible id="cp-nearbygroups" title="Groups near you" count={data.nearby.length}>
       {showEmptyStates && data.nearby.length === 0 && (
         <div className="cp-empty">
           <p>
@@ -725,9 +748,11 @@ export default function Groups({ family, userId }) {
           ))}
         </ul>
       )}
+      </Collapsible>
 
-      <h3 className="cp-h3 cp-h3--section">Start a group</h3>
-
+      {/* The suggested-crew card sits OUTSIDE the "Start a group" collapsible so
+          its button stays tappable while that section is closed: tapping it is
+          what opens the section (below) and scrolls to the form. */}
       {/* Suggested crew: the families closest to the caller, offered as a
           startable group. It sits above the create form so the "Start a group
           with these families" button can prefill the form's name and scroll
@@ -761,7 +786,11 @@ export default function Groups({ family, userId }) {
                 type="button"
                 onClick={() => {
                   setName(data.crew.label);
-                  createFormRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  // Open the Start-a-group section, then scroll to it. The nonce
+                  // bump runs the scroll effect after the form has mounted, so
+                  // the expand always happens before the scroll.
+                  setStartOpen(true);
+                  setScrollNonce((n) => n + 1);
                 }}
               >
                 Start a group with these families
@@ -781,6 +810,9 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
+      {/* Controlled collapsible: collapsed by default, opened either by its own
+          header or by the suggested-crew button above. */}
+      <Collapsible id="cp-startgroup" title="Start a group" open={startOpen} onToggle={setStartOpen}>
       {/* The database decides this (0008: creating a group needs can_organize).
           Without this branch a parent fills in the whole form and meets a raw
           permission error on submit, with nothing telling them what to do
@@ -864,6 +896,7 @@ export default function Groups({ family, userId }) {
       </form>
       </>
       )}
+      </Collapsible>
     </section>
   );
 }

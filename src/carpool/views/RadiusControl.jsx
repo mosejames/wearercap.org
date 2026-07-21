@@ -11,6 +11,10 @@ const MAX = 25;
 // Where the slider thumb rests while on the adaptive default: the 3-mile base
 // the adaptive logic starts from. Moving it from here sets a personal value.
 const BASE = 3;
+// The mile markers drawn under the track, so the control reads as a distance
+// scale rather than an unlabelled bar. Positioned by their share of [MIN, MAX].
+const MARKERS = [1, 5, 10, 15, 20, 25];
+const pct = (v) => ((v - MIN) / (MAX - MIN)) * 100;
 
 export default function RadiusControl({ family, onSaved }) {
   const [radius, setRadius] = useState(family.radius_miles ?? null);
@@ -68,11 +72,22 @@ export default function RadiusControl({ family, onSaved }) {
 
   const isAuto = radius == null;
   const sliderValue = isAuto ? BASE : radius;
+  // What the control says out loud. In automatic mode the thumb sits at the
+  // 3-mile base, so tie the words to that position ("starts near 3 miles")
+  // rather than leaving "Automatic" floating with no relation to the dot.
+  const valueText = isAuto
+    ? 'Automatic, starts near 3 miles and widens where families are spread out'
+    : `Showing families within ${radius} ${radius === 1 ? 'mile' : 'miles'}`;
 
   return (
     <div className="cp-radius">
-      <label className="cp-field-label" htmlFor="family-radius">Show families within</label>
-      <div className="cp-radius-row">
+      <p className="cp-field-label" id="family-radius-label">Show families within</p>
+      {/* No aria-live here: the range input already speaks its value via
+          aria-valuetext as it moves, so announcing this line too would
+          double up. This p is the visual readout for sighted parents. */}
+      <p className="cp-radius-value">{valueText}</p>
+
+      <div className="cp-radius-track">
         <input
           id="family-radius"
           type="range"
@@ -81,18 +96,24 @@ export default function RadiusControl({ family, onSaved }) {
           step={1}
           value={sliderValue}
           onChange={handleSlider}
+          aria-labelledby="family-radius-label"
           aria-describedby="family-radius-help"
+          aria-valuetext={isAuto ? 'Automatic' : `${radius} miles`}
         />
-        <span className="cp-radius-value" aria-live="polite">
-          {isAuto ? 'Automatic' : `${radius} mi`}
-        </span>
+        <div className="cp-radius-marks" aria-hidden="true">
+          {MARKERS.map((m) => (
+            <span key={m} className="cp-radius-mark" style={{ left: `${pct(m)}%` }}>{m}</span>
+          ))}
+        </div>
       </div>
+
       <p id="family-radius-help" className="cp-help">
-        Show me families within this many miles. Leave it on the suggestion to let it widen automatically where families are spread out.
+        Drag to set how far out families show up. Leave it on Automatic to let it widen on its own where families are spread out.
       </p>
+
       {!isAuto && (
         <button type="button" className="cp-btn cp-btn--quiet" onClick={useAutomatic}>
-          Use the suggested default
+          Back to Automatic
         </button>
       )}
       {saving && <p className="cp-item-meta">Saving your radius</p>}

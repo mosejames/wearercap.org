@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadMaps, loadMarker } from '../maps.js';
 import { fetchDirectory, fetchNearby, fetchAreaCount, rankNearby, isMissingRpcError } from '../directory.js';
+import Collapsible from './Collapsible.jsx';
 
 const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID ?? 'DEMO_MAP_ID';
 
@@ -21,7 +22,14 @@ function scheduleText(family) {
   return `${when} · ${family.weekdays.join(', ')}`;
 }
 
-export default function MapView({ family, isPending, reloadKey = 0 }) {
+// The map + near-you list. Split out from MapView so that, on the approved
+// path, the collapsible can unmount it when closed and remount it when
+// reopened: a fresh mount re-runs the effect below, which re-inits the map and
+// refetches, so the map never comes back blank. It reports the in-radius family
+// count up to MapView via onCount, so the collapsed header can show the count
+// even while this content is unmounted (MapView, which holds it, stays
+// mounted). Nothing about the fetch or map logic changed in the split.
+function NearbyContent({ family, isPending, reloadKey = 0, onCount }) {
   const mapContainerRef = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -112,6 +120,9 @@ export default function MapView({ family, isPending, reloadKey = 0 }) {
             });
           });
           setRows(listRows);
+          // Surface the in-radius count to the collapsible header on the
+          // approved path. Guarded by the same cancelled check above.
+          onCount?.(listRows.length);
         }
       } catch (err) {
         if (!cancelled) setError(err.message ?? 'Could not load the map.');
@@ -127,8 +138,7 @@ export default function MapView({ family, isPending, reloadKey = 0 }) {
   }, [family.user_id, isPending, reloadKey]);
 
   return (
-    <section className="cp-subblock">
-      <p className="cp-label cp-label--bar">Families near you</p>
+    <>
       <div ref={mapContainerRef} className="carpool-map" />
       {error && <p role="alert">{error}</p>}
       {loading && !error && <p className="cp-loading cp-after-map">Loading the map</p>}
@@ -163,6 +173,31 @@ export default function MapView({ family, isPending, reloadKey = 0 }) {
           </ul>
         )
       )}
-    </section>
+    </>
+  );
+}
+
+export default function MapView({ family, isPending, reloadKey = 0 }) {
+  // Held here, not in NearbyContent, so the collapsed header keeps showing the
+  // count while the content is unmounted. Updated by NearbyContent on load.
+  const [nearbyCount, setNearbyCount] = useState(null);
+
+  // Pending teaser path is unchanged: no collapsible, same section + label DOM
+  // it always rendered.
+  if (isPending) {
+    return (
+      <section className="cp-subblock">
+        <p className="cp-label cp-label--bar">Families near you</p>
+        <NearbyContent family={family} isPending reloadKey={reloadKey} />
+      </section>
+    );
+  }
+
+  // Approved parent: open by default (this is the useful view), header carries
+  // the in-radius family count.
+  return (
+    <Collapsible id="cp-nearby" title="Families near you" defaultOpen count={nearbyCount}>
+      <NearbyContent family={family} isPending={false} reloadKey={reloadKey} onCount={setNearbyCount} />
+    </Collapsible>
   );
 }

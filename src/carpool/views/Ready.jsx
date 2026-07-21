@@ -8,6 +8,7 @@ import Admin from './Admin.jsx';
 import MapView from './MapView.jsx';
 import RadiusControl from './RadiusControl.jsx';
 import Groups from './Groups.jsx';
+import Collapsible from './Collapsible.jsx';
 
 // Builds a family record from a stashed onboarding/edit payload, saves it,
 // and clears the stash. Used both when the signed-in user has no family row
@@ -159,26 +160,30 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
       {pendingBanner}
       {adminBar}
       <div className="carpool-shell">
-        <p className="cp-label cp-label--bar">Your account</p>
         <h1 className="cp-h1">Your <span className="cp-hl">family.</span></h1>
-        <div className="cp-card">
-          <p className="cp-item-name">{family.parent_name}</p>
-          <p className="cp-item-meta">{family.child_names}</p>
-          <p className="cp-item-meta">Area {family.area_label}</p>
-          <p className="cp-item-meta">
-            {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}
-          </p>
-          <div className="cp-item-actions">
-            <button className="cp-btn cp-btn--ghost cp-btn--sm" onClick={() => setEditing(true)}>Edit my family</button>
+        {/* Collapsed by default: a parent knows their own details, so this is
+            the least-needed block. The former "Your account" kicker becomes the
+            tap header. */}
+        <Collapsible id="cp-family" title="Your account" defaultOpen={false}>
+          <div className="cp-card">
+            <p className="cp-item-name">{family.parent_name}</p>
+            <p className="cp-item-meta">{family.child_names}</p>
+            <p className="cp-item-meta">Area {family.area_label}</p>
+            <p className="cp-item-meta">
+              {family.direction === 'both' ? 'Morning & afternoon' : family.direction === 'am' ? 'Morning' : 'Afternoon'} · {family.weekdays.join(', ')}
+            </p>
+            <div className="cp-item-actions">
+              <button className="cp-btn cp-btn--ghost cp-btn--sm" onClick={() => setEditing(true)}>Edit my family</button>
+            </div>
+            <RadiusControl
+              family={family}
+              onSaved={(radiusMiles) => {
+                setFamily((f) => ({ ...f, radius_miles: radiusMiles }));
+                setNearbyReloadKey((k) => k + 1);
+              }}
+            />
           </div>
-          <RadiusControl
-            family={family}
-            onSaved={(radiusMiles) => {
-              setFamily((f) => ({ ...f, radius_miles: radiusMiles }));
-              setNearbyReloadKey((k) => k + 1);
-            }}
-          />
-        </div>
+        </Collapsible>
         <MapView family={family} isPending={isPending} reloadKey={nearbyReloadKey} />
         {/* Same branch as MapView, so family (and therefore
             family.area_lat/area_lng) is always present: rankGroups measures
