@@ -543,13 +543,19 @@ export default function Onboarding() {
   if (step === 'form') {
     return (
       <div className="carpool-shell">
-        <p className="cp-label"><span className="cp-num">01</span>Start here</p>
+        <p className="cp-label"><span className="cp-num">01</span>Optional, parent-run</p>
         {/* "RCAP Carpool", never "RCA Carpool": RCAP is the parent community's
             own brand, and this tool is parent-run. Naming it after the school
             implies the school sponsors it, which it does not (Mose,
             2026-07-19). Same rule for every email subject and sender name. */}
         <h1 className="cp-h1">RCAP Carpool for <span className="cp-hl">families.</span></h1>
-        <p className="cp-lede">Add your family and we will show you who is already carpooling near you.</p>
+        {/* Framing set at the top on purpose (Mose, 2026-07-21): the entry was
+            reading like an RCA program you enroll in, when it is a tool some
+            parents made that you can take or leave. "tool", "optional", "want
+            to", and the closing line carry that. Do not water this down back
+            into "add your family and we will..." which reads as an
+            instruction. */}
+        <p className="cp-lede">A free tool some RCA parents built for families who want to share the school drive. It is optional. If carpooling would help you, add your family and we will show you who lives nearby. Nobody is required to be here.</p>
         {/* Google goes ABOVE the form on purpose. A parent who fills in every
             field and then taps it loses all of that typing to the redirect, so
             the choice has to come before the investment, not after it. */}

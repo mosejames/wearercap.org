@@ -83,6 +83,10 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
     try {
       const { AutocompleteSuggestion, AutocompleteSessionToken } = await loadPlaces();
       if (!sessionTokenRef.current) sessionTokenRef.current = new AutocompleteSessionToken();
+      // No includedPrimaryTypes on purpose: with no type filter the Data API
+      // returns establishments (churches, schools, stores) alongside street
+      // addresses, which is what lets a parent pin a nearby landmark instead
+      // of their home (Mose, 2026-07-21). Do not add a type restriction here.
       const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input,
         sessionToken: sessionTokenRef.current,
@@ -268,12 +272,19 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
         {/* A real label at last: the old Google widget hid its input inside a
             closed shadow root, so the field could only be named via aria-label
             on a role="group" container. Our own input takes htmlFor. */}
-        <label className="cp-field-label" htmlFor="family-address">Home address</label>
+        <label className="cp-field-label" htmlFor="family-address">A spot near you</label>
         {/* Above the field, not below it, at Mose's direction: a parent
-            should know why the address is being asked for BEFORE they type
-            it, not discover the explanation as fine print afterward. */}
+            should know why this is asked for BEFORE they type it, not discover
+            the explanation as fine print afterward.
+            Reframed 2026-07-21: a parent said "never shared" was not enough,
+            he would rather not type his home in at all. Since we only ever use
+            and show the general AREA, a nearby landmark in the same area gives
+            the identical result, so we bless that outright instead of arguing
+            the home address is safe. The autocomplete is set to return places
+            (churches, schools, stores), not just street addresses, so this
+            copy is actually actionable. */}
         <div className="cp-consent cp-consent--inline">
-          <p>We ask for your address so we can group you with families nearby. It is never shared. Other families only ever see your approximate area, not your address. <a href="#sharing">How sharing works</a></p>
+          <p>Pick a place to put you on the map by area. Your home works, and we only ever use and show your general area, never your address. If you would rather not enter your home, pick a nearby place you trust instead, like a church, a school, or a store. Families only ever see your general area. <a href="#sharing">How sharing works</a></p>
         </div>
         <div className="cp-place">
           <input
@@ -293,7 +304,7 @@ export default function FamilyForm({ family, initialEmail, submitLabel, heading,
                you have to PICK a suggestion or handleSubmit rejects the form
                (no lat/lng is ever populated otherwise). The instruction that
                a suggestion must be picked stays visible here. */
-            placeholder="Type your address, then pick a suggestion"
+            placeholder="Type an address or a place, then pick it"
           />
           {listOpen && (
             <div className="cp-place-pop">
