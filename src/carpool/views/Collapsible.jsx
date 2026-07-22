@@ -104,11 +104,18 @@ export default function Collapsible({
         >
           <span className="cp-collapse-title">{title}</span>
           {showCount && <span className="cp-collapse-count">· {count}</span>}
+          {/* A filled chevron disc, not a bare glyph: the old 12px triangle
+              read as decoration and got missed (Mose, 2026-07-20). The disc
+              plus the pressable bar treatment below make it unmistakably a
+              thing you open. Points down when closed (there is more below),
+              flips up when open. */}
           <span
             className={`cp-collapse-chevron${isOpen ? ' cp-collapse-chevron--open' : ''}`}
             aria-hidden="true"
           >
-            ▸
+            <svg viewBox="0 0 20 20" width="18" height="18" focusable="false">
+              <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </span>
         </button>
       </h2>

@@ -1079,18 +1079,25 @@ body {
 /* The h2 is a semantics-only wrapper (screen-reader heading nav); strip its
    default margin and size so the button inside owns the entire look. */
 .cp-collapse-heading { margin: 0; font: inherit; }
+/* A pressable BAR, not a label with a caret. The tint, the hairline, and the
+   chevron disc together signal "tap to open"; the old flat header read as a
+   static section title and the affordance got missed. */
 .cp-collapse-head {
   -webkit-appearance: none;
   appearance: none;
-  background: none;
-  border: 0;
   width: 100%;
   /* Comfortably over the 44px minimum tap target. */
   min-height: var(--tap);
-  padding: 12px 0;
+  padding: 14px 16px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   cursor: pointer;
   text-align: left;
+  transition: background var(--dur) var(--ease);
 }
+.cp-collapse-head:hover { background: #ece0cb; }
+.cp-collapse-head:active { transform: scale(.995); }
 /* Override .cp-label's bottom margin: as a header it owns the spacing to its
    own body, set on .cp-collapse-body below. */
 .cp-collapse-head.cp-label { margin: 0; }
@@ -1103,21 +1110,28 @@ body {
   color: var(--ink-soft);
   letter-spacing: var(--track-label);
 }
+/* The chevron lives in a filled disc so it reads as the control, not a mark.
+   currentColor drives the stroke; the disc is the app's ink on paper. */
 .cp-collapse-chevron {
   flex: 0 0 auto;
-  display: inline-block;
-  font-size: 12px;
-  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--line-input);
+  color: var(--ink);
   transition: transform var(--dur) var(--ease);
 }
-/* ▸ rotated a quarter turn points down: the open state. Reduced-motion callers
-   still get the rotation, just without the transition (handled globally). */
-.cp-collapse-chevron--open { transform: rotate(90deg); }
+/* Chevron points down when closed (more below); flips up when open. Reduced
+   motion still flips, just without the tween (handled globally). */
+.cp-collapse-chevron--open { transform: rotate(180deg); }
 .cp-collapse-head:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
-.cp-collapse-body { margin-top: 6px; }
+.cp-collapse-body { margin-top: 12px; }
 
 /* APP EXTENSION — the "Getting started" handoff panel. Sits below the roster
    inside a group card, separated by the same 1px --line the roster's own
