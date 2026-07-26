@@ -3,12 +3,24 @@ import {
   SITE, ROUNDS, CURRENT, HOUSES, UNSORTED, CLASSES, RELATIONS, WORDS,
   WORD_MAX, WORD_PROMPT, WORD_HINT, PROMPTS, randomPrompt,
   LINE_PROMPT, LINE_HINT, LINE_PLACEHOLDER, HOURS_URL, HASHTAGS,
-  FIRST_SUMMER_CLASS, wordLabel, houseById, roundBySlug,
+  FIRST_SUMMER_CLASS, MULTI, wordLabel, houseById, roundBySlug,
 } from './config.js';
 import { listEntries, addEntry, uploadFile, setHidden } from './data.js';
 import { makeZip } from './zip.js';
 
-const LANES = [...HOUSES, UNSORTED];
+const LANES = [...HOUSES, UNSORTED, MULTI];
+
+// The board loads a lightweight, resized copy of each photo via Supabase image
+// transforms (the full file stays untouched in storage for the ZIP export). If
+// the transform service is ever unavailable, the <img onError> below falls back
+// to the original URL, so photos never break.
+function thumbUrl(url, width = 900) {
+  if (typeof url !== 'string') return url;
+  const marker = '/storage/v1/object/public/';
+  const i = url.indexOf(marker);
+  if (i === -1) return url; // not a Supabase public object URL — leave it alone
+  return `${url.slice(0, i)}/storage/v1/render/image/public/${url.slice(i + marker.length)}?width=${width}&quality=68`;
+}
 
 // Always render the closing date in school time, not the reader's timezone.
 const CLOSE_LABEL = (iso) =>
@@ -23,7 +35,18 @@ function useCountdown(iso) {
   if (ms <= 0) return { over: true, text: 'Closed' };
   const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5);
   const m = Math.floor((ms % 36e5) / 6e4), sec = Math.floor((ms % 6e4) / 1e3);
-  return { over: false, urgent: ms < 864e5, text: d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${sec}s` };
+  const pad = (n) => String(n).padStart(2, '0');
+  return {
+    over: false,
+    urgent: ms < 864e5,
+    text: d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${sec}s`,
+    parts: [
+      { label: 'days', value: pad(d) },
+      { label: 'hrs', value: pad(h) },
+      { label: 'min', value: pad(m) },
+      { label: 'sec', value: pad(sec) },
+    ],
+  };
 }
 
 /* ----------------------------------------------------------------- tile */
@@ -83,7 +106,11 @@ function Tile({ entry, mine, index = 0 }) {
       <figure className={`card photo${mine ? ' mine' : ''}`} style={wrap}>
         {shot.kind === 'video'
           ? <video src={shot.url} controls playsInline preload="metadata" />
-          : <img src={shot.url} alt="" loading="lazy" width={shot.w || undefined} height={shot.h || undefined} />}
+          : <img
+              src={thumbUrl(shot.url)}
+              onError={(e) => { if (e.currentTarget.src !== shot.url) e.currentTarget.src = shot.url; }}
+              alt="" loading="lazy" decoding="async"
+              width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
           {quote ? <p className="cap-story">{quote}</p> : null}
           {by}
@@ -94,7 +121,7 @@ function Tile({ entry, mine, index = 0 }) {
 
   const text = quote || `${wordLabel(entry.word)}.`;
   return (
-    <article className={`card said${lane.pale ? ' pale' : ''}${mine ? ' mine' : ''}`}
+    <article className={`card said${lane.pale ? ' pale' : ''}${lane.flame ? ' flame' : ''}${mine ? ' mine' : ''}`}
              style={{ ...wrap, '--hc': lane.color, '--fg': lane.fg }}>
       <p className={`said-text ${sizeClass(text)}`}>{text}</p>
       <p className="by on-color">
@@ -198,6 +225,8 @@ function EntryFields({ form }) {
               <button key={h.id} type="button" className={`chip${f.house === h.id ? ' on hc' : ''}`}
                       style={{ '--hc': h.color, '--fg': h.fg }} onClick={() => set('house')(h.id)}>{h.name}</button>
             ))}
+            <button type="button" className={`chip${f.house === MULTI.id ? ' on hc flame' : ''}`}
+                    style={{ '--hc': MULTI.color, '--fg': MULTI.fg }} onClick={() => set('house')(MULTI.id)}>{MULTI.pickLabel}</button>
           </div>
         )}
       </div>
@@ -347,6 +376,7 @@ function MadLib({ form }) {
                  onChange={(e) => set('child')(e.target.value)} />
           , and I’m their <Slot id="relation" value={f.relation} hint="mom? dad?" />.
         </p>
+        <p className="ml-hint">More than one RCA kid? List them all.</p>
         {editing === 'relation' && (
           <div className="chips slotchips">
             {RELATIONS.map((r) => (
@@ -382,6 +412,9 @@ function MadLib({ form }) {
                       style={{ '--hc': h.color, '--fg': h.fg }}
                       onClick={() => pickIt('house', h.id)}>{h.name}</button>
             ))}
+            <button type="button" className={`chip${f.house === MULTI.id ? ' on hc flame' : ''}`}
+                    style={{ '--hc': MULTI.color, '--fg': MULTI.fg }}
+                    onClick={() => pickIt('house', MULTI.id)}>{MULTI.pickLabel}</button>
           </div>
         )}
       </div>
@@ -762,9 +795,23 @@ export default function App() {
             {countdown.over ? (
               <span className="count-note">{CURRENT.name} is closed — everything below stays up.</span>
             ) : (
-              <span className="count-note">
-                Open now: <b>{CURRENT.name}</b> · closes {CLOSE_LABEL(CURRENT.closesAt)} · <b className={countdown.urgent ? 'urgent' : ''}>{countdown.text}</b> left
-              </span>
+              <div className={`vault${countdown.urgent ? ' vault-urgent' : ''}`}>
+                <p className="vault-lead">
+                  <span className="vault-dot" aria-hidden="true" />
+                  The vault closes in
+                </p>
+                <div className="vault-clock" role="timer" aria-label={`${countdown.text} left to add yours`}>
+                  {countdown.parts.map((p) => (
+                    <div className="vault-seg" key={p.label}>
+                      <span className="vault-num">{p.value}</span>
+                      <span className="vault-lab">{p.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="vault-note">
+                  Closes <b>{CLOSE_LABEL(CURRENT.closesAt)}</b> — record your word before it locks.
+                </p>
+              </div>
             )}
           </div>
           {!countdown.over && (
@@ -815,7 +862,7 @@ export default function App() {
               <div className="house-grid">
                 {LANES.map((h) => {
                   const n = stats.byHouse[h.id] || 0;
-                  const lead = h.id !== UNSORTED.id && n > 0 && n === stats.lead;
+                  const lead = h.id !== UNSORTED.id && h.id !== MULTI.id && n > 0 && n === stats.lead;
                   return (
                     <div key={h.id} className={`house${h.pale ? ' pale' : ''}${lead ? ' lead' : ''}${n === 0 ? ' zero' : ''}`}
                          style={{ '--hc': h.color, '--fg': h.fg }}>

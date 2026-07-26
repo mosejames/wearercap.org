@@ -434,3 +434,70 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   .board{padding:26px 0 48px}
   .board-head{margin:0 0 18px}
 }
+
+/* ---------------- vault countdown ---------------- */
+.vault{
+  display:inline-block;margin:2px 0 0;padding:14px 18px 15px;
+  border:1px solid rgba(255,255,255,.12);border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  box-shadow:0 12px 30px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.05);
+  max-width:min(100%,520px)}
+.vault-lead{
+  display:flex;align-items:center;gap:9px;margin:0 0 11px;
+  font-family:Archivo,system-ui,sans-serif;font-weight:800;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.74)}
+.vault-lead b{color:var(--gold);font-weight:800}
+.vault-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;
+  box-shadow:0 0 0 0 rgba(232,165,22,.55);animation:vaultpulse 2.4s ease-out infinite}
+.vault-clock{display:flex;align-items:stretch;gap:10px}
+.vault-seg{
+  min-width:60px;padding:9px 6px 7px;text-align:center;border-radius:12px;
+  background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.08)}
+.vault-num{
+  display:block;font-family:Archivo,system-ui,sans-serif;font-weight:900;
+  font-size:32px;line-height:1;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums}
+.vault-lab{
+  display:block;margin:6px 0 0;font-size:9.5px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.vault-note{margin:12px 0 0;font-size:13px;font-weight:600;color:rgba(255,255,255,.66)}
+.vault-note b{color:rgba(255,255,255,.9);font-weight:800}
+
+/* under 24h — bring the heat */
+.vault-urgent{
+  border-color:rgba(224,33,138,.55);
+  box-shadow:0 12px 34px rgba(216,32,45,.30),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:vaulturge 1.8s ease-in-out infinite}
+.vault-urgent .vault-lead,.vault-urgent .vault-lead b{color:var(--magenta)}
+.vault-urgent .vault-dot{background:var(--magenta);box-shadow:0 0 0 0 rgba(224,33,138,.6)}
+.vault-urgent .vault-seg{border-color:rgba(224,33,138,.35);background:rgba(216,32,45,.16)}
+
+@keyframes vaultpulse{
+  0%{box-shadow:0 0 0 0 rgba(232,165,22,.5)}
+  70%{box-shadow:0 0 0 9px rgba(232,165,22,0)}
+  100%{box-shadow:0 0 0 0 rgba(232,165,22,0)}}
+@keyframes vaulturge{
+  0%,100%{box-shadow:0 12px 30px rgba(216,32,45,.20),inset 0 1px 0 rgba(255,255,255,.05)}
+  50%{box-shadow:0 14px 40px rgba(224,33,138,.42),inset 0 1px 0 rgba(255,255,255,.06)}}
+
+@media(max-width:560px){
+  .vault{padding:12px 13px 13px;border-radius:14px;width:100%;max-width:none}
+  .vault-lead{font-size:11px;letter-spacing:.1em;margin:0 0 9px}
+  .vault-clock{gap:7px}
+  .vault-seg{min-width:0;flex:1;padding:8px 2px 6px}
+  .vault-num{font-size:26px}
+  .vault-lab{font-size:8.5px;letter-spacing:.12em}
+  .vault-note{font-size:12px;margin:10px 0 0}
+}
+@media(prefers-reduced-motion:reduce){
+  .vault-dot,.vault-urgent{animation:none}
+}
+
+/* ---------------- across-houses (flame) lane ---------------- */
+/* A parent whose kids span houses gets the flame instead of one color. */
+.card.said.flame{background:var(--flame)}
+.chip.on.hc.flame{background:var(--flame);border-color:transparent;color:#fff}
+.house.flame:not(.zero){background:var(--flame);color:#fff}
+.house.flame:not(.zero) em{opacity:.85}
+.house.flame b{padding-right:34px}
+.ml-hint{font-size:13px;font-weight:600;color:var(--ink-soft);line-height:1.4;margin:2px 0 10px}

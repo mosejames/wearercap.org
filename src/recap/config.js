@@ -50,6 +50,13 @@ export const UNSORTED = {
   color: '#FFFFFF', fg: '#1a1613', pale: true,
 };
 
+// Parents with kids in more than one house don't pick a single lane — they get
+// the flame. It's the whole "Four houses. One RCAP." idea in one card.
+export const MULTI = {
+  id: 'multi', name: 'Across houses', pickLabel: 'More than one house',
+  meaning: 'Four houses, one family', color: '#E0218A', fg: '#FFFFFF', flame: true,
+};
+
 export const CLASSES = ['2027', '2028', '2029', '2030', '2031', '2032'];
 export const FIRST_SUMMER_CLASS = '2031';
 export const RELATIONS = ['Mom', 'Dad', 'Grandparent', 'Auntie', 'Uncle', 'Bonus Parent', 'Guardian'];
@@ -116,5 +123,8 @@ export const wordLabel = (id) => {
   const t = String(id || '').trim();
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
-export const houseById = (id) =>
-  HOUSES.find((h) => h.id === id) || (id === UNSORTED.id ? UNSORTED : UNSORTED);
+export const houseById = (id) => {
+  if (id === MULTI.id) return MULTI;
+  if (id === UNSORTED.id) return UNSORTED;
+  return HOUSES.find((h) => h.id === id) || UNSORTED;
+};
