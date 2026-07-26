@@ -181,6 +181,7 @@ img{display:block;max-width:100%}
 .card.photo{background:transparent}
 .card.photo img,.card.photo video{
   width:100%;height:auto;display:block;border-radius:15px;background:#f2ece2;
+  object-fit:cover;object-position:center;
 }
 .card.photo figcaption{padding:11px 3px 0}
 .cap-story{
