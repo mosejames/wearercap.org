@@ -406,3 +406,31 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:0 0 30px}
 .panel h3{margin:0 0 4px;font-size:19px;letter-spacing:-.025em}
 .panel .sub{margin:0 0 6px;font-size:13.5px;color:var(--ink-soft)}
+
+
+/* ---------------- compact mobile hero ---------------- */
+@media(max-width:560px){
+  .topbar-in{padding:14px 22px;gap:12px}
+  .mark{font-size:20px}
+  .mark small{font-size:8.5px;letter-spacing:.16em;margin-top:4px}
+  .topmeta{font-size:8.5px;letter-spacing:.12em;line-height:1.6}
+
+  .hero{padding:12px 0 18px}
+  .hero .kicker{font-size:13.5px;margin:0 0 6px}
+  .hero h1{font-size:clamp(29px,8.6vw,44px);line-height:.94}
+  .hero .intro{font-size:13.5px;line-height:1.45;margin:10px 0 0;max-width:none}
+
+  .hero-words{margin:14px 0 0}
+  .hero-words-lead{margin:0 0 7px;font-size:10px;letter-spacing:.14em}
+  .wchips{gap:6px}
+  .wchip{padding:7px 13px;font-size:13.5px;border-width:1.25px}
+  .wchip.own{font-size:13px}
+
+  .hero-cta{margin:12px 0 0}
+  .count-note{font-size:12.5px;line-height:1.5}
+  .hero-progress{margin:12px 0 0;gap:10px}
+  .hero-progress span{font-size:11px}
+
+  .board{padding:26px 0 48px}
+  .board-head{margin:0 0 18px}
+}
