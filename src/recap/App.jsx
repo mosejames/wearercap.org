@@ -683,6 +683,15 @@ export default function App() {
     setLoaded(true);
   }, []);
 
+  // Deep links from the email: /rcap-recap/?word=proud opens the sheet with
+  // that word already picked. Unknown words just open the sheet.
+  useEffect(() => {
+    const w = (new URLSearchParams(window.location.search).get('word') || '').toLowerCase().trim();
+    if (!w) return;
+    if (new Date(CURRENT.closesAt).getTime() <= Date.now()) return;
+    setOpen(WORDS.some((x) => x.id === w) ? w : '');
+  }, []);
+
   useEffect(() => {
     reload();
     const onHash = () => setIsAdmin(window.location.hash === '#admin');
