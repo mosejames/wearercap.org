@@ -1,0 +1,11 @@
+# Supabase CLI config for wearercap.org.
+#
+# This file was missing, which is why `supabase db push` reported
+# "Cannot find project ref" even from inside the repo — the CLI does not
+# treat a folder as a Supabase project without it. Everything else the CLI
+# needs was already here (supabase/.temp/linked-project.json holds the link).
+#
+# Only project_id is required; the CLI supplies sensible defaults for the
+# rest. Commit this file.
+
+project_id = "kcsrtwwpnekqdrfgcfys"

@@ -2,15 +2,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowUpRight,
-  Bell,
   CalendarDays,
+  Car,
   Clock,
   HeartHandshake,
-  LockKeyhole,
   Mail,
   Megaphone,
   PlayCircle,
-  ShieldCheck,
   Users,
   X,
 } from 'lucide-react';
@@ -21,7 +19,7 @@ import './styles.css';
 // /invite/) are served directly and stay reachable.
 // Note: this is a visual cover, not access control. The markup still ships to
 // the browser and is readable via view-source or with CSS disabled.
-const COMING_SOON = true;
+const COMING_SOON = false;
 
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
@@ -30,62 +28,79 @@ const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
 const heroPoster = '/images/rcap-video-hero.jpg';
 
-const communityLinks = [
+/* ------------------------------------------------------------------------
+ * EDIT ZONE — the content below changes during the year.
+ * Everything in this block is plain data: no code knowledge needed beyond
+ * matching the surrounding punctuation. Until the admin screens exist, this
+ * is the one place to update events and open calls.
+ * ---------------------------------------------------------------------- */
+
+// Happening now — the next few real dates families can plan around.
+// Keep this list SHORT (2-4 items) and CURRENT: delete dates once they pass.
+const upcomingEvents = [
+  { weekday: 'Fri', date: 'Jul 24, 2026', label: 'Summer EXP — educator welcome' },
+  { weekday: 'Sat', date: 'Jul 25, 2026', label: 'Summer EXP — educator welcome' },
+  // PLACEHOLDER — confirm after the July 24 board meeting (Agenda Item E
+  // sets the year's meeting calendar; September dates below are from the
+  // school calendar and should be confirmed before the gate comes off):
+  { weekday: 'Thu', date: 'Sept 10, 2026', label: 'Parent Orientation' },
+  { weekday: 'Tue', date: 'Sept 15, 2026', label: 'Bingo Night — season kickoff' },
+];
+
+// The single most time-sensitive ask. One item, not a list — if everything
+// is urgent, nothing is. Set to null to hide the banner entirely.
+const openCall = {
+  label: 'Coming soon',
+  title: 'Committee seats and Advisory Board nominations open for 2026-27',
+  body:
+    'RCAP is widening the bench this year: committee chairs, grade-level ' +
+    'representatives, and more. Details land here after the board sets the ' +
+    'timeline — check back, or email us to raise your hand early.',
+  href: contactHref,
+  linkLabel: 'Raise your hand',
+};
+
+/* ---------------------------- end edit zone --------------------------- */
+
+// The doors — the four main things a family comes here to do. These are the
+// site's top-level sections; each will grow into its own page as it firms up.
+const doors = [
   {
-    variant: 'announcements',
-    icon: Megaphone,
-    title: 'Announcements',
-    body: 'Important RCAP updates, reminders, and links for families.',
-    href: '#announcements',
+    variant: 'carpool',
+    icon: Car,
+    title: 'Carpool',
+    body: 'Find RCA families near you and share the driving.',
+    href: '/carpool/',
+    badge: 'Live',
+    external: false,
+  },
+  {
+    variant: 'serve',
+    icon: HeartHandshake,
+    title: 'Serve',
+    body: 'Volunteer, log your hours, and step up for a committee.',
+    href: '#serve',
+    external: false,
   },
   {
     variant: 'events',
     icon: CalendarDays,
-    title: 'Upcoming Events',
-    body: 'Known dates, EXP opportunities, and family moments.',
+    title: 'Events',
+    body: 'What is happening and when, all in one place.',
     href: '#events',
+    external: false,
   },
   {
-    variant: 'volunteer',
-    icon: HeartHandshake,
-    title: 'Volunteer',
-    body: 'Sign up, serve, and log your volunteer hours.',
-    href: '#volunteer',
-  },
-  {
-    variant: 'resources',
-    icon: ShieldCheck,
-    title: 'Family Resources',
-    body: 'Helpful parent information, contacts, and school-year links.',
-    href: '#resources',
+    variant: 'committees',
+    icon: Users,
+    title: 'Committees',
+    body: 'The teams that carry RCAP, and the seats that are open.',
+    href: '#committees',
+    external: false,
   },
 ];
 
-const announcementFramework = [
-  {
-    title: 'News and reminders',
-    body: 'Quick updates for RCAP families, written plainly and easy to scan.',
-  },
-  {
-    title: 'Dates and details',
-    body: 'Event notes, deadlines, and the details families need before they arrive.',
-  },
-  {
-    title: 'Family actions',
-    body: 'Sign-ups, forms, contacts, and next steps gathered in one place.',
-  },
-];
-
-const knownEvents = [
-  { weekday: 'Sat', date: 'Jul 18, 2026', label: 'Known EXP date' },
-  { weekday: 'Sun', date: 'Jul 19, 2026', label: 'Known EXP date' },
-  { weekday: 'Tue', date: 'Jul 21, 2026', label: 'Known EXP date' },
-  { weekday: 'Wed', date: 'Jul 22, 2026', label: 'Known EXP date' },
-  { weekday: 'Fri', date: 'Jul 24, 2026', label: 'Known EXP date' },
-  { weekday: 'Sat', date: 'Jul 25, 2026', label: 'Known EXP date' },
-];
-
-const volunteerActions = [
+const serveActions = [
   {
     icon: HeartHandshake,
     title: 'Volunteer sign-up',
@@ -103,30 +118,43 @@ const volunteerActions = [
     external: true,
   },
   {
-    icon: Mail,
-    title: 'Ask or offer help',
-    body: 'Send questions, ideas, and offers to help to the current contact.',
+    icon: Megaphone,
+    title: 'Nominate — coming soon',
+    body:
+      'Advisory Board grade seats and committee interest open here soon. ' +
+      'Until then, email RCAP to put a name forward.',
     href: contactHref,
     label: 'Email RCAP',
     external: false,
   },
 ];
 
-const resourceNotes = [
+// Committees — the standing teams. Chairs and open seats get confirmed at the
+// board's first meeting; keep descriptions evergreen so this list stays true.
+const committees = [
   {
-    icon: ShieldCheck,
-    title: 'Family links',
-    body: 'Useful links for staying connected, volunteering, and finding RCAP information quickly.',
+    title: 'Teacher & Staff Appreciation',
+    body: 'The flagship. Teacher Appreciation Week every spring since 2011.',
   },
   {
-    icon: LockKeyhole,
-    title: 'Parent-only details',
-    body: 'Sensitive details stay off the public web and are shared through trusted parent channels.',
+    title: 'Men of RCAP',
+    body: 'Event muscle since 2011 — setup, teardown, and showing up. Open to any man in an RCA family.',
   },
   {
-    icon: Users,
-    title: 'Questions and ideas',
-    body: 'Parents can reach RCAP with questions, corrections, ideas, and ways to help.',
+    title: 'Fall Raffle',
+    body: 'The engine of the budget. Beat its $20,000 goal in 2025.',
+  },
+  {
+    title: 'Christmas / Holiday Decor',
+    body: 'Transforms the whole school every November.',
+  },
+  {
+    title: 'Uniform Swap',
+    body: 'Free uniform exchanges since 2010 — the longest-running family service RCAP offers.',
+  },
+  {
+    title: 'Concessions',
+    body: 'Feeds every event and game night.',
   },
 ];
 
@@ -229,22 +257,125 @@ function App() {
               <PlayCircle size={18} aria-hidden="true" />
               Watch the RCAP video
             </button>
-            <a className="button secondary" href="#get-involved">
-              Get involved
+            <a className="button secondary" href="#doors">
+              Start here
               <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           </div>
         </div>
       </section>
 
+      {/* The doors — route people, don't explain everything. */}
+      <section id="doors" className="doors" aria-label="Where do you want to go?">
+        {doors.map(({ variant, icon: Icon, title, body, href, badge }) => (
+          <a className={`door-card ${variant}`} key={title} href={href}>
+            <div className="door-top">
+              <Icon size={28} aria-hidden="true" />
+              {badge ? <span className="door-badge">{badge}</span> : null}
+            </div>
+            <h3>{title}</h3>
+            <p>{body}</p>
+            <span className="door-go" aria-hidden="true">
+              <ArrowUpRight size={18} />
+            </span>
+          </a>
+        ))}
+      </section>
+
+      {/* Happening now — short, current, dated. The part that must never rot. */}
+      <section id="events" className="content-section events-section">
+        <div className="section-heading">
+          <p className="section-label">Happening Now</p>
+          <h2>The next dates to plan around.</h2>
+        </div>
+        <div className="event-grid" aria-label="Upcoming RCAP dates">
+          {upcomingEvents.map(({ weekday, date, label }) => (
+            <article className="event-card" key={`${date}-${label}`}>
+              <span className="event-weekday">{weekday}</span>
+              <strong>{date}</strong>
+              <span>{label}</span>
+            </article>
+          ))}
+        </div>
+
+        {openCall ? (
+          <a className="open-call" href={openCall.href}>
+            <span className="open-call-label">{openCall.label}</span>
+            <div className="open-call-text">
+              <h3>{openCall.title}</h3>
+              <p>{openCall.body}</p>
+            </div>
+            <em>
+              {openCall.linkLabel}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </em>
+          </a>
+        ) : null}
+      </section>
+
+      {/* Serve — one place for stepping up: hands, hours, and names. */}
+      <section id="serve" className="content-section volunteer-section">
+        <div className="section-heading">
+          <p className="section-label">Serve</p>
+          <h2>Step up in the way that fits.</h2>
+          <p>
+            Give an hour, give a season, or put a name forward — including your
+            own. It all counts, and it all starts here.
+          </p>
+        </div>
+        <div className="action-list">
+          {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
+            <a
+              className="action-link"
+              key={title}
+              href={href}
+              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              <Icon size={24} aria-hidden="true" />
+              <span>
+                <strong>{title}</strong>
+                <span>{body}</span>
+              </span>
+              <em>
+                {label}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </em>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* Committees — the recruitment surface. Chairs/open seats added after
+          the board confirms them; descriptions stay evergreen. */}
+      <section id="committees" className="content-section committees-section">
+        <div className="section-heading">
+          <p className="section-label">Committees</p>
+          <h2>The teams that carry RCAP.</h2>
+          <p>
+            Sixteen years of traditions run through these committees. Chairs and
+            open seats for 2026-27 will be posted here as the board confirms
+            them.
+          </p>
+        </div>
+        <div className="committee-grid" aria-label="RCAP standing committees">
+          {committees.map(({ title, body }) => (
+            <article className="committee-card" key={title}>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Who we are — short; the fuller story gets its own page later. */}
       <section id="community" className="community-feature">
         <div className="community-copy">
-          <p className="section-label">Our Community</p>
+          <p className="section-label">Who We Are</p>
           <h2>Parents showing up for RCA, our kids, and each other.</h2>
           <p>
-            We Are RCAP is the parent community of Ron Clark Academy. This is where
-            families come to stay connected, celebrate what is happening, and find
-            simple ways to support the school.
+            We Are RCAP is the parent community of Ron Clark Academy — sixteen
+            years of families welcoming, building, decorating, feeding, funding,
+            and cheering. Every RCA parent is a member. That includes you.
           </p>
         </div>
 
@@ -272,124 +403,7 @@ function App() {
         </div>
       </section>
 
-      <section className="image-band" aria-label="RCAP community">
-        <img src="/images/rcap-hero-campus.jpg" alt="RCA families walking near campus" />
-        <img src="/images/rcap-hero-volunteer.jpg" alt="RCAP volunteer welcoming families" />
-      </section>
-
-      <section id="get-involved" className="content-section get-involved-section">
-        <div className="section-heading">
-          <p className="section-label">Get Involved</p>
-          <h2>Find what you need and jump in.</h2>
-          <p>
-            Start with the most common RCAP needs: updates, dates, volunteer
-            opportunities, and family resources.
-          </p>
-        </div>
-        <div className="quick-links" aria-label="Get involved with RCAP">
-          {communityLinks.map(({ variant, icon: Icon, title, body, href }) => (
-            <a className={`quick-link ${variant}`} key={title} href={href}>
-              <Icon size={26} aria-hidden="true" />
-              <div className="quick-link-text">
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-              <ArrowUpRight className="quick-arrow" size={20} aria-hidden="true" />
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section id="announcements" className="content-section announcements-section">
-        <div className="section-heading">
-          <p className="section-label">Announcements</p>
-          <h2>Stay connected with RCAP.</h2>
-          <p>
-            Announcements, reminders, and next steps from RCAP live here for
-            families to reference without digging through scattered messages.
-          </p>
-        </div>
-        <div className="framework-grid">
-          {announcementFramework.map(({ title, body }) => (
-            <article className="framework-card" key={title}>
-              <Bell size={22} aria-hidden="true" />
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="events" className="content-section events-section">
-        <div className="section-heading">
-          <p className="section-label">Upcoming Events</p>
-          <h2>Upcoming EXP dates.</h2>
-          <p>
-            These are the confirmed upcoming EXP dates families can plan around.
-          </p>
-        </div>
-        <div className="event-grid" aria-label="Known upcoming EXP dates">
-          {knownEvents.map(({ weekday, date, label }) => (
-            <article className="event-card" key={date}>
-              <span className="event-weekday">{weekday}</span>
-              <strong>{date}</strong>
-              <span>{label}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="volunteer" className="content-section volunteer-section">
-        <div className="section-heading">
-          <p className="section-label">Volunteer</p>
-          <h2>Pitch in, then log the hours.</h2>
-          <p>
-            Ready to help? Sign up for current needs, record your hours, or send
-            RCAP a question.
-          </p>
-        </div>
-        <div className="action-list">
-          {volunteerActions.map(({ icon: Icon, title, body, href, label, external }) => (
-            <a
-              className="action-link"
-              key={title}
-              href={href}
-              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            >
-              <Icon size={24} aria-hidden="true" />
-              <span>
-                <strong>{title}</strong>
-                <span>{body}</span>
-              </span>
-              <em>
-                {label}
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </em>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section id="resources" className="content-section resources-section">
-        <div className="section-heading">
-          <p className="section-label">Family Resources</p>
-          <h2>Resources for RCAP families.</h2>
-          <p>
-            Find useful public links here. Family-only details are shared through
-            trusted parent channels.
-          </p>
-        </div>
-        <div className="resource-grid">
-          {resourceNotes.map(({ icon: Icon, title, body }) => (
-            <article className="resource-note" key={title}>
-              <Icon size={24} aria-hidden="true" />
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
+      {/* Footer — contact now; member sign-in joins when the member area ships. */}
       <section className="closing">
         <p className="section-label">We Are RCAP</p>
         <h2>Connected families make the community stronger.</h2>
@@ -397,6 +411,13 @@ function App() {
           Questions, corrections, ideas, and ways to help are welcome. Email{' '}
           <a href={contactHref}>{contactEmail}</a>.
         </p>
+        <nav className="footer-map" aria-label="Site sections">
+          <a href="/carpool/">Carpool</a>
+          <a href="#serve">Serve</a>
+          <a href="#events">Events</a>
+          <a href="#committees">Committees</a>
+          <a href="/what-to-expect/">What to Expect at EXP</a>
+        </nav>
       </section>
 
       <VideoModal open={isVideoOpen} onClose={closeVideo} />

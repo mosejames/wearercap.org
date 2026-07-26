@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         carpool: resolve(__dirname, 'carpool/index.html'),
+        recap: resolve(__dirname, 'rcap-recap/index.html'),
       },
     },
   },

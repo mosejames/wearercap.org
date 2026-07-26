@@ -1177,3 +1177,241 @@ button {
   /* darker than --muted, which fell to ~3.4:1 against the scrimmed backdrop */
   color: #414c55;
 }
+
+/* ---------------------------------------------------------------------------
+   Doors — the four top-level destinations, pulled up over the hero base.
+   Same card language as quick-link, scaled to four and given a color edge. */
+
+.doors {
+  width: min(1180px, calc(100% - 40px));
+  margin: -64px auto 0;
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.door-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  /* extra bottom padding reserves the corner the .door-go arrow sits in, so
+     a two-line description never runs underneath it */
+  padding: 22px 22px 46px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--blue);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.door-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 46px rgba(8, 13, 18, 0.18);
+}
+
+.door-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.door-card > .door-top svg {
+  color: var(--blue);
+}
+
+.door-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(36, 107, 85, 0.14);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.door-card h3 {
+  margin: 6px 0 0;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.door-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.door-go {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.door-card:hover .door-go {
+  transform: translate(2px, -2px);
+}
+
+.door-card.carpool {
+  border-top-color: var(--green);
+}
+
+.door-card.carpool > .door-top svg {
+  color: var(--green);
+}
+
+.door-card.serve {
+  border-top-color: var(--red);
+}
+
+.door-card.serve > .door-top svg {
+  color: var(--red);
+}
+
+.door-card.committees {
+  border-top-color: var(--gold);
+}
+
+.door-card.committees > .door-top svg {
+  color: var(--gold);
+}
+
+/* Open call — the single most time-sensitive ask, under Happening Now. */
+
+.open-call {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 22px;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: 10px;
+  transition: transform 0.18s ease;
+}
+
+.open-call:hover {
+  transform: translateY(-2px);
+}
+
+.open-call-label {
+  flex: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(228, 167, 47, 0.18);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.open-call-text {
+  flex: 1 1 auto;
+}
+
+.open-call h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.open-call p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.open-call em {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--gold);
+}
+
+/* Committees — evergreen descriptions; chairs and open seats come later. */
+
+.committee-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.committee-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.committee-card h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.committee-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Footer map */
+
+.footer-map {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.footer-map a {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: color 0.15s ease;
+}
+
+.footer-map a:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .doors {
+    width: calc(100% - 28px);
+    grid-template-columns: 1fr 1fr;
+    margin-top: -40px;
+    gap: 10px;
+  }
+
+  .committee-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .open-call {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .doors {
+    grid-template-columns: 1fr;
+  }
+}
