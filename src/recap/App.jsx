@@ -374,9 +374,12 @@ function MadLib({ form }) {
           <input className="ml2-input" style={inputWidth(f.child, 9)} value={f.child}
                  maxLength={40} placeholder="their name" autoComplete="off"
                  onChange={(e) => set('child')(e.target.value)} />
-          , and I’m their <Slot id="relation" value={f.relation} hint="mom? dad?" />.
+          .
         </p>
         <p className="ml-hint">More than one RCA kid? List them all.</p>
+        <p>
+          And I’m their <Slot id="relation" value={f.relation} hint="mom? dad?" />.
+        </p>
         {editing === 'relation' && (
           <div className="chips slotchips">
             {RELATIONS.map((r) => (
