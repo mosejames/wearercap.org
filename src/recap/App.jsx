@@ -50,7 +50,7 @@ function sizeClass(text) {
   return 'sm';
 }
 
-function Tile({ entry, mine, index = 0 }) {
+function Tile({ entry, mine, index = 0, onOpen }) {
   const lane = houseById(entry.house);
   const shot = entry.media?.[0];
   // Photos render at their true proportions (width:100% + height:auto), so they
@@ -83,6 +83,7 @@ function Tile({ entry, mine, index = 0 }) {
           : <img
               src={shot.url}
               alt="" loading="lazy" decoding="async"
+              onClick={onOpen ? () => onOpen(entry) : undefined}
               width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
           {quote ? <p className="cap-story">{quote}</p> : null}
@@ -674,6 +675,40 @@ function Admin({ rows, reload }) {
 
 /* ------------------------------------------------------------------ app */
 
+// Tap a board photo to open it full-size over a dark backdrop. Shows the whole
+// original image (never cropped), with the caption. Close on backdrop, ×, or Esc.
+function Lightbox({ entry, onClose }) {
+  const shot = entry.media?.[0];
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!shot) return null;
+  const whoLabel = entry.parentName
+    ? `${entry.parentName} · ${entry.child}’s ${entry.relation}`
+    : `${entry.child}’s ${entry.relation}`;
+  const quote = entry.story
+    ? (entry.prompt ? `${entry.prompt} ${entry.story}` : entry.story)
+    : '';
+  return (
+    <div className="lightbox" role="dialog" aria-modal="true" onClick={onClose}>
+      <button className="lightbox-x" onClick={onClose} aria-label="Close">×</button>
+      <figure className="lightbox-inner" onClick={(e) => e.stopPropagation()}>
+        {shot.kind === 'video'
+          ? <video src={shot.url} controls playsInline autoPlay />
+          : <img src={shot.url} alt="" />}
+        <figcaption>
+          {quote ? <p className="lightbox-story">{quote}</p> : null}
+          <p className="lightbox-by">{whoLabel} · Class of {entry.gradClass}</p>
+        </figcaption>
+      </figure>
+    </div>
+  );
+}
+
 export default function App() {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -681,6 +716,7 @@ export default function App() {
   const [open, setOpen] = useState(null);
   const [done, setDone] = useState(null);
   const [mineId, setMineId] = useState(null);
+  const [zoom, setZoom] = useState(null);
   const [view, setView] = useState(CURRENT.slug);
   const countdown = useCountdown(CURRENT.closesAt);
   const [isAdmin, setIsAdmin] = useState(() =>
@@ -859,7 +895,7 @@ export default function App() {
               : visible.length === 0 ? <div className="empty">Nothing here yet. Be the first one up.</div>
               : (
                 <div className="board-grid" ref={boardRef}>
-                  {visible.map((e, i) => <Tile key={e.id} entry={e} index={i} mine={e.id === mineId} />)}
+                  {visible.map((e, i) => <Tile key={e.id} entry={e} index={i} mine={e.id === mineId} onOpen={setZoom} />)}
                 </div>
               )}
           </div>
@@ -916,6 +952,7 @@ export default function App() {
                onDone={(e) => { setOpen(null); setDone(e); setMineId(e.id); setRows((p) => [e, ...p]); }} />
       )}
       {done && <Done entry={done} onClose={() => { setDone(null); reload(); }} />}
+      {zoom && <Lightbox entry={zoom} onClose={() => setZoom(null)} />}
     </>
   );
 }
