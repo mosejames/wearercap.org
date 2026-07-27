@@ -10,18 +10,6 @@ import { makeZip } from './zip.js';
 
 const LANES = [...HOUSES, UNSORTED, MULTI];
 
-// The board loads a lightweight, resized copy of each photo via Supabase image
-// transforms (the full file stays untouched in storage for the ZIP export). If
-// the transform service is ever unavailable, the <img onError> below falls back
-// to the original URL, so photos never break.
-function thumbUrl(url, width = 900) {
-  if (typeof url !== 'string') return url;
-  const marker = '/storage/v1/object/public/';
-  const i = url.indexOf(marker);
-  if (i === -1) return url; // not a Supabase public object URL — leave it alone
-  return `${url.slice(0, i)}/storage/v1/render/image/public/${url.slice(i + marker.length)}?width=${width}&quality=68`;
-}
-
 // Always render the closing date in school time, not the reader's timezone.
 const CLOSE_LABEL = (iso) =>
   new Date(iso).toLocaleDateString('en-US', {
@@ -93,8 +81,7 @@ function Tile({ entry, mine, index = 0 }) {
         {shot.kind === 'video'
           ? <video src={shot.url} controls playsInline preload="metadata" />
           : <img
-              src={thumbUrl(shot.url)}
-              onError={(e) => { if (e.currentTarget.src !== shot.url) e.currentTarget.src = shot.url; }}
+              src={shot.url}
               alt="" loading="lazy" decoding="async"
               width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
