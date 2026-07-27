@@ -29,7 +29,7 @@ export const SITE = {
   titleLead: 'DESCRIBE EXP',
   titleGrad: 'IN ONE WORD.',
   intro:
-    'EXP was powered by parents like you. Tell us how it felt with one word, a quick note, or a selfie. Join the wall in under 30 seconds.',
+    'EXP was powered by parents like you. Tell us how it felt with one word, a quick note, or a selfie. Join the recap in under 30 seconds.',
   wordLead: 'Tap your answer',
 };
 
@@ -110,7 +110,7 @@ export const randomPrompt = (not) => {
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
-export const HOURS_URL = 'https://www.trackitforward.com';
+export const HOURS_URL = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 export const HASHTAGS = ['#RCAEXP', '#RCAPINSPIRED', '#RONCLARKACADEMY'];
 export const ADMIN_HINT = 'Back office lives at /rcap-recap/#admin';
 

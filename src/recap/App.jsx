@@ -949,7 +949,7 @@ export default function App() {
         <section className="board">
           <div className="shell">
             <div className="board-head">
-              <span className="eyebrow">The board</span>
+              <span className="eyebrow">The Recap</span>
               {ROUNDS.length > 1 ? (
                 <div className="rounds">
                   {ROUNDS.map((r) => (
