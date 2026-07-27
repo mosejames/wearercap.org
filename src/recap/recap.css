@@ -172,11 +172,11 @@ img{display:block;max-width:100%}
 /* board masonry — true aspect ratios, varied tile sizes, never cropped */
 .board-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px;grid-auto-rows:8px;align-items:start}
 @media(max-width:1100px){.board-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}}
-@media(max-width:780px){.board-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
-@media(max-width:540px){.board-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:780px){.board-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
+@media(max-width:540px){.board-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
 .board-grid > *{align-self:start;margin:0}
 .board-grid .feature{grid-column:span 2}
-@media(max-width:540px){.board-grid .feature{grid-column:auto}}
+@media(max-width:780px){.board-grid .feature{grid-column:auto}}
 
 .card{
   break-inside:avoid;border-radius:15px;overflow:hidden;
