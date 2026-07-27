@@ -16,6 +16,8 @@
   --orange:#f26a1b;
   --magenta:#e0218a;
   --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
+  --mist:#efeae1;
+  --cream:#f7f0e3;
   --shadow:0 18px 38px rgba(8,13,18,.12);
   --shadow-lg:0 26px 60px rgba(8,13,18,.22);
 }
@@ -44,7 +46,7 @@ img{display:block;max-width:100%}
 .topmeta{text-align:right;font-size:10.5px;font-weight:800;letter-spacing:.2em;color:rgba(255,255,255,.62);line-height:1.7}
 
 /* ---------------- hero ---------------- */
-.hero{background:var(--night);color:#fff;padding:22px 0 38px}
+.hero{background:var(--night);color:#fff;padding:22px 0 56px}
 .hero .kicker{
   font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:clamp(17px,2vw,22px);
   color:rgba(255,255,255,.82);margin:0 0 10px;
@@ -105,7 +107,7 @@ img{display:block;max-width:100%}
 .wchip.own{border-style:dashed;color:rgba(255,255,255,.65);font-weight:600}
 .wchip.own:hover{color:#fff}
 
-.hero-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:18px 0 0}
+.hero-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:36px 0 0}
 .btn{
   border:0;border-radius:999px;padding:16px 30px;font-size:16.5px;font-weight:800;letter-spacing:-.01em;
   background:var(--ink);color:var(--paper);box-shadow:var(--shadow);
@@ -120,14 +122,16 @@ img{display:block;max-width:100%}
 .count-note{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.62)}
 .count-note b{color:var(--gold);font-variant-numeric:tabular-nums}
 .count-note b.urgent{color:var(--magenta)}
-.hero-progress{display:flex;align-items:center;gap:14px;margin:16px 0 0;max-width:560px}
+.hero-progress{display:flex;align-items:center;gap:14px;margin:24px 0 0;max-width:560px}
 .hero-progress .bar{flex:1}
 .hero-progress span{font-size:12px;color:rgba(255,255,255,.5);white-space:nowrap;font-variant-numeric:tabular-nums}
 
 /* ---------------- body ---------------- */
-.body{background:var(--paper);padding:8px 0 34px}
-.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
-.eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--orange)}
+.body{background:var(--mist);padding:84px 0 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
+/* The orange rule is an accent for major moments, not a stamp on every heading. */
+.wordband .eyebrow::before,.sheet-head .eyebrow::before{
+  content:"";width:26px;height:3px;border-radius:2px;background:var(--orange)}
 
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px;margin:0}
 .stepcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
@@ -135,9 +139,12 @@ img{display:block;max-width:100%}
 .stepcard b{display:block;font-size:15.5px;letter-spacing:-.015em;margin-bottom:3px}
 .stepcard p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.45}
 
-.houses{margin:0;padding:26px 0 0}
-.houses-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:16px}
-.houses-head p{margin:0;font-size:13.5px;color:var(--ink-soft)}
+.houses{margin:0;padding:0}
+/* Section heads read as one group: kicker label, editorial deck, then air. */
+.houses-head,.board-head,.wordband-head{display:block;margin:0 0 38px}
+.houses-head p,.board-head p,.wordband-head p{
+  margin:12px 0 0;font-size:17.5px;line-height:1.5;font-weight:500;
+  color:var(--ink-soft);max-width:46ch;text-wrap:pretty}
 .house-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:11px}
 .house{background:var(--hc);color:var(--fg);border-radius:14px;padding:15px 16px;position:relative;box-shadow:var(--shadow);transition:transform .18s ease}
 .house:hover{transform:translateY(-3px)}
@@ -150,10 +157,8 @@ img{display:block;max-width:100%}
 
 /* ---------------- word band ---------------- */
 /* The answer to the hero's question, sized by how many parents chose each word. */
-.wordband{background:var(--paper);padding:34px 0 30px;border-bottom:1px solid var(--line)}
-.wordband-head{margin:0 0 18px}
-.wordband-head p{margin:8px 0 0;font-size:13.5px;color:var(--ink-soft)}
-.wordband-list{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px}
+.wordband{background:var(--cream);padding:92px 0 88px}
+.wordband-list{display:flex;flex-wrap:wrap;align-items:baseline;gap:18px 32px;margin:0}
 .bigword{
   position:relative;font-size:calc(var(--s) * 1px);font-weight:900;letter-spacing:-.035em;
   line-height:1.08;color:var(--ink);text-transform:uppercase;overflow-wrap:anywhere;
@@ -169,18 +174,15 @@ img{display:block;max-width:100%}
 .bigword:nth-child(4n+2){color:var(--ink-soft)}
 .bigword:nth-child(5n+3){color:var(--orange)}
 @media(max-width:560px){
-  .wordband{padding:24px 0 22px}
-  .wordband-head{margin:0 0 14px}
-  .wordband-head p{font-size:12.5px}
-  .wordband-list{gap:4px 16px}
+  .wordband{padding:66px 0 64px}
+  .wordband-list{gap:13px 20px}
   .bigword{font-size:calc(var(--s) * .66px);letter-spacing:-.03em}
 }
 
 /* ---------------- the board ---------------- */
-.board{background:#fff;padding:40px 0 60px}
-.board-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 30px}
-.board-head p{margin:0;font-size:13.5px;color:var(--ink-soft)}
-.rounds{display:flex;gap:8px;flex-wrap:wrap}
+.board{background:#fff;padding:96px 0 88px}
+.board-head{margin:0 0 46px}
+.rounds{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0}
 .rchip{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:8px 15px;
   font-size:13.5px;font-weight:700;color:var(--ink-soft);transition:all .14s ease}
 .rchip:hover{border-color:var(--ink-soft)}
@@ -231,7 +233,7 @@ img{display:block;max-width:100%}
 .card.said.pale .pill.onsolid{background:#f0e9dd;color:var(--ink-soft)}
 .said-text{
   margin:0;font-weight:700;letter-spacing:-.022em;line-height:1.12;
-  text-wrap:balance;overflow-wrap:anywhere;hyphens:none;
+  text-wrap:balance;overflow-wrap:break-word;hyphens:none;
 }
 .said-text.xl{font-size:clamp(24px,2.05vw,31px)}
 .said-text.lg{font-size:clamp(20px,1.65vw,24px);line-height:1.16}
@@ -467,8 +469,16 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
 .sticky .btn{width:100%}
 @media(max-width:760px){.sticky{display:block}.foot{padding-bottom:100px}}
 
-.foot{background:var(--night);color:rgba(255,255,255,.62);padding:34px 0 46px;font-size:13.5px}
+/* Closing chapter: back to black, and the hours ask carries real weight. */
+.foot{background:var(--night);color:rgba(255,255,255,.62);padding:76px 0 68px;font-size:13.5px}
+.foot p:first-child{
+  font-size:20px;line-height:1.45;font-weight:600;letter-spacing:-.015em;
+  color:rgba(255,255,255,.92);max-width:30ch;margin:0}
 .foot a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.foot p:first-child a{
+  display:inline-block;margin-top:10px;color:var(--gold);text-decoration:none;font-weight:800;
+  border-bottom:2px solid rgba(232,165,22,.4);padding-bottom:3px}
+.foot p:first-child a:hover{border-bottom-color:var(--gold)}
 .foot .tags{margin-top:10px;letter-spacing:.06em;font-size:11px;font-weight:800;color:rgba(255,255,255,.4)}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:0 0 30px}
 .panel h3{margin:0 0 4px;font-size:19px;letter-spacing:-.025em}
@@ -482,7 +492,7 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   .mark small{font-size:8.5px;letter-spacing:.16em;margin-top:4px}
   .topmeta{font-size:8.5px;letter-spacing:.12em;line-height:1.6}
 
-  .hero{padding:12px 0 18px}
+  .hero{padding:12px 0 40px}
   .hero .kicker{font-size:13.5px;margin:0 0 6px}
   .hero h1{font-size:clamp(29px,8.6vw,44px);line-height:.94}
   .hero .intro{font-size:13.5px;line-height:1.45;margin:10px 0 0;max-width:none}
@@ -493,21 +503,28 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   .wchip{padding:7px 13px;font-size:13.5px;border-width:1.25px}
   .wchip.own{font-size:13px}
 
-  .hero-cta{margin:12px 0 0}
+  .hero-cta{margin:28px 0 0}
   .count-note{font-size:12.5px;line-height:1.5}
-  .hero-progress{margin:12px 0 0;gap:10px}
+  .hero-progress{margin:20px 0 0;gap:10px}
   .hero-progress span{font-size:11px}
 
-  .board{padding:26px 0 48px}
-  .board-head{margin:0 0 18px}
+  /* Section rhythm on mobile: 56-72px of air top and bottom of every chapter. */
+  .board{padding:68px 0 64px}
+  .body{padding:64px 0 60px}
+  .foot{padding-top:60px}
+  .houses-head,.board-head,.wordband-head{margin:0 0 30px}
+  .houses-head p,.board-head p,.wordband-head p{font-size:16px;margin:10px 0 0}
+  .foot p:first-child{font-size:18px}
 }
 
 /* ---------------- vault countdown ---------------- */
+/* Tinted, recessed surface so the clock reads as secondary urgency rather than
+   another row of answer buttons. */
 .vault{
-  display:inline-block;margin:2px 0 0;padding:14px 18px 15px;
-  border:1px solid rgba(255,255,255,.12);border-radius:16px;
-  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
-  box-shadow:0 12px 30px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.05);
+  display:inline-block;margin:2px 0 0;padding:17px 20px 18px;
+  border:1px solid rgba(232,165,22,.22);border-radius:16px;
+  background:linear-gradient(180deg,rgba(232,165,22,.10),rgba(232,165,22,.028));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
   max-width:min(100%,520px)}
 .vault-lead{
   display:flex;align-items:center;gap:9px;margin:0 0 11px;
@@ -568,3 +585,7 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
 .house.flame:not(.zero) em{opacity:.85}
 .house.flame b{padding-right:34px}
 .ml-hint{font-size:13px;font-weight:600;color:var(--ink-soft);line-height:1.4;margin:2px 0 10px}
+
+/* Sticky "Add yours" clearance. Must come last: the base .foot padding
+   shorthand would otherwise override the padding-bottom set earlier. */
+@media(max-width:760px){.foot{padding-bottom:108px}}
