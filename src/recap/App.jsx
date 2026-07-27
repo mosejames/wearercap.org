@@ -77,7 +77,7 @@ function Tile({ entry, mine, index = 0, onOpen }) {
 
   if (shot) {
     return (
-      <figure className={`card photo${feature ? ' feature' : ''}${mine ? ' mine' : ''}`}>
+      <figure id={`entry-${entry.id}`} className={`card photo${feature ? ' feature' : ''}${mine ? ' mine' : ''}`}>
         {shot.kind === 'video'
           ? <video src={shot.url} controls playsInline preload="metadata" />
           : <img
@@ -95,7 +95,7 @@ function Tile({ entry, mine, index = 0, onOpen }) {
 
   const text = quote || `${wordLabel(entry.word)}.`;
   return (
-    <article className={`card said${lane.pale ? ' pale' : ''}${lane.flame ? ' flame' : ''}${mine ? ' mine' : ''}`}
+    <article id={`entry-${entry.id}`} className={`card said${lane.pale ? ' pale' : ''}${lane.flame ? ' flame' : ''}${mine ? ' mine' : ''}`}
              style={{ '--hc': lane.color, '--fg': lane.fg }}>
       <p className={`said-text ${sizeClass(text)}`}>{text}</p>
       <p className="by on-color">
@@ -433,7 +433,35 @@ function MadLib({ form }) {
   );
 }
 
-function Sheet({ initialWord = '', onClose, onDone }) {
+// Parents who arrive from the email tap a word and land straight in the form,
+// skipping the hero. This strip carries the two things they'd have seen there:
+// proof other parents already showed up, and the closing clock.
+function SheetProof({ count, faces, countdown }) {
+  if (!count && !countdown) return null;
+  return (
+    <div className="proof">
+      {faces.length > 0 && (
+        <div className="proof-faces">
+          {faces.map((m) => <img key={m.url} src={m.url} alt="" loading="lazy" />)}
+        </div>
+      )}
+      <div className="proof-text">
+        {count > 0 && (
+          <p className="proof-count">
+            You&rsquo;re joining <b>{count}</b> {count === 1 ? 'parent' : 'parents'} so far.
+          </p>
+        )}
+        {countdown && !countdown.over && (
+          <p className="proof-clock">
+            Closes {CLOSE_LABEL(CURRENT.closesAt)} · <b>{countdown.text} left</b>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Sheet({ initialWord = '', onClose, onDone, count = 0, faces = [], countdown = null }) {
   const form = useEntryForm({
     ...(initialWord ? { word: initialWord } : null),
     prompt: randomPrompt(),
@@ -458,7 +486,10 @@ function Sheet({ initialWord = '', onClose, onDone }) {
           <span className="eyebrow">Fill in the blanks</span>
           <h2>Finish the sentence.</h2>
         </div>
-        <div className="sheet-body"><MadLib form={form} /></div>
+        <div className="sheet-body">
+          <SheetProof count={count} faces={faces} countdown={countdown} />
+          <MadLib form={form} />
+        </div>
         <div className="sheet-foot stack">
           <button className="btn flame" onClick={submit} disabled={!form.ready || busy}>
             {busy ? 'Adding…'
@@ -757,6 +788,18 @@ export default function App() {
   );
   const pct = Math.min(100, Math.round((currentCount / CURRENT.goal) * 100));
 
+  // A few recent faces to show inside the sheet as proof other parents showed up.
+  const proofFaces = useMemo(() => {
+    const out = [];
+    for (const r of rows) {
+      if (r.hidden || r.round !== CURRENT.slug) continue;
+      const shot = r.media?.find((m) => m.kind !== 'video');
+      if (shot) out.push(shot);
+      if (out.length === 4) break;
+    }
+    return out;
+  }, [rows]);
+
   const stats = useMemo(() => {
     const byHouse = {}, byWord = {};
     for (const e of visible) {
@@ -949,9 +992,18 @@ export default function App() {
 
       {open !== null && (
         <Sheet initialWord={open} onClose={() => setOpen(null)}
+               count={currentCount} faces={proofFaces} countdown={countdown}
                onDone={(e) => { setOpen(null); setDone(e); setMineId(e.id); setRows((p) => [e, ...p]); }} />
       )}
-      {done && <Done entry={done} onClose={() => { setDone(null); reload(); }} />}
+      {done && <Done entry={done} onClose={() => {
+        const id = done.id;
+        setDone(null);
+        reload();
+        // Land them on their own card instead of making them hunt for it.
+        setTimeout(() => {
+          document.getElementById(`entry-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }} />}
       {zoom && <Lightbox entry={zoom} onClose={() => setZoom(null)} />}
     </>
   );
