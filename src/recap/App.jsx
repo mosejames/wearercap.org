@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   SITE, ROUNDS, CURRENT, HOUSES, UNSORTED, CLASSES, RELATIONS, WORDS,
   WORD_MAX, WORD_PROMPT, WORD_HINT, PROMPTS, randomPrompt,
@@ -51,19 +51,6 @@ function useCountdown(iso) {
 
 /* ----------------------------------------------------------------- tile */
 
-// Deterministic per-tile variation. The collage should feel hand-arranged,
-// but the same entry must land the same way on every render.
-const SHAPES = [
-  { w: 100, gap: 22, pull: 0 },
-  { w: 88,  gap: 34, pull: 1 },
-  { w: 95,  gap: 24, pull: 0 },
-  { w: 84,  gap: 30, pull: 1 },
-  { w: 100, gap: 32, pull: 0 },
-  { w: 92,  gap: 22, pull: 0 },
-  { w: 86,  gap: 38, pull: 1 },
-];
-const shapeFor = (i) => SHAPES[(i * 3 + ((i * i) % 5)) % SHAPES.length];
-
 // Short quotes get set big, long ones step down. Matches how the reference
 // board reads — a few loud lines, the rest quieter.
 function sizeClass(text) {
@@ -78,13 +65,11 @@ function sizeClass(text) {
 function Tile({ entry, mine, index = 0 }) {
   const lane = houseById(entry.house);
   const shot = entry.media?.[0];
-  const shape = shapeFor(index);
-  const wrap = {
-    width: `${shape.w}%`,
-    marginBottom: shape.gap,
-    marginLeft: shape.pull ? 'auto' : 0,
-    marginRight: shape.pull ? 0 : 'auto',
-  };
+  // Photos keep their true aspect ratio. Landscape shots occasionally span two
+  // columns so the board reads as a varied collage — never cropped.
+  const ratio = shot && shot.w && shot.h ? shot.w / shot.h : null;
+  const feature = !!shot && shot.kind !== 'video' && ratio && ratio >= 1.15 && (index * 7 + 3) % 5 === 0;
+  const media = shot ? { aspectRatio: ratio ? `${shot.w} / ${shot.h}` : (shot.kind === 'video' ? '4 / 5' : undefined) } : undefined;
 
   const whoLabel = entry.parentName
     ? `${entry.parentName} · ${entry.child}’s ${entry.relation}`
@@ -103,13 +88,13 @@ function Tile({ entry, mine, index = 0 }) {
 
   if (shot) {
     return (
-      <figure className={`card photo${mine ? ' mine' : ''}`} style={wrap}>
+      <figure className={`card photo${feature ? ' feature' : ''}${mine ? ' mine' : ''}`}>
         {shot.kind === 'video'
-          ? <video src={shot.url} controls playsInline preload="metadata" />
+          ? <video src={shot.url} controls playsInline preload="metadata" style={media} />
           : <img
               src={thumbUrl(shot.url)}
               onError={(e) => { if (e.currentTarget.src !== shot.url) e.currentTarget.src = shot.url; }}
-              alt="" loading="lazy" decoding="async"
+              alt="" loading="lazy" decoding="async" style={media}
               width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
           {quote ? <p className="cap-story">{quote}</p> : null}
@@ -122,7 +107,7 @@ function Tile({ entry, mine, index = 0 }) {
   const text = quote || `${wordLabel(entry.word)}.`;
   return (
     <article className={`card said${lane.pale ? ' pale' : ''}${lane.flame ? ' flame' : ''}${mine ? ' mine' : ''}`}
-             style={{ ...wrap, '--hc': lane.color, '--fg': lane.fg }}>
+             style={{ '--hc': lane.color, '--fg': lane.fg }}>
       <p className={`said-text ${sizeClass(text)}`}>{text}</p>
       <p className="by on-color">
         {whoLabel}
@@ -765,6 +750,43 @@ export default function App() {
     };
   }, [visible]);
 
+  // Masonry: size each tile's grid row-span from its real height so photos keep
+  // their true ratio and pack tight, with the two-column features mixed in.
+  const boardRef = useRef(null);
+  useLayoutEffect(() => {
+    const grid = boardRef.current;
+    if (!grid) return;
+    const relayout = () => {
+      const cs = getComputedStyle(grid);
+      const rowH = parseFloat(cs.gridAutoRows) || 8;
+      const gap = parseFloat(cs.rowGap) || 0;
+      for (const card of grid.children) {
+        card.style.gridRowEnd = 'auto';
+        const h = card.getBoundingClientRect().height;
+        card.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + gap) / (rowH + gap)))}`;
+      }
+    };
+    relayout();
+    const ro = new ResizeObserver(relayout);
+    ro.observe(grid);
+    window.addEventListener('resize', relayout);
+    const media = grid.querySelectorAll('img, video');
+    media.forEach((m) => {
+      m.addEventListener('load', relayout);
+      m.addEventListener('loadedmetadata', relayout);
+    });
+    const t = setTimeout(relayout, 400);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', relayout);
+      media.forEach((m) => {
+        m.removeEventListener('load', relayout);
+        m.removeEventListener('loadedmetadata', relayout);
+      });
+      clearTimeout(t);
+    };
+  }, [visible, isAdmin]);
+
   if (isAdmin) return <Admin rows={rows} reload={reload} />;
 
 
@@ -848,7 +870,7 @@ export default function App() {
               : !loaded ? <div className="empty">Loading…</div>
               : visible.length === 0 ? <div className="empty">Nothing here yet. Be the first one up.</div>
               : (
-                <div className="grid">
+                <div className="board-grid" ref={boardRef}>
                   {visible.map((e, i) => <Tile key={e.id} entry={e} index={i} mine={e.id === mineId} />)}
                 </div>
               )}
