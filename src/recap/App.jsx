@@ -102,20 +102,14 @@ function Tile({ entry, mine, index = 0 }) {
     : '';
 
   if (shot) {
-    // Keep the masonry variety, but stop ultra-tall photos from making a giant
-    // half-a-face tile: cap portraits at 4:5 and center-crop anything taller.
-    // Landscape and square photos keep their natural shape.
-    const cap = shot.w && shot.h
-      ? { aspectRatio: `${shot.w} / ${Math.min(shot.h, Math.round(shot.w * 1.25))}` }
-      : undefined;
     return (
       <figure className={`card photo${mine ? ' mine' : ''}`} style={wrap}>
         {shot.kind === 'video'
-          ? <video src={shot.url} controls playsInline preload="metadata" style={cap} />
+          ? <video src={shot.url} controls playsInline preload="metadata" />
           : <img
               src={thumbUrl(shot.url)}
               onError={(e) => { if (e.currentTarget.src !== shot.url) e.currentTarget.src = shot.url; }}
-              alt="" loading="lazy" decoding="async" style={cap}
+              alt="" loading="lazy" decoding="async"
               width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
           {quote ? <p className="cap-story">{quote}</p> : null}
