@@ -332,7 +332,9 @@ function MadLib({ form }) {
         {wordShown && !wordOpen ? (
           <div className="ml-wordcard">
             <p className="ml-word-lead">My EXP in one word</p>
-            <button type="button" className="ml-word-big" onClick={() => setWordOpen(true)}>
+            <button type="button"
+                    className={`ml-word-big${wordShown.length > 12 ? ' sm' : wordShown.length > 9 ? ' md' : ''}`}
+                    onClick={() => setWordOpen(true)}>
               {wordShown}
             </button>
             <button type="button" className="ml-tap" onClick={() => setWordOpen(true)}>tap to change</button>
