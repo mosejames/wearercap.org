@@ -79,7 +79,9 @@ function Tile({ entry, mine, index = 0, onOpen }) {
     return (
       <figure id={`entry-${entry.id}`} className={`card photo${feature ? ' feature' : ''}${mine ? ' mine' : ''}`}>
         {shot.kind === 'video'
-          ? <video src={shot.url} controls playsInline preload="metadata" />
+          ? <video src={shot.url} poster={shot.poster || undefined}
+                   controls playsInline preload="metadata"
+                   width={shot.w || undefined} height={shot.h || undefined} />
           : <img
               src={shot.url}
               alt="" loading="lazy" decoding="async"
@@ -759,7 +761,7 @@ function Lightbox({ entry, onClose }) {
       <button className="lightbox-x" onClick={onClose} aria-label="Close">×</button>
       <figure className="lightbox-inner" onClick={(e) => e.stopPropagation()}>
         {shot.kind === 'video'
-          ? <video src={shot.url} controls playsInline autoPlay />
+          ? <video src={shot.url} poster={shot.poster || undefined} controls playsInline autoPlay />
           : <img src={shot.url} alt="" />}
         <figcaption>
           {quote ? <p className="lightbox-story">{quote}</p> : null}
