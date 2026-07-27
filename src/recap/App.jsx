@@ -65,11 +65,12 @@ function sizeClass(text) {
 function Tile({ entry, mine, index = 0 }) {
   const lane = houseById(entry.house);
   const shot = entry.media?.[0];
-  // Photos keep their true aspect ratio. Landscape shots occasionally span two
-  // columns so the board reads as a varied collage — never cropped.
+  // Photos render at their true proportions (width:100% + height:auto), so they
+  // are never stretched or cropped. The width/height attributes reserve the
+  // right space before load; the masonry re-measures once images arrive.
+  // Landscape shots occasionally span two columns for a varied collage.
   const ratio = shot && shot.w && shot.h ? shot.w / shot.h : null;
   const feature = !!shot && shot.kind !== 'video' && ratio && ratio >= 1.15 && (index * 7 + 3) % 5 === 0;
-  const media = shot ? { aspectRatio: ratio ? `${shot.w} / ${shot.h}` : (shot.kind === 'video' ? '4 / 5' : undefined) } : undefined;
 
   const whoLabel = entry.parentName
     ? `${entry.parentName} · ${entry.child}’s ${entry.relation}`
@@ -90,11 +91,11 @@ function Tile({ entry, mine, index = 0 }) {
     return (
       <figure className={`card photo${feature ? ' feature' : ''}${mine ? ' mine' : ''}`}>
         {shot.kind === 'video'
-          ? <video src={shot.url} controls playsInline preload="metadata" style={media} />
+          ? <video src={shot.url} controls playsInline preload="metadata" />
           : <img
               src={thumbUrl(shot.url)}
               onError={(e) => { if (e.currentTarget.src !== shot.url) e.currentTarget.src = shot.url; }}
-              alt="" loading="lazy" decoding="async" style={media}
+              alt="" loading="lazy" decoding="async"
               width={shot.w || undefined} height={shot.h || undefined} />}
         <figcaption>
           {quote ? <p className="cap-story">{quote}</p> : null}
