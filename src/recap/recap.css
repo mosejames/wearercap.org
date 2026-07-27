@@ -157,7 +157,8 @@ img{display:block;max-width:100%}
 
 /* ---------------- word band ---------------- */
 /* The answer to the hero's question, sized by how many parents chose each word. */
-.wordband{background:var(--cream);padding:92px 0 88px}
+.wordband{background:var(--cream);padding:60px 0 62px}
+.wordband-head{margin:0 0 26px}
 .wordband-list{display:flex;flex-wrap:wrap;align-items:baseline;gap:18px 32px;margin:0}
 .bigword{
   position:relative;font-size:calc(var(--s) * 1px);font-weight:900;letter-spacing:-.035em;
@@ -174,7 +175,8 @@ img{display:block;max-width:100%}
 .bigword:nth-child(4n+2){color:var(--ink-soft)}
 .bigword:nth-child(5n+3){color:var(--orange)}
 @media(max-width:560px){
-  .wordband{padding:66px 0 64px}
+  .wordband{padding:40px 0 44px}
+  .wordband-head{margin:0 0 20px}
   .wordband-list{gap:13px 20px}
   .bigword{font-size:calc(var(--s) * .66px);letter-spacing:-.03em}
 }
@@ -518,58 +520,54 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   .foot{padding-top:60px}
   .houses-head,.board-head,.wordband-head{margin:0 0 30px}
   .houses-head p,.board-head p,.wordband-head p{font-size:16px;margin:10px 0 0}
+  .wordband-head{margin:0 0 20px}
   .foot p:first-child{font-size:18px}
 }
 
 /* ---------------- vault countdown ---------------- */
-/* Tinted, recessed surface so the clock reads as secondary urgency rather than
-   another row of answer buttons. */
+/* The deadline gets the flame. One gradient block that stands on its own,
+   with the clock reading through the same surface. */
 .vault{
-  display:inline-block;margin:2px 0 0;padding:17px 20px 18px;
-  border:1px solid rgba(232,165,22,.22);border-radius:16px;
-  background:linear-gradient(180deg,rgba(232,165,22,.10),rgba(232,165,22,.028));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-  max-width:min(100%,520px)}
+  display:block;margin:2px 0 0;padding:20px 22px 22px;
+  border:0;border-radius:18px;
+  background:var(--flame);
+  box-shadow:0 16px 40px rgba(216,32,45,.34);
+  max-width:min(100%,540px)}
 .vault-lead{
-  display:flex;align-items:center;gap:9px;margin:0 0 11px;
+  display:flex;align-items:center;gap:9px;margin:0 0 13px;
   font-family:Archivo,system-ui,sans-serif;font-weight:800;
-  font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.74)}
-.vault-lead b{color:var(--gold);font-weight:800}
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.94)}
+.vault-lead b{color:#fff;font-weight:800}
 .vault-dot{
-  width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;
-  box-shadow:0 0 0 0 rgba(232,165,22,.55);animation:vaultpulse 2.4s ease-out infinite}
+  width:8px;height:8px;border-radius:50%;background:#fff;flex:none;
+  box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:vaultpulse 2.4s ease-out infinite}
 .vault-clock{display:flex;align-items:stretch;gap:10px}
 .vault-seg{
-  min-width:60px;padding:9px 6px 7px;text-align:center;border-radius:12px;
-  background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.08)}
+  min-width:60px;padding:10px 6px 8px;text-align:center;border-radius:12px;
+  background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.26)}
 .vault-num{
   display:block;font-family:Archivo,system-ui,sans-serif;font-weight:900;
   font-size:32px;line-height:1;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums}
 .vault-lab{
   display:block;margin:6px 0 0;font-size:9.5px;font-weight:800;
-  letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5)}
-.vault-note{margin:12px 0 0;font-size:13px;font-weight:600;color:rgba(255,255,255,.66)}
-.vault-note b{color:rgba(255,255,255,.9);font-weight:800}
+  letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.8)}
+.vault-note{margin:14px 0 0;font-size:13px;font-weight:600;color:rgba(255,255,255,.9)}
+.vault-note b{color:#fff;font-weight:800}
 
-/* under 24h — bring the heat */
-.vault-urgent{
-  border-color:rgba(224,33,138,.55);
-  box-shadow:0 12px 34px rgba(216,32,45,.30),inset 0 1px 0 rgba(255,255,255,.06);
-  animation:vaulturge 1.8s ease-in-out infinite}
-.vault-urgent .vault-lead,.vault-urgent .vault-lead b{color:var(--magenta)}
-.vault-urgent .vault-dot{background:var(--magenta);box-shadow:0 0 0 0 rgba(224,33,138,.6)}
-.vault-urgent .vault-seg{border-color:rgba(224,33,138,.35);background:rgba(216,32,45,.16)}
+/* under 24h — deepen the block and let it breathe in and out */
+.vault-urgent{animation:vaulturge 1.8s ease-in-out infinite}
+.vault-urgent .vault-seg{background:rgba(0,0,0,.38);border-color:rgba(255,255,255,.42)}
 
 @keyframes vaultpulse{
-  0%{box-shadow:0 0 0 0 rgba(232,165,22,.5)}
-  70%{box-shadow:0 0 0 9px rgba(232,165,22,0)}
-  100%{box-shadow:0 0 0 0 rgba(232,165,22,0)}}
+  0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}
+  70%{box-shadow:0 0 0 9px rgba(255,255,255,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 @keyframes vaulturge{
-  0%,100%{box-shadow:0 12px 30px rgba(216,32,45,.20),inset 0 1px 0 rgba(255,255,255,.05)}
-  50%{box-shadow:0 14px 40px rgba(224,33,138,.42),inset 0 1px 0 rgba(255,255,255,.06)}}
+  0%,100%{box-shadow:0 16px 40px rgba(216,32,45,.34)}
+  50%{box-shadow:0 20px 54px rgba(224,33,138,.55)}}
 
 @media(max-width:560px){
-  .vault{padding:12px 13px 13px;border-radius:14px;width:100%;max-width:none}
+  .vault{padding:15px 14px 16px;border-radius:15px;width:100%;max-width:none}
   .vault-lead{font-size:11px;letter-spacing:.1em;margin:0 0 9px}
   .vault-clock{gap:7px}
   .vault-seg{min-width:0;flex:1;padding:8px 2px 6px}
