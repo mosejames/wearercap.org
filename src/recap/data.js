@@ -79,8 +79,26 @@ async function compressImage(file, maxDim = 2400, quality = 0.85) {
   }
 }
 
+// The recap-media bucket inherits the project's 50 MB ceiling. Images are
+// compressed below it automatically; video is uploaded as-is, and iPhones shoot
+// 4K by default, so a short clip can blow straight past it. Catch that here and
+// say something a parent can act on instead of letting Storage reject it after
+// a long upload on cell data.
+const MAX_UPLOAD = 50 * 1024 * 1024;
+// Round up, so a file that is over the limit never reads as equal to it.
+const asMB = (bytes) => Math.max(1, Math.ceil(bytes / (1024 * 1024)));
+const LIMIT_MB = Math.round(MAX_UPLOAD / (1024 * 1024));
+
 export async function uploadFile(file) {
   const isVideo = file.type.startsWith('video/');
+
+  if (isVideo && file.size > MAX_UPLOAD) {
+    throw new Error(
+      `That video is about ${asMB(file.size)} MB and the limit is ${LIMIT_MB} MB. ` +
+      `Trim it in Photos (Edit, drag the ends in, Save as New Clip), or add a photo instead.`
+    );
+  }
+
   let body = file;
   let dims = { w: null, h: null };
   let ext = (file.name.split('.').pop() || 'bin').toLowerCase();
@@ -92,6 +110,13 @@ export async function uploadFile(file) {
     dims = { w: c.w, h: c.h };
     ext = 'jpg';
     contentType = 'image/jpeg';
+  }
+
+  if (body.size > MAX_UPLOAD) {
+    throw new Error(
+      `That file is about ${asMB(body.size)} MB and the limit is ${LIMIT_MB} MB. ` +
+      `Try a smaller one.`
+    );
   }
 
   const name = `${CURRENT.slug}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;

@@ -328,7 +328,7 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   background:rgba(8,13,18,.75);color:#fff;font-size:13px;line-height:1;display:grid;place-items:center}
 .upl{display:grid;place-items:center;width:78px;height:78px;border-radius:11px;border:1.5px dashed var(--line);
   background:var(--surface);font-size:24px;color:var(--ink-soft)}
-.err{color:#b1281f;font-size:13.5px;margin:12px 0 0;font-weight:700}
+.err{color:#b1281f;font-size:13.5px;line-height:1.45;margin:12px 0 0;font-weight:700}
 
 /* ---------------- mad-libs sheet ---------------- */
 .ml-word{text-align:center;margin:10px 0 22px;position:relative}
