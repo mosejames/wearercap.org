@@ -106,6 +106,43 @@ function Tile({ entry, mine, index = 0, onOpen }) {
   );
 }
 
+// The hero asks the question in giant type; this answers it. Words are sized by
+// how many parents chose them, so the board's collective mood reads at a glance.
+// Deliberately kept off the individual cards: a word is a vote, a story is a
+// narrative, and stamping one on the other reads as a mismatch.
+const WORDBAND_MAX = 14;
+
+function WordBand({ words }) {
+  const shown = words.slice(0, WORDBAND_MAX);
+  if (shown.length === 0) return null;
+  const top = shown[0].n;
+  const floor = shown[shown.length - 1].n;
+  const span = Math.max(1, top - floor);
+  return (
+    <section className="wordband">
+      <div className="shell">
+        <div className="wordband-head">
+          <span className="eyebrow">What EXP felt like</span>
+          <p>Every word below came from a parent who was there.</p>
+        </div>
+        <div className="wordband-list">
+          {shown.map((w, i) => {
+            const t = (w.n - floor) / span;            // 0 → smallest, 1 → biggest
+            const size = Math.round(21 + t * 37);      // 21px … 58px
+            return (
+              <span key={w.id} className={`bigword${i === 0 ? ' lead' : ''}`}
+                    style={{ '--s': size }}>
+                {w.label}
+                {w.n > 1 && <i>{w.n}</i>}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ----------------------------------------------------------------- form */
 
 const EMPTY = { parentName: '', child: '', relation: '', gradClass: '', house: '', word: '', customWord: '', story: '', prompt: '' };
@@ -915,6 +952,8 @@ export default function App() {
         </div>
       </header>
 
+      <WordBand words={stats.words} />
+
       <main>
         <section className="board">
           <div className="shell">
@@ -963,13 +1002,6 @@ export default function App() {
                   );
                 })}
               </div>
-              {stats.words.length > 0 && (
-                <div className="words">
-                  {stats.words.map((w) => (
-                    <span className="wordstat" key={w.id}><b>{w.label}</b><span>{w.n}</span></span>
-                  ))}
-                </div>
-              )}
             </section>
           </div>
         </section>

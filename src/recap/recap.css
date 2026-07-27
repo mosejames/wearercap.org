@@ -148,10 +148,33 @@ img{display:block;max-width:100%}
 .house.pale{border:1.5px solid var(--line);box-shadow:none}
 .house.zero{background:#efe6d6;color:var(--ink-soft);box-shadow:none}
 
-.words{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0}
-.wordstat{display:inline-flex;align-items:baseline;gap:7px;border:1.5px solid var(--line);border-radius:99px;padding:7px 15px;font-size:14px;background:var(--surface)}
-.wordstat b{font-weight:800}
-.wordstat span{color:var(--ink-soft);font-weight:700;font-variant-numeric:tabular-nums}
+/* ---------------- word band ---------------- */
+/* The answer to the hero's question, sized by how many parents chose each word. */
+.wordband{background:var(--paper);padding:34px 0 30px;border-bottom:1px solid var(--line)}
+.wordband-head{margin:0 0 18px}
+.wordband-head p{margin:8px 0 0;font-size:13.5px;color:var(--ink-soft)}
+.wordband-list{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px}
+.bigword{
+  position:relative;font-size:calc(var(--s) * 1px);font-weight:900;letter-spacing:-.035em;
+  line-height:1.08;color:var(--ink);text-transform:uppercase;overflow-wrap:anywhere;
+}
+.bigword i{
+  font-style:normal;font-size:max(10px,calc(var(--s) * .3px));font-weight:800;
+  color:var(--ink-soft);vertical-align:super;margin-left:5px;font-variant-numeric:tabular-nums;
+}
+.bigword.lead{
+  background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.bigword.lead i{color:var(--orange);-webkit-text-fill-color:var(--orange)}
+.bigword:nth-child(4n+2){color:var(--ink-soft)}
+.bigword:nth-child(5n+3){color:var(--orange)}
+@media(max-width:560px){
+  .wordband{padding:24px 0 22px}
+  .wordband-head{margin:0 0 14px}
+  .wordband-head p{font-size:12.5px}
+  .wordband-list{gap:4px 16px}
+  .bigword{font-size:calc(var(--s) * .66px);letter-spacing:-.03em}
+}
 
 /* ---------------- the board ---------------- */
 .board{background:#fff;padding:40px 0 60px}
