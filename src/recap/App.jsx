@@ -329,23 +329,14 @@ function MadLib({ form }) {
     <div className="ml">
       {/* the word is the hero */}
       <div className="ml-word">
-        <svg className="doodle heart" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 20c-5-4.5-8-7.4-8-10.6C4 6.6 6 5 8.2 5c1.5 0 2.9.8 3.8 2 .9-1.2 2.3-2 3.8-2C18 5 20 6.6 20 9.4c0 3.2-3 6.1-8 10.6z"
-                fill="none" stroke="var(--magenta)" strokeWidth="2" strokeLinejoin="round" />
-        </svg>
-        <svg className="doodle spark" viewBox="0 0 24 24" aria-hidden="true">
-          <g stroke="var(--magenta)" strokeWidth="2" strokeLinecap="round">
-            <path d="M4 20 L9 15" /><path d="M12 21 L13 14" /><path d="M20 20 L16 15" />
-          </g>
-        </svg>
         {wordShown && !wordOpen ? (
-          <>
+          <div className="ml-wordcard">
             <button type="button" className="ml-word-big" onClick={() => setWordOpen(true)}>
               {wordShown}
             </button>
             <p className="ml-word-sub">That’s my EXP in one word.</p>
             <button type="button" className="ml-tap" onClick={() => setWordOpen(true)}>tap to change</button>
-          </>
+          </div>
         ) : (
           <>
             <p className="ml-word-sub">My EXP in one word:</p>
