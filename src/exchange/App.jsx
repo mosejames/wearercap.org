@@ -265,16 +265,7 @@ function Home({ bins, inv, reqs, refresh }) {
       <section className="shell section">
         <div className="card standard">
           <h3>{DONATION_STANDARD.title}</h3>
-          <p className="standard-intro">{DONATION_STANDARD.intro}</p>
-          <ul className="standard-list">
-            {DONATION_STANDARD.points.map((p) => (
-              <li key={p.t}>
-                <span className="standard-icon" aria-hidden="true">{p.icon}</span>
-                <span><b>{p.t}</b> — {p.d}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="standard-close">{DONATION_STANDARD.close}</p>
+          <p>{DONATION_STANDARD.body}</p>
         </div>
       </section>
 

@@ -147,38 +147,13 @@ export function sizeLabel(v) {
 // The first sensible default for a given item type.
 export const firstSize = (typeId) => (sizeGroups(typeId)[0]?.sizes[0]?.v) || 'YM';
 
-// What we're hoping for, said warmly. Every piece in a bin turns up on a
-// school morning for somebody's kid — that's the whole standard.
+// A light touch, not a lecture. These are parents who already know what a
+// good hand-me-down looks like — this just tilts the head toward it.
 export const DONATION_STANDARD = {
-  title: 'What makes a great donation',
-  intro:
-    'Everything that goes into a bin turns up on a school morning for somebody else’s ' +
-    'child. So the bar is a loving one: send what you’d be glad to see come home.',
-  points: [
-    {
-      icon: '💚',
-      t: 'Gently loved',
-      d: 'Outgrown, not worn out — with real school years still left in it.',
-    },
-    {
-      icon: '🧼',
-      t: 'Freshly washed',
-      d: 'Straight from your machine to the bin. Every single time.',
-    },
-    {
-      icon: '✨',
-      t: 'Stain-free',
-      d: 'Nothing a wash didn’t lift, and every button and zipper still doing its job.',
-    },
-    {
-      icon: '🌈',
-      t: 'True color',
-      d: 'Still deep and even — not sun-faded, thinned out, or gone gray.',
-    },
-  ],
-  close:
-    'The test we use: would you be happy if this showed up for your own child on the ' +
-    'first day of school? If the answer is yes, it’s exactly what we’re looking for.',
+  title: 'A quick reminder',
+  body:
+    'Whatever goes into a bin turns up on somebody else\u2019s child on a school ' +
+    'morning \u2014 so: gently loved, freshly washed, stain-free, still true in color.',
 };
 
 export const HOUSES = [
