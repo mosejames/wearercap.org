@@ -188,3 +188,27 @@ export const CONTACT = {
   name: '',
   email: 'hello@wearercap.org',
 };
+
+// ---------------------------------------------------------------------------
+// Phone numbers. People type "+1 404 555 1212", "(404) 555-1212", "404.555.1212"
+// and "14045551212" and mean the same thing, so every comparison runs on digits
+// and every display runs through here. Storage is E.164 so there's one
+// canonical form in the database.
+// ---------------------------------------------------------------------------
+export function phoneDigits(v) {
+  const d = String(v || '').replace(/\D/g, '');
+  if (d.length === 11 && d[0] === '1') return d.slice(1);
+  if (d.length === 10) return d;
+  return '';
+}
+
+export function prettyPhone(v) {
+  const d = phoneDigits(v);
+  if (!d) return String(v || '');
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
+export const samePhone = (a, b) => {
+  const x = phoneDigits(a);
+  return !!x && x === phoneDigits(b);
+};

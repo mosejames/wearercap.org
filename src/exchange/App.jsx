@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
-  SIZE_SET_LABEL,
+  SIZE_SET_LABEL, prettyPhone,
   houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, CONTACT,
@@ -889,7 +889,7 @@ function HolderHome({ token }) {
 // pings — so how they hear from us is theirs to choose too.
 function HolderSettings({ token, holder, reload }) {
   const [f, setF] = useState({
-    phone: holder.phone || '',
+    phone: prettyPhone(holder.phone || ''),
     email: holder.email || '',
     notifyMode: holder.notify_mode || 'instant',
   });
@@ -1061,7 +1061,7 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
             {pickups.map((o) => (
               <li key={o.id} className="req holder">
                 <div className="req-main">
-                  <b>{o.parent_name}{o.contact ? ` · ${o.contact}` : ''}</b>
+                  <b>{o.parent_name}{o.contact ? ` · ${prettyPhone(o.contact)}` : ''}</b>
                   <span>{o.items_desc}</span>
                 </div>
                 <div className="req-side">
@@ -1190,7 +1190,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
             {pickups.map((o) => (
               <li key={o.id} className="req holder">
                 <div className="req-main">
-                  <b>{o.parent_name}{o.contact ? ` · ${o.contact}` : ''}</b>
+                  <b>{o.parent_name}{o.contact ? ` · ${prettyPhone(o.contact)}` : ''}</b>
                   <span>{o.items_desc}</span>
                 </div>
                 <div className="req-side">
@@ -1702,7 +1702,8 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   }
 
   const shared = {
-    pass, act, msg, bins, holders, refresh, setPrintBins,
+    pass, act, msg, bins, refresh, setPrintBins,
+    holders: data.holders.length ? data.holders : holders,
     reqs: data.requests, notifications: data.notifications,
   };
   if (sub === 'bins')     return <AdminBins {...shared} />;
@@ -1796,7 +1797,7 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, notificat
             {overdue.map((r) => (
               <li key={r.id}>
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}</b> for {r.parent_name}
-                {r.contact ? ` (${r.contact})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
+                {r.contact ? ` (${prettyPhone(r.contact)})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
                 , {handoffSummary(r) || 'no plan'} · {dueInfo(r.due_at).label}
               </li>
             ))}
@@ -1867,7 +1868,7 @@ function AdminRequests({ pass, act, msg, bins, reqs }) {
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>
                   {r.parent_name}{r.student ? ` · ${r.student}` : ''}
-                  {r.contact ? ` · ${r.contact}` : ' · no contact'}
+                  {r.contact ? ` · ${prettyPhone(r.contact)}` : ' · no contact'}
                 </span>
                 <span className="plan">
                   {bin ? `${bin.code} · ${bin.holder_name || 'no holder'}` : 'no bin yet'}
@@ -1908,7 +1909,7 @@ function RequestEditSheet({ req, bins, pass, act, onClose }) {
     <Sheet onClose={onClose} title={`${typeLabel(req.item_type)} · ${sizeLabel(req.size)}`}>
       <p className="fine">
         For <b>{req.parent_name}</b>{req.student ? ` (${req.student})` : ''}
-        {req.contact ? ` · ${req.contact}` : ''} · asked {fmtDay(req.created_at)}
+        {req.contact ? ` · ${prettyPhone(req.contact)}` : ''} · asked {fmtDay(req.created_at)}
       </p>
 
       <label>Move to another bin
@@ -2013,7 +2014,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
               <div>
                 <b>{h.name}</b>
                 <span className={h.phone ? '' : 'missing'}>
-                  📱 {h.phone || 'no phone — they get no texts'}
+                  📱 {h.phone ? prettyPhone(h.phone) : 'no phone — they get no texts'}
                 </span>
                 <span className={h.email ? '' : 'missing'}>
                   ✉️ {h.email || 'no email on file'}
@@ -2104,7 +2105,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
               await act(() => db.adminTextHolderLink(pass, linkFor.id));
               setLinkFor(null);
             }}
-          >{linkFor.phone ? `Text it to ${linkFor.phone}` : 'No cell on file — add one first'}</button>
+          >{linkFor.phone ? `Text it to ${prettyPhone(linkFor.phone)}` : 'No cell on file — add one first'}</button>
           <button
             className="btn ghost wide"
             disabled={!linkFor.phone && !linkFor.email}
@@ -2151,7 +2152,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
 
 function HolderSheet({ holder, onSave, onClose }) {
   const [f, setF] = useState({
-    name: holder?.name || '', phone: holder?.phone || '', email: holder?.email || '',
+    name: holder?.name || '', phone: prettyPhone(holder?.phone || ''), email: holder?.email || '',
     house: holder?.house || '', student: holder?.student || '', note: holder?.note || '',
   });
   const [busy, setBusy] = useState(false);
@@ -2374,7 +2375,7 @@ function AdminOffers({ bins, offers, refresh }) {
             <div className="req-main">
               <b>{o.parent_name} <HouseTag id={o.house} /></b>
               <span>{o.items_desc}</span>
-              <span>{o.contact || 'no contact left'} · {binName(o.bin_id)} · {fmtDay(o.created_at)}</span>
+              <span>{o.contact ? prettyPhone(o.contact) : 'no contact left'} · {binName(o.bin_id)} · {fmtDay(o.created_at)}</span>
             </div>
             <div className="req-side">
               <span className={`chip ${o.status === 'open' ? 'chip-open' : 'chip-assigned'}`}>
