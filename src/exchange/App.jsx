@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SITE, DONATION_STANDARD, APPROX_NOTE, sizeGroups, sizeLabel, firstSize,
+  SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
   SIZE_SET_LABEL,
   houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
@@ -399,7 +399,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
       <label>Anything else? (optional)
-        <input value={form.note} onChange={set('note')} placeholder="Slim fit if there's a choice" maxLength={200} />
+        <input value={form.note} onChange={set('note')} placeholder={FIT_HINT} maxLength={200} />
       </label>
       <label className="qty">How many?
         <select value={form.qty} onChange={set('qty')}>

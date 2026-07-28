@@ -17,7 +17,7 @@ describe('size sets follow the item', () => {
     const v = values('pants-girls');
     expect(v).toContain('7');
     expect(v).toContain('16');
-    expect(v).toContain('10.5');          // half sizes
+    expect(v).not.toContain('10.5');      // plus is a fit note now, not a size
     expect(v).not.toContain('18');        // that's a boys size
     expect(v).not.toContain('YM');        // and that's a shirt size
   });
@@ -26,8 +26,8 @@ describe('size sets follow the item', () => {
     const v = values('pants-boys');
     expect(v).toContain('8');
     expect(v).toContain('20');
-    expect(v).toContain('12H');           // husky
-    expect(v).toContain('14S');           // slim
+    expect(v).not.toContain('12H');       // husky and slim are fit notes now
+    expect(v).not.toContain('14S');
     expect(v).toContain('W32');           // outgrown 20
     expect(v).not.toContain('7');         // girls only
   });
@@ -61,9 +61,13 @@ describe('browsing with no item chosen', () => {
 describe('sizeLabel', () => {
   it('spells out what a size means', () => {
     expect(sizeLabel('YM')).toBe('YM · 8–10');
-    expect(sizeLabel('10.5')).toBe('10½ Plus');
     expect(sizeLabel('W32')).toBe('32 waist');
+  });
+
+  it('still reads slim, husky and plus logged before they became notes', () => {
     expect(sizeLabel('12H')).toBe('12 Husky');
+    expect(sizeLabel('14S')).toBe('14 Slim');
+    expect(sizeLabel('10.5')).toBe('10½ Plus');
   });
 
   it('passes anything logged before this change straight through', () => {
