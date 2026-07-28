@@ -205,6 +205,7 @@ export async function adminItemType(pass, id, fields = {}) {
     p_housed: fields.housed ?? null,
     p_hidden: fields.hidden ?? null,
     p_sort: fields.sort ?? null,
+    p_size_set: fields.sizeSet ?? null,
   });
   if (error) throw error;
 }

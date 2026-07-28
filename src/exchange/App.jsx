@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SITE, SIZES, DONATION_STANDARD, APPROX_NOTE,
+  SITE, DONATION_STANDARD, APPROX_NOTE, sizeGroups, sizeLabel, firstSize, sizeSetFor,
+  SIZE_SET_LABEL,
   houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, CONTACT,
@@ -55,6 +56,24 @@ function HouseTag({ id }) {
 }
 
 const itemKey = (x) => `${x.itemType || x.item_type}|${x.size}|${x.house || ''}`;
+
+// The size list follows the item: girls' bottoms, boys' bottoms, or tops.
+function SizePicker({ itemType, value, onChange, placeholder }) {
+  return (
+    <select value={value} onChange={onChange}>
+      {placeholder && <option value="">{placeholder}</option>}
+      {sizeGroups(itemType).map((g, i) =>
+        g.group ? (
+          <optgroup key={g.group} label={g.group}>
+            {g.sizes.map((s) => <option key={s.v} value={s.v}>{s.label}</option>)}
+          </optgroup>
+        ) : (
+          g.sizes.map((s) => <option key={s.v + i} value={s.v}>{s.label}</option>)
+        )
+      )}
+    </select>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // App shell
@@ -196,14 +215,23 @@ function Home({ bins, inv, reqs, refresh }) {
               <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house (neutral items)'}</option>
             ))}
           </select>
-          <select value={type} onChange={(e) => setType(e.target.value)}>
+          <select
+            value={type}
+            onChange={(e) => {
+              const t = e.target.value;
+              setType(t);
+              // A size from another set would show zero results forever.
+              if (size && t && !sizeGroups(t).some((g) => g.sizes.some((x) => x.v === size))) {
+                setSize('');
+              }
+            }}>
             <option value="">Choose your item</option>
             {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
-          <select value={size} onChange={(e) => setSize(e.target.value)}>
-            <option value="">Choose your size</option>
-            {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SizePicker
+            itemType={type} value={size} placeholder="Choose your size"
+            onChange={(e) => setSize(e.target.value)}
+          />
         </div>
 
         {shown.length === 0 ? (
@@ -220,7 +248,7 @@ function Home({ bins, inv, reqs, refresh }) {
                 <div className="stock-what">
                   <b>{typeLabel(t.itemType)}</b>
                   <HouseTag id={t.house} />
-                  <span className="size-chip">{t.size}</span>
+                  <span className="size-chip">{sizeLabel(t.size)}</span>
                 </div>
                 <div className="stock-meta">
                   <span>~{t.qty} across {t.bins.length} bin{t.bins.length > 1 ? 's' : ''}</span>
@@ -279,7 +307,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
   const [form, setForm] = useState({
     parentName: '', student: '', contact: '', note: '',
     itemType: preset.itemType || visibleItemTypes()[0]?.id || 'polo',
-    size: preset.size || SIZES[0],
+    size: preset.size || firstSize(preset.itemType || visibleItemTypes()[0]?.id),
     house: preset.house || '',
     requesterHouse: preset.house || '',
     qty: 1,
@@ -319,7 +347,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
         {result.status === 'assigned' ? (
           <>
             <p className="big">
-              <b>{typeLabel(result.item_type)}{result.house ? ` (${houseInfo(result.house).name})` : ''} · {result.size}</b> is with the{' '}
+              <b>{typeLabel(result.item_type)}{result.house ? ` (${houseInfo(result.house).name})` : ''} · {sizeLabel(result.size)}</b> is with the{' '}
             <b>{bin ? bin.name : 'bin'}</b>{bin?.holder_name ? ` (${bin.holder_name})` : ''}.
             </p>
             <p>
@@ -342,14 +370,17 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     <Sheet onClose={onClose} title="Request an item">
       <div className="grid2">
         <label>Item
-          <select value={form.itemType} onChange={set('itemType')}>
+          <select
+            value={form.itemType}
+            onChange={(e) => {
+              const itemType = e.target.value;
+              setForm({ ...form, itemType, size: firstSize(itemType) });
+            }}>
             {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </label>
         <label>Size
-          <select value={form.size} onChange={set('size')}>
-            {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SizePicker itemType={form.itemType} value={form.size} onChange={set('size')} />
         </label>
       </div>
       <div className="grid2">
@@ -507,7 +538,7 @@ function RequestsView({ bins, reqs, settings, refresh }) {
           return (
             <li key={r.id} className={`req status-${r.status}`}>
               <div className="req-main">
-                <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
+                <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>{r.parent_name}{r.student ? ` · for ${r.student}` : ''}</span>
                 {plan && <span className="plan">🤝 {plan}{bin?.holder_name ? ` · with ${bin.holder_name}` : ''}</span>}
               </div>
@@ -594,7 +625,7 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
   return (
     <Sheet onClose={onClose} title="Set up the handoff">
       <p className="fine">
-        <b>{typeLabel(req.item_type)} · {req.size}</b> is with {holder}
+        <b>{typeLabel(req.item_type)} · {sizeLabel(req.size)}</b> is with {holder}
         {bin?.code ? ` (${bin.code})` : ''}. How would you like to get it?
       </p>
 
@@ -724,7 +755,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
               return (
                 <li key={r.id} className={`req holder ${due?.overdue ? 'overdue' : ''}`}>
                   <div className="req-main">
-                    <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
+                    <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                     <span>for {r.parent_name}{r.student ? ` (${r.student})` : ''}{r.note ? ` — “${r.note}”` : ''}</span>
                     <span className="plan">
                       {r.status === 'assigned'
@@ -804,7 +835,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
                 <div className="stock-what">
                   <b>{typeLabel(i.itemType)}</b>
                   <HouseTag id={i.house} />
-                  <span className="size-chip">{i.size}</span>
+                  <span className="size-chip">{sizeLabel(i.size)}</span>
                 </div>
                 <div className="stock-meta"><span>~{i.qty}</span></div>
               </li>
@@ -822,7 +853,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
                 <span className={`delta ${m.qty_delta > 0 ? 'pos' : 'neg'}`}>
                   {m.qty_delta > 0 ? `+${m.qty_delta}` : m.qty_delta}
                 </span>
-                {typeLabel(m.item_type)}{m.house ? ` (${houseInfo(m.house).name})` : ''} · {m.size}
+                {typeLabel(m.item_type)}{m.house ? ` (${houseInfo(m.house).name})` : ''} · {sizeLabel(m.size)}
                 {m.actor_name ? ` — ${m.actor_name}` : ''}
                 <time>{fmtDay(m.created_at)}</time>
               </li>
@@ -945,7 +976,8 @@ function AvailabilityCard({ bin, refresh }) {
 function MoveSheet({ bin, sign, onDone, onClose }) {
   const [lines, setLines] = useState([]);
   const [cur, setCur] = useState({
-    itemType: visibleItemTypes()[0]?.id || 'polo', size: SIZES[1], qty: 1,
+    itemType: visibleItemTypes()[0]?.id || 'polo',
+    size: firstSize(visibleItemTypes()[0]?.id), qty: 1,
     // House bins mostly hold their own house's gear — start there.
     house: typeHoused(visibleItemTypes()[0]?.id) ? (bin.holder_house || '') : '',
   });
@@ -984,6 +1016,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
               const itemType = e.target.value;
               setCur({
                 ...cur, itemType,
+                size: firstSize(itemType),
                 house: typeHoused(itemType) ? (cur.house || bin.holder_house || '') : '',
               });
             }}>
@@ -1000,9 +1033,8 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
       </div>
       <div className="grid2">
         <label>Size
-          <select value={cur.size} onChange={(e) => setCur({ ...cur, size: e.target.value })}>
-            {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SizePicker itemType={cur.itemType} value={cur.size}
+            onChange={(e) => setCur({ ...cur, size: e.target.value })} />
         </label>
         <label>Qty
           <select value={cur.qty} onChange={(e) => setCur({ ...cur, qty: e.target.value })}>
@@ -1015,7 +1047,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
         <ul className="lines">
           {lines.map((l, i) => (
             <li key={i}>
-              {sign > 0 ? '+' : '−'}{l.qty} {typeLabel(l.itemType)}{l.house ? ` (${houseInfo(l.house).name})` : ''} · {l.size}
+              {sign > 0 ? '+' : '−'}{l.qty} {typeLabel(l.itemType)}{l.house ? ` (${houseInfo(l.house).name})` : ''} · {sizeLabel(l.size)}
               <button className="linkish" onClick={() => setLines(lines.filter((_, j) => j !== i))}>remove</button>
             </li>
           ))}
@@ -1141,7 +1173,7 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, 
           <ul className="plainlist">
             {overdue.map((r) => (
               <li key={r.id}>
-                <b>{typeLabel(r.item_type)} · {r.size}</b> for {r.parent_name}
+                <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}</b> for {r.parent_name}
                 {r.contact ? ` (${r.contact})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
                 , {handoffSummary(r) || 'no plan'} · {dueInfo(r.due_at).label}
               </li>
@@ -1210,7 +1242,7 @@ function AdminRequests({ pass, act, msg, bins, reqs }) {
           return (
             <li key={r.id} className={`req ${due?.overdue ? 'overdue' : ''}`}>
               <div className="req-main">
-                <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
+                <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>
                   {r.parent_name}{r.student ? ` · ${r.student}` : ''}
                   {r.contact ? ` · ${r.contact}` : ' · no contact'}
@@ -1251,7 +1283,7 @@ function RequestEditSheet({ req, bins, pass, act, onClose }) {
   const done = (fn) => async () => { await act(fn); onClose(); };
 
   return (
-    <Sheet onClose={onClose} title={`${typeLabel(req.item_type)} · ${req.size}`}>
+    <Sheet onClose={onClose} title={`${typeLabel(req.item_type)} · ${sizeLabel(req.size)}`}>
       <p className="fine">
         For <b>{req.parent_name}</b>{req.student ? ` (${req.student})` : ''}
         {req.contact ? ` · ${req.contact}` : ''} · asked {fmtDay(req.created_at)}
@@ -1582,7 +1614,7 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
 // Bring one back (or add something new) without touching code.
 function AdminItemTypes({ pass, act }) {
   const [adding, setAdding] = useState(false);
-  const [nf, setNf] = useState({ id: '', label: '', housed: false });
+  const [nf, setNf] = useState({ id: '', label: '', housed: false, sizeSet: 'tops' });
   const types = allItemTypes();
 
   return (
@@ -1597,7 +1629,11 @@ function AdminItemTypes({ pass, act }) {
           <li key={t.id} className={t.hidden ? 'retired' : ''}>
             <div className="bin-admin-main">
               <b>{t.label}</b>
-              <span>{t.housed ? 'house-colored' : 'any house'}{t.hidden ? ' · hidden' : ''}</span>
+              <span>
+                {SIZE_SET_LABEL[t.size_set || 'tops']} sizes
+                {' · '}{t.housed ? 'house-colored' : 'any house'}
+                {t.hidden ? ' · hidden' : ''}
+              </span>
             </div>
             <div className="bin-admin-actions">
               <button className="linkish" onClick={() =>
@@ -1626,11 +1662,21 @@ function AdminItemTypes({ pass, act }) {
               </select>
             </label>
           </div>
+          <label>Which sizes does it use?
+            <select value={nf.sizeSet} onChange={(e) => setNf({ ...nf, sizeSet: e.target.value })}>
+              {Object.entries(SIZE_SET_LABEL).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </label>
           <button className="btn small" onClick={() =>
             act(async () => {
               if (!nf.id || !nf.label.trim()) throw new Error('Id and label are required.');
-              await db.adminItemType(pass, nf.id, { label: nf.label.trim(), housed: nf.housed, hidden: false, sort: 65 });
-              setNf({ id: '', label: '', housed: false }); setAdding(false);
+              await db.adminItemType(pass, nf.id, {
+                label: nf.label.trim(), housed: nf.housed, hidden: false,
+                sort: 65, sizeSet: nf.sizeSet,
+              });
+              setNf({ id: '', label: '', housed: false, sizeSet: 'tops' }); setAdding(false);
             })}>Add type</button>
           <button className="linkish" onClick={() => setAdding(false)}>cancel</button>
         </>
