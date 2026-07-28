@@ -1,0 +1,149 @@
+<!doctype html>
+<!--
+  Source for public/uniform-exchange-og.png (1200×630).
+  Follows the RCAP Recap OG: night ground, RCAP mark top left, a two-line
+  Archivo Black headline with the second line in the flame, a strap with the
+  URL, and a tilted stack on the right. Here the stack is inventory rows in the
+  four house colours, which says what the thing does at a glance.
+
+  Regenerate:  node docs/og-render.mjs
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --night: #0e0c0b;
+        --gold: #e8a516;
+        --orange: #f26a1b;
+        --red: #d8202d;
+        --magenta: #e0218a;
+        --flame: linear-gradient(96deg, var(--gold) 0%, var(--orange) 34%, var(--red) 68%, var(--magenta) 100%);
+        --altruismo: #14110f;
+        --amistad: #d8202d;
+        --isibindi: #1f9d57;
+        --reveur: #1f55c0;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 1200px; height: 630px; overflow: hidden;
+        background: var(--night); color: #fff;
+        font-family: 'Archivo', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        position: relative;
+      }
+
+      /* the mark, exactly as the Recap card carries it */
+      .mark {
+        position: absolute; top: 54px; left: 64px;
+        font-size: 34px; font-weight: 900; letter-spacing: -0.02em; line-height: 1;
+      }
+      .mark i {
+        font-style: normal;
+        background: var(--flame);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .mark small {
+        display: block; margin-top: 9px;
+        font-size: 11.5px; font-weight: 800; letter-spacing: 0.24em;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .headline {
+        position: absolute; left: 64px; top: 188px;
+        font-size: 74px; font-weight: 900; line-height: 0.9;
+        letter-spacing: -0.04em; text-transform: uppercase;
+      }
+      /* Both lines are blocks that refuse to wrap, so the break lands where
+         it's meant to rather than wherever the box runs out. */
+      .headline span, .headline b { display: block; white-space: nowrap; }
+      .headline b {
+        font-weight: 900;
+        background: var(--flame);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+
+      .strap {
+        position: absolute; left: 64px; top: 366px;
+        font-size: 22px; font-weight: 700; color: rgba(255, 255, 255, 0.66);
+        letter-spacing: -0.01em;
+      }
+      .strap em {
+        font-style: normal; font-weight: 800; color: var(--gold);
+      }
+
+      /* four houses along the bottom, one wearing the flame */
+      .houses { position: absolute; left: 64px; bottom: 58px; display: flex; gap: 13px; }
+      .houses span {
+        border: 1.5px solid rgba(255, 255, 255, 0.26); border-radius: 999px;
+        padding: 11px 24px; font-size: 19px; font-weight: 700;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .houses span.on {
+        background: var(--flame); border-color: transparent; color: #fff; font-weight: 800;
+      }
+
+      /* The stack bleeds off the right edge like the Recap's cards do. Rows are
+         content-width and hug that edge, so the label and its size always stay
+         on the canvas however far the card runs off. */
+      .stack {
+        position: absolute; right: 20px; top: 48px; width: 640px;
+        display: flex; flex-direction: column; align-items: flex-end;
+      }
+      .row {
+        display: inline-flex; align-items: center; gap: 14px;
+        border-radius: 18px; padding: 20px 28px; margin-bottom: 16px;
+        font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.42);
+      }
+      .row .size {
+        font-size: 19px; font-weight: 800;
+        border-radius: 9px; padding: 6px 12px; letter-spacing: 0.02em;
+        background: rgba(0, 0, 0, 0.24);
+      }
+      .r1 { background: var(--amistad);   color: #fff2f1; transform: rotate(-3.2deg); }
+      .r2 { background: var(--isibindi);  color: #f0fcf5; transform: rotate(2.1deg); }
+      .r3 { background: #ffffff;          color: #14110f; transform: rotate(-1.4deg); }
+      .r3 .size { background: rgba(0, 0, 0, 0.09); }
+      .r4 { background: var(--reveur);    color: #f0f5ff; transform: rotate(3deg); }
+      .r5 {
+        background: var(--altruismo); color: #fff;
+        border: 1.5px solid rgba(255, 255, 255, 0.16);
+        transform: rotate(-2.2deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mark">RCA<i>P</i><small>THE UNIFORM EXCHANGE</small></div>
+
+    <div class="headline">
+      <span>Uniforms that</span>
+      <b>keep moving.</b>
+    </div>
+
+    <p class="strap">
+      Scan a bin, request a size · <em>wearercap.org/uniform-exchange</em>
+    </p>
+
+    <div class="houses">
+      <span class="on">Altruismo</span>
+      <span>Amistad</span>
+      <span>Isibindi</span>
+      <span>Rêveur</span>
+    </div>
+
+    <div class="stack">
+      <div class="row r1">Amistad Polo <span class="size">YM</span></div>
+      <div class="row r2">Isibindi Polo <span class="size">YL</span></div>
+      <div class="row r3">Khaki Pants <span class="size">12</span></div>
+      <div class="row r4">Rêveur Vest <span class="size">YS</span></div>
+      <div class="row r5">Dress Shirt <span class="size">AS</span></div>
+    </div>
+  </body>
+</html>
