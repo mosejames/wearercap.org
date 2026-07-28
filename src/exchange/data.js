@@ -69,6 +69,7 @@ export async function addRequest(form, binId) {
       item_type: form.itemType,
       size: form.size,
       house: form.house || '',
+      requester_house: form.requesterHouse || '',
       qty: form.qty || 1,
       note: (form.note || '').trim(),
       bin_id: binId, // null puts it on the waitlist
@@ -107,4 +108,49 @@ export async function adminBin(pass, action, id, fields = {}) {
   });
   if (error) throw error;
   return data;
+}
+
+// ---------------------------------------------------------------------------
+// Donation offers — "come pick up my clothes."
+// ---------------------------------------------------------------------------
+export async function listOffers() {
+  const { data, error } = await supabase
+    .from('ue_offers')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addOffer(form, binId) {
+  const { data, error } = await supabase
+    .from('ue_offers')
+    .insert({
+      parent_name: form.parentName.trim(),
+      contact: (form.contact || '').trim(),
+      house: form.house || '',
+      items_desc: form.itemsDesc.trim(),
+      bin_id: binId,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateOffer(id, status, binId = null, note = null) {
+  const { error } = await supabase.rpc('ue_offer_update', {
+    p_id: id, p_status: status, p_bin: binId, p_note: note,
+  });
+  if (error) throw error;
+}
+
+export async function listNotifications(limit = 40) {
+  const { data, error } = await supabase
+    .from('ue_notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
 }

@@ -217,3 +217,18 @@ a{color:inherit}
   border-radius:8px;padding:4px 9px;text-transform:uppercase;vertical-align:middle;
 }
 .house-chip.any{border:1px solid var(--line)}
+
+/* ---------------- offer sheet / reports ---------------- */
+.sheet textarea{
+  border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--surface);
+  font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);resize:vertical;
+}
+.report-stats{display:flex;gap:24px;flex-wrap:wrap;margin:6px 0 14px}
+.report-stats div{display:flex;flex-direction:column}
+.report-stats b{font-size:26px;font-weight:900;background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+.report-stats span{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-top:2px}
+.report-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:0 0 10px}
+.report-table th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);padding:6px 8px 6px 0;border-bottom:1px solid var(--line)}
+.report-table td{padding:8px 8px 8px 0;border-bottom:1px dashed var(--line);font-variant-numeric:tabular-nums}
+.notif-body{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero .hero-cta .btn{font-size:16px}

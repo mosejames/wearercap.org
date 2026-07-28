@@ -25,8 +25,9 @@ export const ITEM_TYPES = [
   { id: 'polo',        label: 'RCA Polo' },
   { id: 'dress-shirt', label: 'White Dress Shirt' },
   { id: 'sweater',     label: 'Sweater / Cardigan' },
+  { id: 'vest',        label: 'Vest' },
   { id: 'house',       label: 'House Apparel / Swag' },
-  { id: 'bottoms',     label: 'Bottoms (Hilfiger only)' },
+  { id: 'bottoms',     label: 'Khaki Bottoms (Hilfiger only)' },
   { id: 'ski',         label: 'Ski Apparel / Gear' },
   { id: 'other',       label: 'Other' },
 ];
@@ -67,7 +68,7 @@ export const HOUSE_CHOICES = [ANY_HOUSE, ...HOUSES];
 export const houseInfo = (id) => houseById(id) || ANY_HOUSE;
 
 // Types where the house picker defaults to a house instead of "Any house".
-export const HOUSED_TYPES = ['polo', 'sweater', 'house'];
+export const HOUSED_TYPES = ['polo', 'sweater', 'vest', 'house'];
 
 export const typeLabel = (id) =>
   (ITEM_TYPES.find((t) => t.id === id) || { label: id }).label;

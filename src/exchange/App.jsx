@@ -57,13 +57,16 @@ export default function App() {
   const [bins, setBins] = useState([]);
   const [inv, setInv] = useState([]);
   const [reqs, setReqs] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState('');
 
   const refresh = async () => {
     try {
-      const [b, i, r] = await Promise.all([db.listBins(), db.listInventory(), db.listRequests()]);
-      setBins(b); setInv(i); setReqs(r); setErr('');
+      const [b, i, r, o] = await Promise.all([
+        db.listBins(), db.listInventory(), db.listRequests(), db.listOffers(),
+      ]);
+      setBins(b); setInv(i); setReqs(r); setOffers(o); setErr('');
     } catch (e) {
       setErr(e.message || 'Could not reach the exchange.');
     } finally {
@@ -104,11 +107,11 @@ export default function App() {
       {!loaded ? (
         <div className="shell loading">Opening the bins…</div>
       ) : route.view === 'bin' ? (
-        <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
+        <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} reqs={reqs} offers={offers} refresh={refresh} />
       ) : route.view === 'requests' ? (
         <RequestsView bins={bins} reqs={reqs} refresh={refresh} />
       ) : route.view === 'admin' ? (
-        <AdminView bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
+        <AdminView bins={bins} inv={inv} reqs={reqs} offers={offers} refresh={refresh} />
       ) : (
         <Home bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
       )}
@@ -134,6 +137,7 @@ function Home({ bins, inv, reqs, refresh }) {
   const [size, setSize] = useState('');
   const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
   const [sheet, setSheet] = useState(null); // { itemType, size, house } or 'waitlist'
+  const [offering, setOffering] = useState(false);
 
   const assigned = reqs.filter((r) => r.status === 'assigned');
   const all = useMemo(() => totals(inv), [inv]);
@@ -155,15 +159,19 @@ function Home({ bins, inv, reqs, refresh }) {
             {SITE.titleLead} <span className="flame">{SITE.titleGrad}</span>
           </h1>
           <p className="intro">{SITE.intro}</p>
-          <div className="hero-stats">
-            <div><b>{all.reduce((n, t) => n + t.qty, 0)}</b><span>items in circulation</span></div>
-            <div><b>{activeBins.length}</b><span>parent bins</span></div>
-            <div><b>{reqs.filter((r) => r.status === 'fulfilled').length}</b><span>uniforms rehomed</span></div>
+          <div className="hero-cta">
+            <a className="btn on-night" href="#find" onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('find')?.scrollIntoView({ behavior: 'smooth' });
+            }}>🔎 I'm looking for an item</a>
+            <button className="btn ghost-night" onClick={() => setOffering(true)}>
+              👕 I have clothes to donate
+            </button>
           </div>
         </div>
       </section>
 
-      <section className="shell section">
+      <section className="shell section" id="find">
         <h2 className="h2">Find a size</h2>
         <p className="sub">{APPROX_NOTE}</p>
         <div className="filters">
@@ -233,6 +241,13 @@ function Home({ bins, inv, reqs, refresh }) {
           onClose={() => setSheet(null)}
         />
       )}
+      {offering && (
+        <OfferSheet
+          bins={bins}
+          onDone={() => { setOffering(false); refresh(); }}
+          onClose={() => setOffering(false)}
+        />
+      )}
     </>
   );
 }
@@ -247,6 +262,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     itemType: preset.itemType || ITEM_TYPES[0].id,
     size: preset.size || SIZES[0],
     house: preset.house || '',
+    requesterHouse: preset.house || '',
     qty: 1,
   });
   const [busy, setBusy] = useState(false);
@@ -259,7 +275,15 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     if (!form.parentName.trim()) { setErr('Your name is the one thing we need.'); return; }
     setBusy(true); setErr('');
     try {
-      const binId = pickBin(inv, assigned, form.itemType, form.size, form.house, Number(form.qty) || 1);
+      // Relationships first: route to the requester's own house bin when it
+      // has the item, even for house-neutral pieces like khakis.
+      const houseBins = bins
+        .filter((b) => !b.retired && b.holder_house === form.requesterHouse)
+        .map((b) => b.id);
+      const binId = pickBin(
+        inv, assigned, form.itemType, form.size, form.house,
+        Number(form.qty) || 1, houseBins
+      );
       const row = await db.addRequest({ ...form, qty: Number(form.qty) || 1 }, binId);
       setResult(row);
     } catch (e) {
@@ -310,13 +334,24 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
           </select>
         </label>
       </div>
-      <label>House
-        <select value={form.house} onChange={set('house')}>
-          {HOUSE_CHOICES.map((h) => (
-            <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no house colors'}</option>
-          ))}
-        </select>
-      </label>
+      <div className="grid2">
+        <label>Item's house
+          <select value={form.house} onChange={set('house')}>
+            {HOUSE_CHOICES.map((h) => (
+              <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no colors'}</option>
+            ))}
+          </select>
+        </label>
+        <label>Your house
+          <select value={form.requesterHouse} onChange={set('requesterHouse')}>
+            <option value="">—</option>
+            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="fine">We route requests through your own house's bin whenever it has the item — that's how the swap has always worked.</p>
       <div className="grid2">
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
@@ -325,8 +360,8 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
           <input value={form.student} onChange={set('student')} placeholder="Imani" maxLength={60} />
         </label>
       </div>
-      <label>Phone or email (optional — only used if there's a question)
-        <input value={form.contact} onChange={set('contact')} maxLength={80} />
+      <label>Cell number (optional — we'll text you updates: request received, item at the front desk)
+        <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
       <label>Anything else? (optional)
         <input value={form.note} onChange={set('note')} placeholder="Slim fit if there's a choice" maxLength={200} />
@@ -343,6 +378,82 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
       <p className="fine">
         A bin holder brings it to the RCA front desk within {FRONT_DESK_DAYS} days. Free, always.
       </p>
+    </Sheet>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The offer sheet — "I have clothes, come get them." Routed to the offerer's
+// house bin; the holder reaches out to arrange the pickup.
+// ---------------------------------------------------------------------------
+function OfferSheet({ bins, onDone, onClose }) {
+  const [form, setForm] = useState({ parentName: '', contact: '', house: '', itemsDesc: '' });
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [err, setErr] = useState('');
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const submit = async () => {
+    if (!form.parentName.trim()) { setErr('Your name is the one thing we need.'); return; }
+    if (!form.itemsDesc.trim()) { setErr('Tell us roughly what you have.'); return; }
+    setBusy(true); setErr('');
+    try {
+      const houseBin = bins.find((b) => !b.retired && b.holder_house === form.house)
+        || bins.find((b) => !b.retired);
+      const row = await db.addOffer(form, houseBin ? houseBin.id : null);
+      setResult(row);
+    } catch (e) {
+      setErr(e.message || "That didn't go through — try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (result) {
+    const bin = bins.find((b) => b.id === result.bin_id);
+    return (
+      <Sheet onClose={onDone} title="Thank you! 💚">
+        <p className="big">
+          Your offer is in{bin?.holder_name ? <> — <b>{bin.holder_name}</b> ({bin.name}) will reach
+          out to arrange the pickup</> : ' — a bin holder will reach out to arrange the pickup'}.
+        </p>
+        {form.contact.trim() && <p>We just texted you a confirmation.</p>}
+        <button className="btn flame wide" onClick={onDone}>Done</button>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Sheet onClose={onClose} title="Donate clothes">
+      <p className="fine">
+        Gently loved only, please — and a heads-up on what bins can't take is below the search.
+      </p>
+      <div className="grid2">
+        <label>Your name *
+          <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
+        </label>
+        <label>Your house
+          <select value={form.house} onChange={set('house')}>
+            <option value="">—</option>
+            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label>Cell number (so your bin holder can arrange the pickup)
+        <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
+      </label>
+      <label>What do you have? *
+        <textarea
+          rows={3} value={form.itemsDesc} onChange={set('itemsDesc')} maxLength={400}
+          placeholder="Two YM Amistad polos, a stack of khakis size 10, one ski jacket…"
+        />
+      </label>
+      {err && <p className="err">{err}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={submit}>
+        {busy ? 'Sending…' : 'Offer it up'}
+      </button>
     </Sheet>
   );
 }
@@ -400,7 +511,7 @@ function RequestsView({ bins, reqs, refresh }) {
 // The bin page — what the QR code opens. Inventory, add/take flows, and the
 // holder's fulfillment queue.
 // ---------------------------------------------------------------------------
-function BinView({ bin, code, bins, inv, reqs, refresh }) {
+function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
   const [mode, setMode] = useState(null); // 'add' | 'take'
   const [log, setLog] = useState(null);
 
@@ -425,6 +536,9 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
       (a.house || '').localeCompare(b.house || '') ||
       a.size.localeCompare(b.size));
   const queue = reqs.filter((r) => r.bin_id === bin.id && r.status === 'assigned');
+  const pickups = (offers || []).filter(
+    (o) => o.bin_id === bin.id && (o.status === 'open' || o.status === 'scheduled')
+  );
 
   return (
     <>
@@ -466,6 +580,38 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
                 </li>
               );
             })}
+          </ul>
+        </section>
+      )}
+
+      {pickups.length > 0 && (
+        <section className="shell section">
+          <h2 className="h2">Pickups to arrange 👕</h2>
+          <p className="sub">Parents offering clothes for this bin. Reach out, grab the bag, then log what came in with “I'm adding items.”</p>
+          <ul className="req-list">
+            {pickups.map((o) => (
+              <li key={o.id} className="req holder">
+                <div className="req-main">
+                  <b>{o.parent_name}{o.contact ? ` · ${o.contact}` : ''}</b>
+                  <span>{o.items_desc}</span>
+                </div>
+                <div className="req-side">
+                  {o.status === 'open' ? (
+                    <button className="btn small" onClick={async () => { await db.updateOffer(o.id, 'scheduled'); refresh(); }}>
+                      Pickup arranged
+                    </button>
+                  ) : (
+                    <span className="chip chip-assigned">Scheduled</span>
+                  )}
+                  <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); refresh(); }}>
+                    Collected ✓
+                  </button>
+                  <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); refresh(); }}>
+                    cancel
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
         </section>
       )}
@@ -614,7 +760,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Back office — passcode-gated in the database, like the Recap.
 // ---------------------------------------------------------------------------
-function AdminView({ bins, inv, reqs, refresh }) {
+function AdminView({ bins, inv, reqs, offers, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
   const [ok, setOk] = useState(!!sessionStorage.getItem('ue-pass'));
   const [form, setForm] = useState({ code: '', name: '', holderName: '', holderHouse: '' });
@@ -760,6 +906,10 @@ function AdminView({ bins, inv, reqs, refresh }) {
           })}>Create bin</button>
       </div>
 
+      <AdminOffers bins={bins} offers={offers} refresh={refresh} />
+      <AdminReports bins={bins} inv={inv} reqs={reqs} />
+      <AdminNotifications />
+
       {driftRows.length > 0 && (
         <div className="card">
           <h3>Count drift (bins that went below zero)</h3>
@@ -774,6 +924,112 @@ function AdminView({ bins, inv, reqs, refresh }) {
         </div>
       )}
     </section>
+  );
+}
+
+// Donation offers, all houses — the admin's view of pickups in flight.
+function AdminOffers({ bins, offers, refresh }) {
+  const live = (offers || []).filter((o) => o.status === 'open' || o.status === 'scheduled');
+  if (!live.length) return null;
+  const binName = (id) => bins.find((b) => b.id === id)?.name || 'unassigned';
+  return (
+    <div className="card">
+      <h3>Donation pickups in flight</h3>
+      <ul className="req-list">
+        {live.map((o) => (
+          <li key={o.id} className="req">
+            <div className="req-main">
+              <b>{o.parent_name} <HouseTag id={o.house} /></b>
+              <span>{o.items_desc}</span>
+              <span>{o.contact || 'no contact left'} · {binName(o.bin_id)} · {fmtDay(o.created_at)}</span>
+            </div>
+            <div className="req-side">
+              <span className={`chip ${o.status === 'open' ? 'chip-open' : 'chip-assigned'}`}>
+                {o.status === 'open' ? 'Needs contact' : 'Scheduled'}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// The numbers Mose wants OFF the front page and IN the back office:
+// circulation, movement, and how the houses are doing. History, not hype.
+function AdminReports({ bins, inv, reqs }) {
+  const all = totals(inv);
+  const onHand = all.reduce((n, t) => n + t.qty, 0);
+  const fulfilled = reqs.filter((r) => r.status === 'fulfilled');
+  const waitlist = reqs.filter((r) => r.status === 'open');
+
+  // Per-house: items on hand (by the item's house) and requests routed there.
+  const houses = ['altruismo', 'amistad', 'isibindi', 'reveur', ''];
+  const rows = houses.map((h) => ({
+    house: h,
+    onHand: all.filter((t) => t.house === h).reduce((n, t) => n + t.qty, 0),
+    requested: reqs.filter((r) => (r.house || '') === h && r.status !== 'canceled').length,
+    rehomed: fulfilled.filter((r) => (r.house || '') === h).length,
+  })).filter((r) => r.onHand || r.requested || r.rehomed);
+
+  // Average days from request to front desk.
+  const days = fulfilled
+    .filter((r) => r.fulfilled_at && r.created_at)
+    .map((r) => (new Date(r.fulfilled_at) - new Date(r.created_at)) / 86400000);
+  const avgDays = days.length ? (days.reduce((a, b) => a + b, 0) / days.length).toFixed(1) : null;
+
+  return (
+    <div className="card">
+      <h3>Reports</h3>
+      <div className="report-stats">
+        <div><b>{onHand}</b><span>items on hand</span></div>
+        <div><b>{fulfilled.length}</b><span>uniforms rehomed</span></div>
+        <div><b>{waitlist.length}</b><span>on the waitlist</span></div>
+        {avgDays && <div><b>{avgDays}d</b><span>avg to front desk</span></div>}
+      </div>
+      {rows.length > 0 && (
+        <table className="report-table">
+          <thead>
+            <tr><th>Items by house</th><th>On hand</th><th>Requested</th><th>Rehomed</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.house || 'any'}>
+                <td><HouseTag id={r.house} /></td>
+                <td>~{r.onHand}</td><td>{r.requested}</td><td>{r.rehomed}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="fine">Every add, take, and delivery is in the movement log — open any bin for its history.</p>
+    </div>
+  );
+}
+
+// The text-message outbox: what's queued, what's gone out.
+function AdminNotifications() {
+  const [rows, setRows] = useState(null);
+  useEffect(() => { db.listNotifications().then(setRows).catch(() => setRows([])); }, []);
+  if (!rows || !rows.length) return null;
+  const pending = rows.filter((n) => n.status === 'pending').length;
+  return (
+    <div className="card">
+      <h3>Text updates {pending > 0 ? `· ${pending} queued` : ''}</h3>
+      <p className="fine">
+        Queued texts go out about once an hour (request received, item at the front desk,
+        donation offer confirmed).
+      </p>
+      <ul className="activity">
+        {rows.slice(0, 12).map((n) => (
+          <li key={n.id}>
+            <span className={`chip ${n.status === 'sent' ? 'chip-fulfilled' : n.status === 'pending' ? 'chip-open' : 'chip-canceled'}`}>{n.status}</span>
+            <span className="notif-body">{n.body.slice(0, 80)}…</span>
+            <time>{fmtDay(n.created_at)}</time>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

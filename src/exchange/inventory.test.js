@@ -51,6 +51,14 @@ describe('pickBin', () => {
     // a promise for isibindi doesn't block amistad stock
     expect(pickBin(rows, assigned, 'polo', 'YM', 'amistad', 3)).toBe('b');
   });
+  it('prefers the requester\'s house bin even when another bin is deeper', () => {
+    // bin a is deeper (5 vs 2), but b is the requester's house bin
+    expect(pickBin(rows, [], 'polo', 'YM', 'isibindi', 1, ['b'])).toBe('b');
+    // preference only applies when the preferred bin actually has the item
+    expect(pickBin(rows, [], 'polo', 'YM', 'isibindi', 3, ['b'])).toBe('a');
+    // neutral items also follow the house preference
+    expect(pickBin(rows, [], 'dress-shirt', 'AS', '', 1, ['a'])).toBe('a');
+  });
   it('returns null when nothing fits', () => {
     expect(pickBin(rows, [], 'polo', 'A2XL', 'isibindi')).toBeNull();
     const assigned = [
