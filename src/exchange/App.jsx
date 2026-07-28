@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SITE, SIZES, ACCEPTING, NOT_ACCEPTING, APPROX_NOTE,
+  SITE, SIZES, DONATION_STANDARD, APPROX_NOTE,
   FRONT_DESK_DAYS, houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, CONTACT,
@@ -106,7 +106,7 @@ export default function App() {
         </div>
       </header>
 
-      {err && <div className="shell warn">⚠ {err}</div>}
+      {err && <div className="shell warn-wrap"><div className="warn">⚠ {err}</div></div>}
 
       {!loaded ? (
         <div className="shell loading">Opening the bins…</div>
@@ -224,15 +224,19 @@ function Home({ bins, inv, reqs, refresh }) {
         )}
       </section>
 
-      <section className="shell section cols">
-        <div className="card">
-          <h3>Bins are accepting</h3>
-          <ul className="ticks">{ACCEPTING.map((a) => <li key={a}>💚 {a}</li>)}</ul>
-        </div>
-        <div className="card">
-          <h3>Please don't donate</h3>
-          <ul className="ticks">{NOT_ACCEPTING.map((a) => <li key={a}>🚫 {a}</li>)}</ul>
-          <p className="fine">Retired styles — please pass these to another school of your choice.</p>
+      <section className="shell section">
+        <div className="card standard">
+          <h3>{DONATION_STANDARD.title}</h3>
+          <p className="standard-intro">{DONATION_STANDARD.intro}</p>
+          <ul className="standard-list">
+            {DONATION_STANDARD.points.map((p) => (
+              <li key={p.t}>
+                <span className="standard-icon" aria-hidden="true">{p.icon}</span>
+                <span><b>{p.t}</b> — {p.d}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="standard-close">{DONATION_STANDARD.close}</p>
         </div>
       </section>
 

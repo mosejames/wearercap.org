@@ -48,18 +48,39 @@ export const SIZES = [
   'Other',
 ];
 
-export const ACCEPTING = [
-  'RCA house polos',
-  'Like-new white dress shirts',
-  'Vests',
-  'Khaki pants, shorts, and skirts',
-];
-
-export const NOT_ACCEPTING = [
-  'Lands’ End bottoms',
-  'Lands’ End Isibindi polos',
-  'Buckhead Uniforms skorts',
-];
+// What we're hoping for, said warmly. Every piece in a bin turns up on a
+// school morning for somebody's kid — that's the whole standard.
+export const DONATION_STANDARD = {
+  title: 'What makes a great donation',
+  intro:
+    'Everything that goes into a bin turns up on a school morning for somebody else’s ' +
+    'child. So the bar is a loving one: send what you’d be glad to see come home.',
+  points: [
+    {
+      icon: '💚',
+      t: 'Gently loved',
+      d: 'Outgrown, not worn out — with real school years still left in it.',
+    },
+    {
+      icon: '🧼',
+      t: 'Freshly washed',
+      d: 'Straight from your machine to the bin. Every single time.',
+    },
+    {
+      icon: '✨',
+      t: 'Stain-free',
+      d: 'Nothing a wash didn’t lift, and every button and zipper still doing its job.',
+    },
+    {
+      icon: '🌈',
+      t: 'True color',
+      d: 'Still deep and even — not sun-faded, thinned out, or gone gray.',
+    },
+  ],
+  close:
+    'The test we use: would you be happy if this showed up for your own child on the ' +
+    'first day of school? If the answer is yes, it’s exactly what we’re looking for.',
+};
 
 export const HOUSES = [
   { id: 'altruismo', name: 'Altruismo', color: '#14110F', fg: '#FFFFFF' },
