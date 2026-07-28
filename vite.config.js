@@ -10,6 +10,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         carpool: resolve(__dirname, 'carpool/index.html'),
         recap: resolve(__dirname, 'rcap-recap/index.html'),
+        exchange: resolve(__dirname, 'uniform-exchange/index.html'),
       },
     },
   },
