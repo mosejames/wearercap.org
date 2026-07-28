@@ -146,7 +146,7 @@ export default function App() {
             <small>{SITE.meta.join(' · ')}</small>
           </a>
           <nav className="topnav">
-            <a href="#/">Browse</a>
+            <a href="#/">Request</a>
             <a href="#/requests">My requests</a>
           </nav>
         </div>
@@ -196,15 +196,22 @@ function Home({ bins, inv, commitments, refresh }) {
   const [offering, setOffering] = useState(false);
 
   const assigned = commitments; // already only what's promised out, no people
-  const all = useMemo(() => totals(inv), [inv]);
-  const shown = all.filter(
-    (t) =>
-      (!type || t.itemType === type) &&
-      (!size || t.size === size) &&
-      // A house pick also shows house-neutral items — they fit everyone.
-      (house === 'all' || t.house === house || (house !== '' && t.house === ''))
-  );
-  const activeBins = bins.filter((b) => !b.retired);
+
+  // A family says what they need; the matching happens out of sight. Showing
+  // bin contents here only ever raised questions — whether a count was a size,
+  // whether a list was other people's requests, why the thing on screen wasn't
+  // reserved for them. None of that is a parent's problem to solve.
+  const requesterHouse = house === 'all' ? '' : house;
+  const needsHouse = typeHoused(type) && house === 'all';
+  const ready = !!type && !!size && !needsHouse;
+
+  const ask = () => setSheet({
+    itemType: type,
+    size,
+    // Polos and vests belong to a house; khakis and dress shirts fit anyone.
+    house: typeHoused(type) ? requesterHouse : '',
+    requesterHouse,
+  });
 
   return (
     <>
@@ -219,30 +226,33 @@ function Home({ bins, inv, commitments, refresh }) {
             <a className="btn on-night" href="#find" onClick={(e) => {
               e.preventDefault();
               document.getElementById('find')?.scrollIntoView({ behavior: 'smooth' });
-            }}>🔎 I'm looking for an item</a>
+            }}>I'm looking for an item</a>
             <button className="btn ghost-night" onClick={() => setOffering(true)}>
-              👕 I have clothes to donate
+              I have clothes to donate
             </button>
           </div>
         </div>
       </section>
 
       <section className="shell section" id="find">
-        <h2 className="h2">Find a size</h2>
-        <p className="sub">{APPROX_NOTE}</p>
+        <h2 className="h2">Request an item</h2>
+        <p className="sub">
+          Tell us what your student needs. We'll find it in a bin and text you
+          when it's ready — or put you on the list and text you the moment one
+          turns up.
+        </p>
         <div className="filters">
           <select value={house} onChange={(e) => setHouse(e.target.value)}>
             <option value="all">Choose your house</option>
-            {HOUSE_CHOICES.map((h) => (
-              <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house (neutral items)'}</option>
-            ))}
+            {HOUSES.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+            <option value="">My student is new / not sorted yet</option>
           </select>
           <select
             value={type}
             onChange={(e) => {
               const t = e.target.value;
               setType(t);
-              // A size from another set would show zero results forever.
+              // A size from another set would mean nothing for this item.
               if (size && t && !sizeGroups(t).some((g) => g.sizes.some((x) => x.v === size))) {
                 setSize('');
               }
@@ -256,40 +266,22 @@ function Home({ bins, inv, commitments, refresh }) {
           />
         </div>
 
-        {shown.length === 0 ? (
-          <div className="empty">
-            <p>Nothing in the bins for that just now.</p>
-            <button className="btn flame" onClick={() => setSheet('waitlist')}>
-              Join the waitlist — we'll match the next one in
-            </button>
-          </div>
-        ) : (
-          <ul className="stock">
-            {shown.map((t) => (
-              <li key={itemKey(t)} className="stock-row">
-                <div className="stock-what">
-                  <b>{typeLabel(t.itemType)}</b>
-                  <HouseTag id={t.house} />
-                  <span className="size-chip">{sizeChip(t.size)}</span>
-                </div>
-                <div className="stock-meta">
-                  <span>
-                    ~{t.qty} available
-                    {t.bins.length > 1 ? ` in ${t.bins.length} bins` : ''}
-                  </span>
-                  <button className="btn small" onClick={() => setSheet({ itemType: t.itemType, size: t.size, house: t.house })}>
-                    Request
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <button className="btn flame wide" disabled={!ready} onClick={ask}>
+          {ready ? `Request ${typeLabel(type)}` : 'Request an item'}
+        </button>
+
+        <p className="fine ask-note">
+          {needsHouse
+            ? `${typeLabel(type)}s come in house colors — pick your house above.`
+            : !type || !size
+              ? 'Pick an item and a size to get started.'
+              : "Not sure of the size? Ask anyway — say so in the notes and your bin holder will work it out with you."}
+        </p>
       </section>
 
       {sheet && (
         <RequestSheet
-          preset={sheet === 'waitlist' ? { itemType: type, size, house: house === 'all' ? '' : house } : sheet}
+          preset={sheet}
           inv={inv}
           assigned={assigned}
           bins={bins}
@@ -318,7 +310,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     itemType: preset.itemType || visibleItemTypes()[0]?.id || 'polo',
     size: preset.size || firstSize(preset.itemType || visibleItemTypes()[0]?.id),
     house: preset.house || '',
-    requesterHouse: preset.house || '',
+    requesterHouse: preset.requesterHouse ?? preset.house ?? '',
     qty: 1,
   });
   const [busy, setBusy] = useState(false);
@@ -383,7 +375,10 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
             value={form.itemType}
             onChange={(e) => {
               const itemType = e.target.value;
-              setForm({ ...form, itemType, size: firstSize(itemType) });
+              setForm({
+                ...form, itemType, size: firstSize(itemType),
+                house: typeHoused(itemType) ? form.requesterHouse : '',
+              });
             }}>
             {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
@@ -392,24 +387,26 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
           <SizePicker itemType={form.itemType} value={form.size} onChange={set('size')} />
         </label>
       </div>
-      <div className="grid2">
-        <label>Item's house
-          <select value={form.house} onChange={set('house')}>
-            {HOUSE_CHOICES.map((h) => (
-              <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no colors'}</option>
-            ))}
-          </select>
-        </label>
-        <label>Your house
-          <select value={form.requesterHouse} onChange={set('requesterHouse')}>
-            <option value="">—</option>
-            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <p className="fine">We route requests through your own house's bin whenever it has the item — that's how the swap has always worked.</p>
+      <label>Your house
+        <select
+          value={form.requesterHouse}
+          onChange={(e) => {
+            const requesterHouse = e.target.value;
+            // Polos and vests come in house colors; everything else is neutral,
+            // so the family's house only decides which bin we ask first.
+            setForm({
+              ...form, requesterHouse,
+              house: typeHoused(form.itemType) ? requesterHouse : '',
+            });
+          }}>
+          <option value="">My student is new / not sorted yet</option>
+          {HOUSES.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </label>
+      <p className="fine">
+        We ask your own house's bin first whenever it has the item — that's how the
+        swap has always worked.
+      </p>
       <div className="grid2">
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
@@ -418,7 +415,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
           <input value={form.student} onChange={set('student')} placeholder="Imani" maxLength={60} />
         </label>
       </div>
-      <label>Cell number (optional — we'll text you updates: request received, item at the front desk)
+      <label>Cell number (optional — it's how we tell you when it's ready)
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
       <label>Anything else? (optional)
@@ -1075,7 +1072,7 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
 
       {pickups.length > 0 && (
         <section className="shell section">
-          <h2 className="h2">Pickups to arrange 👕</h2>
+          <h2 className="h2">Pickups to arrange</h2>
           <p className="sub">Reach out, grab the bag, then add what came in under My bins.</p>
           <ul className="req-list">
             {pickups.map((o) => (
@@ -1204,7 +1201,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
 
       {pickups.length > 0 && (
         <section className="shell section">
-          <h2 className="h2">Pickups to arrange 👕</h2>
+          <h2 className="h2">Pickups to arrange</h2>
           <p className="sub">Parents offering clothes for this bin. Reach out, grab the bag, then log what came in with “I'm adding items.”</p>
           <ul className="req-list">
             {pickups.map((o) => (

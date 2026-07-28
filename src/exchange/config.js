@@ -10,9 +10,9 @@ export const SITE = {
   titleLead: 'UNIFORMS THAT',
   titleGrad: 'KEEP MOVING.',
   intro:
-    'Gently loved uniforms live in QR-coded bins held by RCAP parents. ' +
-    'Search every bin, request what your student needs, then pick a handoff ' +
-    'that fits your week — at carline, or straight from student to student.',
+    'Gently loved uniforms live in bins held by RCAP parents. Tell us what ' +
+    'your student needs and we\u2019ll find it, then pick a handoff that fits ' +
+    'your week \u2014 at carline, or straight from student to student.',
 };
 
 // Kept for the front-desk mode, which is built but switched off in settings.
