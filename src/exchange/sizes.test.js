@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS,
+  setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
 } from './config.js';
 
 setItemTypes([
@@ -89,5 +89,20 @@ describe('no accidental duplicates', () => {
       const v = groups.flatMap((g) => g.sizes.map((s) => s.v));
       expect(new Set(v).size, `${key} has a duplicate size`).toBe(v.length);
     }
+  });
+});
+
+// A bare number in a chip reads like a count, so the word goes back in.
+describe('sizeChip', () => {
+  it('names the plain numbers', () => {
+    expect(sizeChip('12')).toBe('Size 12');
+    expect(sizeChip('7')).toBe('Size 7');
+  });
+  it('leaves anything that already says what it is', () => {
+    expect(sizeChip('YM')).toBe('YM · 8–10');
+    expect(sizeChip('AS')).toBe('Adult S');
+    expect(sizeChip('W28')).toBe('28 waist');
+    expect(sizeChip('Jr 3')).toBe('Juniors 3');
+    expect(sizeChip('12H')).toBe('12 Husky');
   });
 });

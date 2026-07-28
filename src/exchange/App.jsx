@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
-  SIZE_SET_LABEL, prettyPhone,
+  SIZE_SET_LABEL, prettyPhone, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, holderUrl, CONTACT,
@@ -270,10 +270,13 @@ function Home({ bins, inv, commitments, refresh }) {
                 <div className="stock-what">
                   <b>{typeLabel(t.itemType)}</b>
                   <HouseTag id={t.house} />
-                  <span className="size-chip">{sizeLabel(t.size)}</span>
+                  <span className="size-chip">{sizeChip(t.size)}</span>
                 </div>
                 <div className="stock-meta">
-                  <span>~{t.qty} across {t.bins.length} bin{t.bins.length > 1 ? 's' : ''}</span>
+                  <span>
+                    ~{t.qty} available
+                    {t.bins.length > 1 ? ` in ${t.bins.length} bins` : ''}
+                  </span>
                   <button className="btn small" onClick={() => setSheet({ itemType: t.itemType, size: t.size, house: t.house })}>
                     Request
                   </button>
@@ -2594,7 +2597,7 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
                     <ul className="stock-rows">
                       {t.sizes.map((s) => (
                         <li key={s.size}>
-                          <span className="stock-size">{sizeLabel(s.size)}</span>
+                          <span className="stock-size">{sizeChip(s.size)}</span>
                           <span className={`stock-qty ${s.free === 0 ? 'spent' : ''}`}>
                             {s.qty}
                             {s.promised > 0 && <em>{s.free} free</em>}
@@ -2620,7 +2623,7 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
                     <ul className="stock-rows">
                       {shorts.map((s) => (
                         <li key={`${s.itemType}|${s.size}`}>
-                          <span className="stock-size">{sizeLabel(s.size)}</span>
+                          <span className="stock-size">{sizeChip(s.size)}</span>
                           <span className="stock-qty">{typeLabel(s.itemType)}</span>
                           <span className="stock-where">
                             <b>{s.qty} {s.qty === 1 ? 'family' : 'families'} waiting</b>
@@ -2661,7 +2664,7 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
                     .sort((x, y) => x.itemType.localeCompare(y.itemType) || x.size.localeCompare(y.size))
                     .map((l) => (
                       <li key={`${l.itemType}|${l.size}|${l.house}`}>
-                        <span className="stock-size">{sizeLabel(l.size)}</span>
+                        <span className="stock-size">{sizeChip(l.size)}</span>
                         <span className="stock-qty">{l.qty}</span>
                         <span className="stock-where">
                           {typeLabel(l.itemType)} {l.house && <HouseTag id={l.house} />}

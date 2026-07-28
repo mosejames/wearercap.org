@@ -147,6 +147,15 @@ export function sizeLabel(v) {
   return LEGACY_LABELS[v] || v;
 }
 
+// A bare number in a chip reads like a quantity: "Khaki Pants · Boys [12]"
+// looks like twelve pairs of pants, not a size 12. Letter sizes ("YM · 8–10")
+// and waists ("28 waist") say what they are already — the plain numbers don't,
+// so say it for them.
+export const sizeChip = (v) => {
+  const l = sizeLabel(v);
+  return /^\d+$/.test(l) ? `Size ${l}` : l;
+};
+
 // The first sensible default for a given item type.
 export const firstSize = (typeId) => (sizeGroups(typeId)[0]?.sizes[0]?.v) || 'YM';
 
