@@ -4,7 +4,7 @@ import {
   SIZE_SET_LABEL, prettyPhone,
   houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
-  typeLabel, binUrl, CONTACT,
+  typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift } from './inventory.js';
@@ -15,7 +15,24 @@ import { qrSvg } from './qr.js';
 // Routing — tiny hash router, same style as the rest of the site.
 // ---------------------------------------------------------------------------
 function parseHash() {
-  const h = (window.location.hash || '').replace(/^#\/?/, '');
+  // Shared links come in on short real paths (/uniform-exchange/h/<token>) so
+  // that a scraper can be handed tags for that page rather than the front
+  // door. Those normally bounce here as a hash, but read the path too — then
+  // it works even if the rewrite is missing, as it is in local dev.
+  const hash = window.location.hash || '';
+  if (!hash) {
+    const m = (window.location.pathname || '').match(/\/uniform-exchange\/([hbm])\/([^/]+)/);
+    if (m) {
+      const [, kind, raw] = m;
+      if (kind === 'b') return { view: 'bin', code: decodeURIComponent(raw).toUpperCase() };
+      return { view: kind === 'h' ? 'holder' : 'my', token: raw };
+    }
+    if (/\/uniform-exchange\/storage\/?$/.test(window.location.pathname || '')) {
+      return { view: 'admin', sub: '' };
+    }
+  }
+
+  const h = hash.replace(/^#\/?/, '');
   const [head, ...rest] = h.split('/');
   if (head === 'bin' && rest[0]) return { view: 'bin', code: decodeURIComponent(rest[0]).toUpperCase() };
   if (head === 'requests') return { view: 'requests' };
@@ -2174,9 +2191,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
           </p>
           <input
             className="search" readOnly
-            value={links[linkFor.id]
-              ? `https://wearercap.org/uniform-exchange/#/holder/${links[linkFor.id]}`
-              : 'Loading…'}
+            value={links[linkFor.id] ? holderUrl(links[linkFor.id]) : 'Loading…'}
             onFocus={(e) => e.target.select()}
           />
           <button

@@ -1,10 +1,20 @@
 <!doctype html>
 <!--
-  Source for public/uniform-exchange-og.png (1200×630).
-  Follows the RCAP Recap OG: night ground, RCAP mark top left, a two-line
+  Source for the Uniform Exchange OG cards (1200×630 each).
+
+  One layout, four variants — because a private holder link and the front page
+  are not the same thing, and a preview that says the same words for both tells
+  whoever you sent it to nothing at all.
+
+    ?v=main    → public/uniform-exchange-og.png
+    ?v=bin     → public/uniform-exchange-bin-og.png
+    ?v=holder  → public/uniform-exchange-holder-og.png
+    ?v=my      → public/uniform-exchange-my-og.png
+    ?v=admin   → public/uniform-exchange-admin-og.png
+
+  Follows the RCAP Recap card: night ground, RCAP mark top left, a two-line
   Archivo Black headline with the second line in the flame, a strap with the
-  URL, and a tilted stack on the right. Here the stack is inventory rows in the
-  four house colours, which says what the thing does at a glance.
+  URL, and a tilted stack on the right.
 
   Regenerate:  node docs/og-render.mjs
 -->
@@ -88,6 +98,7 @@
       .houses span.on {
         background: var(--flame); border-color: transparent; color: #fff; font-weight: 800;
       }
+      .houses.off { display: none; }
 
       /* The stack bleeds off the right edge like the Recap's cards do. Rows are
          content-width and hug that edge, so the label and its size always stay
@@ -120,30 +131,79 @@
     </style>
   </head>
   <body>
-    <div class="mark">RCA<i>P</i><small>THE UNIFORM EXCHANGE</small></div>
+    <div class="mark">RCA<i>P</i><small id="kicker">THE UNIFORM EXCHANGE</small></div>
 
     <div class="headline">
-      <span>Uniforms that</span>
-      <b>keep moving.</b>
+      <span id="line1">Uniforms that</span>
+      <b id="line2">keep moving.</b>
     </div>
 
-    <p class="strap">
-      Scan a bin, request a size · <em>wearercap.org/uniform-exchange</em>
-    </p>
+    <p class="strap" id="strap"></p>
 
-    <div class="houses">
+    <div class="houses" id="houses">
       <span class="on">Altruismo</span>
       <span>Amistad</span>
       <span>Isibindi</span>
       <span>Rêveur</span>
     </div>
 
-    <div class="stack">
-      <div class="row r1">Amistad Polo <span class="size">YM</span></div>
-      <div class="row r2">Isibindi Polo <span class="size">YL</span></div>
-      <div class="row r3">Khaki Pants <span class="size">12</span></div>
-      <div class="row r4">Rêveur Vest <span class="size">YS</span></div>
-      <div class="row r5">Dress Shirt <span class="size">AS</span></div>
-    </div>
+    <div class="stack" id="stack"></div>
+
+    <script>
+      // Everything that differs between the cards, in one place.
+      const ITEMS = [
+        ['Amistad Polo', 'YM'], ['Isibindi Polo', 'YL'], ['Khaki Pants', '12'],
+        ['Rêveur Vest', 'YS'], ['Dress Shirt', 'AS'],
+      ];
+
+      const VARIANTS = {
+        main: {
+          kicker: 'THE UNIFORM EXCHANGE',
+          line1: 'Uniforms that', line2: 'keep moving.',
+          strap: 'Scan a bin, request a size · <em>wearercap.org/uniform-exchange</em>',
+          rows: ITEMS,
+        },
+        bin: {
+          kicker: 'ONE BIN, UP CLOSE',
+          line1: "What's in", line2: 'this bin.',
+          strap: 'Take what fits, log what you leave · <em>wearercap.org</em>',
+          rows: ITEMS,
+        },
+        holder: {
+          kicker: 'THE BIN HOLDER PAGE',
+          line1: 'The bin lives', line2: 'in your trunk.',
+          strap: 'Your queue, your counts, your carline mornings · <em>wearercap.org</em>',
+          rows: [['To hand off', '2'], ['In your bins', '31'], ['Carline', 'Tue'], ['QR labels', 'print']],
+        },
+        my: {
+          kicker: 'YOUR REQUESTS',
+          line1: 'What you', line2: 'asked for.',
+          strap: 'Pick a handoff, then tap Got it · <em>wearercap.org</em>',
+          rows: [['Ready for you', '1'], ['On the waitlist', '2'], ['Handoff set', 'Thu']],
+        },
+        admin: {
+          kicker: 'RCAP · STAFF',
+          line1: 'The storage', line2: 'room.',
+          strap: 'Bins, holders and everything in flight',
+          rows: [['Bins', '7'], ['Holders', '6'], ['In flight', '3']],
+        },
+      };
+
+      const key = new URLSearchParams(location.search).get('v') || 'main';
+      const v = VARIANTS[key] || VARIANTS.main;
+
+      document.getElementById('kicker').textContent = v.kicker;
+      document.getElementById('line1').textContent = v.line1;
+      document.getElementById('line2').textContent = v.line2;
+      document.getElementById('strap').innerHTML = v.strap;
+      if (v.houses === false) document.getElementById('houses').classList.add('off');
+
+      // Rows keep the same colour cycle whatever they say, so the cards stay
+      // recognisably one family.
+      document.getElementById('stack').innerHTML = v.rows
+        .map(([label, size], i) =>
+          `<div class="row r${(i % 5) + 1}">${label} <span class="size">${size}</span></div>`)
+        .join('');
+    </script>
   </body>
 </html>

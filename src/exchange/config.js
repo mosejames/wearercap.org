@@ -178,9 +178,22 @@ export const houseInfo = (id) => houseById(id) || ANY_HOUSE;
 export const typeLabel = (id) =>
   (TYPES.find((t) => t.id === id) || { label: id }).label;
 
-// The QR code on every bin resolves here.
-export const binUrl = (code) =>
-  `https://wearercap.org/uniform-exchange/#/bin/${code}`;
+// ---------------------------------------------------------------------------
+// Links people actually send.
+//
+// The app is a hash router, and a fragment never reaches the server — so a
+// scraper building a message preview only ever saw the one static page, and
+// every link in the system looked identical in a thread. These short paths hit
+// a tiny function that answers with tags written for that destination, then
+// bounces the visitor into the app. The old `#/…` links still work, printed
+// QR labels included.
+// ---------------------------------------------------------------------------
+const ROOT = 'https://wearercap.org/uniform-exchange';
+
+// The QR code on every bin resolves here. Shorter URL, simpler code, easier scan.
+export const binUrl = (code) => `${ROOT}/b/${code}`;
+export const holderUrl = (token) => `${ROOT}/h/${token}`;
+export const myUrl = (token) => `${ROOT}/m/${token}`;
 
 // The bin-coordinator seat is open right now — questions go to the RCAP
 // inbox until it's filled. Swap in a name + email here when it is.

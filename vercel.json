@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/uniform-exchange/h/:token", "destination": "/api/link?p=holder&v=:token" },
+    { "source": "/uniform-exchange/b/:code", "destination": "/api/link?p=bin&v=:code" },
+    { "source": "/uniform-exchange/m/:token", "destination": "/api/link?p=my&v=:token" },
+    { "source": "/uniform-exchange/storage", "destination": "/api/link?p=admin" }
+  ]
+}
