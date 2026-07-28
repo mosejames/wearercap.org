@@ -156,3 +156,24 @@ export async function listNotifications(limit = 40) {
   if (error) throw error;
   return data || [];
 }
+
+export async function listItemTypes() {
+  const { data, error } = await supabase
+    .from('ue_item_types')
+    .select('*')
+    .order('sort', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminItemType(pass, id, fields = {}) {
+  const { error } = await supabase.rpc('ue_admin_item_type', {
+    p_pass: pass,
+    p_id: id,
+    p_label: fields.label ?? null,
+    p_housed: fields.housed ?? null,
+    p_hidden: fields.hidden ?? null,
+    p_sort: fields.sort ?? null,
+  });
+  if (error) throw error;
+}

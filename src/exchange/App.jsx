@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SITE, ITEM_TYPES, SIZES, ACCEPTING, NOT_ACCEPTING, APPROX_NOTE,
-  FRONT_DESK_DAYS, houseById, houseInfo, HOUSE_CHOICES, HOUSED_TYPES,
+  SITE, SIZES, ACCEPTING, NOT_ACCEPTING, APPROX_NOTE,
+  FRONT_DESK_DAYS, houseById, houseInfo, HOUSE_CHOICES,
+  setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
@@ -58,14 +59,17 @@ export default function App() {
   const [inv, setInv] = useState([]);
   const [reqs, setReqs] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [, setTypes] = useState([]); // re-render when the live types land
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState('');
 
   const refresh = async () => {
     try {
-      const [b, i, r, o] = await Promise.all([
+      const [b, i, r, o, t] = await Promise.all([
         db.listBins(), db.listInventory(), db.listRequests(), db.listOffers(),
+        db.listItemTypes().catch(() => []),
       ]);
+      setItemTypes(t); setTypes(t);
       setBins(b); setInv(i); setReqs(r); setOffers(o); setErr('');
     } catch (e) {
       setErr(e.message || 'Could not reach the exchange.');
@@ -184,7 +188,7 @@ function Home({ bins, inv, reqs, refresh }) {
           </select>
           <select value={type} onChange={(e) => setType(e.target.value)}>
             <option value="">Every item</option>
-            {ITEM_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
           <select value={size} onChange={(e) => setSize(e.target.value)}>
             <option value="">Every size</option>
@@ -260,7 +264,7 @@ function Home({ bins, inv, reqs, refresh }) {
 function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
   const [form, setForm] = useState({
     parentName: '', student: '', contact: '', note: '',
-    itemType: preset.itemType || ITEM_TYPES[0].id,
+    itemType: preset.itemType || visibleItemTypes()[0]?.id || 'polo',
     size: preset.size || SIZES[0],
     house: preset.house || '',
     requesterHouse: preset.house || '',
@@ -326,7 +330,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
       <div className="grid2">
         <label>Item
           <select value={form.itemType} onChange={set('itemType')}>
-            {ITEM_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </label>
         <label>Size
@@ -671,9 +675,9 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
 function MoveSheet({ bin, sign, onDone, onClose }) {
   const [lines, setLines] = useState([]);
   const [cur, setCur] = useState({
-    itemType: ITEM_TYPES[0].id, size: SIZES[1], qty: 1,
+    itemType: visibleItemTypes()[0]?.id || 'polo', size: SIZES[1], qty: 1,
     // House bins mostly hold their own house's gear — start there.
-    house: HOUSED_TYPES.includes(ITEM_TYPES[0].id) ? (bin.holder_house || '') : '',
+    house: typeHoused(visibleItemTypes()[0]?.id) ? (bin.holder_house || '') : '',
   });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -710,10 +714,10 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
               const itemType = e.target.value;
               setCur({
                 ...cur, itemType,
-                house: HOUSED_TYPES.includes(itemType) ? (cur.house || bin.holder_house || '') : '',
+                house: typeHoused(itemType) ? (cur.house || bin.holder_house || '') : '',
               });
             }}>
-            {ITEM_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </label>
         <label>House
@@ -913,6 +917,7 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
         />
       )}
 
+      <AdminItemTypes pass={pass} refresh={refresh} act={act} />
       <AdminOffers bins={bins} offers={offers} refresh={refresh} />
       <AdminReports bins={bins} inv={inv} reqs={reqs} />
       <AdminNotifications />
@@ -1005,6 +1010,66 @@ function BinSheet({ bin, onSave, onClose }) {
         {busy ? 'Saving…' : bin ? 'Save changes' : 'Create bin'}
       </button>
     </Sheet>
+  );
+}
+
+// Item types — hidden ones keep their history but leave the dropdowns.
+// Bring one back (or add something new) without touching code.
+function AdminItemTypes({ pass, refresh, act }) {
+  const [adding, setAdding] = useState(false);
+  const [nf, setNf] = useState({ id: '', label: '', housed: false });
+  const types = allItemTypes();
+
+  return (
+    <div className="card">
+      <h3>Item types</h3>
+      <p className="fine">Hidden types keep their history and can come back any time.</p>
+      <ul className="bin-admin">
+        {types.map((t) => (
+          <li key={t.id} className={t.hidden ? 'retired' : ''}>
+            <div className="bin-admin-main">
+              <b>{t.label}</b>
+              <span>{t.housed ? 'house-colored' : 'any house'}{t.hidden ? ' · hidden' : ''}</span>
+            </div>
+            <div className="bin-admin-actions">
+              <button className="linkish" onClick={() =>
+                act(() => db.adminItemType(pass, t.id, { hidden: !t.hidden }))}>
+                {t.hidden ? 'show' : 'hide'}
+              </button>
+              <button className="linkish" onClick={() => {
+                const label = prompt('Label', t.label);
+                if (label && label.trim()) act(() => db.adminItemType(pass, t.id, { label: label.trim() }));
+              }}>rename</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {adding ? (
+        <>
+          <div className="grid3">
+            <label>Id (short, lowercase) <input value={nf.id} placeholder="belt"
+              onChange={(e) => setNf({ ...nf, id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} /></label>
+            <label>Label <input value={nf.label} placeholder="Belt"
+              onChange={(e) => setNf({ ...nf, label: e.target.value })} /></label>
+            <label>House-colored?
+              <select value={nf.housed ? 'y' : 'n'} onChange={(e) => setNf({ ...nf, housed: e.target.value === 'y' })}>
+                <option value="n">No — any house</option>
+                <option value="y">Yes</option>
+              </select>
+            </label>
+          </div>
+          <button className="btn small" onClick={() =>
+            act(async () => {
+              if (!nf.id || !nf.label.trim()) throw new Error('Id and label are required.');
+              await db.adminItemType(pass, nf.id, { label: nf.label.trim(), housed: nf.housed, hidden: false, sort: 65 });
+              setNf({ id: '', label: '', housed: false }); setAdding(false);
+            })}>Add type</button>
+          <button className="linkish" onClick={() => setAdding(false)}>cancel</button>
+        </>
+      ) : (
+        <button className="btn small ghost" onClick={() => setAdding(true)}>＋ Add a type</button>
+      )}
+    </div>
   );
 }
 

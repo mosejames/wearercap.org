@@ -21,16 +21,26 @@ export const FRONT_DESK_DAYS = 3;
 export const APPROX_NOTE =
   'Counts are approximate — bins are living things. If something is off, just adjust it.';
 
-export const ITEM_TYPES = [
-  { id: 'polo',        label: 'RCA Polo' },
-  { id: 'dress-shirt', label: 'White Dress Shirt' },
-  { id: 'sweater',     label: 'Sweater / Cardigan' },
-  { id: 'vest',        label: 'Vest' },
-  { id: 'house',       label: 'House Apparel / Swag' },
-  { id: 'bottoms',     label: 'Khaki Bottoms (Hilfiger only)' },
-  { id: 'ski',         label: 'Ski Apparel / Gear' },
-  { id: 'other',       label: 'Other' },
+// Item types live in the database (ue_item_types) so the admin can hide or
+// restore them without a deploy. This is the boot fallback until they load;
+// setItemTypes() replaces it with the live rows.
+const DEFAULT_TYPES = [
+  { id: 'polo',        label: 'RCA House Polo',    housed: true,  hidden: false },
+  { id: 'dress-shirt', label: 'White Dress Shirt', housed: false, hidden: false },
+  { id: 'vest',        label: 'Vest',              housed: true,  hidden: false },
+  { id: 'pants',       label: 'Khaki Pants',       housed: false, hidden: false },
+  { id: 'shorts',      label: 'Khaki Shorts',      housed: false, hidden: false },
+  { id: 'skirt',       label: 'Khaki Skirt',       housed: false, hidden: false },
 ];
+
+let TYPES = [...DEFAULT_TYPES];
+
+export function setItemTypes(rows) {
+  if (rows && rows.length) TYPES = rows;
+}
+export const allItemTypes = () => TYPES;
+export const visibleItemTypes = () => TYPES.filter((t) => !t.hidden);
+export const typeHoused = (id) => !!TYPES.find((t) => t.id === id)?.housed;
 
 export const SIZES = [
   'YXS', 'YS', 'YM', 'YL', 'YXL',
@@ -39,11 +49,10 @@ export const SIZES = [
 ];
 
 export const ACCEPTING = [
-  'RCA shirts and sweaters',
-  'House apparel and swag',
+  'RCA house polos',
   'Like-new white dress shirts',
-  'Hilfiger-only bottoms',
-  'Ski apparel and gear',
+  'Vests',
+  'Khaki pants, shorts, and skirts',
 ];
 
 export const NOT_ACCEPTING = [
@@ -68,10 +77,8 @@ export const HOUSE_CHOICES = [ANY_HOUSE, ...HOUSES];
 export const houseInfo = (id) => houseById(id) || ANY_HOUSE;
 
 // Types where the house picker defaults to a house instead of "Any house".
-export const HOUSED_TYPES = ['polo', 'sweater', 'vest', 'house'];
-
 export const typeLabel = (id) =>
-  (ITEM_TYPES.find((t) => t.id === id) || { label: id }).label;
+  (TYPES.find((t) => t.id === id) || { label: id }).label;
 
 // The QR code on every bin resolves here.
 export const binUrl = (code) =>
