@@ -128,8 +128,10 @@ export default async function handler(req, res) {
       const who = String(bin.holder_name || '').trim().split(' ')[0];
       c.og = `${bin.code} · ${bin.name}`;
       c.title = `${bin.code} · ${bin.name} — RCAP Uniform Exchange`;
+      // Altruismo, Amistad and Isibindi take "an"; Rêveur takes "a".
+      const article = /^[aeiou]/i.test(house) ? 'An' : 'A';
       c.desc = [
-        house ? `A ${house} bin` : 'A uniform bin',
+        house ? `${article} ${house} bin` : 'A uniform bin',
         who ? `carried by ${who}` : null,
         bin.total ? `· about ${bin.total} item${bin.total === 1 ? '' : 's'} on hand` : null,
       ].filter(Boolean).join(' ') +
