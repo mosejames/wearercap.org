@@ -314,3 +314,30 @@ a{color:inherit}
 .house-head .house-chip{font-size:12px;padding:6px 12px}
 .house-head span{font-size:12px;font-weight:700;color:var(--ink-soft)}
 .holder-head span.missing{color:var(--red)}
+
+/* ---------------- holder page ---------------- */
+.page-tabs{margin:18px 0 0}
+.count-grid{list-style:none;margin:0 0 14px;padding:0}
+.count-grid li{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px var(--card-pad);margin:0 0 10px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.count-what{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.count-what select{
+  width:100%;min-width:0;border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 10px;background:var(--paper);font-size:14.5px;
+}
+.count-qty{display:flex;align-items:center;gap:8px}
+.count-qty input{
+  width:74px;text-align:center;border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 6px;background:var(--paper);font-weight:800;font-size:17px;
+}
+.step{
+  width:44px;height:44px;flex:none;border:1.5px solid var(--line);background:var(--paper);
+  border-radius:10px;font-size:21px;font-weight:800;line-height:1;color:var(--ink);
+}
+.step:active{background:var(--night);color:#fff}
+.count-qty .linkish{margin-left:auto}
+.count-foot{margin-top:14px}
+.page-foot{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}

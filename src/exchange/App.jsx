@@ -20,6 +20,7 @@ function parseHash() {
   if (head === 'bin' && rest[0]) return { view: 'bin', code: decodeURIComponent(rest[0]).toUpperCase() };
   if (head === 'requests') return { view: 'requests' };
   if (head === 'my' && rest[0]) return { view: 'my', token: rest[0] };
+  if (head === 'holder' && rest[0]) return { view: 'holder', token: rest[0] };
   if (head === 'admin') return { view: 'admin', sub: rest[0] || '' };
   return { view: 'home' };
 }
@@ -142,6 +143,8 @@ export default function App() {
         <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} refresh={refresh} />
       ) : route.view === 'my' ? (
         <MyRequests token={route.token} bins={bins} settings={settings} />
+      ) : route.view === 'holder' ? (
+        <HolderHome token={route.token} />
       ) : route.view === 'requests' ? (
         <FindMyRequests />
       ) : route.view === 'admin' ? (
@@ -158,7 +161,7 @@ export default function App() {
             {CONTACT.name ? <><b>{CONTACT.name}</b> · </> : null}
             <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
           </p>
-          <p className="foot-fine">Parent-run, alongside RCA. · <a href="#/admin">Back office</a></p>
+          <p className="foot-fine">Parent-run, alongside RCA. · <a href="#/admin">Storage Room</a></p>
         </div>
       </footer>
     </>
@@ -745,6 +748,192 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
 }
 
 // ---------------------------------------------------------------------------
+// A bin holder's own page. The bin QR is fine when you're standing over one
+// bin, but a person carrying three of them needs somewhere that shows the lot:
+// everything they owe, everything to collect, and one grid to punch in counts.
+// ---------------------------------------------------------------------------
+function HolderHome({ token }) {
+  const [data, setData] = useState(undefined);
+  const [tab, setTab] = useState('todo');
+  const [printBins, setPrintBins] = useState(null);
+
+  const load = () => db.holderHome(token).then(setData).catch(() => setData(null));
+  useEffect(() => { load(); }, [token]);
+
+  if (data === undefined) return <div className="shell loading">Opening your bins…</div>;
+  if (!data) {
+    return (
+      <section className="shell section narrow-card">
+        <h2 className="h2">Hmm</h2>
+        <p>That link doesn't open anything. Check the text it came in, or email{' '}
+          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>.</p>
+      </section>
+    );
+  }
+
+  const { holder, bins, inventory, queue, pickups } = data;
+  const live = bins.filter((b) => !b.retired);
+  const todo = queue.length + pickups.length;
+
+  if (printBins) {
+    return (
+      <section className="print-sheet">
+        <button className="btn no-print" onClick={() => setPrintBins(null)}>← Back</button>
+        <button className="btn flame no-print" onClick={() => window.print()}>Print</button>
+        <div className="labels">
+          {printBins.map((b) => (
+            <div className="label" key={b.id}>
+              <div dangerouslySetInnerHTML={{ __html: qrSvg(binUrl(b.code), 240) }} />
+              <b>{b.name}</b>
+              {b.focus && <span>Mostly {b.focus}</span>}
+              <span>In the care of {holder.name}</span>
+              <span>Scan to see inside · add what you drop in</span>
+              <code>{b.code} · wearercap.org/uniform-exchange</code>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <section className="hero bin-hero">
+        <div className="shell">
+          <p className="kicker">Bin holder{holder.house ? ` · ${houseInfo(holder.house).name}` : ''}</p>
+          <h1>{holder.name}</h1>
+          <p className="intro">
+            {live.length} bin{live.length === 1 ? '' : 's'} in your care
+            {todo > 0 ? ` · ${todo} thing${todo === 1 ? '' : 's'} needing you` : ' · nothing needs you right now'}
+          </p>
+        </div>
+      </section>
+
+      <div className="shell">
+        <div className="mode-tabs page-tabs">
+          {[['todo', `To do${todo ? ` (${todo})` : ''}`], ['counts', 'My bins'], ['me', 'My setup']]
+            .map(([k, label]) => (
+              <button key={k} className={`mode ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>
+                {label}
+              </button>
+            ))}
+        </div>
+      </div>
+
+      {tab === 'todo' && (
+        <HolderTodo holder={holder} bins={bins} queue={queue} pickups={pickups} reload={load} />
+      )}
+
+      {tab === 'counts' && (
+        <CountSheet
+          token={token} holder={holder} bins={live} inventory={inventory} reload={load}
+          onPrint={() => setPrintBins(live)}
+        />
+      )}
+
+      {tab === 'me' && (
+        <section className="shell section">
+          <h2 className="h2">When you're around</h2>
+          <p className="sub">
+            Set this once — every family who requests from any of your bins picks
+            from it, so nobody has to text back and forth.
+          </p>
+          <AvailabilityCard bin={holder} token={token} refresh={load} />
+        </section>
+      )}
+    </>
+  );
+}
+
+function HolderTodo({ holder, bins, queue, pickups, reload }) {
+  const binCode = (id) => bins.find((b) => b.id === id)?.code || '';
+
+  if (!queue.length && !pickups.length) {
+    return (
+      <section className="shell section">
+        <p className="empty">
+          Nothing waiting on you. When a family requests something from one of your
+          bins, it lands here and we text you.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      {queue.length > 0 && (
+        <section className="shell section">
+          <h2 className="h2 flame-text">Hand these off 🤝</h2>
+          <ul className="req-list">
+            {queue.map((r) => {
+              const due = dueInfo(r.due_at);
+              const plan = handoffSummary(r);
+              return (
+                <li key={r.id} className={`req holder ${due?.overdue ? 'overdue' : ''}`}>
+                  <div className="req-main">
+                    <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
+                    <span>
+                      for {r.parent_name}{r.student ? ` (${r.student})` : ''}
+                      {r.note ? ` — “${r.note}”` : ''}
+                    </span>
+                    <span className="plan">
+                      {binCode(r.bin_id)}{' · '}
+                      {r.status === 'assigned' ? '⏳ waiting on them to pick a time'
+                        : r.status === 'handed_off' ? `✅ handed off · ${plan} — waiting on them to confirm`
+                        : `🤝 ${plan}`}
+                    </span>
+                  </div>
+                  <div className="req-side">
+                    {due && r.status === 'scheduled' &&
+                      <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+                    {r.status !== 'handed_off' && (
+                      <button className="btn small flame"
+                        onClick={async () => { await db.handoffSent(r.id, holder.name); reload(); }}>
+                        Handed it off ✓
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {pickups.length > 0 && (
+        <section className="shell section">
+          <h2 className="h2">Pickups to arrange 👕</h2>
+          <p className="sub">Reach out, grab the bag, then add what came in under My bins.</p>
+          <ul className="req-list">
+            {pickups.map((o) => (
+              <li key={o.id} className="req holder">
+                <div className="req-main">
+                  <b>{o.parent_name}{o.contact ? ` · ${o.contact}` : ''}</b>
+                  <span>{o.items_desc}</span>
+                </div>
+                <div className="req-side">
+                  {o.status === 'open' ? (
+                    <button className="btn small" onClick={async () => { await db.updateOffer(o.id, 'scheduled'); reload(); }}>
+                      Pickup arranged
+                    </button>
+                  ) : <span className="chip chip-assigned">Scheduled</span>}
+                  <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); reload(); }}>
+                    Collected ✓
+                  </button>
+                  <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); reload(); }}>
+                    cancel
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The bin page — what the QR code opens. Inventory, add/take flows, and the
 // holder's fulfillment queue.
 // ---------------------------------------------------------------------------
@@ -933,7 +1122,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
 
 // The holder answers "when are you around?" once. Everything downstream —
 // the dates a requester taps, the texts — comes from this.
-function AvailabilityCard({ bin, refresh }) {
+function AvailabilityCard({ bin, token, refresh }) {
   const holderId = bin.holder_id;
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({
@@ -953,7 +1142,8 @@ function AvailabilityCard({ bin, refresh }) {
   const save = async () => {
     setBusy(true); setErr('');
     try {
-      if (holderId) await db.setHolderAvailability(holderId, f);
+      if (token) await db.setAvailabilityByToken(token, f);
+      else if (holderId) await db.setHolderAvailability(holderId, f);
       else await db.setAvailability(bin.id, f);
       setOpen(false); refresh();
     } catch (e) {
@@ -1027,6 +1217,147 @@ function AvailabilityCard({ bin, refresh }) {
         <button className="linkish" onClick={() => setOpen(false)}>cancel</button>
       </div>
     </div>
+  );
+}
+
+// Counting a whole bin at once. Nobody setting up for the first time wants to
+// log twenty polos one at a time — so this is a grid: every line already in the
+// bin, pre-filled, plus blank rows to add to. You type what's actually there
+// and hit save; the database works out the difference and logs that.
+function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
+  const [binId, setBinId] = useState(bins[0]?.id || '');
+  const [rows, setRows] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const blank = () => ({
+    key: Math.random().toString(36).slice(2),
+    item_type: visibleItemTypes()[0]?.id || 'polo',
+    size: firstSize(visibleItemTypes()[0]?.id),
+    house: typeHoused(visibleItemTypes()[0]?.id) ? (holder.house || '') : '',
+    qty: 1,
+    existing: false,
+  });
+
+  // Reload the grid whenever the bin (or the underlying counts) change.
+  useEffect(() => {
+    const mine = (inventory || [])
+      .filter((i) => i.bin_id === binId && i.qty !== 0)
+      .sort((a, b) => a.item_type.localeCompare(b.item_type) || a.size.localeCompare(b.size))
+      .map((i) => ({
+        key: `${i.item_type}|${i.size}|${i.house || ''}`,
+        item_type: i.item_type, size: i.size, house: i.house || '',
+        qty: Math.max(0, i.qty), existing: true,
+      }));
+    setRows(mine.length ? mine : [blank()]);
+    setMsg('');
+  }, [binId, inventory]);
+
+  const set = (key, patch) =>
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+
+  const save = async () => {
+    setBusy(true); setMsg('');
+    try {
+      const lines = rows
+        .filter((r) => r.item_type && r.size)
+        .map((r) => ({
+          bin_id: binId, item_type: r.item_type, size: r.size,
+          house: r.house || '', qty: Number(r.qty) || 0,
+        }));
+      const changed = await db.setHolderInventory(token, lines, holder.name);
+      setMsg(changed ? `Saved — ${changed} line${changed === 1 ? '' : 's'} updated.` : 'Nothing had changed.');
+      reload();
+    } catch (e) {
+      setMsg(e.message || "That didn't save — try again.");
+    } finally { setBusy(false); }
+  };
+
+  if (!bins.length) {
+    return (
+      <section className="shell section">
+        <p className="empty">No bins assigned to you yet.</p>
+      </section>
+    );
+  }
+
+  const bin = bins.find((b) => b.id === binId);
+
+  return (
+    <section className="shell section">
+      <h2 className="h2">My bins</h2>
+      <p className="sub">
+        Type what's actually in the bin — rough is fine, it's a bin. Everything
+        already counted is here; add lines for anything new.
+      </p>
+
+      {bins.length > 1 && (
+        <div className="filters">
+          <select value={binId} onChange={(e) => setBinId(e.target.value)}>
+            {bins.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.code} · {b.name}{b.focus ? ` (${b.focus})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <ul className="count-grid">
+        {rows.map((r) => (
+          <li key={r.key}>
+            <div className="count-what">
+              <select
+                value={r.item_type}
+                onChange={(e) => {
+                  const t = e.target.value;
+                  set(r.key, {
+                    item_type: t,
+                    size: firstSize(t),
+                    house: typeHoused(t) ? (r.house || holder.house || '') : '',
+                  });
+                }}>
+                {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+              <SizePicker itemType={r.item_type} value={r.size}
+                onChange={(e) => set(r.key, { size: e.target.value })} />
+              {typeHoused(r.item_type) && (
+                <select value={r.house} onChange={(e) => set(r.key, { house: e.target.value })}>
+                  {HOUSE_CHOICES.map((h) => (
+                    <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house'}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="count-qty">
+              <button className="step" onClick={() => set(r.key, { qty: Math.max(0, (Number(r.qty) || 0) - 1) })}>−</button>
+              <input
+                type="number" inputMode="numeric" min="0" max="99" value={r.qty}
+                onChange={(e) => set(r.key, { qty: e.target.value })}
+              />
+              <button className="step" onClick={() => set(r.key, { qty: Math.min(99, (Number(r.qty) || 0) + 1) })}>+</button>
+              <button className="linkish" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
+                remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <button className="btn ghost" onClick={() => setRows((rs) => [...rs, blank()])}>
+        ＋ Another line
+      </button>
+
+      {msg && <p className="fine">{msg}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={save}>
+        {busy ? 'Saving…' : `Save ${bin ? bin.code : ''} counts`}
+      </button>
+
+      <p className="fine count-foot">
+        Every change is logged, so the history still shows what moved and when.
+        {' '}<button className="linkish" onClick={onPrint}>Print my QR labels</button>
+      </p>
+    </section>
   );
 }
 
@@ -1123,7 +1454,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 }
 
 // ---------------------------------------------------------------------------
-// Back office — passcode-gated in the database, like the Recap.
+// The Storage Room — passcode-gated in the database, like the Recap.
 // ---------------------------------------------------------------------------
 function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
@@ -1157,7 +1488,7 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   if (!ok) {
     return (
       <section className="shell section narrow-card">
-        <h2 className="h2">Back office</h2>
+        <h2 className="h2">Storage Room</h2>
         <input className="search" type="password" placeholder="Passcode" value={pass}
           onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && tryPass()} />
         {msg && <p className="err">{msg}</p>}
@@ -1208,7 +1539,7 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
 function AdminPage({ title, children, msg }) {
   return (
     <section className="shell section">
-      <a className="crumb" href="#/admin">← Back office</a>
+      <a className="crumb" href="#/admin">← Storage Room</a>
       <h2 className="h2">{title}</h2>
       {msg && <p className="err">{msg}</p>}
       {children}
@@ -1227,7 +1558,7 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, notificat
   );
   return (
     <section className="shell section">
-      <h2 className="h2">Back office</h2>
+      <h2 className="h2">Storage Room</h2>
       {msg && <p className="err">{msg}</p>}
 
       <div className="admin-nav">
@@ -1416,6 +1747,10 @@ function RequestEditSheet({ req, bins, pass, act, onClose }) {
 function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
   const [editHolder, setEditHolder] = useState(null); // 'new' | holder
   const [editBin, setEditBin] = useState(null);       // {holderId} | bin
+  const [linkFor, setLinkFor] = useState(null);       // holder whose link we're sharing
+  const [links, setLinks] = useState({});
+
+  useEffect(() => { db.adminHolderLinks(pass).then(setLinks).catch(() => {}); }, [pass, holders.length]);
 
   const binsOf = (hid) => bins.filter((b) => b.holder_id === hid);
   const orphans = bins.filter((b) => !b.holder_id);
@@ -1436,9 +1771,6 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
       </p>
       <div className="admin-actions">
         <button className="btn" onClick={() => setEditHolder('new')}>＋ New holder</button>
-        <button className="btn ghost" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
-          🖨 Print all QR labels
-        </button>
       </div>
 
       {noPhone.length > 0 && (
@@ -1475,6 +1807,12 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
               </div>
               <div className="bin-admin-actions">
                 <button className="btn small" onClick={() => setEditHolder(h)}>Edit</button>
+                {mine.length > 0 && (
+                  <button className="linkish" onClick={() => setPrintBins(mine.filter((b) => !b.retired))}>
+                    print labels
+                  </button>
+                )}
+                <button className="linkish" onClick={() => setLinkFor(h)}>their page</button>
                 <button className="linkish" onClick={() =>
                   act(() => db.adminHolder(pass, h.active === false ? 'restore' : 'deactivate', h.id))}>
                   {h.active === false ? 'restore' : 'retire'}
@@ -1521,6 +1859,38 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
             ))}
           </ul>
         </div>
+      )}
+
+      <p className="fine page-foot">
+        <button className="linkish" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
+          🖨 Print every QR label
+        </button>{' '}— handy for a stack to hand out; each holder can also print
+        their own from their page.
+      </p>
+
+      {linkFor && (
+        <Sheet onClose={() => setLinkFor(null)} title={`${linkFor.name}'s page`}>
+          <p className="fine">
+            This is {linkFor.name.split(' ')[0]}'s private page — their bins, anything
+            queued to them, and where they update their counts. No password; the link
+            is the key, so send it to them rather than posting it anywhere.
+          </p>
+          <input
+            className="search" readOnly
+            value={links[linkFor.id]
+              ? `https://wearercap.org/uniform-exchange/#/holder/${links[linkFor.id]}`
+              : 'Loading…'}
+            onFocus={(e) => e.target.select()}
+          />
+          <button
+            className="btn flame wide"
+            disabled={!linkFor.phone}
+            onClick={async () => {
+              await act(() => db.adminTextHolderLink(pass, linkFor.id));
+              setLinkFor(null);
+            }}
+          >{linkFor.phone ? `Text it to ${linkFor.phone}` : 'No cell on file — add one first'}</button>
+        </Sheet>
       )}
 
       {editHolder && (

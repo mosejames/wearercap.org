@@ -4,10 +4,15 @@ import { supabase } from '../carpool/supabaseClient.js';
 // All Supabase traffic for the Uniform Exchange lives here.
 // ---------------------------------------------------------------------------
 
+const HOLDER_PUBLIC =
+  'id,name,house,student,note,offers_carline,offers_student,carline_days,carline_when,carline_spot,active';
+
+// Public holder fields only — the cell, email and private token come down with
+// the admin payload, never with the anon key.
 export async function listHolders() {
   const { data, error } = await supabase
     .from('ue_holders')
-    .select('*')
+    .select(HOLDER_PUBLIC)
     .order('name', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -87,6 +92,7 @@ export async function adminData(pass) {
   return {
     requests: data?.requests || [],
     offers: data?.offers || [],
+    holders: data?.holders || [],
     notifications: data?.notifications || [],
   };
 }
@@ -307,5 +313,48 @@ export async function adminRequest(pass, id, status = null, note = null) {
   const { error } = await supabase.rpc('ue_admin_request', {
     p_pass: pass, p_id: id, p_status: status, p_note: note,
   });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// A bin holder's own page — everything they carry, in one call.
+// ---------------------------------------------------------------------------
+export async function holderHome(token) {
+  const { data, error } = await supabase.rpc('ue_holder_home', { p_token: token });
+  if (error) throw error;
+  return data;
+}
+
+// The holder says what's in the bin now; the database logs the difference, so
+// the movement history stays a record of what changed.
+export async function setHolderInventory(token, lines, actor = '') {
+  const { data, error } = await supabase.rpc('ue_holder_set_inventory', {
+    p_token: token, p_lines: lines, p_actor: actor,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function setAvailabilityByToken(token, f) {
+  const { error } = await supabase.rpc('ue_holder_availability_by_token', {
+    p_token: token,
+    p_offers_carline: f.offersCarline ?? null,
+    p_offers_student: f.offersStudent ?? null,
+    p_days: f.days ?? null,
+    p_when: f.when ?? null,
+    p_spot: f.spot ?? null,
+    p_student: f.holderStudent ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function adminHolderLinks(pass) {
+  const { data, error } = await supabase.rpc('ue_admin_holder_links', { p_pass: pass });
+  if (error) throw error;
+  return data || {};
+}
+
+export async function adminTextHolderLink(pass, id) {
+  const { error } = await supabase.rpc('ue_admin_text_holder_link', { p_pass: pass, p_id: id });
   if (error) throw error;
 }
