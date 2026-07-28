@@ -892,8 +892,6 @@ function HolderSettings({ token, holder, reload }) {
     phone: holder.phone || '',
     email: holder.email || '',
     notifyMode: holder.notify_mode || 'instant',
-    special: !!holder.special_arrangements,
-    specialNote: holder.special_note || '',
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -937,24 +935,6 @@ function HolderSettings({ token, holder, reload }) {
             ))}
         </div>
       </div>
-
-      <label className="check">
-        <input type="checkbox" checked={f.special}
-          onChange={(e) => setF({ ...f, special: e.target.checked })} />
-        <span>🤝 I'm open to arranging another time</span>
-      </label>
-      {f.special && (
-        <div className="avail-body">
-          <p className="fine">
-            Families will see this as an option alongside carline, and it shares your
-            cell with that one family so the two of you can sort it out directly.
-          </p>
-          <label>Anything they should know? (optional)
-            <input value={f.specialNote} onChange={set('specialNote')}
-              placeholder="Evenings are easiest, I'm near the school" maxLength={200} />
-          </label>
-        </div>
-      )}
 
       {msg && <p className="fine">{msg}</p>}
       <div className="avail-actions">
@@ -1304,7 +1284,9 @@ function AvailabilityCard({ bin, token, refresh }) {
     days: bin.carline_days && bin.carline_days.length ? bin.carline_days : [1, 2, 3, 4, 5],
     when: 'am', // handoffs happen at morning carline; afternoons are chaos
     spot: bin.carline_spot || '',
-    holderStudent: bin.holder_student || '',
+    holderStudent: bin.holder_student || bin.student || '',
+    special: !!bin.special_arrangements,
+    specialNote: bin.special_note || '',
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -1378,6 +1360,25 @@ function AvailabilityCard({ bin, token, refresh }) {
           <label>Your student's name and grade
             <input value={f.holderStudent} onChange={(e) => setF({ ...f, holderStudent: e.target.value })}
               placeholder="Cayenne · 7th" maxLength={80} />
+          </label>
+        </div>
+      )}
+
+      <label className="check">
+        <input type="checkbox" checked={f.special}
+          onChange={(e) => setF({ ...f, special: e.target.checked })} />
+        <span>🤝 I'll arrange another time if neither works</span>
+      </label>
+
+      {f.special && (
+        <div className="avail-body">
+          <p className="fine">
+            Families see this alongside carline, and picking it shares your cell with
+            that one family so the two of you can sort it out directly.
+          </p>
+          <label>Anything they should know? (optional)
+            <input value={f.specialNote} onChange={(e) => setF({ ...f, specialNote: e.target.value })}
+              placeholder="Evenings are easiest, I'm near the school" maxLength={200} />
           </label>
         </div>
       )}

@@ -86,6 +86,7 @@ export function availabilityLine(bin) {
     else if (days.length) parts.push(`Carline ${days.join(' · ')}, ${when}`);
   }
   if (bin.offers_student !== false) parts.push('Student to student');
+  if (bin.special_arrangements) parts.push('Open to another time');
   return parts.length ? parts.join('  ·  ') : 'No handoff options set yet';
 }
 

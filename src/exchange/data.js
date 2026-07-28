@@ -248,6 +248,8 @@ export async function setAvailability(binId, f) {
     p_when: f.when ?? null,
     p_spot: f.spot ?? null,
     p_holder_student: f.holderStudent ?? null,
+    p_special: f.special ?? null,
+    p_special_note: f.specialNote ?? null,
   });
   if (error) throw error;
 }
@@ -288,6 +290,8 @@ export async function setHolderAvailability(holderId, f) {
     p_when: f.when ?? null,
     p_spot: f.spot ?? null,
     p_student: f.holderStudent ?? null,
+    p_special: f.special ?? null,
+    p_special_note: f.specialNote ?? null,
   });
   if (error) throw error;
 }
@@ -344,6 +348,8 @@ export async function setAvailabilityByToken(token, f) {
     p_when: f.when ?? null,
     p_spot: f.spot ?? null,
     p_student: f.holderStudent ?? null,
+    p_special: f.special ?? null,
+    p_special_note: f.specialNote ?? null,
   });
   if (error) throw error;
 }
