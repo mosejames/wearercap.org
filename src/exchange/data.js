@@ -105,6 +105,8 @@ export async function adminBin(pass, action, id, fields = {}) {
     p_holder_name: fields.holderName ?? null,
     p_holder_house: fields.holderHouse ?? null,
     p_holder_note: fields.holderNote ?? null,
+    p_holder_email: fields.holderEmail ?? null,
+    p_holder_phone: fields.holderPhone ?? null,
   });
   if (error) throw error;
   return data;

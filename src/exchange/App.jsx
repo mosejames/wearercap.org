@@ -119,8 +119,9 @@ export default function App() {
       <footer className="foot">
         <div className="shell">
           <p>
-            Questions, donations, or a bin of your own? Uniform Swap chair{' '}
-            <b>{CONTACT.name}</b> · <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+            Questions, donations, or a bin of your own?{' '}
+            {CONTACT.name ? <><b>{CONTACT.name}</b> · </> : null}
+            <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
           </p>
           <p className="foot-fine">Parent-run, alongside RCA. · <a href="#/admin">Back office</a></p>
         </div>
@@ -763,9 +764,9 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 function AdminView({ bins, inv, reqs, offers, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
   const [ok, setOk] = useState(!!sessionStorage.getItem('ue-pass'));
-  const [form, setForm] = useState({ code: '', name: '', holderName: '', holderHouse: '' });
   const [msg, setMsg] = useState('');
-  const [printMode, setPrintMode] = useState(false);
+  const [printBins, setPrintBins] = useState(null); // null | array of bins
+  const [editBin, setEditBin] = useState(null); // null | 'new' | bin row
 
   const tryPass = async () => {
     try {
@@ -799,16 +800,17 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
     catch (e) { setMsg(e.message || 'Nope.'); }
   };
 
-  if (printMode) {
+  if (printBins) {
     return (
       <section className="print-sheet">
-        <button className="btn no-print" onClick={() => setPrintMode(false)}>← Back</button>
+        <button className="btn no-print" onClick={() => setPrintBins(null)}>← Back</button>
         <button className="btn flame no-print" onClick={() => window.print()}>Print</button>
         <div className="labels">
-          {bins.filter((b) => !b.retired).map((b) => (
+          {printBins.map((b) => (
             <div className="label" key={b.id}>
               <div dangerouslySetInnerHTML={{ __html: qrSvg(binUrl(b.code), 240) }} />
               <b>{b.name}</b>
+              {b.holder_name && <span>In the care of {b.holder_name}</span>}
               <span>Scan to see inside · add what you drop in</span>
               <code>{b.code} · wearercap.org/uniform-exchange</code>
             </div>
@@ -823,7 +825,10 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
       <h2 className="h2">Back office</h2>
       {msg && <p className="err">{msg}</p>}
       <div className="admin-actions">
-        <button className="btn" onClick={() => setPrintMode(true)}>🖨 Print QR bin labels</button>
+        <button className="btn" onClick={() => setEditBin('new')}>＋ New bin</button>
+        <button className="btn ghost" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
+          🖨 Print all QR labels
+        </button>
       </div>
 
       {overdue.length > 0 && (
@@ -867,44 +872,46 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
       )}
 
       <div className="card">
-        <h3>Bins</h3>
+        <h3>Bins &amp; holders</h3>
+        <p className="fine">
+          A bin is a person. The holder's phone gets the "your bin is queued up" texts;
+          multiple bins per house is normal — just add another.
+        </p>
         <ul className="bin-admin">
           {bins.map((b) => (
             <li key={b.id} className={b.retired ? 'retired' : ''}>
-              <a href={`#/bin/${b.code}`}><b>{b.code}</b> {b.name}</a>
-              <span>{b.holder_name || 'no holder yet'}</span>
-              <button className="linkish" onClick={() => {
-                const holderName = prompt('Holder name', b.holder_name);
-                if (holderName !== null) act(() => db.adminBin(pass, 'update', b.id, { holderName }));
-              }}>edit holder</button>
-              <button className="linkish" onClick={() =>
-                act(() => db.adminBin(pass, b.retired ? 'restore' : 'retire', b.id))}>
-                {b.retired ? 'restore' : 'retire'}
-              </button>
+              <div className="bin-admin-main">
+                <a href={`#/bin/${b.code}`}><b>{b.code}</b> {b.name} <HouseTag id={b.holder_house} /></a>
+                <span>
+                  {b.holder_name || 'no holder yet'}
+                  {b.holder_phone ? ` · 📱 ${b.holder_phone}` : ' · no phone (no holder texts!)'}
+                  {b.holder_email ? ` · ✉️ ${b.holder_email}` : ''}
+                </span>
+              </div>
+              <div className="bin-admin-actions">
+                <button className="btn small" onClick={() => setEditBin(b)}>Edit</button>
+                <button className="btn small ghost" onClick={() => setPrintBins([b])}>🖨 Label</button>
+                <button className="linkish" onClick={() =>
+                  act(() => db.adminBin(pass, b.retired ? 'restore' : 'retire', b.id))}>
+                  {b.retired ? 'restore' : 'retire'}
+                </button>
+              </div>
             </li>
           ))}
         </ul>
-        <h3>New bin</h3>
-        <div className="grid3">
-          <label>Code <input value={form.code} placeholder="AMI-2"
-            onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} /></label>
-          <label>Name <input value={form.name} placeholder="Amistad Bin 2"
-            onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-          <label>Holder <input value={form.holderName}
-            onChange={(e) => setForm({ ...form, holderName: e.target.value })} /></label>
-        </div>
-        <label>House
-          <select value={form.holderHouse} onChange={(e) => setForm({ ...form, holderHouse: e.target.value })}>
-            <option value="">None / mixed</option>
-            {['altruismo', 'amistad', 'isibindi', 'reveur'].map((h) => <option key={h} value={h}>{h}</option>)}
-          </select>
-        </label>
-        <button className="btn" onClick={() =>
-          act(async () => {
-            await db.adminBin(pass, 'create', null, form);
-            setForm({ code: '', name: '', holderName: '', holderHouse: '' });
-          })}>Create bin</button>
       </div>
+
+      {editBin && (
+        <BinSheet
+          bin={editBin === 'new' ? null : editBin}
+          onSave={async (fields) => {
+            await db.adminBin(pass, editBin === 'new' ? 'create' : 'update',
+              editBin === 'new' ? null : editBin.id, fields);
+            setEditBin(null); refresh();
+          }}
+          onClose={() => setEditBin(null)}
+        />
+      )}
 
       <AdminOffers bins={bins} offers={offers} refresh={refresh} />
       <AdminReports bins={bins} inv={inv} reqs={reqs} />
@@ -924,6 +931,80 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
         </div>
       )}
     </section>
+  );
+}
+
+// Create or edit a bin — the whole person, not just a name: the phone is
+// what receives the "your bin is queued up" texts, the email is on file for
+// anything that needs it.
+function BinSheet({ bin, onSave, onClose }) {
+  const [f, setF] = useState({
+    code: bin?.code || '',
+    name: bin?.name || '',
+    holderName: bin?.holder_name || '',
+    holderHouse: bin?.holder_house || '',
+    holderPhone: bin?.holder_phone || '',
+    holderEmail: bin?.holder_email || '',
+    holderNote: bin?.holder_note || '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const save = async () => {
+    if (!bin && (!f.code.trim() || !f.name.trim())) { setErr('Code and name are required.'); return; }
+    setBusy(true); setErr('');
+    try {
+      await onSave({ ...f, code: f.code.trim().toUpperCase() });
+    } catch (e) {
+      setErr(e.message || "That didn't save — try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet onClose={onClose} title={bin ? `Edit ${bin.code}` : 'New bin'}>
+      <div className="grid2">
+        <label>Code {bin ? '(fixed — it’s on the QR)' : '*'}
+          <input value={f.code} onChange={set('code')} placeholder="AMI-2" maxLength={20} disabled={!!bin} />
+        </label>
+        <label>Bin name *
+          <input value={f.name} onChange={set('name')} placeholder="Amistad Bin 2" maxLength={60} />
+        </label>
+      </div>
+      <div className="grid2">
+        <label>Holder name
+          <input value={f.holderName} onChange={set('holderName')} placeholder="Shekita James" maxLength={60} />
+        </label>
+        <label>House
+          <select value={f.holderHouse} onChange={set('holderHouse')}>
+            <option value="">None / mixed</option>
+            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label>Holder cell — gets the "request queued to your bin" and pickup texts
+        <input value={f.holderPhone} onChange={set('holderPhone')} inputMode="tel" placeholder="404-555-1234" maxLength={40} />
+      </label>
+      <label>Holder email
+        <input value={f.holderEmail} onChange={set('holderEmail')} inputMode="email" placeholder="shekita@example.com" maxLength={120} />
+      </label>
+      <label>Note (shows on the bin page)
+        <input value={f.holderNote} onChange={set('holderNote')} placeholder="Texts beat calls · pickup evenings" maxLength={200} />
+      </label>
+      {bin && (
+        <p className="fine">
+          Transferring this bin to another adult? Replace the holder's name, cell, and email
+          here — the physical bin and its QR label move with them, history stays put.
+        </p>
+      )}
+      {err && <p className="err">{err}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={save}>
+        {busy ? 'Saving…' : bin ? 'Save changes' : 'Create bin'}
+      </button>
+    </Sheet>
   );
 }
 

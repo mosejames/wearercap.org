@@ -77,8 +77,9 @@ export const typeLabel = (id) =>
 export const binUrl = (code) =>
   `https://wearercap.org/uniform-exchange/#/bin/${code}`;
 
-// Swap questions go to the Uniform Swap chair (March 2025 slide).
+// The bin-coordinator seat is open right now — questions go to the RCAP
+// inbox until it's filled. Swap in a name + email here when it is.
 export const CONTACT = {
-  name: 'Sandra Mitchell',
-  email: 'ladyofproverbs31@gmail.com',
+  name: '',
+  email: 'hello@wearercap.org',
 };
