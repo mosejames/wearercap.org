@@ -70,6 +70,87 @@ export function pickBin(rows, openAssigned, itemType, size, house, qty = 1, pref
   return pick ? pick.binId : null;
 }
 
+// ---------------------------------------------------------------------------
+// The whole cupboard, one shape: what exists, by house, down to the size, and
+// which bin it's sitting in. Answers "do we have a 12 for an Amistad family,
+// and who has it?" without opening seven bins one at a time.
+//
+// `promised` is stock already spoken for by a live request, so a shelf that
+// looks full but is entirely owed reads honestly.
+// `shortages` are sizes people are waiting on that nobody has — the reason to
+// send a "does anyone have…" email.
+// ---------------------------------------------------------------------------
+const LIVE = ['assigned', 'scheduled', 'handed_off'];
+
+export function stockByHouse(rows, bins = [], reqs = []) {
+  const binById = new Map((bins || []).map((b) => [b.id, b]));
+
+  const owed = new Map();
+  const waiting = new Map();
+  for (const r of reqs || []) {
+    const k = key(r.item_type, r.size, r.house);
+    const n = Math.max(1, r.qty || 1);
+    if (LIVE.includes(r.status)) owed.set(k, (owed.get(k) || 0) + n);
+    else if (r.status === 'open') waiting.set(k, (waiting.get(k) || 0) + n);
+  }
+
+  const houses = new Map();
+  const house = (h) => {
+    if (!houses.has(h)) {
+      houses.set(h, { house: h, onHand: 0, promised: 0, types: new Map(), shortages: [] });
+    }
+    return houses.get(h);
+  };
+
+  for (const t of totals(rows)) {
+    const H = house(t.house);
+    const k = key(t.itemType, t.size, t.house);
+    const promised = Math.min(t.qty, owed.get(k) || 0);
+    H.onHand += t.qty;
+    H.promised += promised;
+
+    if (!H.types.has(t.itemType)) H.types.set(t.itemType, { itemType: t.itemType, qty: 0, sizes: [] });
+    const T = H.types.get(t.itemType);
+    T.qty += t.qty;
+    T.sizes.push({
+      size: t.size,
+      qty: t.qty,
+      promised,
+      free: t.qty - promised,
+      where: t.bins
+        .map((b) => {
+          const bin = binById.get(b.binId);
+          return {
+            binId: b.binId,
+            qty: b.qty,
+            code: bin?.code || '',
+            name: bin?.name || '',
+            holder: bin?.holder_name || '',
+          };
+        })
+        .sort((a, b) => b.qty - a.qty || a.code.localeCompare(b.code)),
+    });
+  }
+
+  // Anything on the waitlist that no bin can answer.
+  const have = new Set(totals(rows).map((t) => key(t.itemType, t.size, t.house)));
+  for (const [k, qty] of waiting) {
+    if (have.has(k)) continue;
+    const [itemType, size, h] = k.split('|');
+    house(h).shortages.push({ itemType, size, qty });
+  }
+
+  return [...houses.values()]
+    .map((h) => ({
+      ...h,
+      types: [...h.types.values()].sort((a, b) => a.itemType.localeCompare(b.itemType)),
+      shortages: h.shortages.sort(
+        (a, b) => a.itemType.localeCompare(b.itemType) || a.size.localeCompare(b.size)
+      ),
+    }))
+    .sort((a, b) => (a.house === '' ? 1 : b.house === '' ? -1 : a.house.localeCompare(b.house)));
+}
+
 // Bins whose raw sum went negative — the drift the admin page surfaces.
 export function drift(rows) {
   return (rows || []).filter((r) => r.qty < 0);

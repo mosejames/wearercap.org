@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
   SIZE_SET_LABEL, prettyPhone,
-  houseById, houseInfo, HOUSE_CHOICES,
+  houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
-import { byBin, totals, pickBin, drift } from './inventory.js';
+import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
 import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
 import { qrSvg } from './qr.js';
 
@@ -1807,6 +1807,7 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   if (sub === 'bins')     return <AdminBins {...shared} />;
   if (sub === 'requests') return <AdminRequests {...shared} />;
   if (sub === 'settings' || sub === 'types') return <AdminSettings {...shared} settings={settings} />;
+  if (sub === 'inventory') return <AdminInventory {...shared} inv={inv} />;
   return <AdminHome {...shared} inv={inv} offers={data.offers} />;
 }
 
@@ -1870,6 +1871,7 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, notificat
   const overdue = reqs.filter(
     (r) => ['scheduled','handed_off'].includes(r.status) && dueInfo(r.due_at)?.overdue
   );
+  const onHand = totals(inv).reduce((n, t) => n + t.qty, 0);
   return (
     <section className="shell section">
       <h2 className="h2">Storage Room</h2>
@@ -1882,6 +1884,9 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, notificat
         <a href="#/admin/bins">
           <b>Bins &amp; holders</b>
           <span>{holders.filter((h) => h.active !== false).length} people · {bins.filter((b) => !b.retired).length} bins</span>
+        </a>
+        <a href="#/admin/inventory">
+          <b>What's on hand</b><span>{onHand} items · by house, by bin</span>
         </a>
         <a href="#/admin/settings">
           <b>Settings</b><span>Item types · handoff · texts</span>
@@ -2487,6 +2492,204 @@ function AdminOffers({ bins, offers, refresh }) {
 
 // The numbers Mose wants OFF the front page and IN the back office:
 // circulation, movement, and how the houses are doing. History, not hype.
+// ---------------------------------------------------------------------------
+// What's on hand — the cupboard, by house, down to the size, and whose trunk
+// it's in. The question this answers is the one that comes up on the phone:
+// "does anyone have a 12 for an Amistad family, and who do I call?"
+// ---------------------------------------------------------------------------
+function AdminInventory({ bins, inv, reqs, setPrintBins }) {
+  const [house, setHouse] = useState('all');
+  const [q, setQ] = useState('');
+  const [view, setView] = useState('house');
+
+  const report = useMemo(() => stockByHouse(inv, bins, reqs), [inv, bins, reqs]);
+  const shown = house === 'all' ? report : report.filter((h) => h.house === house);
+
+  const hit = (...parts) =>
+    !q.trim() || parts.filter(Boolean).join(' ').toLowerCase().includes(q.trim().toLowerCase());
+
+  const onHand = report.reduce((n, h) => n + h.onHand, 0);
+  const promised = report.reduce((n, h) => n + h.promised, 0);
+  const shortages = report.reduce((n, h) => n + h.shortages.length, 0);
+
+  // The same stock, turned around: one card per bin, for when you know who you
+  // want to call and need to know what they're carrying.
+  const perBin = useMemo(() => {
+    const map = new Map();
+    for (const h of report) {
+      for (const t of h.types) {
+        for (const s of t.sizes) {
+          for (const w of s.where) {
+            if (!map.has(w.binId)) map.set(w.binId, { ...w, qty: 0, lines: [] });
+            const b = map.get(w.binId);
+            b.qty += w.qty;
+            b.lines.push({ itemType: t.itemType, size: s.size, house: h.house, qty: w.qty });
+          }
+        }
+      }
+    }
+    return [...map.values()].sort((a, b) => b.qty - a.qty || a.code.localeCompare(b.code));
+  }, [report]);
+
+  return (
+    <AdminPage title="What's on hand">
+      <div className="report-stats">
+        <div><b>{onHand}</b><span>items on hand</span></div>
+        <div><b>{onHand - promised}</b><span>free to give out</span></div>
+        <div><b>{promised}</b><span>already spoken for</span></div>
+        {shortages > 0 && <div><b>{shortages}</b><span>sizes nobody has</span></div>}
+      </div>
+
+      <div className="mode-tabs">
+        {[['house', 'By house'], ['bin', 'By bin']].map(([k, label]) => (
+          <button key={k} className={`mode ${view === k ? 'on' : ''}`} onClick={() => setView(k)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <input
+        className="search" value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder="Find a size, an item, a bin or a name"
+      />
+
+      {view === 'house' && (
+        <>
+          <div className="mode-tabs">
+            {/* Houses in their usual order, with the neutral pile last. */}
+            {[['all', 'Every house'], ...HOUSES.map((h) => [h.id, h.name]), ['any', 'Any house']]
+              .map(([k, label]) => (
+                <button
+                  key={k}
+                  className={`mode ${house === (k === 'any' ? '' : k) ? 'on' : ''}`}
+                  onClick={() => setHouse(k === 'any' ? '' : k)}>
+                  {label}
+                </button>
+              ))}
+          </div>
+
+          {shown.map((h) => {
+            const types = h.types
+              .map((t) => ({
+                ...t,
+                sizes: t.sizes.filter((s) =>
+                  hit(typeLabel(t.itemType), sizeLabel(s.size), ...s.where.map((w) => `${w.code} ${w.holder}`))),
+              }))
+              .filter((t) => t.sizes.length);
+            const shorts = h.shortages.filter((s) => hit(typeLabel(s.itemType), sizeLabel(s.size)));
+            if (!types.length && !shorts.length) return null;
+
+            return (
+              <div className="card" key={h.house || 'any'}>
+                <div className="stock-head">
+                  <HouseTag id={h.house} />
+                  <span className="fine">
+                    ~{h.onHand} on hand{h.promised ? ` · ${h.promised} spoken for` : ''}
+                  </span>
+                </div>
+
+                {types.map((t) => (
+                  <div className="stock-type" key={t.itemType}>
+                    <h4>{typeLabel(t.itemType)}</h4>
+                    <ul className="stock-rows">
+                      {t.sizes.map((s) => (
+                        <li key={s.size}>
+                          <span className="stock-size">{sizeLabel(s.size)}</span>
+                          <span className={`stock-qty ${s.free === 0 ? 'spent' : ''}`}>
+                            {s.qty}
+                            {s.promised > 0 && <em>{s.free} free</em>}
+                          </span>
+                          <span className="stock-where">
+                            {s.where.map((w) => (
+                              <a key={w.binId} href={`#/bin/${w.code}`}>
+                                {w.code}
+                                {w.qty > 1 ? ` ×${w.qty}` : ''}
+                                {w.holder ? <i> · {w.holder.split(' ')[0]}</i> : null}
+                              </a>
+                            ))}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+
+                {shorts.length > 0 && (
+                  <div className="stock-type stock-short">
+                    <h4>Waiting on — nobody has these</h4>
+                    <ul className="stock-rows">
+                      {shorts.map((s) => (
+                        <li key={`${s.itemType}|${s.size}`}>
+                          <span className="stock-size">{sizeLabel(s.size)}</span>
+                          <span className="stock-qty">{typeLabel(s.itemType)}</span>
+                          <span className="stock-where">
+                            <b>{s.qty} {s.qty === 1 ? 'family' : 'families'} waiting</b>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {!shown.some((h) => h.onHand || h.shortages.length) && (
+            <p className="empty">
+              {q ? 'Nothing matches that.' : 'Nothing counted in yet — holders add theirs from their own page.'}
+            </p>
+          )}
+        </>
+      )}
+
+      {view === 'bin' && (
+        <>
+          {perBin
+            .map((b) => ({
+              ...b,
+              lines: b.lines.filter((l) => hit(typeLabel(l.itemType), sizeLabel(l.size), b.code, b.holder)),
+            }))
+            .filter((b) => b.lines.length)
+            .map((b) => (
+              <div className="card" key={b.binId}>
+                <div className="stock-head">
+                  <b>{b.code} · {b.name}</b>
+                  <span className="fine">{b.holder} · ~{b.qty} items</span>
+                </div>
+                <ul className="stock-rows">
+                  {b.lines
+                    .sort((x, y) => x.itemType.localeCompare(y.itemType) || x.size.localeCompare(y.size))
+                    .map((l) => (
+                      <li key={`${l.itemType}|${l.size}|${l.house}`}>
+                        <span className="stock-size">{sizeLabel(l.size)}</span>
+                        <span className="stock-qty">{l.qty}</span>
+                        <span className="stock-where">
+                          {typeLabel(l.itemType)} {l.house && <HouseTag id={l.house} />}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                <p className="fine">
+                  <a href={`#/bin/${b.code}`}>Open the bin</a>
+                  {' · '}
+                  <button className="linkish" onClick={() => setPrintBins([bins.find((x) => x.id === b.binId)].filter(Boolean))}>
+                    Print its label
+                  </button>
+                </p>
+              </div>
+            ))}
+          {!perBin.length && <p className="empty">Nothing counted in yet.</p>}
+        </>
+      )}
+
+      <p className="fine page-foot">
+        Counts are approximate on purpose — bins are living things. Every add and take
+        is in the movement log; open any bin for its history.
+      </p>
+    </AdminPage>
+  );
+}
+
 function AdminReports({ bins, inv, reqs }) {
   const all = totals(inv);
   const onHand = all.reduce((n, t) => n + t.qty, 0);
@@ -2515,7 +2718,7 @@ function AdminReports({ bins, inv, reqs }) {
         <div><b>{onHand}</b><span>items on hand</span></div>
         <div><b>{fulfilled.length}</b><span>uniforms rehomed</span></div>
         <div><b>{waitlist.length}</b><span>on the waitlist</span></div>
-        {avgDays && <div><b>{avgDays}d</b><span>avg to front desk</span></div>}
+        {avgDays && <div><b>{avgDays}d</b><span>avg request to in hand</span></div>}
       </div>
       {rows.length > 0 && (
         <table className="report-table">
@@ -2532,7 +2735,10 @@ function AdminReports({ bins, inv, reqs }) {
           </tbody>
         </table>
       )}
-      <p className="fine">Every add, take, and delivery is in the movement log — open any bin for its history.</p>
+      <p className="fine">
+        <a href="#/admin/inventory">See everything on hand</a> — by house, by size, and
+        which bin it's in.
+      </p>
     </div>
   );
 }
@@ -2546,8 +2752,8 @@ function AdminNotifications({ notifications }) {
     <div className="card">
       <h3>Text updates {pending > 0 ? `· ${pending} queued` : ''}</h3>
       <p className="fine">
-        Queued texts go out about once an hour (request received, item at the front desk,
-        donation offer confirmed).
+        Texts go out the moment something happens — a request lands, a handoff is set,
+        an item changes hands. Anything stuck here is retried on the hour.
       </p>
       <ul className="activity">
         {rows.slice(0, 12).map((n) => (
