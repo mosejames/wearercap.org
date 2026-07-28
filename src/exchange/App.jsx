@@ -8,7 +8,7 @@ import {
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift } from './inventory.js';
-import { nextSlots, slotLabel, handoffSummary, availabilityLine, WEEKDAYS } from './handoff.js';
+import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
 import { qrSvg } from './qr.js';
 
 // ---------------------------------------------------------------------------
@@ -579,10 +579,7 @@ function MyRequests({ token, bins, settings }) {
   return (
     <section className="shell section">
       <h2 className="h2">{who ? `${who}'s requests` : 'My requests'}</h2>
-      <p className="sub">
-        Pick a handoff that fits your week, then tap <b>Got it</b> once it's in your
-        hands — that's what closes it out.
-      </p>
+      <p className="sub">{myRequestsLead(rows)}</p>
       {err && <p className="err">{err}</p>}
       <ul className="req-list">
         {rows.map((r) => {

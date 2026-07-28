@@ -87,3 +87,26 @@ export function availabilityLine(bin) {
   if (bin.offers_student !== false) parts.push('Student to student');
   return parts.length ? parts.join('  ·  ') : 'No handoff options set yet';
 }
+
+// The line at the top of someone's requests page. Telling a family to "pick a
+// handoff" when everything they have is still on the waitlist is just noise —
+// so say the thing that's actually true of their list right now.
+export function myRequestsLead(rows) {
+  const has = (s) => (rows || []).some((r) => r.status === s);
+  const waiting = has('open');
+  const ready = has('assigned');
+  const inFlight = has('scheduled') || has('handed_off');
+
+  if (ready) {
+    return waiting
+      ? 'One of yours is here — pick a handoff that fits your week. We’ll text you about the rest when they turn up.'
+      : 'Your item is here. Pick a handoff that fits your week, then tap Got it once it’s in your hands.';
+  }
+  if (inFlight) {
+    return 'A handoff is set. Tap Got it once it’s in your hands — that’s what closes it out.';
+  }
+  if (waiting) {
+    return 'You’re on the waitlist. The moment a match comes into any bin we’ll text you, and you can pick a handoff then.';
+  }
+  return 'Nothing needs you right now.';
+}

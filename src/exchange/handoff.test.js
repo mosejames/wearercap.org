@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nextSlots, slotLabel, handoffSummary, availabilityLine } from './handoff.js';
+import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead } from './handoff.js';
 
 // Friday, July 31 2026 as the fixed "today" for every test.
 const FRI = new Date(2026, 6, 31);
@@ -67,5 +67,35 @@ describe('availabilityLine', () => {
       .toBe('Carline any weekday, mornings  ·  Student to student');
     expect(availabilityLine({ offers_carline: false, offers_student: false }))
       .toBe('No handoff options set yet');
+  });
+});
+
+describe('myRequestsLead', () => {
+  const r = (status) => ({ status });
+
+  it('does not tell a waitlisted family to pick a handoff', () => {
+    const lead = myRequestsLead([r('open')]);
+    expect(lead).toMatch(/waitlist/i);
+    expect(lead).not.toMatch(/pick a handoff that fits/i);
+  });
+
+  it('asks for a time once something is actually theirs', () => {
+    expect(myRequestsLead([r('assigned')])).toMatch(/pick a handoff/i);
+  });
+
+  it('leads with the actionable one when a list is mixed', () => {
+    const lead = myRequestsLead([r('open'), r('assigned')]);
+    expect(lead).toMatch(/pick a handoff/i);
+    expect(lead).toMatch(/rest when they turn up/i);
+  });
+
+  it('nudges the confirmation once a handoff is set', () => {
+    expect(myRequestsLead([r('scheduled')])).toMatch(/Got it/);
+    expect(myRequestsLead([r('handed_off')])).toMatch(/Got it/);
+  });
+
+  it('stays quiet when everything is done', () => {
+    expect(myRequestsLead([r('fulfilled'), r('canceled')])).toBe('Nothing needs you right now.');
+    expect(myRequestsLead([])).toBe('Nothing needs you right now.');
   });
 });
