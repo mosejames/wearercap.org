@@ -340,6 +340,15 @@ a{color:inherit}
 .step:active{background:var(--night);color:#fff}
 .count-qty .linkish{margin-left:auto}
 .count-foot{margin-top:14px}
+
+/* which bin you're counting, and the two things you can do to it */
+.binbar{margin:0 0 18px}
+.binbar .mode-tabs{margin-bottom:10px}
+.binbar-meta{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px}
+.binbar-meta b{letter-spacing:.04em}
+.binbar-form{
+  padding:14px;border:1.5px dashed var(--line);border-radius:14px;background:var(--surface);
+}
 .page-foot{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
 
 /* ---------------- handoff ---------------- */

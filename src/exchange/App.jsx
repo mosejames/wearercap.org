@@ -1398,6 +1398,92 @@ function AvailabilityCard({ bin, token, refresh }) {
 // log twenty polos one at a time — so this is a grid: every line already in the
 // bin, pre-filled, plus blank rows to add to. You type what's actually there
 // and hit save; the database works out the difference and logs that.
+// A holder's bins, and the two things they'll ever want to do to one: call it
+// what they actually call it, and add another when the first one fills up.
+// No passcode — their token already says who they are.
+function BinBar({ token, bins, binId, setBinId, reload }) {
+  const [mode, setMode] = useState('');            // '' | 'rename' | 'add'
+  const [f, setF] = useState({ name: '', focus: '' });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const bin = bins.find((b) => b.id === binId);
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const open = (which) => {
+    setErr('');
+    setF(which === 'rename' && bin ? { name: bin.name, focus: bin.focus || '' } : { name: '', focus: '' });
+    setMode(which);
+  };
+
+  const save = async () => {
+    setBusy(true); setErr('');
+    try {
+      if (mode === 'add') {
+        const made = await db.holderAddBin(token, f.name, f.focus);
+        if (made?.id) setBinId(made.id);
+      } else {
+        await db.holderRenameBin(token, binId, f.name, f.focus);
+      }
+      setMode('');
+      reload();
+    } catch (e) {
+      setErr(e.message || "That didn't save — try again.");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="binbar">
+      {bins.length > 1 && (
+        <div className="mode-tabs">
+          {bins.map((b) => (
+            <button key={b.id} className={`mode ${b.id === binId ? 'on' : ''}`}
+              onClick={() => { setMode(''); setBinId(b.id); }}>
+              {b.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {mode === '' && (
+        <p className="fine binbar-meta">
+          {bin && <><b>{bin.code}</b>{bin.focus ? ` · mostly ${bin.focus}` : ''} · </>}
+          {bin && <button className="linkish" onClick={() => open('rename')}>Rename this bin</button>}
+          {bin && ' · '}
+          <button className="linkish" onClick={() => open('add')}>
+            {bins.length ? 'Add another bin' : 'Start my first bin'}
+          </button>
+        </p>
+      )}
+
+      {mode !== '' && (
+        <div className="avail-body binbar-form">
+          <label>{mode === 'add' ? 'Name your new bin' : 'Bin name'}
+            <input value={f.name} maxLength={60} placeholder="The bin in my trunk"
+              onChange={set('name')} />
+          </label>
+          <label>Mostly full of (optional)
+            <input value={f.focus} maxLength={40} placeholder="polos, bottoms, small sizes…"
+              onChange={set('focus')} />
+          </label>
+          {err && <p className="fine">{err}</p>}
+          <div className="avail-actions">
+            <button className="btn flame" disabled={busy} onClick={save}>
+              {busy ? 'Saving…' : mode === 'add' ? 'Add the bin' : 'Save name'}
+            </button>
+            <button className="linkish" onClick={() => setMode('')}>Cancel</button>
+          </div>
+          {mode === 'add' && (
+            <p className="fine">
+              We'll give it its own code and QR label — print it from the bottom of this page.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   const [binId, setBinId] = useState(bins[0]?.id || '');
   const [rows, setRows] = useState([]);
@@ -1450,7 +1536,12 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   if (!bins.length) {
     return (
       <section className="shell section">
-        <p className="empty">No bins assigned to you yet.</p>
+        <h2 className="h2">My bins</h2>
+        <p className="sub">
+          Nothing in your care yet — a bin is just a tub in your trunk with a QR
+          label on it. Start one and we'll give it a code.
+        </p>
+        <BinBar token={token} bins={bins} binId={binId} setBinId={setBinId} reload={reload} />
       </section>
     );
   }
@@ -1465,17 +1556,7 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
         already counted is here; add lines for anything new.
       </p>
 
-      {bins.length > 1 && (
-        <div className="filters">
-          <select value={binId} onChange={(e) => setBinId(e.target.value)}>
-            {bins.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.code} · {b.name}{b.focus ? ` (${b.focus})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <BinBar token={token} bins={bins} binId={binId} setBinId={setBinId} reload={reload} />
 
       <ul className="count-grid">
         {rows.map((r) => (
@@ -2245,7 +2326,7 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const save = async () => {
-    if (!bin && (!f.code.trim() || !f.name.trim())) { setErr('Code and name are required.'); return; }
+    if (!bin && !f.name.trim()) { setErr('A bin needs a name.'); return; }
     setBusy(true); setErr('');
     try { await onSave({ ...f, code: f.code.trim().toUpperCase() }); }
     catch (e) { setErr(e.message || "That didn't save — try again."); setBusy(false); }
@@ -2254,7 +2335,7 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
   return (
     <Sheet onClose={onClose} title={bin ? `Edit ${bin.code}` : 'New bin'}>
       <div className="grid2">
-        <label>Code {bin ? '(fixed — it’s on the QR)' : '*'}
+        <label>Code {bin ? '(fixed — it’s on the QR)' : '(blank = next in their house)'}
           <input value={f.code} onChange={set('code')} placeholder="AMI-2" maxLength={20} disabled={!!bin} />
         </label>
         <label>Bin name *

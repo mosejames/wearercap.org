@@ -339,6 +339,22 @@ export async function setHolderInventory(token, lines, actor = '') {
   return data;
 }
 
+// A holder's bins are theirs to name and to add to — the token is the proof.
+export async function holderAddBin(token, name = '', focus = '') {
+  const { data, error } = await supabase.rpc('ue_holder_add_bin', {
+    p_token: token, p_name: name || null, p_focus: focus || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function holderRenameBin(token, binId, name, focus = null) {
+  const { error } = await supabase.rpc('ue_holder_rename_bin', {
+    p_token: token, p_bin: binId, p_name: name ?? null, p_focus: focus,
+  });
+  if (error) throw error;
+}
+
 export async function setAvailabilityByToken(token, f) {
   const { error } = await supabase.rpc('ue_holder_availability_by_token', {
     p_token: token,
