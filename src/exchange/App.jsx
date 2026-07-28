@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, SIZES, DONATION_STANDARD, APPROX_NOTE,
-  FRONT_DESK_DAYS, houseById, houseInfo, HOUSE_CHOICES,
+  houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift } from './inventory.js';
+import { nextSlots, slotLabel, handoffSummary, availabilityLine, WEEKDAYS } from './handoff.js';
 import { qrSvg } from './qr.js';
 
 // ---------------------------------------------------------------------------
@@ -34,7 +35,12 @@ function dueInfo(iso) {
 }
 
 const STATUS_LABEL = {
-  open: 'Waitlist', assigned: 'With a bin holder', fulfilled: 'At the front desk', canceled: 'Canceled',
+  open: 'Waitlist',
+  assigned: 'Pick a handoff time',
+  scheduled: 'Handoff set',
+  handed_off: 'On its way',
+  fulfilled: 'Received',
+  canceled: 'Canceled',
 };
 
 // Uniforms are broken up by houses — every item wears its house's color.
@@ -60,16 +66,17 @@ export default function App() {
   const [reqs, setReqs] = useState([]);
   const [offers, setOffers] = useState([]);
   const [, setTypes] = useState([]); // re-render when the live types land
+  const [settings, setSettings] = useState({});
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState('');
 
   const refresh = async () => {
     try {
-      const [b, i, r, o, t] = await Promise.all([
+      const [b, i, r, o, t, st] = await Promise.all([
         db.listBins(), db.listInventory(), db.listRequests(), db.listOffers(),
-        db.listItemTypes().catch(() => []),
+        db.listItemTypes().catch(() => []), db.listSettings().catch(() => ({})),
       ]);
-      setItemTypes(t); setTypes(t);
+      setItemTypes(t); setTypes(t); setSettings(st);
       setBins(b); setInv(i); setReqs(r); setOffers(o); setErr('');
     } catch (e) {
       setErr(e.message || 'Could not reach the exchange.');
@@ -113,9 +120,9 @@ export default function App() {
       ) : route.view === 'bin' ? (
         <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} reqs={reqs} offers={offers} refresh={refresh} />
       ) : route.view === 'requests' ? (
-        <RequestsView bins={bins} reqs={reqs} refresh={refresh} />
+        <RequestsView bins={bins} reqs={reqs} settings={settings} refresh={refresh} />
       ) : route.view === 'admin' ? (
-        <AdminView bins={bins} inv={inv} reqs={reqs} offers={offers} refresh={refresh} />
+        <AdminView bins={bins} inv={inv} reqs={reqs} offers={offers} settings={settings} refresh={refresh} />
       ) : (
         <Home bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
       )}
@@ -313,15 +320,14 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
             <b>{bin ? bin.name : 'bin'}</b>{bin?.holder_name ? ` (${bin.holder_name})` : ''}.
             </p>
             <p>
-              It'll be at the <b>RCA front desk by {fmtDay(result.due_at)}</b> with your name on it.
-              Check <a href="#/requests">Requests</a> any time for status.
+              Next: <a href="#/requests"><b>pick a handoff time</b></a> that works for you —
+              carline or straight from student to student.
             </p>
           </>
         ) : (
           <p className="big">
             Nothing in the bins right now, so you're on the <b>waitlist</b> — the moment a match
-            is added to any bin, RCAP will assign it and it lands at the front desk within{' '}
-            {FRONT_DESK_DAYS} days.
+            is added to any bin we'll match it to you and text you to set up a handoff.
           </p>
         )}
         <button className="btn flame wide" onClick={onDone}>Done</button>
@@ -385,7 +391,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
         {busy ? 'Sending…' : 'Submit request'}
       </button>
       <p className="fine">
-        A bin holder brings it to the RCA front desk within {FRONT_DESK_DAYS} days. Free, always.
+        You'll pick a handoff that fits your week — carline, or student to student. Free, always.
       </p>
     </Sheet>
   );
@@ -470,16 +476,21 @@ function OfferSheet({ bins, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Requests — everyone can see the queue; cancel is one tap.
 // ---------------------------------------------------------------------------
-function RequestsView({ bins, reqs, refresh }) {
+function RequestsView({ bins, reqs, settings, refresh }) {
   const [who, setWho] = useState('');
+  const [picking, setPicking] = useState(null); // the request being scheduled
   const shown = reqs.filter(
     (r) => !who || r.parent_name.toLowerCase().includes(who.toLowerCase())
   );
-  const binName = (id) => bins.find((b) => b.id === id)?.name || '—';
+  const binOf = (id) => bins.find((b) => b.id === id) || null;
 
   return (
     <section className="shell section">
       <h2 className="h2">Requests</h2>
+      <p className="sub">
+        Found your item? Pick a handoff that fits your week, then tap <b>Got it</b> once
+        it's in your hands — that's what closes it out.
+      </p>
       <input
         className="search" placeholder="Find your name…"
         value={who} onChange={(e) => setWho(e.target.value)}
@@ -487,21 +498,35 @@ function RequestsView({ bins, reqs, refresh }) {
       <ul className="req-list">
         {shown.length === 0 && <li className="empty">No requests yet.</li>}
         {shown.map((r) => {
-          const due = r.status === 'assigned' ? dueInfo(r.due_at) : null;
+          const bin = binOf(r.bin_id);
+          const due = r.status === 'scheduled' ? dueInfo(r.due_at) : null;
+          const plan = handoffSummary(r);
           return (
             <li key={r.id} className={`req status-${r.status}`}>
               <div className="req-main">
                 <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>{r.parent_name}{r.student ? ` · for ${r.student}` : ''}</span>
+                {plan && <span className="plan">🤝 {plan}{bin?.holder_name ? ` · with ${bin.holder_name}` : ''}</span>}
               </div>
               <div className="req-side">
                 <span className={`chip chip-${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+
                 {r.status === 'assigned' && (
-                  <span className={`due ${due?.urgent ? 'urgent' : ''}`}>
-                    {binName(r.bin_id)} · {due?.label}
-                  </span>
+                  <button className="btn small flame" onClick={() => setPicking(r)}>
+                    Pick a time
+                  </button>
                 )}
-                {(r.status === 'open' || r.status === 'assigned') && (
+                {r.status === 'scheduled' && (
+                  <button className="linkish" onClick={() => setPicking(r)}>change time</button>
+                )}
+                {(r.status === 'scheduled' || r.status === 'handed_off') && (
+                  <button
+                    className="btn small flame"
+                    onClick={async () => { await db.handoffReceived(r.id); refresh(); }}
+                  >Got it ✓</button>
+                )}
+                {(r.status === 'open' || r.status === 'assigned' || r.status === 'scheduled') && (
                   <button
                     className="linkish"
                     onClick={async () => { await db.cancelRequest(r.id); refresh(); }}
@@ -512,7 +537,124 @@ function RequestsView({ bins, reqs, refresh }) {
           );
         })}
       </ul>
+
+      {picking && (
+        <HandoffSheet
+          req={picking}
+          bin={binOf(picking.bin_id)}
+          frontDesk={settings?.front_desk_enabled === 'true'}
+          onDone={() => { setPicking(null); refresh(); }}
+          onClose={() => setPicking(null)}
+        />
+      )}
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Picking a handoff. The holder already said when they're around, so this is
+// just tapping a day — no back-and-forth, no phone tag.
+// ---------------------------------------------------------------------------
+function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
+  const [mode, setMode] = useState(
+    bin?.offers_carline !== false ? 'carline' : (bin?.offers_student !== false ? 'student' : 'carline')
+  );
+  const [pick, setPick] = useState(null);
+  const [student, setStudent] = useState(req.student || '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const slots = nextSlots(bin, new Date(), 6);
+  const holder = bin?.holder_name || 'your bin holder';
+
+  const save = async () => {
+    setErr('');
+    if (mode === 'carline' && !pick) { setErr('Pick a day that works for you.'); return; }
+    if (mode === 'student' && !student.trim()) {
+      setErr("We need your student's name so the bag gets to the right hands."); return;
+    }
+    setBusy(true);
+    try {
+      await db.scheduleHandoff(
+        req.id, mode,
+        mode === 'carline' ? pick.date : null,
+        mode === 'carline' ? pick.slot : '',
+        mode === 'student' ? student.trim() : null
+      );
+      onDone();
+    } catch (e) {
+      setErr(e.message || "That didn't save — try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet onClose={onClose} title="Set up the handoff">
+      <p className="fine">
+        <b>{typeLabel(req.item_type)} · {req.size}</b> is with {holder}
+        {bin?.code ? ` (${bin.code})` : ''}. How would you like to get it?
+      </p>
+
+      <div className="mode-tabs">
+        {bin?.offers_carline !== false && (
+          <button className={`mode ${mode === 'carline' ? 'on' : ''}`} onClick={() => setMode('carline')}>
+            🚗 Carline
+          </button>
+        )}
+        {bin?.offers_student !== false && (
+          <button className={`mode ${mode === 'student' ? 'on' : ''}`} onClick={() => setMode('student')}>
+            🎒 Student to student
+          </button>
+        )}
+        {frontDesk && (
+          <button className={`mode ${mode === 'desk' ? 'on' : ''}`} onClick={() => setMode('desk')}>
+            🏫 Front desk
+          </button>
+        )}
+      </div>
+
+      {mode === 'carline' && (
+        slots.length ? (
+          <>
+            <p className="fine">{holder} is around on these days — tap one.</p>
+            <div className="slots">
+              {slots.map((s) => (
+                <button
+                  key={s.date + s.slot}
+                  className={`slot ${pick && pick.date === s.date && pick.slot === s.slot ? 'on' : ''}`}
+                  onClick={() => setPick(s)}
+                >{slotLabel(s)}</button>
+              ))}
+            </div>
+            {bin?.carline_spot && <p className="fine">📍 Look for: {bin.carline_spot}</p>}
+          </>
+        ) : (
+          <p className="fine">{holder} hasn't set carline days yet — try student to student.</p>
+        )
+      )}
+
+      {mode === 'student' && (
+        <>
+          <p className="fine">
+            {holder} sends it in with {bin?.holder_student ? <b>{bin.holder_student}</b> : 'their student'},
+            who hands it to yours at school. No coordinating carpool lines.
+          </p>
+          <label>Your student's name and grade *
+            <input value={student} onChange={(e) => setStudent(e.target.value)}
+              placeholder="Imani · 6th" maxLength={60} />
+          </label>
+        </>
+      )}
+
+      {mode === 'desk' && (
+        <p className="fine">{holder} drops it at the RCA front desk with your name on it.</p>
+      )}
+
+      {err && <p className="err">{err}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={save}>
+        {busy ? 'Setting it up…' : 'Confirm handoff'}
+      </button>
+    </Sheet>
   );
 }
 
@@ -544,7 +686,9 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
       a.itemType.localeCompare(b.itemType) ||
       (a.house || '').localeCompare(b.house || '') ||
       a.size.localeCompare(b.size));
-  const queue = reqs.filter((r) => r.bin_id === bin.id && r.status === 'assigned');
+  const queue = reqs.filter(
+    (r) => r.bin_id === bin.id && ['assigned', 'scheduled', 'handed_off'].includes(r.status)
+  );
   const pickups = (offers || []).filter(
     (o) => o.bin_id === bin.id && (o.status === 'open' || o.status === 'scheduled')
   );
@@ -565,26 +709,37 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
 
       {queue.length > 0 && (
         <section className="shell section">
-          <h2 className="h2 flame-text">To the front desk 🏫</h2>
+          <h2 className="h2 flame-text">Hand these off 🤝</h2>
           <p className="sub">
-            These requests are assigned to this bin. Drop each at the RCA front desk,
-            labeled with the parent's name, then tap <b>Delivered</b>.
+            Requests queued to this bin. Once a family picks a time it shows here — bag it up,
+            label it with their name, and tap <b>Handed it off</b> when it leaves your hands.
           </p>
           <ul className="req-list">
             {queue.map((r) => {
               const due = dueInfo(r.due_at);
+              const plan = handoffSummary(r);
               return (
                 <li key={r.id} className={`req holder ${due?.overdue ? 'overdue' : ''}`}>
                   <div className="req-main">
                     <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                     <span>for {r.parent_name}{r.student ? ` (${r.student})` : ''}{r.note ? ` — “${r.note}”` : ''}</span>
+                    <span className="plan">
+                      {r.status === 'assigned'
+                        ? '⏳ waiting on them to pick a time'
+                        : r.status === 'handed_off'
+                          ? `✅ handed off · ${plan} — waiting on them to confirm`
+                          : `🤝 ${plan}`}
+                    </span>
                   </div>
                   <div className="req-side">
-                    <span className={`due ${due?.urgent ? 'urgent' : ''}`}>{due?.label}</span>
-                    <button
-                      className="btn small flame"
-                      onClick={async () => { await db.fulfillRequest(r.id, bin.holder_name); refresh(); }}
-                    >Delivered ✓</button>
+                    {due && r.status === 'scheduled' &&
+                      <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+                    {r.status !== 'handed_off' && (
+                      <button
+                        className="btn small flame"
+                        onClick={async () => { await db.handoffSent(r.id, bin.holder_name); refresh(); }}
+                      >Handed it off ✓</button>
+                    )}
                   </div>
                 </li>
               );
@@ -624,6 +779,15 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
           </ul>
         </section>
       )}
+
+      <section className="shell section">
+        <h2 className="h2">When you're around</h2>
+        <p className="sub">
+          Set this once and every family who requests from your bin picks from it —
+          no texting back and forth.
+        </p>
+        <AvailabilityCard bin={bin} refresh={refresh} />
+      </section>
 
       <section className="shell section">
         <h2 className="h2">What's in this bin</h2>
@@ -672,6 +836,106 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
         />
       )}
     </>
+  );
+}
+
+// The holder answers "when are you around?" once. Everything downstream —
+// the dates a requester taps, the texts — comes from this.
+function AvailabilityCard({ bin, refresh }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({
+    offersCarline: bin.offers_carline !== false,
+    offersStudent: bin.offers_student !== false,
+    days: bin.carline_days && bin.carline_days.length ? bin.carline_days : [1, 2, 3, 4, 5],
+    when: bin.carline_when || 'pm',
+    spot: bin.carline_spot || '',
+    holderStudent: bin.holder_student || '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const toggleDay = (n) =>
+    setF({ ...f, days: f.days.includes(n) ? f.days.filter((d) => d !== n) : [...f.days, n].sort() });
+
+  const save = async () => {
+    setBusy(true); setErr('');
+    try {
+      await db.setAvailability(bin.id, f);
+      setOpen(false); refresh();
+    } catch (e) {
+      setErr(e.message || "That didn't save — try again.");
+    } finally { setBusy(false); }
+  };
+
+  if (!open) {
+    return (
+      <div className="card avail">
+        <div className="avail-now">
+          <b>{availabilityLine(bin)}</b>
+          {bin.carline_spot && <span>📍 {bin.carline_spot}</span>}
+        </div>
+        <button className="btn small" onClick={() => setOpen(true)}>Edit my availability</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card avail">
+      <label className="check">
+        <input type="checkbox" checked={f.offersCarline}
+          onChange={(e) => setF({ ...f, offersCarline: e.target.checked })} />
+        <span>🚗 I can hand off at carline</span>
+      </label>
+
+      {f.offersCarline && (
+        <div className="avail-body">
+          <p className="fine">Which days are easy for you?</p>
+          <div className="daypick">
+            {WEEKDAYS.map((w) => (
+              <button
+                key={w.n}
+                className={`day ${f.days.includes(w.n) ? 'on' : ''}`}
+                onClick={() => toggleDay(w.n)}
+              >{w.short}</button>
+            ))}
+          </div>
+          <label>Morning or afternoon?
+            <select value={f.when} onChange={(e) => setF({ ...f, when: e.target.value })}>
+              <option value="am">Morning drop-off</option>
+              <option value="pm">Afternoon pickup</option>
+              <option value="both">Either one</option>
+            </select>
+          </label>
+          <label>How will they spot you? (optional)
+            <input value={f.spot} onChange={(e) => setF({ ...f, spot: e.target.value })}
+              placeholder="Blue Highlander, I park by the gym" maxLength={120} />
+          </label>
+        </div>
+      )}
+
+      <label className="check">
+        <input type="checkbox" checked={f.offersStudent}
+          onChange={(e) => setF({ ...f, offersStudent: e.target.checked })} />
+        <span>🎒 I can send it in with my student</span>
+      </label>
+
+      {f.offersStudent && (
+        <div className="avail-body">
+          <label>Your student's name and grade
+            <input value={f.holderStudent} onChange={(e) => setF({ ...f, holderStudent: e.target.value })}
+              placeholder="Cayenne · 7th" maxLength={80} />
+          </label>
+        </div>
+      )}
+
+      {err && <p className="err">{err}</p>}
+      <div className="avail-actions">
+        <button className="btn small flame" disabled={busy} onClick={save}>
+          {busy ? 'Saving…' : 'Save availability'}
+        </button>
+        <button className="linkish" onClick={() => setOpen(false)}>cancel</button>
+      </div>
+    </div>
   );
 }
 
@@ -769,7 +1033,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Back office — passcode-gated in the database, like the Recap.
 // ---------------------------------------------------------------------------
-function AdminView({ bins, inv, reqs, offers, refresh }) {
+function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
   const [ok, setOk] = useState(!!sessionStorage.getItem('ue-pass'));
   const [msg, setMsg] = useState('');
@@ -800,8 +1064,10 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
   }
 
   const waitlist = reqs.filter((r) => r.status === 'open');
-  const assigned = reqs.filter((r) => r.status === 'assigned');
-  const overdue = assigned.filter((r) => dueInfo(r.due_at)?.overdue);
+  const needsTime = reqs.filter((r) => r.status === 'assigned');
+  const overdue = reqs.filter(
+    (r) => ['scheduled', 'handed_off'].includes(r.status) && dueInfo(r.due_at)?.overdue
+  );
   const driftRows = drift(inv);
   const act = async (fn) => {
     try { await fn(); setMsg(''); refresh(); }
@@ -841,17 +1107,39 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
 
       {overdue.length > 0 && (
         <div className="card overdue-card">
-          <h3>⏰ Past the three days</h3>
+          <h3>⏰ Handoffs that haven't closed</h3>
           <ul>
             {overdue.map((r) => (
               <li key={r.id}>
                 <b>{typeLabel(r.item_type)}{r.house ? ` (${houseInfo(r.house).name})` : ''} · {r.size}</b> for {r.parent_name}
                 {r.contact ? ` (${r.contact})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
-                , {dueInfo(r.due_at).label}
+                , {handoffSummary(r) || 'no plan'} · {dueInfo(r.due_at).label}
               </li>
             ))}
           </ul>
-          <p className="fine">A gentle nudge in the House group chat usually does it.</p>
+          <p className="fine">
+            Either the handoff slipped or nobody tapped “Got it.” A nudge in the House
+            group chat usually does it.
+          </p>
+        </div>
+      )}
+
+      {needsTime.length > 0 && (
+        <div className="card">
+          <h3>Waiting on a family to pick a time</h3>
+          <ul className="req-list">
+            {needsTime.map((r) => (
+              <li key={r.id} className="req">
+                <div className="req-main">
+                  <b>{typeLabel(r.item_type)} · {r.size}</b>
+                  <span>
+                    {r.parent_name}{r.contact ? ` · ${r.contact}` : ''} —{' '}
+                    {bins.find((b) => b.id === r.bin_id)?.name || 'bin'} · asked {fmtDay(r.created_at)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -920,6 +1208,23 @@ function AdminView({ bins, inv, reqs, offers, refresh }) {
           onClose={() => setEditBin(null)}
         />
       )}
+
+      <div className="card">
+        <h3>Handoff options</h3>
+        <p className="fine">
+          RCA is staying hands-off, so the front desk is switched off — carline and
+          student-to-student carry the handoffs. Flip this on if the school ever says yes.
+        </p>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={settings?.front_desk_enabled === 'true'}
+            onChange={(e) =>
+              act(() => db.adminSetting(pass, 'front_desk_enabled', e.target.checked ? 'true' : 'false'))}
+          />
+          <span>Offer “RCA front desk” as a handoff choice</span>
+        </label>
+      </div>
 
       <AdminItemTypes pass={pass} refresh={refresh} act={act} />
       <AdminOffers bins={bins} offers={offers} refresh={refresh} />

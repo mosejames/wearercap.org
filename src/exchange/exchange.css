@@ -269,3 +269,47 @@ a{color:inherit}
   font-family:'Newsreader',Georgia,serif;font-style:italic;
   font-size:15.5px;line-height:1.55;color:var(--ink);
 }
+
+/* ---------------- handoff ---------------- */
+.plan{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.chip-scheduled{background:#e6efff;color:#1a3f8f}
+.chip-handed_off{background:#ffe9d6;color:#a04708}
+
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.mode{
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);
+  border-radius:99px;padding:10px 16px;font-size:14px;font-weight:700;
+}
+.mode.on{background:var(--night);border-color:var(--night);color:#fff}
+
+.slots{display:grid;gap:9px;margin:0 0 14px}
+@media (min-width:460px){.slots{grid-template-columns:1fr 1fr}}
+.slot{
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:12px;padding:14px 14px;font-size:14.5px;font-weight:700;text-align:left;
+}
+.slot.on{background:var(--flame);border-color:transparent;color:#fff;box-shadow:var(--shadow)}
+
+.avail{display:flex;flex-direction:column;gap:12px}
+.avail-now{display:flex;flex-direction:column;gap:4px}
+.avail-now b{font-size:15px}
+.avail-now span{font-size:13px;color:var(--ink-soft)}
+.avail .btn{align-self:flex-start}
+.avail-body{display:flex;flex-direction:column;gap:10px;padding-left:2px}
+.avail-body label,.sheet .avail-body label{
+  display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);
+}
+.avail-body input,.avail-body select{
+  border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--paper);
+  font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);
+}
+.avail-actions{display:flex;gap:14px;align-items:center}
+.check{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:700;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--orange);flex:none}
+.daypick{display:flex;gap:7px;flex-wrap:wrap}
+.day{
+  border:1.5px solid var(--line);background:var(--paper);color:var(--ink-soft);
+  border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:800;min-width:52px;
+}
+.day.on{background:var(--night);border-color:var(--night);color:#fff}

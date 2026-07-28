@@ -177,3 +177,51 @@ export async function adminItemType(pass, id, fields = {}) {
   });
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// Handoff — how the item actually changes hands.
+// ---------------------------------------------------------------------------
+export async function listSettings() {
+  const { data, error } = await supabase.from('ue_settings').select('*');
+  if (error) throw error;
+  const out = {};
+  (data || []).forEach((r) => { out[r.key] = r.value; });
+  return out;
+}
+
+export async function adminSetting(pass, key, value) {
+  const { error } = await supabase.rpc('ue_admin_setting', {
+    p_pass: pass, p_key: key, p_value: value,
+  });
+  if (error) throw error;
+}
+
+export async function setAvailability(binId, f) {
+  const { error } = await supabase.rpc('ue_bin_availability', {
+    p_id: binId,
+    p_offers_carline: f.offersCarline ?? null,
+    p_offers_student: f.offersStudent ?? null,
+    p_days: f.days ?? null,
+    p_when: f.when ?? null,
+    p_spot: f.spot ?? null,
+    p_holder_student: f.holderStudent ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function scheduleHandoff(id, mode, date = null, slot = '', student = null) {
+  const { error } = await supabase.rpc('ue_handoff_schedule', {
+    p_id: id, p_mode: mode, p_date: date, p_slot: slot, p_student: student,
+  });
+  if (error) throw error;
+}
+
+export async function handoffSent(id, actor = '') {
+  const { error } = await supabase.rpc('ue_handoff_sent', { p_id: id, p_actor: actor });
+  if (error) throw error;
+}
+
+export async function handoffReceived(id) {
+  const { error } = await supabase.rpc('ue_handoff_received', { p_id: id });
+  if (error) throw error;
+}

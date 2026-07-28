@@ -11,10 +11,11 @@ export const SITE = {
   titleGrad: 'KEEP MOVING.',
   intro:
     'Gently loved uniforms live in QR-coded bins held by RCAP parents. ' +
-    'Search every bin, request what your student needs, and the bin holder ' +
-    'drops it at the RCA front desk within three days.',
+    'Search every bin, request what your student needs, then pick a handoff ' +
+    'that fits your week — at carline, or straight from student to student.',
 };
 
+// Kept for the front-desk mode, which is built but switched off in settings.
 export const FRONT_DESK_DAYS = 3;
 
 // Counts are approximate on purpose. Say so everywhere it matters.
