@@ -48,6 +48,7 @@ export async function logMovements(binId, lines, sign, actorName, note = '') {
       bin_id: binId,
       item_type: l.itemType,
       size: l.size,
+      house: l.house || '',
       qty_delta: sign * l.qty,
       kind: sign > 0 ? 'add' : 'remove',
       actor_name: (actorName || '').trim(),
@@ -67,6 +68,7 @@ export async function addRequest(form, binId) {
       student: (form.student || '').trim(),
       item_type: form.itemType,
       size: form.size,
+      house: form.house || '',
       qty: form.qty || 1,
       note: (form.note || '').trim(),
       bin_id: binId, // null puts it on the waitlist

@@ -60,6 +60,15 @@ export const HOUSES = [
 
 export const houseById = (id) => HOUSES.find((h) => h.id === id) || null;
 
+// Uniforms are broken up by houses: an Isibindi polo only helps an Isibindi
+// family. '' means house-neutral (white dress shirts, bottoms, ski gear).
+export const ANY_HOUSE = { id: '', name: 'Any house', color: '#efeae1', fg: '#1a1613' };
+export const HOUSE_CHOICES = [ANY_HOUSE, ...HOUSES];
+export const houseInfo = (id) => houseById(id) || ANY_HOUSE;
+
+// Types where the house picker defaults to a house instead of "Any house".
+export const HOUSED_TYPES = ['polo', 'sweater', 'house'];
+
 export const typeLabel = (id) =>
   (ITEM_TYPES.find((t) => t.id === id) || { label: id }).label;
 

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, ITEM_TYPES, SIZES, ACCEPTING, NOT_ACCEPTING, APPROX_NOTE,
-  FRONT_DESK_DAYS, houseById, typeLabel, binUrl, CONTACT,
+  FRONT_DESK_DAYS, houseById, houseInfo, HOUSE_CHOICES, HOUSED_TYPES,
+  typeLabel, binUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift } from './inventory.js';
@@ -34,6 +35,19 @@ function dueInfo(iso) {
 const STATUS_LABEL = {
   open: 'Waitlist', assigned: 'With a bin holder', fulfilled: 'At the front desk', canceled: 'Canceled',
 };
+
+// Uniforms are broken up by houses — every item wears its house's color.
+function HouseTag({ id }) {
+  const h = houseInfo(id);
+  return (
+    <span
+      className={`house-chip ${id ? '' : 'any'}`}
+      style={{ background: h.color, color: h.fg }}
+    >{h.name}</span>
+  );
+}
+
+const itemKey = (x) => `${x.itemType || x.item_type}|${x.size}|${x.house || ''}`;
 
 // ---------------------------------------------------------------------------
 // App shell
@@ -118,12 +132,17 @@ export default function App() {
 function Home({ bins, inv, reqs, refresh }) {
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
-  const [sheet, setSheet] = useState(null); // { itemType, size } or 'waitlist'
+  const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
+  const [sheet, setSheet] = useState(null); // { itemType, size, house } or 'waitlist'
 
   const assigned = reqs.filter((r) => r.status === 'assigned');
   const all = useMemo(() => totals(inv), [inv]);
   const shown = all.filter(
-    (t) => (!type || t.itemType === type) && (!size || t.size === size)
+    (t) =>
+      (!type || t.itemType === type) &&
+      (!size || t.size === size) &&
+      // A house pick also shows house-neutral items — they fit everyone.
+      (house === 'all' || t.house === house || (house !== '' && t.house === ''))
   );
   const activeBins = bins.filter((b) => !b.retired);
 
@@ -148,6 +167,12 @@ function Home({ bins, inv, reqs, refresh }) {
         <h2 className="h2">Find a size</h2>
         <p className="sub">{APPROX_NOTE}</p>
         <div className="filters">
+          <select value={house} onChange={(e) => setHouse(e.target.value)}>
+            <option value="all">Every house</option>
+            {HOUSE_CHOICES.map((h) => (
+              <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house (neutral items)'}</option>
+            ))}
+          </select>
           <select value={type} onChange={(e) => setType(e.target.value)}>
             <option value="">Every item</option>
             {ITEM_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -168,14 +193,15 @@ function Home({ bins, inv, reqs, refresh }) {
         ) : (
           <ul className="stock">
             {shown.map((t) => (
-              <li key={t.itemType + t.size} className="stock-row">
+              <li key={itemKey(t)} className="stock-row">
                 <div className="stock-what">
                   <b>{typeLabel(t.itemType)}</b>
+                  <HouseTag id={t.house} />
                   <span className="size-chip">{t.size}</span>
                 </div>
                 <div className="stock-meta">
                   <span>~{t.qty} across {t.bins.length} bin{t.bins.length > 1 ? 's' : ''}</span>
-                  <button className="btn small" onClick={() => setSheet({ itemType: t.itemType, size: t.size })}>
+                  <button className="btn small" onClick={() => setSheet({ itemType: t.itemType, size: t.size, house: t.house })}>
                     Request
                   </button>
                 </div>
@@ -199,7 +225,7 @@ function Home({ bins, inv, reqs, refresh }) {
 
       {sheet && (
         <RequestSheet
-          preset={sheet === 'waitlist' ? { itemType: type, size } : sheet}
+          preset={sheet === 'waitlist' ? { itemType: type, size, house: house === 'all' ? '' : house } : sheet}
           inv={inv}
           assigned={assigned}
           bins={bins}
@@ -220,6 +246,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     parentName: '', student: '', contact: '', note: '',
     itemType: preset.itemType || ITEM_TYPES[0].id,
     size: preset.size || SIZES[0],
+    house: preset.house || '',
     qty: 1,
   });
   const [busy, setBusy] = useState(false);
@@ -232,7 +259,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     if (!form.parentName.trim()) { setErr('Your name is the one thing we need.'); return; }
     setBusy(true); setErr('');
     try {
-      const binId = pickBin(inv, assigned, form.itemType, form.size, Number(form.qty) || 1);
+      const binId = pickBin(inv, assigned, form.itemType, form.size, form.house, Number(form.qty) || 1);
       const row = await db.addRequest({ ...form, qty: Number(form.qty) || 1 }, binId);
       setResult(row);
     } catch (e) {
@@ -249,7 +276,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
         {result.status === 'assigned' ? (
           <>
             <p className="big">
-              <b>{typeLabel(result.item_type)} · {result.size}</b> is with the{' '}
+              <b>{typeLabel(result.item_type)}{result.house ? ` (${houseInfo(result.house).name})` : ''} · {result.size}</b> is with the{' '}
             <b>{bin ? bin.name : 'bin'}</b>{bin?.holder_name ? ` (${bin.holder_name})` : ''}.
             </p>
             <p>
@@ -283,6 +310,13 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
           </select>
         </label>
       </div>
+      <label>House
+        <select value={form.house} onChange={set('house')}>
+          {HOUSE_CHOICES.map((h) => (
+            <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no house colors'}</option>
+          ))}
+        </select>
+      </label>
       <div className="grid2">
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
@@ -337,7 +371,7 @@ function RequestsView({ bins, reqs, refresh }) {
           return (
             <li key={r.id} className={`req status-${r.status}`}>
               <div className="req-main">
-                <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''}</b>
+                <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>{r.parent_name}{r.student ? ` · for ${r.student}` : ''}</span>
               </div>
               <div className="req-side">
@@ -386,7 +420,10 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
   const house = houseById(bin.holder_house);
   const mine = byBin(inv).get(bin.id) || new Map();
   const items = [...mine.values()].filter((i) => i.qty > 0)
-    .sort((a, b) => a.itemType.localeCompare(b.itemType) || a.size.localeCompare(b.size));
+    .sort((a, b) =>
+      a.itemType.localeCompare(b.itemType) ||
+      (a.house || '').localeCompare(b.house || '') ||
+      a.size.localeCompare(b.size));
   const queue = reqs.filter((r) => r.bin_id === bin.id && r.status === 'assigned');
 
   return (
@@ -416,7 +453,7 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
               return (
                 <li key={r.id} className={`req holder ${due?.overdue ? 'overdue' : ''}`}>
                   <div className="req-main">
-                    <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''}</b>
+                    <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                     <span>for {r.parent_name}{r.student ? ` (${r.student})` : ''}{r.note ? ` — “${r.note}”` : ''}</span>
                   </div>
                   <div className="req-side">
@@ -441,9 +478,10 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
         ) : (
           <ul className="stock">
             {items.map((i) => (
-              <li key={i.itemType + i.size} className="stock-row">
+              <li key={itemKey(i)} className="stock-row">
                 <div className="stock-what">
                   <b>{typeLabel(i.itemType)}</b>
+                  <HouseTag id={i.house} />
                   <span className="size-chip">{i.size}</span>
                 </div>
                 <div className="stock-meta"><span>~{i.qty}</span></div>
@@ -462,7 +500,7 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
                 <span className={`delta ${m.qty_delta > 0 ? 'pos' : 'neg'}`}>
                   {m.qty_delta > 0 ? `+${m.qty_delta}` : m.qty_delta}
                 </span>
-                {typeLabel(m.item_type)} · {m.size}
+                {typeLabel(m.item_type)}{m.house ? ` (${houseInfo(m.house).name})` : ''} · {m.size}
                 {m.actor_name ? ` — ${m.actor_name}` : ''}
                 <time>{fmtDay(m.created_at)}</time>
               </li>
@@ -485,7 +523,11 @@ function BinView({ bin, code, bins, inv, reqs, refresh }) {
 // Add / take items — a running list so a whole grocery bag logs in one go.
 function MoveSheet({ bin, sign, onDone, onClose }) {
   const [lines, setLines] = useState([]);
-  const [cur, setCur] = useState({ itemType: ITEM_TYPES[0].id, size: SIZES[1], qty: 1 });
+  const [cur, setCur] = useState({
+    itemType: ITEM_TYPES[0].id, size: SIZES[1], qty: 1,
+    // House bins mostly hold their own house's gear — start there.
+    house: HOUSED_TYPES.includes(ITEM_TYPES[0].id) ? (bin.holder_house || '') : '',
+  });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -513,12 +555,29 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
           ? 'Roughly what went in? Close counts are perfect counts here.'
           : 'Roughly what came out? (Requests you deliver log themselves — this is for everything else.)'}
       </p>
-      <div className="grid3">
+      <div className="grid2">
         <label>Item
-          <select value={cur.itemType} onChange={(e) => setCur({ ...cur, itemType: e.target.value })}>
+          <select
+            value={cur.itemType}
+            onChange={(e) => {
+              const itemType = e.target.value;
+              setCur({
+                ...cur, itemType,
+                house: HOUSED_TYPES.includes(itemType) ? (cur.house || bin.holder_house || '') : '',
+              });
+            }}>
             {ITEM_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </label>
+        <label>House
+          <select value={cur.house} onChange={(e) => setCur({ ...cur, house: e.target.value })}>
+            {HOUSE_CHOICES.map((h) => (
+              <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no house colors'}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="grid2">
         <label>Size
           <select value={cur.size} onChange={(e) => setCur({ ...cur, size: e.target.value })}>
             {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -535,7 +594,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
         <ul className="lines">
           {lines.map((l, i) => (
             <li key={i}>
-              {sign > 0 ? '+' : '−'}{l.qty} {typeLabel(l.itemType)} · {l.size}
+              {sign > 0 ? '+' : '−'}{l.qty} {typeLabel(l.itemType)}{l.house ? ` (${houseInfo(l.house).name})` : ''} · {l.size}
               <button className="linkish" onClick={() => setLines(lines.filter((_, j) => j !== i))}>remove</button>
             </li>
           ))}
@@ -627,7 +686,7 @@ function AdminView({ bins, inv, reqs, refresh }) {
           <ul>
             {overdue.map((r) => (
               <li key={r.id}>
-                <b>{typeLabel(r.item_type)} · {r.size}</b> for {r.parent_name}
+                <b>{typeLabel(r.item_type)}{r.house ? ` (${houseInfo(r.house).name})` : ''} · {r.size}</b> for {r.parent_name}
                 {r.contact ? ` (${r.contact})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
                 , {dueInfo(r.due_at).label}
               </li>
@@ -644,7 +703,7 @@ function AdminView({ bins, inv, reqs, refresh }) {
             {waitlist.map((r) => (
               <li key={r.id} className="req">
                 <div className="req-main">
-                  <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''}</b>
+                  <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                   <span>{r.parent_name}{r.contact ? ` · ${r.contact}` : ''}</span>
                 </div>
                 <div className="req-side">
@@ -707,7 +766,7 @@ function AdminView({ bins, inv, reqs, refresh }) {
           <ul>
             {driftRows.map((d, i) => (
               <li key={i}>
-                {bins.find((b) => b.id === d.bin_id)?.name || d.bin_id}: {typeLabel(d.item_type)} · {d.size} at {d.qty}
+                {bins.find((b) => b.id === d.bin_id)?.name || d.bin_id}: {typeLabel(d.item_type)}{d.house ? ` (${houseInfo(d.house).name})` : ''} · {d.size} at {d.qty}
               </li>
             ))}
           </ul>
