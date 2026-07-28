@@ -64,6 +64,7 @@ export function slotLabel(slot) {
 export function handoffSummary(req) {
   if (!req || !req.handoff_mode) return '';
   if (req.handoff_mode === 'student') return 'Student to student';
+  if (req.handoff_mode === 'other') return 'A time you two arranged';
   if (req.handoff_mode === 'desk') return 'RCA front desk';
   if (!req.handoff_date) return 'Carline — day to be picked';
   return slotLabel({ date: req.handoff_date, slot: req.handoff_slot });

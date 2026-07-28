@@ -119,11 +119,18 @@ Deno.serve(async (req) => {
     if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     rows = data || [];
   } else {
-    // Sweeper: everything still pending, plus recent failures worth another
-    // go. After a day, or three tries, we stop rattling a bad number.
+    // Sweep time is also when the day's held messages get rolled into one
+    // round-up for the holders who asked for that.
+    await db.rpc('ue_send_digests').catch(() => {});
+
+    // Everything still pending and actually due, plus recent failures worth
+    // another go. After a day, or three tries, we stop rattling a bad number.
+    const now = new Date().toISOString();
     const dayAgo = new Date(Date.now() - 86400000).toISOString();
     const [pending, retry] = await Promise.all([
-      db.from('ue_notifications').select(sel).eq('status', 'pending').order('created_at').limit(50),
+      db.from('ue_notifications').select(sel).eq('status', 'pending')
+        .or(`deliver_after.is.null,deliver_after.lte.${now}`)
+        .order('created_at').limit(50),
       db.from('ue_notifications').select(sel).eq('status', 'failed')
         .gte('created_at', dayAgo).lt('attempts', 3).order('created_at').limit(50),
     ]);

@@ -363,3 +363,21 @@ export async function adminWelcomeHolder(pass, id) {
   const { error } = await supabase.rpc('ue_admin_welcome_holder', { p_pass: pass, p_id: id });
   if (error) throw error;
 }
+
+export async function holderUpdateSelf(token, f) {
+  const { error } = await supabase.rpc('ue_holder_update_self', {
+    p_token: token,
+    p_phone: f.phone ?? null,
+    p_email: f.email ?? null,
+    p_notify_mode: f.notifyMode ?? null,
+    p_special: f.special ?? null,
+    p_special_note: f.specialNote ?? null,
+  });
+  if (error) throw error;
+}
+
+// The holder door: type your cell, we text your page.
+export async function holderRequestLink(phone) {
+  const { error } = await supabase.rpc('ue_holder_request_link', { p_phone: phone });
+  if (error) throw error;
+}

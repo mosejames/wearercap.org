@@ -659,6 +659,9 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
   const save = async () => {
     setErr('');
     if (mode === 'carline' && !pick) { setErr('Pick a day that works for you.'); return; }
+    if (mode === 'other' && !req.contact) {
+      setErr('We need a cell on your request so you two can reach each other.'); return;
+    }
     if (mode === 'student' && !student.trim()) {
       setErr("We need your student's name so the bag gets to the right hands."); return;
     }
@@ -693,6 +696,11 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
         {bin?.offers_student !== false && (
           <button className={`mode ${mode === 'student' ? 'on' : ''}`} onClick={() => setMode('student')}>
             🎒 Student to student
+          </button>
+        )}
+        {bin?.holder?.special_arrangements && (
+          <button className={`mode ${mode === 'other' ? 'on' : ''}`} onClick={() => setMode('other')}>
+            🤝 Another time
           </button>
         )}
         {frontDesk && (
@@ -732,6 +740,19 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
             <input value={student} onChange={(e) => setStudent(e.target.value)}
               placeholder="Imani · 6th" maxLength={60} />
           </label>
+        </>
+      )}
+
+      {mode === 'other' && (
+        <>
+          <p className="fine">
+            {holder} is happy to sort out a time outside morning carline. Choosing this
+            shares their cell with you so the two of you can arrange it directly — the
+            app steps out of the way here, so it's on you both to make it happen.
+          </p>
+          {bin?.holder?.special_note && (
+            <p className="fine">📝 {bin.holder.special_note}</p>
+          )}
         </>
       )}
 
@@ -844,16 +865,104 @@ function HolderHome({ token }) {
       )}
 
       {tab === 'me' && (
-        <section className="shell section">
-          <h2 className="h2">When you're around</h2>
-          <p className="sub">
-            Set this once — every family who requests from any of your bins picks
-            from it, so nobody has to text back and forth.
-          </p>
-          <AvailabilityCard bin={holder} token={token} refresh={load} />
-        </section>
+        <>
+          <section className="shell section">
+            <h2 className="h2">When you're around</h2>
+            <p className="sub">
+              Set this once — every family who requests from any of your bins picks
+              from it, so nobody has to text back and forth.
+            </p>
+            <AvailabilityCard bin={holder} token={token} refresh={load} />
+          </section>
+          <section className="shell section">
+            <h2 className="h2">You &amp; your alerts</h2>
+            <HolderSettings token={token} holder={holder} reload={load} />
+          </section>
+        </>
       )}
     </>
+  );
+}
+
+// A holder's own details. Nobody should have to email an admin to change
+// their phone number, and a volunteer pinged all afternoon stops reading the
+// pings — so how they hear from us is theirs to choose too.
+function HolderSettings({ token, holder, reload }) {
+  const [f, setF] = useState({
+    phone: holder.phone || '',
+    email: holder.email || '',
+    notifyMode: holder.notify_mode || 'instant',
+    special: !!holder.special_arrangements,
+    specialNote: holder.special_note || '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const save = async () => {
+    setBusy(true); setMsg('');
+    try {
+      await db.holderUpdateSelf(token, f);
+      setMsg('Saved.'); reload();
+    } catch (e) {
+      setMsg(e.message || "That didn't save — try again.");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="card avail">
+      <div className="avail-body">
+        <label>Your cell — where request alerts go
+          <input value={f.phone} onChange={set('phone')} inputMode="tel"
+            placeholder="404-555-1234" maxLength={40} />
+        </label>
+        <label>Your email
+          <input value={f.email} onChange={set('email')} inputMode="email" maxLength={120} />
+        </label>
+      </div>
+
+      <div className="avail-body">
+        <p className="fine">How would you like to hear about requests?</p>
+        <div className="pick-row">
+          {[['instant', 'Right away', 'A text the moment a family requests something.'],
+            ['daily', 'End of day', 'One round-up around 5pm with everything from that day.']]
+            .map(([v, label, blurb]) => (
+              <button
+                key={v}
+                className={`pick ${f.notifyMode === v ? 'on' : ''}`}
+                onClick={() => setF({ ...f, notifyMode: v })}
+              >
+                <b>{label}</b><span>{blurb}</span>
+              </button>
+            ))}
+        </div>
+      </div>
+
+      <label className="check">
+        <input type="checkbox" checked={f.special}
+          onChange={(e) => setF({ ...f, special: e.target.checked })} />
+        <span>🤝 I'm open to arranging another time</span>
+      </label>
+      {f.special && (
+        <div className="avail-body">
+          <p className="fine">
+            Families will see this as an option alongside carline, and it shares your
+            cell with that one family so the two of you can sort it out directly.
+          </p>
+          <label>Anything they should know? (optional)
+            <input value={f.specialNote} onChange={set('specialNote')}
+              placeholder="Evenings are easiest, I'm near the school" maxLength={200} />
+          </label>
+        </div>
+      )}
+
+      {msg && <p className="fine">{msg}</p>}
+      <div className="avail-actions">
+        <button className="btn small flame" disabled={busy} onClick={save}>
+          {busy ? 'Saving…' : 'Save my settings'}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1553,10 +1662,12 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
     return (
       <section className="shell section narrow-card">
         <h2 className="h2">Storage Room</h2>
+        <p className="sub">For whoever runs the exchange.</p>
         <input className="search" type="password" placeholder="Passcode" value={pass}
           onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && tryPass()} />
         {msg && <p className="err">{msg}</p>}
         <button className="btn flame" onClick={tryPass}>Open</button>
+        <HolderDoor />
       </section>
     );
   }
@@ -1597,6 +1708,45 @@ function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   if (sub === 'requests') return <AdminRequests {...shared} />;
   if (sub === 'settings' || sub === 'types') return <AdminSettings {...shared} settings={settings} />;
   return <AdminHome {...shared} inv={inv} offers={data.offers} />;
+}
+
+// Bin holders don't get a passcode — they get their page texted to them.
+function HolderDoor() {
+  const [phone, setPhone] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const send = async () => {
+    setBusy(true);
+    try { await db.holderRequestLink(phone); } catch { /* say nothing either way */ }
+    setSent(true); setBusy(false);
+  };
+
+  return (
+    <div className="card holder-door">
+      <h3>Hold a bin?</h3>
+      {sent ? (
+        <p className="fine">
+          If that number is on a bin, we just texted your page. It doesn't expire —
+          save it somewhere handy.
+        </p>
+      ) : (
+        <>
+          <p className="fine">
+            No passcode for you — pop in your cell and we'll text your own page.
+          </p>
+          <input
+            className="search" inputMode="tel" placeholder="404-555-1234"
+            value={phone} onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && phone.trim() && send()}
+          />
+          <button className="btn small" disabled={busy || !phone.trim()} onClick={send}>
+            {busy ? 'Sending…' : 'Text me my page'}
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
 
 // A back-office page header with a way back to the dashboard.

@@ -410,3 +410,17 @@ a{color:inherit}
 .start-steps li.done .start-mark{background:var(--green)}
 .start-steps li.done b{color:var(--ink-soft);text-decoration:line-through;text-decoration-thickness:1px}
 .start-steps li.done span,.start-steps li.done .btn{display:none}
+
+/* ---------------- holder settings ---------------- */
+.pick-row{display:grid;gap:9px}
+@media (min-width:460px){.pick-row{grid-template-columns:1fr 1fr}}
+.pick{
+  border:1.5px solid var(--line);background:var(--paper);border-radius:13px;
+  padding:13px 15px;text-align:left;display:flex;flex-direction:column;gap:3px;
+}
+.pick b{font-size:14.5px;color:var(--ink)}
+.pick span{font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+.pick.on{border-color:var(--orange);background:#fff6ee;box-shadow:0 0 0 1px var(--orange) inset}
+.holder-door{margin-top:22px;background:var(--paper)}
+.holder-door h3{margin-bottom:6px}
+.holder-door .search{margin-top:10px}
