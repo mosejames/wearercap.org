@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  SITE, DONATION_STANDARD, APPROX_NOTE, sizeGroups, sizeLabel, firstSize, sizeSetFor,
+  SITE, DONATION_STANDARD, APPROX_NOTE, sizeGroups, sizeLabel, firstSize,
   SIZE_SET_LABEL,
   houseById, houseInfo, HOUSE_CHOICES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
@@ -19,6 +19,7 @@ function parseHash() {
   const [head, ...rest] = h.split('/');
   if (head === 'bin' && rest[0]) return { view: 'bin', code: decodeURIComponent(rest[0]).toUpperCase() };
   if (head === 'requests') return { view: 'requests' };
+  if (head === 'my' && rest[0]) return { view: 'my', token: rest[0] };
   if (head === 'admin') return { view: 'admin', sub: rest[0] || '' };
   return { view: 'home' };
 }
@@ -82,8 +83,7 @@ export default function App() {
   const [route, setRoute] = useState(parseHash());
   const [bins, setBins] = useState([]);
   const [inv, setInv] = useState([]);
-  const [reqs, setReqs] = useState([]);
-  const [offers, setOffers] = useState([]);
+  const [commitments, setCommitments] = useState([]);
   const [holders, setHolders] = useState([]);
   const [, setTypes] = useState([]); // re-render when the live types land
   const [settings, setSettings] = useState({});
@@ -93,12 +93,12 @@ export default function App() {
   const refresh = async () => {
     try {
       const hs = await db.listHolders().catch(() => []);
-      const [b, i, r, o, t, st] = await Promise.all([
-        db.listBins(hs), db.listInventory(), db.listRequests(), db.listOffers(),
+      const [b, i, c, t, st] = await Promise.all([
+        db.listBins(hs), db.listInventory(), db.listCommitments(),
         db.listItemTypes().catch(() => []), db.listSettings().catch(() => ({})),
       ]);
       setItemTypes(t); setTypes(t); setSettings(st); setHolders(hs);
-      setBins(b); setInv(i); setReqs(r); setOffers(o); setErr('');
+      setBins(b); setInv(i); setCommitments(c); setErr('');
     } catch (e) {
       setErr(e.message || 'Could not reach the exchange.');
     } finally {
@@ -129,7 +129,7 @@ export default function App() {
           </a>
           <nav className="topnav">
             <a href="#/">Browse</a>
-            <a href="#/requests">Requests</a>
+            <a href="#/requests">My requests</a>
           </nav>
         </div>
       </header>
@@ -139,14 +139,16 @@ export default function App() {
       {!loaded ? (
         <div className="shell loading">Opening the bins…</div>
       ) : route.view === 'bin' ? (
-        <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} reqs={reqs} offers={offers} refresh={refresh} />
+        <BinView bin={binByCode.get(route.code)} code={route.code} bins={bins} inv={inv} refresh={refresh} />
+      ) : route.view === 'my' ? (
+        <MyRequests token={route.token} bins={bins} settings={settings} />
       ) : route.view === 'requests' ? (
-        <RequestsView bins={bins} reqs={reqs} settings={settings} refresh={refresh} />
+        <FindMyRequests />
       ) : route.view === 'admin' ? (
-        <AdminView sub={route.sub} bins={bins} holders={holders} inv={inv} reqs={reqs}
-          offers={offers} settings={settings} refresh={refresh} />
+        <AdminView sub={route.sub} bins={bins} holders={holders} inv={inv}
+          settings={settings} refresh={refresh} />
       ) : (
-        <Home bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
+        <Home bins={bins} inv={inv} commitments={commitments} refresh={refresh} />
       )}
 
       <footer className="foot">
@@ -166,14 +168,14 @@ export default function App() {
 // ---------------------------------------------------------------------------
 // Home — search everything, request an item.
 // ---------------------------------------------------------------------------
-function Home({ bins, inv, reqs, refresh }) {
+function Home({ bins, inv, commitments, refresh }) {
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
   const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
   const [sheet, setSheet] = useState(null); // { itemType, size, house } or 'waitlist'
   const [offering, setOffering] = useState(false);
 
-  const assigned = reqs.filter((r) => r.status === 'assigned');
+  const assigned = commitments; // already only what's promised out, no people
   const all = useMemo(() => totals(inv), [inv]);
   const shown = all.filter(
     (t) =>
@@ -260,13 +262,6 @@ function Home({ bins, inv, reqs, refresh }) {
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="shell section">
-        <div className="card standard">
-          <h3>{DONATION_STANDARD.title}</h3>
-          <p>{DONATION_STANDARD.body}</p>
-        </div>
       </section>
 
       {sheet && (
@@ -465,9 +460,7 @@ function OfferSheet({ bins, onDone, onClose }) {
 
   return (
     <Sheet onClose={onClose} title="Donate clothes">
-      <p className="fine">
-        Gently loved only, please — and a heads-up on what bins can't take is below the search.
-      </p>
+      <p className="fine">{DONATION_STANDARD.body}</p>
       <div className="grid2">
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
@@ -501,28 +494,98 @@ function OfferSheet({ bins, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Requests — everyone can see the queue; cancel is one tap.
 // ---------------------------------------------------------------------------
-function RequestsView({ bins, reqs, settings, refresh }) {
-  const [who, setWho] = useState('');
-  const [picking, setPicking] = useState(null); // the request being scheduled
-  const shown = reqs.filter(
-    (r) => !who || r.parent_name.toLowerCase().includes(who.toLowerCase())
+// No public list any more. Without your link there is nothing here to see —
+// type your number and we text you a fresh one.
+function FindMyRequests() {
+  const [phone, setPhone] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const send = async () => {
+    setBusy(true);
+    try { await db.requestAccess(phone); } catch { /* say nothing either way */ }
+    setSent(true); setBusy(false);
+  };
+
+  return (
+    <section className="shell section narrow-card">
+      <h2 className="h2">My requests</h2>
+      {sent ? (
+        <>
+          <p>
+            If we have any requests for that number, we just texted you a private link
+            to them. It doesn't expire — save it somewhere handy.
+          </p>
+          <p className="fine">
+            Nothing arrived? The number may not match the one on the request. Email{' '}
+            <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> and we'll sort it out.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="sub">
+            Every text we send includes your own private link. Lost it? Pop your number
+            in and we'll send it again.
+          </p>
+          <input
+            className="search" inputMode="tel" placeholder="404-555-1234"
+            value={phone} onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && phone.trim() && send()}
+          />
+          <button className="btn flame" disabled={busy || !phone.trim()} onClick={send}>
+            {busy ? 'Sending…' : 'Text me my link'}
+          </button>
+          <p className="fine">
+            We keep requests private — your name and what you asked for are only ever
+            visible to you, your bin holder, and RCAP.
+          </p>
+        </>
+      )}
+    </section>
   );
+}
+
+// Your requests, and only yours. The token in the link is the key.
+function MyRequests({ token, bins, settings }) {
+  const [rows, setRows] = useState(null);
+  const [picking, setPicking] = useState(null);
+  const [err, setErr] = useState('');
+
+  const load = async () => {
+    try { setRows(await db.myRequests(token)); }
+    catch (e) { setErr(e.message || 'Could not open your requests.'); setRows([]); }
+  };
+  useEffect(() => { load(); }, [token]);
+
   const binOf = (id) => bins.find((b) => b.id === id) || null;
+
+  if (rows === null) return <div className="shell loading">Finding your requests…</div>;
+
+  if (!rows.length) {
+    return (
+      <section className="shell section narrow-card">
+        <h2 className="h2">My requests</h2>
+        <p>
+          Nothing here — either this link has expired or there aren't any requests on
+          this number yet.
+        </p>
+        <a className="btn flame" href="#/">Find an item</a>
+      </section>
+    );
+  }
+
+  const who = rows[0]?.parent_name;
 
   return (
     <section className="shell section">
-      <h2 className="h2">Requests</h2>
+      <h2 className="h2">{who ? `${who}'s requests` : 'My requests'}</h2>
       <p className="sub">
-        Found your item? Pick a handoff that fits your week, then tap <b>Got it</b> once
-        it's in your hands — that's what closes it out.
+        Pick a handoff that fits your week, then tap <b>Got it</b> once it's in your
+        hands — that's what closes it out.
       </p>
-      <input
-        className="search" placeholder="Find your name…"
-        value={who} onChange={(e) => setWho(e.target.value)}
-      />
+      {err && <p className="err">{err}</p>}
       <ul className="req-list">
-        {shown.length === 0 && <li className="empty">No requests yet.</li>}
-        {shown.map((r) => {
+        {rows.map((r) => {
           const bin = binOf(r.bin_id);
           const due = r.status === 'scheduled' ? dueInfo(r.due_at) : null;
           const plan = handoffSummary(r);
@@ -530,7 +593,7 @@ function RequestsView({ bins, reqs, settings, refresh }) {
             <li key={r.id} className={`req status-${r.status}`}>
               <div className="req-main">
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
-                <span>{r.parent_name}{r.student ? ` · for ${r.student}` : ''}</span>
+                {r.student && <span>for {r.student}</span>}
                 {plan && <span className="plan">🤝 {plan}{bin?.holder_name ? ` · with ${bin.holder_name}` : ''}</span>}
               </div>
               <div className="req-side">
@@ -538,9 +601,7 @@ function RequestsView({ bins, reqs, settings, refresh }) {
                 {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
 
                 {r.status === 'assigned' && (
-                  <button className="btn small flame" onClick={() => setPicking(r)}>
-                    Pick a time
-                  </button>
+                  <button className="btn small flame" onClick={() => setPicking(r)}>Pick a time</button>
                 )}
                 {r.status === 'scheduled' && (
                   <button className="linkish" onClick={() => setPicking(r)}>change time</button>
@@ -548,13 +609,13 @@ function RequestsView({ bins, reqs, settings, refresh }) {
                 {(r.status === 'scheduled' || r.status === 'handed_off') && (
                   <button
                     className="btn small flame"
-                    onClick={async () => { await db.handoffReceived(r.id); refresh(); }}
+                    onClick={async () => { await db.handoffReceived(r.id); load(); }}
                   >Got it ✓</button>
                 )}
                 {(r.status === 'open' || r.status === 'assigned' || r.status === 'scheduled') && (
                   <button
                     className="linkish"
-                    onClick={async () => { await db.cancelRequest(r.id); refresh(); }}
+                    onClick={async () => { await db.cancelRequest(r.id); load(); }}
                   >cancel</button>
                 )}
               </div>
@@ -562,13 +623,16 @@ function RequestsView({ bins, reqs, settings, refresh }) {
           );
         })}
       </ul>
+      <p className="fine">
+        This page is yours alone — the link works like a key, so keep it to yourself.
+      </p>
 
       {picking && (
         <HandoffSheet
           req={picking}
           bin={binOf(picking.bin_id)}
           frontDesk={settings?.front_desk_enabled === 'true'}
-          onDone={() => { setPicking(null); refresh(); }}
+          onDone={() => { setPicking(null); load(); }}
           onClose={() => setPicking(null)}
         />
       )}
@@ -687,13 +751,23 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
 // The bin page — what the QR code opens. Inventory, add/take flows, and the
 // holder's fulfillment queue.
 // ---------------------------------------------------------------------------
-function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
+function BinView({ bin, code, bins, inv, refresh }) {
   const [mode, setMode] = useState(null); // 'add' | 'take'
   const [log, setLog] = useState(null);
+  const [queueData, setQueueData] = useState({ requests: [], offers: [] });
+
+  // A holder sees what's queued to their own bin — and nothing beyond it.
+  const loadQueue = () =>
+    db.binQueue(code).then(setQueueData).catch(() => setQueueData({ requests: [], offers: [] }));
 
   useEffect(() => {
-    if (bin) db.listMovements(bin.id).then(setLog).catch(() => setLog([]));
+    if (bin) {
+      db.listMovements(bin.id).then(setLog).catch(() => setLog([]));
+      loadQueue();
+    }
   }, [bin?.id]);
+
+  const reload = () => { refresh(); loadQueue(); };
 
   if (!bin) {
     return (
@@ -711,12 +785,8 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
       a.itemType.localeCompare(b.itemType) ||
       (a.house || '').localeCompare(b.house || '') ||
       a.size.localeCompare(b.size));
-  const queue = reqs.filter(
-    (r) => r.bin_id === bin.id && ['assigned', 'scheduled', 'handed_off'].includes(r.status)
-  );
-  const pickups = (offers || []).filter(
-    (o) => o.bin_id === bin.id && (o.status === 'open' || o.status === 'scheduled')
-  );
+  const queue = queueData.requests;
+  const pickups = queueData.offers;
 
   return (
     <>
@@ -762,7 +832,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
                     {r.status !== 'handed_off' && (
                       <button
                         className="btn small flame"
-                        onClick={async () => { await db.handoffSent(r.id, bin.holder_name); refresh(); }}
+                        onClick={async () => { await db.handoffSent(r.id, bin.holder_name); reload(); }}
                       >Handed it off ✓</button>
                     )}
                   </div>
@@ -786,16 +856,16 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
                 </div>
                 <div className="req-side">
                   {o.status === 'open' ? (
-                    <button className="btn small" onClick={async () => { await db.updateOffer(o.id, 'scheduled'); refresh(); }}>
+                    <button className="btn small" onClick={async () => { await db.updateOffer(o.id, 'scheduled'); reload(); }}>
                       Pickup arranged
                     </button>
                   ) : (
                     <span className="chip chip-assigned">Scheduled</span>
                   )}
-                  <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); refresh(); }}>
+                  <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); reload(); }}>
                     Collected ✓
                   </button>
-                  <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); refresh(); }}>
+                  <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); reload(); }}>
                     cancel
                   </button>
                 </div>
@@ -856,7 +926,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
       {mode && (
         <MoveSheet
           bin={bin} sign={mode === 'add' ? 1 : -1}
-          onDone={() => { setMode(null); refresh(); db.listMovements(bin.id).then(setLog); }}
+          onDone={() => { setMode(null); reload(); db.listMovements(bin.id).then(setLog); }}
           onClose={() => setMode(null)}
         />
       )}
@@ -1058,17 +1128,30 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Back office — passcode-gated in the database, like the Recap.
 // ---------------------------------------------------------------------------
-function AdminView({ sub, bins, holders, inv, reqs, offers, settings, refresh }) {
+function AdminView({ sub, bins, holders, inv, settings, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
-  const [ok, setOk] = useState(!!sessionStorage.getItem('ue-pass'));
+  const [ok, setOk] = useState(false);
   const [msg, setMsg] = useState('');
   const [printBins, setPrintBins] = useState(null);
+  const [data, setData] = useState({ requests: [], offers: [], notifications: [] });
+
+  // Requests, offers and the text log are no longer readable with the anon key,
+  // so the passcode is what actually fetches them.
+  const loadAdmin = async (p) => {
+    const d = await db.adminData(p);
+    setData(d); setOk(true); setMsg('');
+    return d;
+  };
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('ue-pass');
+    if (saved) loadAdmin(saved).catch(() => { sessionStorage.removeItem('ue-pass'); setOk(false); });
+  }, []);
 
   const tryPass = async () => {
     try {
-      await db.adminHolder(pass, 'update', holders[0]?.id, {});
+      await loadAdmin(pass);
       sessionStorage.setItem('ue-pass', pass);
-      setOk(true); setMsg('');
     } catch {
       setMsg("That passcode isn't it.");
     }
@@ -1087,8 +1170,10 @@ function AdminView({ sub, bins, holders, inv, reqs, offers, settings, refresh })
   }
 
   const act = async (fn) => {
-    try { await fn(); setMsg(''); refresh(); }
-    catch (e) { setMsg(e.message || 'Nope.'); }
+    try {
+      await fn(); setMsg(''); refresh();
+      await loadAdmin(pass).catch(() => {});
+    } catch (e) { setMsg(e.message || 'Nope.'); }
   };
 
   if (printBins) {
@@ -1112,11 +1197,14 @@ function AdminView({ sub, bins, holders, inv, reqs, offers, settings, refresh })
     );
   }
 
-  const shared = { pass, act, msg, bins, holders, reqs, refresh, setPrintBins };
+  const shared = {
+    pass, act, msg, bins, holders, refresh, setPrintBins,
+    reqs: data.requests, notifications: data.notifications,
+  };
   if (sub === 'bins')     return <AdminBins {...shared} />;
   if (sub === 'requests') return <AdminRequests {...shared} />;
   if (sub === 'settings' || sub === 'types') return <AdminSettings {...shared} settings={settings} />;
-  return <AdminHome {...shared} inv={inv} offers={offers} />;
+  return <AdminHome {...shared} inv={inv} offers={data.offers} />;
 }
 
 // A back-office page header with a way back to the dashboard.
@@ -1133,7 +1221,7 @@ function AdminPage({ title, children, msg }) {
 
 // The dashboard is only what needs attention today. Everything you *manage*
 // lives one tap away.
-function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, setPrintBins }) {
+function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, notifications, refresh, setPrintBins }) {
   const waitlist = reqs.filter((r) => r.status === 'open');
   const needsTime = reqs.filter((r) => r.status === 'assigned');
   const pending = reqs.filter((r) => ['open','assigned','scheduled','handed_off'].includes(r.status));
@@ -1194,7 +1282,7 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, 
 
       <AdminOffers bins={bins} offers={offers} refresh={refresh} />
       <AdminReports bins={bins} inv={inv} reqs={reqs} />
-      <AdminNotifications />
+      <AdminNotifications notifications={notifications} />
     </section>
   );
 }
@@ -1523,7 +1611,7 @@ function HolderSheet({ holder, onSave, onClose }) {
   );
 }
 
-function AdminSettings({ pass, act, msg, settings }) {
+function AdminSettings({ pass, act, msg, settings, notifications }) {
   return (
     <AdminPage title="Settings" msg={msg}>
       <div className="card">
@@ -1543,7 +1631,7 @@ function AdminSettings({ pass, act, msg, settings }) {
         </label>
       </div>
       <AdminItemTypes pass={pass} act={act} />
-      <AdminNotifications />
+      <AdminNotifications notifications={notifications} />
     </AdminPage>
   );
 }
@@ -1759,10 +1847,9 @@ function AdminReports({ bins, inv, reqs }) {
 }
 
 // The text-message outbox: what's queued, what's gone out.
-function AdminNotifications() {
-  const [rows, setRows] = useState(null);
-  useEffect(() => { db.listNotifications().then(setRows).catch(() => setRows([])); }, []);
-  if (!rows || !rows.length) return null;
+function AdminNotifications({ notifications }) {
+  const rows = notifications || [];
+  if (!rows.length) return null;
   const pending = rows.filter((n) => n.status === 'pending').length;
   return (
     <div className="card">

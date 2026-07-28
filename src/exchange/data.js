@@ -50,13 +50,45 @@ export async function listInventory() {
   return data || [];
 }
 
-export async function listRequests() {
-  const { data, error } = await supabase
-    .from('ue_requests')
-    .select('*')
-    .order('created_at', { ascending: false });
+// Requests hold names, students and phone numbers, so they are not listable.
+// This is the anonymous slice the matcher needs: what's already promised out
+// of which bin, with no people attached.
+export async function listCommitments() {
+  const { data, error } = await supabase.from('ue_commitments').select('*');
   if (error) throw error;
   return data || [];
+}
+
+// Everything tied to one private token — that phone number's requests, and
+// nothing else in the system.
+export async function myRequests(token) {
+  const { data, error } = await supabase.rpc('ue_my_requests', { p_token: token });
+  if (error) throw error;
+  return data || [];
+}
+
+// Lost the link: we text a fresh one. Says nothing about whether we know you.
+export async function requestAccess(phone) {
+  const { error } = await supabase.rpc('ue_request_access', { p_phone: phone });
+  if (error) throw error;
+}
+
+// A bin holder's own queue, opened by the code on their QR label.
+export async function binQueue(code) {
+  const { data, error } = await supabase.rpc('ue_bin_queue', { p_code: code });
+  if (error) throw error;
+  return { requests: data?.requests || [], offers: data?.offers || [] };
+}
+
+// The back office, behind the passcode.
+export async function adminData(pass) {
+  const { data, error } = await supabase.rpc('ue_admin_data', { p_pass: pass });
+  if (error) throw error;
+  return {
+    requests: data?.requests || [],
+    offers: data?.offers || [],
+    notifications: data?.notifications || [],
+  };
 }
 
 export async function listMovements(binId, limit = 30) {
@@ -91,22 +123,18 @@ export async function logMovements(binId, lines, sign, actorName, note = '') {
 }
 
 export async function addRequest(form, binId) {
-  const { data, error } = await supabase
-    .from('ue_requests')
-    .insert({
-      parent_name: form.parentName.trim(),
-      contact: (form.contact || '').trim(),
-      student: (form.student || '').trim(),
-      item_type: form.itemType,
-      size: form.size,
-      house: form.house || '',
-      requester_house: form.requesterHouse || '',
-      qty: form.qty || 1,
-      note: (form.note || '').trim(),
-      bin_id: binId, // null puts it on the waitlist
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('ue_create_request', {
+    p_parent_name: form.parentName,
+    p_contact: form.contact || '',
+    p_student: form.student || '',
+    p_item_type: form.itemType,
+    p_size: form.size,
+    p_house: form.house || '',
+    p_requester_house: form.requesterHouse || '',
+    p_qty: form.qty || 1,
+    p_note: form.note || '',
+    p_bin: binId, // null puts it on the waitlist
+  });
   if (error) throw error;
   return data;
 }
@@ -146,27 +174,14 @@ export async function adminBin(pass, action, id, fields = {}) {
 // ---------------------------------------------------------------------------
 // Donation offers — "come pick up my clothes."
 // ---------------------------------------------------------------------------
-export async function listOffers() {
-  const { data, error } = await supabase
-    .from('ue_offers')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
-}
-
 export async function addOffer(form, binId) {
-  const { data, error } = await supabase
-    .from('ue_offers')
-    .insert({
-      parent_name: form.parentName.trim(),
-      contact: (form.contact || '').trim(),
-      house: form.house || '',
-      items_desc: form.itemsDesc.trim(),
-      bin_id: binId,
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('ue_create_offer', {
+    p_parent_name: form.parentName,
+    p_contact: form.contact || '',
+    p_house: form.house || '',
+    p_items_desc: form.itemsDesc,
+    p_bin: binId,
+  });
   if (error) throw error;
   return data;
 }
@@ -176,16 +191,6 @@ export async function updateOffer(id, status, binId = null, note = null) {
     p_id: id, p_status: status, p_bin: binId, p_note: note,
   });
   if (error) throw error;
-}
-
-export async function listNotifications(limit = 40) {
-  const { data, error } = await supabase
-    .from('ue_notifications')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return data || [];
 }
 
 export async function listItemTypes() {
