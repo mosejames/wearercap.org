@@ -358,3 +358,8 @@ export async function adminTextHolderLink(pass, id) {
   const { error } = await supabase.rpc('ue_admin_text_holder_link', { p_pass: pass, p_id: id });
   if (error) throw error;
 }
+
+export async function adminWelcomeHolder(pass, id) {
+  const { error } = await supabase.rpc('ue_admin_welcome_holder', { p_pass: pass, p_id: id });
+  if (error) throw error;
+}

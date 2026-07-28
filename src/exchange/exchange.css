@@ -394,3 +394,19 @@ a{color:inherit}
   border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:800;min-width:52px;
 }
 .day.on{background:var(--night);border-color:var(--night);color:#fff}
+
+/* ---------------- holder getting started ---------------- */
+.start-card h3{margin-bottom:4px;text-transform:none;font-size:19px;letter-spacing:-.02em}
+.start-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:16px}
+.start-steps li{display:flex;gap:12px;align-items:flex-start}
+.start-steps li > div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.start-steps b{font-size:15px}
+.start-steps span{font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
+.start-steps .btn{align-self:flex-start;margin-top:3px}
+.start-mark{
+  flex:none;width:26px;height:26px;border-radius:99px;display:grid;place-items:center;
+  font-size:13px;font-weight:900;background:var(--night);color:#fff;margin-top:1px;
+}
+.start-steps li.done .start-mark{background:var(--green)}
+.start-steps li.done b{color:var(--ink-soft);text-decoration:line-through;text-decoration-thickness:1px}
+.start-steps li.done span,.start-steps li.done .btn{display:none}

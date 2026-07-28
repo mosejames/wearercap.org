@@ -775,6 +775,11 @@ function HolderHome({ token }) {
   const live = bins.filter((b) => !b.retired);
   const todo = queue.length + pickups.length;
 
+  // Setup ticks itself off as they actually do it, then disappears for good.
+  const counted = (inventory || []).some((i) => i.qty > 0);
+  const scheduled = !!holder.availability_set_at;
+  const settingUp = !counted || !scheduled;
+
   if (printBins) {
     return (
       <section className="print-sheet">
@@ -820,6 +825,13 @@ function HolderHome({ token }) {
         </div>
       </div>
 
+      {tab === 'todo' && settingUp && (
+        <GettingStarted
+          holder={holder} counted={counted} scheduled={scheduled}
+          hasBins={live.length > 0} go={setTab}
+        />
+      )}
+
       {tab === 'todo' && (
         <HolderTodo holder={holder} bins={bins} queue={queue} pickups={pickups} reload={load} />
       )}
@@ -842,6 +854,58 @@ function HolderHome({ token }) {
         </section>
       )}
     </>
+  );
+}
+
+// Three things, and it says which one is still waiting. Once both jobs are
+// done this never shows again — nobody wants a tutorial on their fifth visit.
+function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
+  const steps = [
+    {
+      done: counted,
+      title: 'Count what you already have',
+      body: hasBins
+        ? 'A grid under My bins, pre-filled with anything we know about. Type roughly what’s in there and save — rough is fine, it’s a bin.'
+        : 'No bin assigned to you yet. RCAP will sort that out and it’ll show up here.',
+      cta: hasBins ? ['My bins', 'counts'] : null,
+    },
+    {
+      done: scheduled,
+      title: 'Say which mornings work',
+      body: 'Handoffs happen at morning drop-off. Tap your easy days and add how a family will spot you — “blue Highlander, I park by the gym.” You can also offer to send things in with your own student.',
+      cta: ['My setup', 'me'],
+    },
+    {
+      done: false, informational: true,
+      title: 'Then just watch for texts',
+      body: 'When a family requests something from your bin we’ll text you what it is, who it’s for, and the morning they picked. Bag it, hand it over, tap “Handed it off.” That’s the job.',
+      cta: null,
+    },
+  ];
+
+  return (
+    <section className="shell section">
+      <div className="card start-card">
+        <h3>Welcome, {holder.name.split(' ')[0]} 👋</h3>
+        <p className="fine">
+          Two quick things and you’re set up. This disappears once they’re done.
+        </p>
+        <ol className="start-steps">
+          {steps.map((s, i) => (
+            <li key={s.title} className={s.done ? 'done' : ''}>
+              <span className="start-mark">{s.done ? '✓' : s.informational ? '·' : i + 1}</span>
+              <div>
+                <b>{s.title}</b>
+                <span>{s.body}</span>
+                {s.cta && !s.done && (
+                  <button className="btn small" onClick={() => go(s.cta[1])}>{s.cta[0]} →</button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
   );
 }
 
@@ -1890,6 +1954,18 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
               setLinkFor(null);
             }}
           >{linkFor.phone ? `Text it to ${linkFor.phone}` : 'No cell on file — add one first'}</button>
+          <button
+            className="btn ghost wide"
+            disabled={!linkFor.phone && !linkFor.email}
+            onClick={async () => {
+              await act(() => db.adminWelcomeHolder(pass, linkFor.id));
+              setLinkFor(null);
+            }}
+          >Send the whole welcome again</button>
+          <p className="fine">
+            The welcome goes out automatically the moment someone is added with a cell
+            or an email — this is for when it needs saying twice.
+          </p>
         </Sheet>
       )}
 
