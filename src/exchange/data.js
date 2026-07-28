@@ -4,13 +4,44 @@ import { supabase } from '../carpool/supabaseClient.js';
 // All Supabase traffic for the Uniform Exchange lives here.
 // ---------------------------------------------------------------------------
 
-export async function listBins() {
+export async function listHolders() {
   const { data, error } = await supabase
-    .from('ue_bins')
+    .from('ue_holders')
     .select('*')
-    .order('created_at', { ascending: true });
+    .order('name', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+// A bin is joined to its holder here, so the rest of the app can keep reading
+// bin.holder_name / bin.carline_days without caring that the person is now
+// their own record.
+export async function listBins(holders = null) {
+  const [{ data, error }, hs] = await Promise.all([
+    supabase.from('ue_bins').select('*').order('created_at', { ascending: true }),
+    holders ? Promise.resolve(holders) : listHolders().catch(() => []),
+  ]);
+  if (error) throw error;
+  const byId = new Map((hs || []).map((h) => [h.id, h]));
+  return (data || []).map((b) => {
+    const h = byId.get(b.holder_id);
+    if (!h) return b;
+    return {
+      ...b,
+      holder: h,
+      holder_name: h.name,
+      holder_house: h.house,
+      holder_phone: h.phone,
+      holder_email: h.email,
+      holder_note: h.note,
+      holder_student: h.student,
+      offers_carline: h.offers_carline,
+      offers_student: h.offers_student,
+      carline_days: h.carline_days,
+      carline_when: h.carline_when,
+      carline_spot: h.carline_spot,
+    };
+  });
 }
 
 export async function listInventory() {
@@ -223,5 +254,52 @@ export async function handoffSent(id, actor = '') {
 
 export async function handoffReceived(id) {
   const { error } = await supabase.rpc('ue_handoff_received', { p_id: id });
+  if (error) throw error;
+}
+
+export async function adminHolder(pass, action, id = null, f = {}) {
+  const { data, error } = await supabase.rpc('ue_admin_holder', {
+    p_pass: pass, p_action: action, p_id: id,
+    p_name: f.name ?? null, p_phone: f.phone ?? null, p_email: f.email ?? null,
+    p_house: f.house ?? null, p_student: f.student ?? null, p_note: f.note ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function setHolderAvailability(holderId, f) {
+  const { error } = await supabase.rpc('ue_holder_availability', {
+    p_id: holderId,
+    p_offers_carline: f.offersCarline ?? null,
+    p_offers_student: f.offersStudent ?? null,
+    p_days: f.days ?? null,
+    p_when: f.when ?? null,
+    p_spot: f.spot ?? null,
+    p_student: f.holderStudent ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function adminBin2(pass, action, id = null, f = {}) {
+  const { data, error } = await supabase.rpc('ue_admin_bin2', {
+    p_pass: pass, p_action: action, p_id: id,
+    p_code: f.code ?? null, p_name: f.name ?? null,
+    p_holder_id: f.holderId ?? null, p_focus: f.focus ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminReassign(pass, id, binId) {
+  const { error } = await supabase.rpc('ue_admin_reassign', {
+    p_pass: pass, p_id: id, p_bin: binId,
+  });
+  if (error) throw error;
+}
+
+export async function adminRequest(pass, id, status = null, note = null) {
+  const { error } = await supabase.rpc('ue_admin_request', {
+    p_pass: pass, p_id: id, p_status: status, p_note: note,
+  });
   if (error) throw error;
 }

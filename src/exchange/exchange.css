@@ -313,3 +313,43 @@ a{color:inherit}
   border-radius:10px;padding:10px 13px;font-size:13.5px;font-weight:800;min-width:52px;
 }
 .day.on{background:var(--night);border-color:var(--night);color:#fff}
+
+/* ---------------- back office navigation ---------------- */
+.crumb{
+  display:inline-block;margin:0 0 10px;font-size:12.5px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;
+}
+.crumb:hover{color:var(--ink)}
+.admin-nav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}
+.admin-nav a{
+  display:flex;flex-direction:column;gap:3px;text-decoration:none;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:15px var(--card-pad);transition:transform .15s ease,box-shadow .15s ease;
+}
+.admin-nav a:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.admin-nav b{font-size:15px;letter-spacing:-.01em}
+.admin-nav span{font-size:12px;color:var(--ink-soft)}
+.warn-card{border-left:5px solid var(--gold)}
+.plainlist{list-style:none;margin:0;padding:0;font-size:13.5px;line-height:1.6}
+.plainlist li{padding:5px 0;border-bottom:1px dashed var(--line)}
+.plainlist li:last-child{border-bottom:0}
+
+/* ---------------- holders ---------------- */
+.holder-card{display:flex;flex-direction:column;gap:12px}
+.holder-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.holder-head > div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.holder-head b{font-size:15.5px}
+.holder-head span{font-size:13px;color:var(--ink-soft)}
+.bin-rows{list-style:none;margin:0;padding:0}
+.bin-rows li{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 0;border-top:1px dashed var(--line);font-size:14px;
+}
+.bin-rows li a{text-decoration:none}
+.bin-rows li em{font-style:normal;color:var(--ink-soft);font-size:13px}
+.bin-rows li.retired{opacity:.45}
+.holder-card > .btn{align-self:flex-start}
+
+/* ---------------- request editing ---------------- */
+.sheet-danger{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
+.danger-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}

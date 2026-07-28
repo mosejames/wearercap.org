@@ -18,7 +18,7 @@ function parseHash() {
   const [head, ...rest] = h.split('/');
   if (head === 'bin' && rest[0]) return { view: 'bin', code: decodeURIComponent(rest[0]).toUpperCase() };
   if (head === 'requests') return { view: 'requests' };
-  if (head === 'admin') return { view: 'admin' };
+  if (head === 'admin') return { view: 'admin', sub: rest[0] || '' };
   return { view: 'home' };
 }
 
@@ -65,6 +65,7 @@ export default function App() {
   const [inv, setInv] = useState([]);
   const [reqs, setReqs] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [holders, setHolders] = useState([]);
   const [, setTypes] = useState([]); // re-render when the live types land
   const [settings, setSettings] = useState({});
   const [loaded, setLoaded] = useState(false);
@@ -72,11 +73,12 @@ export default function App() {
 
   const refresh = async () => {
     try {
+      const hs = await db.listHolders().catch(() => []);
       const [b, i, r, o, t, st] = await Promise.all([
-        db.listBins(), db.listInventory(), db.listRequests(), db.listOffers(),
+        db.listBins(hs), db.listInventory(), db.listRequests(), db.listOffers(),
         db.listItemTypes().catch(() => []), db.listSettings().catch(() => ({})),
       ]);
-      setItemTypes(t); setTypes(t); setSettings(st);
+      setItemTypes(t); setTypes(t); setSettings(st); setHolders(hs);
       setBins(b); setInv(i); setReqs(r); setOffers(o); setErr('');
     } catch (e) {
       setErr(e.message || 'Could not reach the exchange.');
@@ -122,7 +124,8 @@ export default function App() {
       ) : route.view === 'requests' ? (
         <RequestsView bins={bins} reqs={reqs} settings={settings} refresh={refresh} />
       ) : route.view === 'admin' ? (
-        <AdminView bins={bins} inv={inv} reqs={reqs} offers={offers} settings={settings} refresh={refresh} />
+        <AdminView sub={route.sub} bins={bins} holders={holders} inv={inv} reqs={reqs}
+          offers={offers} settings={settings} refresh={refresh} />
       ) : (
         <Home bins={bins} inv={inv} reqs={reqs} refresh={refresh} />
       )}
@@ -842,6 +845,7 @@ function BinView({ bin, code, bins, inv, reqs, offers, refresh }) {
 // The holder answers "when are you around?" once. Everything downstream —
 // the dates a requester taps, the texts — comes from this.
 function AvailabilityCard({ bin, refresh }) {
+  const holderId = bin.holder_id;
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({
     offersCarline: bin.offers_carline !== false,
@@ -860,7 +864,8 @@ function AvailabilityCard({ bin, refresh }) {
   const save = async () => {
     setBusy(true); setErr('');
     try {
-      await db.setAvailability(bin.id, f);
+      if (holderId) await db.setHolderAvailability(holderId, f);
+      else await db.setAvailability(bin.id, f);
       setOpen(false); refresh();
     } catch (e) {
       setErr(e.message || "That didn't save — try again.");
@@ -875,6 +880,7 @@ function AvailabilityCard({ bin, refresh }) {
           {bin.carline_spot && <span>📍 {bin.carline_spot}</span>}
         </div>
         <button className="btn small" onClick={() => setOpen(true)}>Edit my availability</button>
+        <p className="fine">This is your schedule — it covers every bin you hold.</p>
       </div>
     );
   }
@@ -1033,17 +1039,15 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
 // ---------------------------------------------------------------------------
 // Back office — passcode-gated in the database, like the Recap.
 // ---------------------------------------------------------------------------
-function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
+function AdminView({ sub, bins, holders, inv, reqs, offers, settings, refresh }) {
   const [pass, setPass] = useState(sessionStorage.getItem('ue-pass') || '');
   const [ok, setOk] = useState(!!sessionStorage.getItem('ue-pass'));
   const [msg, setMsg] = useState('');
-  const [printBins, setPrintBins] = useState(null); // null | array of bins
-  const [editBin, setEditBin] = useState(null); // null | 'new' | bin row
+  const [printBins, setPrintBins] = useState(null);
 
   const tryPass = async () => {
     try {
-      // Any admin call verifies the passcode server-side; a no-op update works.
-      await db.adminBin(pass, 'update', bins[0]?.id, {});
+      await db.adminHolder(pass, 'update', holders[0]?.id, {});
       sessionStorage.setItem('ue-pass', pass);
       setOk(true); setMsg('');
     } catch {
@@ -1063,12 +1067,6 @@ function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
     );
   }
 
-  const waitlist = reqs.filter((r) => r.status === 'open');
-  const needsTime = reqs.filter((r) => r.status === 'assigned');
-  const overdue = reqs.filter(
-    (r) => ['scheduled', 'handed_off'].includes(r.status) && dueInfo(r.due_at)?.overdue
-  );
-  const driftRows = drift(inv);
   const act = async (fn) => {
     try { await fn(); setMsg(''); refresh(); }
     catch (e) { setMsg(e.message || 'Nope.'); }
@@ -1084,6 +1082,7 @@ function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
             <div className="label" key={b.id}>
               <div dangerouslySetInnerHTML={{ __html: qrSvg(binUrl(b.code), 240) }} />
               <b>{b.name}</b>
+              {b.focus && <span>Mostly {b.focus}</span>}
               {b.holder_name && <span>In the care of {b.holder_name}</span>}
               <span>Scan to see inside · add what you drop in</span>
               <code>{b.code} · wearercap.org/uniform-exchange</code>
@@ -1094,121 +1093,407 @@ function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
     );
   }
 
+  const shared = { pass, act, msg, bins, holders, reqs, refresh, setPrintBins };
+  if (sub === 'bins')     return <AdminBins {...shared} />;
+  if (sub === 'types')    return <AdminItemTypes {...shared} />;
+  if (sub === 'requests') return <AdminRequests {...shared} />;
+  if (sub === 'settings') return <AdminSettings {...shared} settings={settings} />;
+  return <AdminHome {...shared} inv={inv} offers={offers} />;
+}
+
+// A back-office page header with a way back to the dashboard.
+function AdminPage({ title, children, msg }) {
+  return (
+    <section className="shell section">
+      <a className="crumb" href="#/admin">← Back office</a>
+      <h2 className="h2">{title}</h2>
+      {msg && <p className="err">{msg}</p>}
+      {children}
+    </section>
+  );
+}
+
+// The dashboard is only what needs attention today. Everything you *manage*
+// lives one tap away.
+function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, setPrintBins }) {
+  const waitlist = reqs.filter((r) => r.status === 'open');
+  const needsTime = reqs.filter((r) => r.status === 'assigned');
+  const pending = reqs.filter((r) => ['open','assigned','scheduled','handed_off'].includes(r.status));
+  const overdue = reqs.filter(
+    (r) => ['scheduled','handed_off'].includes(r.status) && dueInfo(r.due_at)?.overdue
+  );
+  const noPhone = bins.filter((b) => !b.retired && !(b.holder_phone || '').trim()).length;
+
   return (
     <section className="shell section">
       <h2 className="h2">Back office</h2>
       {msg && <p className="err">{msg}</p>}
-      <div className="admin-actions">
-        <button className="btn" onClick={() => setEditBin('new')}>＋ New bin</button>
-        <button className="btn ghost" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
-          🖨 Print all QR labels
-        </button>
+
+      <div className="admin-nav">
+        <a href="#/admin/requests">
+          <b>Requests</b><span>{pending.length} in flight</span>
+        </a>
+        <a href="#/admin/bins">
+          <b>Bins &amp; holders</b>
+          <span>{holders.filter((h) => h.active !== false).length} people · {bins.filter((b) => !b.retired).length} bins</span>
+        </a>
+        <a href="#/admin/types">
+          <b>Item types</b><span>{visibleItemTypes().length} in the dropdowns</span>
+        </a>
+        <a href="#/admin/settings">
+          <b>Settings</b><span>Handoff options · texts</span>
+        </a>
       </div>
+
+      {noPhone > 0 && (
+        <div className="card warn-card">
+          <h3>📱 {noPhone} bin{noPhone > 1 ? 's' : ''} with no holder phone</h3>
+          <p className="fine">
+            No phone means that holder never hears a request landed.{' '}
+            <a href="#/admin/bins">Add their number</a>.
+          </p>
+        </div>
+      )}
 
       {overdue.length > 0 && (
         <div className="card overdue-card">
           <h3>⏰ Handoffs that haven't closed</h3>
-          <ul>
+          <ul className="plainlist">
             {overdue.map((r) => (
               <li key={r.id}>
-                <b>{typeLabel(r.item_type)}{r.house ? ` (${houseInfo(r.house).name})` : ''} · {r.size}</b> for {r.parent_name}
+                <b>{typeLabel(r.item_type)} · {r.size}</b> for {r.parent_name}
                 {r.contact ? ` (${r.contact})` : ''} — {bins.find((b) => b.id === r.bin_id)?.holder_name || 'bin'}
                 , {handoffSummary(r) || 'no plan'} · {dueInfo(r.due_at).label}
               </li>
             ))}
           </ul>
           <p className="fine">
-            Either the handoff slipped or nobody tapped “Got it.” A nudge in the House
-            group chat usually does it.
+            Either the handoff slipped or nobody tapped “Got it.”{' '}
+            <a href="#/admin/requests">Fix them here</a>.
           </p>
         </div>
       )}
 
-      {needsTime.length > 0 && (
+      {(needsTime.length > 0 || waitlist.length > 0) && (
         <div className="card">
-          <h3>Waiting on a family to pick a time</h3>
-          <ul className="req-list">
-            {needsTime.map((r) => (
-              <li key={r.id} className="req">
-                <div className="req-main">
-                  <b>{typeLabel(r.item_type)} · {r.size}</b>
-                  <span>
-                    {r.parent_name}{r.contact ? ` · ${r.contact}` : ''} —{' '}
-                    {bins.find((b) => b.id === r.bin_id)?.name || 'bin'} · asked {fmtDay(r.created_at)}
-                  </span>
-                </div>
-              </li>
-            ))}
+          <h3>Needs a nudge</h3>
+          <ul className="plainlist">
+            {needsTime.length > 0 && (
+              <li>{needsTime.length} waiting on a family to pick a handoff time</li>
+            )}
+            {waitlist.length > 0 && (
+              <li>{waitlist.length} on the waitlist with nothing in stock yet</li>
+            )}
           </ul>
+          <p className="fine"><a href="#/admin/requests">Open requests</a></p>
         </div>
       )}
 
-      {waitlist.length > 0 && (
-        <div className="card">
-          <h3>Waitlist — assign when stock lands</h3>
-          <ul className="req-list">
-            {waitlist.map((r) => (
-              <li key={r.id} className="req">
-                <div className="req-main">
-                  <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
-                  <span>{r.parent_name}{r.contact ? ` · ${r.contact}` : ''}</span>
-                </div>
-                <div className="req-side">
-                  <select defaultValue="" onChange={(e) => e.target.value &&
-                    act(() => db.assignRequest(r.id, e.target.value))}>
-                    <option value="" disabled>Assign to bin…</option>
-                    {bins.filter((b) => !b.retired).map((b) =>
-                      <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <AdminOffers bins={bins} offers={offers} refresh={refresh} />
+      <AdminReports bins={bins} inv={inv} reqs={reqs} />
+      <AdminNotifications />
+    </section>
+  );
+}
 
-      <div className="card">
-        <h3>Bins &amp; holders</h3>
-        <p className="fine">
-          A bin is a person. The holder's phone gets the "your bin is queued up" texts;
-          multiple bins per house is normal — just add another.
-        </p>
-        <ul className="bin-admin">
-          {bins.map((b) => (
-            <li key={b.id} className={b.retired ? 'retired' : ''}>
-              <div className="bin-admin-main">
-                <a href={`#/bin/${b.code}`}><b>{b.code}</b> {b.name} <HouseTag id={b.holder_house} /></a>
+// ---------------------------------------------------------------------------
+// Every request still in flight, and the levers to fix one: move it to another
+// bin, put it back on the waitlist, close it, or cancel it.
+// ---------------------------------------------------------------------------
+function AdminRequests({ pass, act, msg, bins, reqs }) {
+  const [tab, setTab] = useState('pending');
+  const [editing, setEditing] = useState(null);
+
+  const pending = reqs.filter((r) => ['open','assigned','scheduled','handed_off'].includes(r.status));
+  const shown = tab === 'pending' ? pending
+    : tab === 'done' ? reqs.filter((r) => r.status === 'fulfilled')
+    : reqs.filter((r) => r.status === 'canceled');
+
+  const binOf = (id) => bins.find((b) => b.id === id);
+
+  return (
+    <AdminPage title="Requests" msg={msg}>
+      <div className="mode-tabs">
+        {[['pending', `In flight (${pending.length})`], ['done', 'Received'], ['canceled', 'Canceled']]
+          .map(([k, label]) => (
+            <button key={k} className={`mode ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>
+              {label}
+            </button>
+          ))}
+      </div>
+
+      <ul className="req-list">
+        {shown.length === 0 && <li className="empty">Nothing here.</li>}
+        {shown.map((r) => {
+          const bin = binOf(r.bin_id);
+          const due = ['scheduled','handed_off'].includes(r.status) ? dueInfo(r.due_at) : null;
+          return (
+            <li key={r.id} className={`req ${due?.overdue ? 'overdue' : ''}`}>
+              <div className="req-main">
+                <b>{typeLabel(r.item_type)} · {r.size}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>
-                  {b.holder_name || 'no holder yet'}
-                  {b.holder_phone ? ` · 📱 ${b.holder_phone}` : ' · no phone (no holder texts!)'}
-                  {b.holder_email ? ` · ✉️ ${b.holder_email}` : ''}
+                  {r.parent_name}{r.student ? ` · ${r.student}` : ''}
+                  {r.contact ? ` · ${r.contact}` : ' · no contact'}
+                </span>
+                <span className="plan">
+                  {bin ? `${bin.code} · ${bin.holder_name || 'no holder'}` : 'no bin yet'}
+                  {handoffSummary(r) ? ` · 🤝 ${handoffSummary(r)}` : ''}
+                  {` · asked ${fmtDay(r.created_at)}`}
                 </span>
               </div>
-              <div className="bin-admin-actions">
-                <button className="btn small" onClick={() => setEditBin(b)}>Edit</button>
-                <button className="btn small ghost" onClick={() => setPrintBins([b])}>🖨 Label</button>
-                <button className="linkish" onClick={() =>
-                  act(() => db.adminBin(pass, b.retired ? 'restore' : 'retire', b.id))}>
-                  {b.retired ? 'restore' : 'retire'}
-                </button>
+              <div className="req-side">
+                <span className={`chip chip-${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+                {['open','assigned','scheduled','handed_off'].includes(r.status) && (
+                  <button className="btn small" onClick={() => setEditing(r)}>Edit</button>
+                )}
               </div>
             </li>
+          );
+        })}
+      </ul>
+
+      {editing && (
+        <RequestEditSheet
+          req={editing} bins={bins} pass={pass} act={act}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </AdminPage>
+  );
+}
+
+function RequestEditSheet({ req, bins, pass, act, onClose }) {
+  const [bin, setBin] = useState(req.bin_id || '');
+  const [note, setNote] = useState(req.note || '');
+  const live = bins.filter((b) => !b.retired);
+
+  const done = (fn) => async () => { await act(fn); onClose(); };
+
+  return (
+    <Sheet onClose={onClose} title={`${typeLabel(req.item_type)} · ${req.size}`}>
+      <p className="fine">
+        For <b>{req.parent_name}</b>{req.student ? ` (${req.student})` : ''}
+        {req.contact ? ` · ${req.contact}` : ''} · asked {fmtDay(req.created_at)}
+      </p>
+
+      <label>Move to another bin
+        <select value={bin} onChange={(e) => setBin(e.target.value)}>
+          <option value="">— pick a bin —</option>
+          {live.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.code} · {b.holder_name || 'no holder'}{b.focus ? ` (${b.focus})` : ''}
+            </option>
           ))}
-        </ul>
+        </select>
+      </label>
+      <p className="fine">
+        Moving it resets the handoff — the new holder keeps different hours, so the
+        family picks a fresh time and both of them get a text.
+      </p>
+      <button
+        className="btn wide"
+        disabled={!bin || bin === req.bin_id}
+        onClick={done(() => db.adminReassign(pass, req.id, bin))}
+      >Move it</button>
+
+      <label style={{ marginTop: 18 }}>Note
+        <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} />
+      </label>
+      <button className="btn ghost wide" onClick={done(() => db.adminRequest(pass, req.id, null, note))}>
+        Save note
+      </button>
+
+      <div className="sheet-danger">
+        <p className="fine">Force the status when real life got ahead of the app:</p>
+        <div className="danger-row">
+          <button className="btn small ghost" onClick={done(() => db.adminRequest(pass, req.id, 'open'))}>
+            Back to waitlist
+          </button>
+          <button className="btn small flame" onClick={done(() => db.adminRequest(pass, req.id, 'fulfilled'))}>
+            Mark received
+          </button>
+          <button className="linkish" onClick={done(() => db.adminRequest(pass, req.id, 'canceled'))}>
+            cancel request
+          </button>
+        </div>
       </div>
+    </Sheet>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// People, and the bins each of them carries.
+// ---------------------------------------------------------------------------
+function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
+  const [editHolder, setEditHolder] = useState(null); // 'new' | holder
+  const [editBin, setEditBin] = useState(null);       // {holderId} | bin
+
+  const binsOf = (hid) => bins.filter((b) => b.holder_id === hid);
+  const orphans = bins.filter((b) => !b.holder_id);
+
+  return (
+    <AdminPage title="Bins & holders" msg={msg}>
+      <p className="sub">
+        One parent, as many bins as they can carry — a shirt bin and a pants bin is normal.
+        Phone and schedule live on the person, so you only ever enter them once.
+      </p>
+      <div className="admin-actions">
+        <button className="btn" onClick={() => setEditHolder('new')}>＋ New holder</button>
+        <button className="btn ghost" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
+          🖨 Print all QR labels
+        </button>
+      </div>
+
+      {holders.map((h) => {
+        const mine = binsOf(h.id);
+        return (
+          <div className={`card holder-card ${h.active === false ? 'retired' : ''}`} key={h.id}>
+            <div className="holder-head">
+              <div>
+                <b>{h.name} <HouseTag id={h.house} /></b>
+                <span>
+                  {h.phone ? `📱 ${h.phone}` : '📱 no phone — they get no texts'}
+                  {h.email ? ` · ✉️ ${h.email}` : ''}
+                </span>
+                <span className="fine">{availabilityLine(h)}</span>
+              </div>
+              <div className="bin-admin-actions">
+                <button className="btn small" onClick={() => setEditHolder(h)}>Edit</button>
+                <button className="linkish" onClick={() =>
+                  act(() => db.adminHolder(pass, h.active === false ? 'restore' : 'deactivate', h.id))}>
+                  {h.active === false ? 'restore' : 'retire'}
+                </button>
+              </div>
+            </div>
+
+            <ul className="bin-rows">
+              {mine.length === 0 && <li className="fine">No bins yet.</li>}
+              {mine.map((b) => (
+                <li key={b.id} className={b.retired ? 'retired' : ''}>
+                  <a href={`#/bin/${b.code}`}>
+                    <b>{b.code}</b> {b.name}{b.focus ? <em> · {b.focus}</em> : null}
+                  </a>
+                  <div className="bin-admin-actions">
+                    <button className="linkish" onClick={() => setEditBin(b)}>edit</button>
+                    <button className="linkish" onClick={() => setPrintBins([b])}>label</button>
+                    <button className="linkish" onClick={() =>
+                      act(() => db.adminBin2(pass, b.retired ? 'restore' : 'retire', b.id))}>
+                      {b.retired ? 'restore' : 'retire'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <button className="btn small ghost" onClick={() => setEditBin({ holderId: h.id })}>
+              ＋ Add a bin for {h.name.split(' ')[0]}
+            </button>
+          </div>
+        );
+      })}
+
+      {orphans.length > 0 && (
+        <div className="card">
+          <h3>Bins with no holder</h3>
+          <ul className="bin-rows">
+            {orphans.map((b) => (
+              <li key={b.id}>
+                <a href={`#/bin/${b.code}`}><b>{b.code}</b> {b.name}</a>
+                <button className="linkish" onClick={() => setEditBin(b)}>assign a holder</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {editHolder && (
+        <HolderSheet
+          holder={editHolder === 'new' ? null : editHolder}
+          onSave={async (f) => {
+            await act(() => db.adminHolder(pass, editHolder === 'new' ? 'create' : 'update',
+              editHolder === 'new' ? null : editHolder.id, f));
+            setEditHolder(null);
+          }}
+          onClose={() => setEditHolder(null)}
+        />
+      )}
 
       {editBin && (
         <BinSheet
-          bin={editBin === 'new' ? null : editBin}
-          onSave={async (fields) => {
-            await db.adminBin(pass, editBin === 'new' ? 'create' : 'update',
-              editBin === 'new' ? null : editBin.id, fields);
-            setEditBin(null); refresh();
+          bin={editBin.id ? editBin : null}
+          holders={holders}
+          defaultHolderId={editBin.holderId || editBin.holder_id}
+          onSave={async (f) => {
+            await act(() => db.adminBin2(pass, editBin.id ? 'update' : 'create',
+              editBin.id || null, f));
+            setEditBin(null);
           }}
           onClose={() => setEditBin(null)}
         />
       )}
+    </AdminPage>
+  );
+}
 
+function HolderSheet({ holder, onSave, onClose }) {
+  const [f, setF] = useState({
+    name: holder?.name || '', phone: holder?.phone || '', email: holder?.email || '',
+    house: holder?.house || '', student: holder?.student || '', note: holder?.note || '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const save = async () => {
+    if (!f.name.trim()) { setErr('A name is the one thing we need.'); return; }
+    setBusy(true); setErr('');
+    try { await onSave(f); } catch (e) { setErr(e.message || 'Nope.'); setBusy(false); }
+  };
+
+  return (
+    <Sheet onClose={onClose} title={holder ? `Edit ${holder.name}` : 'New holder'}>
+      <div className="grid2">
+        <label>Name *
+          <input value={f.name} onChange={set('name')} placeholder="Shekita James" maxLength={60} />
+        </label>
+        <label>House
+          <select value={f.house} onChange={set('house')}>
+            <option value="">None / mixed</option>
+            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label>Cell — this is what gets the "a request landed in your bin" texts
+        <input value={f.phone} onChange={set('phone')} inputMode="tel" placeholder="404-555-1234" maxLength={40} />
+      </label>
+      <label>Email
+        <input value={f.email} onChange={set('email')} inputMode="email" maxLength={120} />
+      </label>
+      <label>Their student (name and grade)
+        <input value={f.student} onChange={set('student')} placeholder="Cayenne · 7th" maxLength={80} />
+      </label>
+      <label>Note
+        <input value={f.note} onChange={set('note')} placeholder="Texts beat calls" maxLength={200} />
+      </label>
+      {err && <p className="err">{err}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={save}>
+        {busy ? 'Saving…' : holder ? 'Save changes' : 'Create holder'}
+      </button>
+      {holder && (
+        <p className="fine">
+          Handing their bins to someone else? Make the new person a holder, then
+          edit each bin to point at them — the bins and their history stay put.
+        </p>
+      )}
+    </Sheet>
+  );
+}
+
+function AdminSettings({ pass, act, msg, settings }) {
+  return (
+    <AdminPage title="Settings" msg={msg}>
       <div className="card">
         <h3>Handoff options</h3>
         <p className="fine">
@@ -1225,41 +1510,19 @@ function AdminView({ bins, inv, reqs, offers, settings, refresh }) {
           <span>Offer “RCA front desk” as a handoff choice</span>
         </label>
       </div>
-
-      <AdminItemTypes pass={pass} refresh={refresh} act={act} />
-      <AdminOffers bins={bins} offers={offers} refresh={refresh} />
-      <AdminReports bins={bins} inv={inv} reqs={reqs} />
       <AdminNotifications />
-
-      {driftRows.length > 0 && (
-        <div className="card">
-          <h3>Count drift (bins that went below zero)</h3>
-          <ul>
-            {driftRows.map((d, i) => (
-              <li key={i}>
-                {bins.find((b) => b.id === d.bin_id)?.name || d.bin_id}: {typeLabel(d.item_type)}{d.house ? ` (${houseInfo(d.house).name})` : ''} · {d.size} at {d.qty}
-              </li>
-            ))}
-          </ul>
-          <p className="fine">Harmless — it means takes were logged that adds never were. It self-corrects at the next add.</p>
-        </div>
-      )}
-    </section>
+    </AdminPage>
   );
 }
 
-// Create or edit a bin — the whole person, not just a name: the phone is
-// what receives the "your bin is queued up" texts, the email is on file for
-// anything that needs it.
-function BinSheet({ bin, onSave, onClose }) {
+// A bin now just needs a code, a name, who carries it, and what it mostly
+// holds. The person's phone and schedule live on the holder record.
+function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
   const [f, setF] = useState({
     code: bin?.code || '',
     name: bin?.name || '',
-    holderName: bin?.holder_name || '',
-    holderHouse: bin?.holder_house || '',
-    holderPhone: bin?.holder_phone || '',
-    holderEmail: bin?.holder_email || '',
-    holderNote: bin?.holder_note || '',
+    holderId: bin?.holder_id || defaultHolderId || '',
+    focus: bin?.focus || '',
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -1268,12 +1531,8 @@ function BinSheet({ bin, onSave, onClose }) {
   const save = async () => {
     if (!bin && (!f.code.trim() || !f.name.trim())) { setErr('Code and name are required.'); return; }
     setBusy(true); setErr('');
-    try {
-      await onSave({ ...f, code: f.code.trim().toUpperCase() });
-    } catch (e) {
-      setErr(e.message || "That didn't save — try again.");
-      setBusy(false);
-    }
+    try { await onSave({ ...f, code: f.code.trim().toUpperCase() }); }
+    catch (e) { setErr(e.message || "That didn't save — try again."); setBusy(false); }
   };
 
   return (
@@ -1283,56 +1542,46 @@ function BinSheet({ bin, onSave, onClose }) {
           <input value={f.code} onChange={set('code')} placeholder="AMI-2" maxLength={20} disabled={!!bin} />
         </label>
         <label>Bin name *
-          <input value={f.name} onChange={set('name')} placeholder="Amistad Bin 2" maxLength={60} />
+          <input value={f.name} onChange={set('name')} placeholder="Shekita's Shirt Bin" maxLength={60} />
         </label>
       </div>
-      <div className="grid2">
-        <label>Holder name
-          <input value={f.holderName} onChange={set('holderName')} placeholder="Shekita James" maxLength={60} />
-        </label>
-        <label>House
-          <select value={f.holderHouse} onChange={set('holderHouse')}>
-            <option value="">None / mixed</option>
-            {HOUSE_CHOICES.filter((h) => h.id).map((h) => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <label>Holder cell — gets the "request queued to your bin" and pickup texts
-        <input value={f.holderPhone} onChange={set('holderPhone')} inputMode="tel" placeholder="404-555-1234" maxLength={40} />
+      <label>Who carries it?
+        <select value={f.holderId} onChange={set('holderId')}>
+          <option value="">— pick a holder —</option>
+          {(holders || []).filter((h) => h.active !== false).map((h) => (
+            <option key={h.id} value={h.id}>{h.name}</option>
+          ))}
+        </select>
       </label>
-      <label>Holder email
-        <input value={f.holderEmail} onChange={set('holderEmail')} inputMode="email" placeholder="shekita@example.com" maxLength={120} />
+      <label>What's mostly in it? (optional)
+        <input value={f.focus} onChange={set('focus')} placeholder="Shirts · Pants · Everything" maxLength={40} />
       </label>
-      <label>Note (shows on the bin page)
-        <input value={f.holderNote} onChange={set('holderNote')} placeholder="Texts beat calls · pickup evenings" maxLength={200} />
-      </label>
-      {bin && (
-        <p className="fine">
-          Transferring this bin to another adult? Replace the holder's name, cell, and email
-          here — the physical bin and its QR label move with them, history stays put.
-        </p>
-      )}
       {err && <p className="err">{err}</p>}
       <button className="btn flame wide" disabled={busy} onClick={save}>
         {busy ? 'Saving…' : bin ? 'Save changes' : 'Create bin'}
       </button>
+      <p className="fine">
+        Moving a bin to a different adult? Change the holder here — the QR label and
+        everything logged in this bin stay exactly as they are.
+      </p>
     </Sheet>
   );
 }
 
 // Item types — hidden ones keep their history but leave the dropdowns.
 // Bring one back (or add something new) without touching code.
-function AdminItemTypes({ pass, refresh, act }) {
+function AdminItemTypes({ pass, refresh, act, msg }) {
   const [adding, setAdding] = useState(false);
   const [nf, setNf] = useState({ id: '', label: '', housed: false });
   const types = allItemTypes();
 
   return (
-    <div className="card">
-      <h3>Item types</h3>
-      <p className="fine">Hidden types keep their history and can come back any time.</p>
+    <AdminPage title="Item types" msg={msg}>
+      <p className="sub">
+        What parents can pick from. Hiding a type keeps every bit of its history —
+        it just leaves the dropdowns until you bring it back.
+      </p>
+      <div className="card">
       <ul className="bin-admin">
         {types.map((t) => (
           <li key={t.id} className={t.hidden ? 'retired' : ''}>
@@ -1378,7 +1627,8 @@ function AdminItemTypes({ pass, refresh, act }) {
       ) : (
         <button className="btn small ghost" onClick={() => setAdding(true)}>＋ Add a type</button>
       )}
-    </div>
+      </div>
+    </AdminPage>
   );
 }
 
