@@ -16,6 +16,11 @@ export const WEEKDAYS = [
 
 export const SLOT_LABEL = { am: 'morning carline', pm: 'afternoon carline' };
 
+// Handoffs happen at morning carline. Afternoon pickup is chaos — everyone
+// leaving at once, nobody able to stop. Anything else is a special
+// arrangement the two families make between themselves.
+export const MORNING_ONLY = true;
+
 const iso = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -27,7 +32,7 @@ export function nextSlots(bin, from = new Date(), count = 4) {
     .filter((d) => d >= 1 && d <= 5);
   if (!days.length) return [];
 
-  const when = bin.carline_when || 'pm';
+  const when = MORNING_ONLY ? 'am' : (bin.carline_when || 'am');
   const slots = when === 'both' ? ['am', 'pm'] : [when];
 
   const out = [];
@@ -73,8 +78,9 @@ export function availabilityLine(bin) {
       .slice().sort()
       .map((n) => WEEKDAYS.find((w) => w.n === n)?.short)
       .filter(Boolean);
-    const when = bin.carline_when === 'both' ? 'morning & afternoon'
-      : bin.carline_when === 'am' ? 'morning' : 'afternoon';
+    const when = MORNING_ONLY ? 'mornings'
+      : bin.carline_when === 'both' ? 'morning & afternoon'
+      : bin.carline_when === 'am' ? 'mornings' : 'afternoons';
     if (days.length === 5) parts.push(`Carline any weekday, ${when}`);
     else if (days.length) parts.push(`Carline ${days.join(' · ')}, ${when}`);
   }

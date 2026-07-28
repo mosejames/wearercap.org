@@ -321,6 +321,8 @@ a{color:inherit}
 }
 .crumb:hover{color:var(--ink)}
 .admin-nav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}
+.admin-nav a:first-child{grid-column:1 / -1}
+.admin-nav a:first-child{grid-column:1 / -1}
 .admin-nav a{
   display:flex;flex-direction:column;gap:3px;text-decoration:none;
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -353,3 +355,13 @@ a{color:inherit}
 /* ---------------- request editing ---------------- */
 .sheet-danger{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line)}
 .danger-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+
+/* ---------------- holders grouped by house ---------------- */
+.house-group{margin:0 0 26px}
+.house-head{
+  display:flex;align-items:center;gap:11px;margin:0 0 11px;
+  padding-bottom:9px;border-bottom:2px solid var(--line);
+}
+.house-head .house-chip{font-size:12px;padding:6px 12px}
+.house-head span{font-size:12px;font-weight:700;color:var(--ink-soft)}
+.holder-head span.missing{color:var(--red)}

@@ -6,10 +6,10 @@ const FRI = new Date(2026, 6, 31);
 
 describe('nextSlots', () => {
   it('offers the holder’s days only, starting tomorrow', () => {
-    const bin = { offers_carline: true, carline_days: [2, 4], carline_when: 'pm' };
+    const bin = { offers_carline: true, carline_days: [2, 4], carline_when: 'am' };
     const s = nextSlots(bin, FRI, 4);
     expect(s.map((x) => x.date)).toEqual(['2026-08-04', '2026-08-06', '2026-08-11', '2026-08-13']);
-    expect(s.every((x) => x.slot === 'pm')).toBe(true);
+    expect(s.every((x) => x.slot === 'am')).toBe(true);
   });
 
   it('never offers today (nobody can make a handoff happen in an hour)', () => {
@@ -19,19 +19,18 @@ describe('nextSlots', () => {
   });
 
   it('skips weekends even when asked for every day', () => {
-    const bin = { offers_carline: true, carline_days: [1, 2, 3, 4, 5], carline_when: 'pm' };
+    const bin = { offers_carline: true, carline_days: [1, 2, 3, 4, 5], carline_when: 'am' };
     const s = nextSlots(bin, FRI, 3);
     // Sat 8/1 and Sun 8/2 are skipped
     expect(s.map((x) => x.date)).toEqual(['2026-08-03', '2026-08-04', '2026-08-05']);
   });
 
-  it('gives both slots on a day when the holder does mornings and afternoons', () => {
-    const bin = { offers_carline: true, carline_days: [1], carline_when: 'both' };
+  it('only ever offers mornings — afternoon carline is too chaotic', () => {
+    const bin = { offers_carline: true, carline_days: [1, 3], carline_when: 'both' };
     const s = nextSlots(bin, FRI, 4);
-    expect(s.slice(0, 2)).toEqual([
-      { date: '2026-08-03', slot: 'am', dow: 1 },
-      { date: '2026-08-03', slot: 'pm', dow: 1 },
-    ]);
+    expect(s.every((x) => x.slot === 'am')).toBe(true);
+    // one slot per day, not two
+    expect(s.map((x) => x.date)).toEqual(['2026-08-03', '2026-08-05', '2026-08-10', '2026-08-12']);
   });
 
   it('returns nothing when the holder does not do carline', () => {
@@ -47,7 +46,6 @@ describe('nextSlots', () => {
 
 describe('slotLabel', () => {
   it('reads like a person wrote it', () => {
-    expect(slotLabel({ date: '2026-08-04', slot: 'pm' })).toBe('Tue, Aug 4 · afternoon carline');
     expect(slotLabel({ date: '2026-08-03', slot: 'am' })).toBe('Mon, Aug 3 · morning carline');
   });
 });
@@ -55,18 +53,18 @@ describe('slotLabel', () => {
 describe('handoffSummary', () => {
   it('describes each mode', () => {
     expect(handoffSummary({ handoff_mode: 'student' })).toBe('Student to student');
-    expect(handoffSummary({ handoff_mode: 'carline', handoff_date: '2026-08-04', handoff_slot: 'pm' }))
-      .toBe('Tue, Aug 4 · afternoon carline');
+    expect(handoffSummary({ handoff_mode: 'carline', handoff_date: '2026-08-04', handoff_slot: 'am' }))
+      .toBe('Tue, Aug 4 · morning carline');
     expect(handoffSummary({ handoff_mode: '' })).toBe('');
   });
 });
 
 describe('availabilityLine', () => {
   it('summarises what a holder offers', () => {
-    expect(availabilityLine({ offers_carline: true, carline_days: [2, 4], carline_when: 'pm', offers_student: false }))
-      .toBe('Carline Tue · Thu, afternoon');
-    expect(availabilityLine({ offers_carline: true, carline_days: [1, 2, 3, 4, 5], carline_when: 'both', offers_student: true }))
-      .toBe('Carline any weekday, morning & afternoon  ·  Student to student');
+    expect(availabilityLine({ offers_carline: true, carline_days: [2, 4], carline_when: 'am', offers_student: false }))
+      .toBe('Carline Tue · Thu, mornings');
+    expect(availabilityLine({ offers_carline: true, carline_days: [1, 2, 3, 4, 5], carline_when: 'am', offers_student: true }))
+      .toBe('Carline any weekday, mornings  ·  Student to student');
     expect(availabilityLine({ offers_carline: false, offers_student: false }))
       .toBe('No handoff options set yet');
   });

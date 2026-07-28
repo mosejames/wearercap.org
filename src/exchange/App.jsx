@@ -191,17 +191,17 @@ function Home({ bins, inv, reqs, refresh }) {
         <p className="sub">{APPROX_NOTE}</p>
         <div className="filters">
           <select value={house} onChange={(e) => setHouse(e.target.value)}>
-            <option value="all">Every house</option>
+            <option value="all">Choose your house</option>
             {HOUSE_CHOICES.map((h) => (
               <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house (neutral items)'}</option>
             ))}
           </select>
           <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="">Every item</option>
+            <option value="">Choose your item</option>
             {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
           <select value={size} onChange={(e) => setSize(e.target.value)}>
-            <option value="">Every size</option>
+            <option value="">Choose your size</option>
             {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
@@ -851,7 +851,7 @@ function AvailabilityCard({ bin, refresh }) {
     offersCarline: bin.offers_carline !== false,
     offersStudent: bin.offers_student !== false,
     days: bin.carline_days && bin.carline_days.length ? bin.carline_days : [1, 2, 3, 4, 5],
-    when: bin.carline_when || 'pm',
+    when: 'am', // handoffs happen at morning carline; afternoons are chaos
     spot: bin.carline_spot || '',
     holderStudent: bin.holder_student || '',
   });
@@ -895,7 +895,10 @@ function AvailabilityCard({ bin, refresh }) {
 
       {f.offersCarline && (
         <div className="avail-body">
-          <p className="fine">Which days are easy for you?</p>
+          <p className="fine">
+            Which mornings are easy for you? Handoffs happen at <b>morning drop-off</b> —
+            afternoon carline is too rushed. Anything else, you two can arrange directly.
+          </p>
           <div className="daypick">
             {WEEKDAYS.map((w) => (
               <button
@@ -905,13 +908,6 @@ function AvailabilityCard({ bin, refresh }) {
               >{w.short}</button>
             ))}
           </div>
-          <label>Morning or afternoon?
-            <select value={f.when} onChange={(e) => setF({ ...f, when: e.target.value })}>
-              <option value="am">Morning drop-off</option>
-              <option value="pm">Afternoon pickup</option>
-              <option value="both">Either one</option>
-            </select>
-          </label>
           <label>How will they spot you? (optional)
             <input value={f.spot} onChange={(e) => setF({ ...f, spot: e.target.value })}
               placeholder="Blue Highlander, I park by the gym" maxLength={120} />
@@ -1095,9 +1091,8 @@ function AdminView({ sub, bins, holders, inv, reqs, offers, settings, refresh })
 
   const shared = { pass, act, msg, bins, holders, reqs, refresh, setPrintBins };
   if (sub === 'bins')     return <AdminBins {...shared} />;
-  if (sub === 'types')    return <AdminItemTypes {...shared} />;
   if (sub === 'requests') return <AdminRequests {...shared} />;
-  if (sub === 'settings') return <AdminSettings {...shared} settings={settings} />;
+  if (sub === 'settings' || sub === 'types') return <AdminSettings {...shared} settings={settings} />;
   return <AdminHome {...shared} inv={inv} offers={offers} />;
 }
 
@@ -1122,8 +1117,6 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, 
   const overdue = reqs.filter(
     (r) => ['scheduled','handed_off'].includes(r.status) && dueInfo(r.due_at)?.overdue
   );
-  const noPhone = bins.filter((b) => !b.retired && !(b.holder_phone || '').trim()).length;
-
   return (
     <section className="shell section">
       <h2 className="h2">Back office</h2>
@@ -1137,23 +1130,10 @@ function AdminHome({ pass, act, msg, bins, holders, reqs, inv, offers, refresh, 
           <b>Bins &amp; holders</b>
           <span>{holders.filter((h) => h.active !== false).length} people · {bins.filter((b) => !b.retired).length} bins</span>
         </a>
-        <a href="#/admin/types">
-          <b>Item types</b><span>{visibleItemTypes().length} in the dropdowns</span>
-        </a>
         <a href="#/admin/settings">
-          <b>Settings</b><span>Handoff options · texts</span>
+          <b>Settings</b><span>Item types · handoff · texts</span>
         </a>
       </div>
-
-      {noPhone > 0 && (
-        <div className="card warn-card">
-          <h3>📱 {noPhone} bin{noPhone > 1 ? 's' : ''} with no holder phone</h3>
-          <p className="fine">
-            No phone means that holder never hears a request landed.{' '}
-            <a href="#/admin/bins">Add their number</a>.
-          </p>
-        </div>
-      )}
 
       {overdue.length > 0 && (
         <div className="card overdue-card">
@@ -1331,12 +1311,20 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
 
   const binsOf = (hid) => bins.filter((b) => b.holder_id === hid);
   const orphans = bins.filter((b) => !b.holder_id);
+  const noPhone = holders.filter((h) => h.active !== false && !(h.phone || '').trim());
+
+  // A house can have several bin holders — group them so you read the roster
+  // house by house, the way the community is actually organised.
+  const groups = [...HOUSE_CHOICES.filter((h) => h.id), { id: '', name: 'No house / mixed' }]
+    .map((house) => ({ house, people: holders.filter((h) => (h.house || '') === house.id) }))
+    .filter((g) => g.people.length);
 
   return (
     <AdminPage title="Bins & holders" msg={msg}>
       <p className="sub">
-        One parent, as many bins as they can carry — a shirt bin and a pants bin is normal.
-        Phone and schedule live on the person, so you only ever enter them once.
+        Grouped by house, because that's how families find each other. A house can have
+        several bin holders, and one parent can carry several bins — a shirt bin and a
+        pants bin is normal. Phone, email and schedule live on the person, entered once.
       </p>
       <div className="admin-actions">
         <button className="btn" onClick={() => setEditHolder('new')}>＋ New holder</button>
@@ -1345,16 +1333,35 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
         </button>
       </div>
 
-      {holders.map((h) => {
+      {noPhone.length > 0 && (
+        <div className="card warn-card">
+          <h3>📱 {noPhone.length} holder{noPhone.length > 1 ? 's' : ''} with no phone</h3>
+          <p className="fine">
+            No number means they never hear that a request landed in their bin —
+            {' '}{noPhone.map((h) => h.name).join(', ')}. Tap Edit on their card to add it.
+          </p>
+        </div>
+      )}
+
+      {groups.map(({ house, people }) => (
+        <div className="house-group" key={house.id || 'none'}>
+          <div className="house-head">
+            <HouseTag id={house.id} />
+            <span>{people.length} bin holder{people.length > 1 ? 's' : ''}</span>
+          </div>
+
+      {people.map((h) => {
         const mine = binsOf(h.id);
         return (
           <div className={`card holder-card ${h.active === false ? 'retired' : ''}`} key={h.id}>
             <div className="holder-head">
               <div>
-                <b>{h.name} <HouseTag id={h.house} /></b>
-                <span>
-                  {h.phone ? `📱 ${h.phone}` : '📱 no phone — they get no texts'}
-                  {h.email ? ` · ✉️ ${h.email}` : ''}
+                <b>{h.name}</b>
+                <span className={h.phone ? '' : 'missing'}>
+                  📱 {h.phone || 'no phone — they get no texts'}
+                </span>
+                <span className={h.email ? '' : 'missing'}>
+                  ✉️ {h.email || 'no email on file'}
                 </span>
                 <span className="fine">{availabilityLine(h)}</span>
               </div>
@@ -1391,6 +1398,8 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
           </div>
         );
       })}
+        </div>
+      ))}
 
       {orphans.length > 0 && (
         <div className="card">
@@ -1510,6 +1519,7 @@ function AdminSettings({ pass, act, msg, settings }) {
           <span>Offer “RCA front desk” as a handoff choice</span>
         </label>
       </div>
+      <AdminItemTypes pass={pass} act={act} />
       <AdminNotifications />
     </AdminPage>
   );
@@ -1570,18 +1580,18 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
 
 // Item types — hidden ones keep their history but leave the dropdowns.
 // Bring one back (or add something new) without touching code.
-function AdminItemTypes({ pass, refresh, act, msg }) {
+function AdminItemTypes({ pass, act }) {
   const [adding, setAdding] = useState(false);
   const [nf, setNf] = useState({ id: '', label: '', housed: false });
   const types = allItemTypes();
 
   return (
-    <AdminPage title="Item types" msg={msg}>
-      <p className="sub">
+    <div className="card">
+      <h3>Item types</h3>
+      <p className="fine">
         What parents can pick from. Hiding a type keeps every bit of its history —
         it just leaves the dropdowns until you bring it back.
       </p>
-      <div className="card">
       <ul className="bin-admin">
         {types.map((t) => (
           <li key={t.id} className={t.hidden ? 'retired' : ''}>
@@ -1627,8 +1637,7 @@ function AdminItemTypes({ pass, refresh, act, msg }) {
       ) : (
         <button className="btn small ghost" onClick={() => setAdding(true)}>＋ Add a type</button>
       )}
-      </div>
-    </AdminPage>
+    </div>
   );
 }
 
