@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
-  SIZE_SET_LABEL, prettyPhone, sizeChip,
+  SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
   typeLabel, binUrl, holderUrl, CONTACT,
@@ -320,7 +320,18 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target ? e.target.value : e });
 
   const submit = async () => {
-    if (!form.parentName.trim()) { setErr('Your name is the one thing we need.'); return; }
+    // All three are needed to finish the job, not just to open a record: the
+    // holder hands the bag to a named student, and every step after this —
+    // the confirmation, the handoff link, the private page — arrives by text.
+    if (!form.parentName.trim()) { setErr('We need your name.'); return; }
+    if (!form.student.trim()) {
+      setErr("We need your student's name — that's who the bin holder is handing it to.");
+      return;
+    }
+    if (!phoneDigits(form.contact)) {
+      setErr('We need a cell number we can text — that\u2019s how you get your item.');
+      return;
+    }
     setBusy(true); setErr('');
     try {
       // Relationships first: route to the requester's own house bin when it
@@ -411,13 +422,17 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
         </label>
-        <label>Student (optional)
-          <input value={form.student} onChange={set('student')} placeholder="Imani" maxLength={60} />
+        <label>Student &amp; grade *
+          <input value={form.student} onChange={set('student')} placeholder="Imani, 6th" maxLength={60} />
         </label>
       </div>
-      <label>Cell number (optional — it's how we tell you when it's ready)
+      <label>Cell number *
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
+      <p className="fine">
+        Your confirmation, the link to pick a handoff, and the page that keeps
+        track of it all come by text. It stays between you and your bin holder.
+      </p>
       <label>Anything else? (optional)
         <input value={form.note} onChange={set('note')} placeholder={FIT_HINT} maxLength={200} />
       </label>
@@ -449,7 +464,11 @@ function OfferSheet({ bins, onDone, onClose }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const submit = async () => {
-    if (!form.parentName.trim()) { setErr('Your name is the one thing we need.'); return; }
+    if (!form.parentName.trim()) { setErr('We need your name.'); return; }
+    if (!phoneDigits(form.contact)) {
+      setErr('We need a cell number — it\u2019s how your bin holder arranges the pickup.');
+      return;
+    }
     if (!form.itemsDesc.trim()) { setErr('Tell us roughly what you have.'); return; }
     setBusy(true); setErr('');
     try {
@@ -467,12 +486,12 @@ function OfferSheet({ bins, onDone, onClose }) {
   if (result) {
     const bin = bins.find((b) => b.id === result.bin_id);
     return (
-      <Sheet onClose={onDone} title="Thank you! 💚">
+      <Sheet onClose={onDone} title="Thank you">
         <p className="big">
           Your offer is in{bin?.holder_name ? <> — <b>{bin.holder_name}</b> ({bin.name}) will reach
           out to arrange the pickup</> : ' — a bin holder will reach out to arrange the pickup'}.
         </p>
-        {form.contact.trim() && <p>We just texted you a confirmation.</p>}
+        <p>We just texted you a confirmation.</p>
         <button className="btn flame wide" onClick={onDone}>Done</button>
       </Sheet>
     );
@@ -494,7 +513,7 @@ function OfferSheet({ bins, onDone, onClose }) {
           </select>
         </label>
       </div>
-      <label>Cell number (so your bin holder can arrange the pickup)
+      <label>Cell number * (so your bin holder can arrange the pickup)
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
       <label>What do you have? *

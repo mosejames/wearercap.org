@@ -186,7 +186,10 @@ a{color:inherit}
   border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--surface);
   font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);
 }
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* minmax(0,1fr), not 1fr: a grid track's floor is min-content, so one long
+   label ("Student & grade") pushes its column wider than the sheet and the
+   whole form runs off the right edge. */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .grid3{display:grid;grid-template-columns:1.4fr 1fr .7fr;gap:10px}
 @media (max-width:480px){.grid3{grid-template-columns:1fr 1fr}}
 .qty{max-width:130px}
