@@ -530,18 +530,25 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
           </>
         )}
         {waiting.length > 0 && (
-          <>
-            <p className={ready.length ? '' : 'big'}>
-              {ready.length ? 'Still looking for ' : 'Nothing in the bins right now, so you\u2019re on the '}
-              {ready.length ? null : <b>waitlist</b>}
-              {ready.length
-                ? waiting.map((r) => `${typeLabel(r.item_type)} · ${sizeLabel(r.size)}`).join(' and ')
-                : ' — '}
-              {ready.length
-                ? ' — we\u2019ll text you the moment one turns up.'
-                : 'the moment a match lands in any bin we\u2019ll match it to you and text you.'}
+          ready.length > 0 ? (
+            <>
+              <p>
+                Still looking for{' '}
+                <b>{waiting.map((r) => `${typeLabel(r.item_type)} · ${sizeLabel(r.size)}`).join(' and ')}</b>.
+                Nobody has {waiting.length > 1 ? 'those' : 'that'} right now.
+              </p>
+              <p className="fine">
+                Nothing above is waiting on it — go ahead and pick your handoff. The
+                moment {waiting.length > 1 ? 'they turn' : 'one turns'} up in any bin we'll
+                match {waiting.length > 1 ? 'them' : 'it'} to you and text you.
+              </p>
+            </>
+          ) : (
+            <p className="big">
+              Nothing in the bins right now, so you're on the <b>waitlist</b> — the moment a
+              match lands in any bin we'll match it to you and text you.
             </p>
-          </>
+          )
         )}
         <button className="btn flame wide" onClick={onDone}>Done</button>
       </Sheet>
