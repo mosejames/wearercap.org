@@ -69,6 +69,13 @@ export const ORDER_MAX_ITEMS = 2;
 export const typeMaxQty = (id) =>
   Math.max(1, TYPES.find((t) => t.id === id)?.max_qty || 1);
 
+// Some things come one way only. Don't make anyone choose from a list of one —
+// returns that lone size, or '' when there's a real choice to make.
+export function onlySize(typeId) {
+  const all = (sizeGroups(typeId) || []).flatMap((g) => g.sizes);
+  return all.length === 1 ? all[0].v : '';
+}
+
 // ---------------------------------------------------------------------------
 // Ask who it's for first, and the list stops being a list of everything.
 // A co-ed piece — the interlock polo, the sweater vest — is the same garment
@@ -132,12 +139,9 @@ export const SIZE_SETS = {
     { group: '', sizes: [n('Other')] },
   ],
 
-  // Ties don't size like clothes — a length, if anything.
+  // The house tie comes one way and one way only, so there's nothing to ask.
   neckwear: [
-    { group: 'Tie', sizes: [
-      n('OS', 'One size'), n('TY', 'Youth length'), n('TA', 'Adult length'),
-    ] },
-    { group: '', sizes: [n('Other')] },
+    { group: 'Tie', sizes: [n('OS', 'One size')] },
   ],
 
   'girls-bottoms': [
@@ -199,6 +203,7 @@ export const allSizes = () =>
 // tops used to run YXS–YXL before we checked the order page.
 const LEGACY_LABELS = {
   // The co-ed tops ran on a youth scale before we read the order page.
+  'TY': 'Youth length', 'TA': 'Adult length',
   'YXS': 'YXS · 4–5', 'YS': 'YS · 6–7', 'YM': 'YM · 8–10',
   'YL': 'YL · 12–14', 'YXL': 'YXL · 16–18',
   '8S': '8 Slim', '10S': '10 Slim', '12S': '12 Slim', '14S': '14 Slim',

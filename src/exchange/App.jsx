@@ -4,7 +4,7 @@ import {
   SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
-  typeMaxQty, ORDER_MAX_ITEMS,
+  typeMaxQty, ORDER_MAX_ITEMS, onlySize,
   typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
@@ -101,9 +101,9 @@ function HouseTag({ id }) {
 const itemKey = (x) => `${x.itemType || x.item_type}|${x.size}|${x.house || ''}`;
 
 // The size list follows the item: girls' bottoms, boys' bottoms, or tops.
-function SizePicker({ itemType, value, onChange, placeholder }) {
+function SizePicker({ itemType, value, onChange, placeholder, disabled = false }) {
   return (
-    <select value={value} onChange={onChange}>
+    <select value={value} onChange={onChange} disabled={disabled}>
       {placeholder && <option value="">{placeholder}</option>}
       {sizeGroups(itemType).map((g, i) =>
         g.group ? (
@@ -311,8 +311,13 @@ function Home({ bins, inv, commitments, refresh }) {
             onChange={(e) => {
               const t = e.target.value;
               setType(t);
-              // A size from another set would mean nothing for this item.
-              if (size && t && !sizeGroups(t).some((g) => g.sizes.some((x) => x.v === size))) {
+              setQty(1);
+              // The tie comes one way only — don't make anyone pick from a
+              // list of one. Otherwise a size from another set would mean
+              // nothing for this item, so it goes.
+              const lone = onlySize(t);
+              if (lone) setSize(lone);
+              else if (size && t && !sizeGroups(t).some((g) => g.sizes.some((x) => x.v === size))) {
                 setSize('');
               }
             }}>
@@ -321,6 +326,7 @@ function Home({ bins, inv, commitments, refresh }) {
           </select>
           <SizePicker
             itemType={type} value={size} placeholder="Choose your size"
+            disabled={!!onlySize(type)}
             onChange={(e) => { setSize(e.target.value); setQty(1); }}
           />
         </div>
@@ -352,7 +358,9 @@ function Home({ bins, inv, commitments, refresh }) {
                   ? `${typeLabel(type)} comes in house colors — pick your house above.`
                   : !type || !size
                     ? 'Pick an item and a size to get started.'
-                    : "Not sure of the size? Ask anyway \u2014 say so in the notes and your bin holder will work it out with you."}
+                    : onlySize(type)
+                      ? `${typeLabel(type)} comes one size, so there\u2019s nothing to pick.`
+                      : "Not sure of the size? Ask anyway \u2014 say so in the notes and your bin holder will work it out with you."}
         </p>
 
         {order.length > 0 && (

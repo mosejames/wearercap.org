@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
-  typesForGender, typeGender, typeHoused, typeMaxQty, ORDER_MAX_ITEMS,
+  typesForGender, typeGender, typeHoused, typeMaxQty, ORDER_MAX_ITEMS, onlySize,
 } from './config.js';
 
 setItemTypes([
@@ -265,9 +265,8 @@ describe('house-embroidered pieces', () => {
   it('sizes a tie as a length, not a chest', () => {
     setItemTypes(TYPES);
     expect(sizeSetFor('tie')).toBe('neckwear');
-    expect(sizeGroups('tie')[0].sizes.map((s) => s.v)).toEqual(['OS', 'TY', 'TA']);
+    expect(sizeGroups('tie')[0].sizes.map((s) => s.v)).toEqual(['OS']);
     expect(sizeLabel('OS')).toBe('One size');
-    expect(sizeLabel('TA')).toBe('Adult length');
     expect(firstSize('tie')).toBe('OS');
   });
 });
@@ -299,5 +298,30 @@ describe('order limits', () => {
 
   it('holds two different items in one order', () => {
     expect(ORDER_MAX_ITEMS).toBe(2);
+  });
+});
+
+// The house tie comes one way only.
+describe('one-size items', () => {
+  const TYPES = [
+    { id: 'tie', label: 'House Tie', gender: 'coed', housed: true, hidden: false, size_set: 'neckwear', max_qty: 1 },
+    { id: 'polo', label: 'House Polo · Co-Ed', gender: 'coed', housed: true, hidden: false, size_set: 'tops', max_qty: 2 },
+  ];
+
+  it('offers exactly one tie size, and calls it what it is', () => {
+    setItemTypes(TYPES);
+    const all = sizeGroups('tie').flatMap((g) => g.sizes);
+    expect(all.map((x) => x.v)).toEqual(['OS']);
+    expect(sizeLabel('OS')).toBe('One size');
+  });
+
+  it('answers the size question for you when there is only one answer', () => {
+    setItemTypes(TYPES);
+    expect(onlySize('tie')).toBe('OS');
+    expect(onlySize('polo')).toBe('');   // a real choice, so ask
+  });
+
+  it('still reads the lengths that briefly existed', () => {
+    expect(sizeLabel('TA')).toBe('Adult length');
   });
 });
