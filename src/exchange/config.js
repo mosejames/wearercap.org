@@ -62,13 +62,19 @@ export const typeGender = (id) => TYPES.find((t) => t.id === id)?.gender || 'coe
 // type. Twenty-five counted by a girl's family and twenty-five by a boy's are
 // fifty of one thing, not two piles of twenty-five.
 // ---------------------------------------------------------------------------
+// 'all' is a real choice, not a fallback. A girl who wears the boys' flat
+// front pant is common, and the two-door version quietly hid that from her.
+// It's labelled for the clothes rather than the child on purpose.
 export const GENDERS = [
-  { id: 'girls', label: 'Girls' },
-  { id: 'boys', label: 'Boys' },
+  { id: 'girls', label: 'For a Girl' },
+  { id: 'boys', label: 'For a Boy' },
+  { id: 'all', label: 'Show everything' },
 ];
 
 export const typesForGender = (g) =>
-  visibleItemTypes().filter((t) => !g || t.gender === g || (t.gender || 'coed') === 'coed');
+  visibleItemTypes().filter(
+    (t) => !g || g === 'all' || t.gender === g || (t.gender || 'coed') === 'coed'
+  );
 
 // ---------------------------------------------------------------------------
 // Sizes depend on the item. Girls' bottoms run 7–16; boys' bottoms run 8–20

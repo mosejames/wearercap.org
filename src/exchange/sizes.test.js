@@ -190,6 +190,14 @@ describe('gender-first item lists', () => {
     expect(ids('').length).toBe(TYPES.length - 1);
   });
 
+  it('shows everything on purpose too — a girl can wear the boys pant', () => {
+    setItemTypes(TYPES);
+    expect(ids('all')).toEqual(ids(''));
+    expect(ids('all')).toContain('pants-boys');
+    expect(ids('all')).toContain('polo-girls');
+    expect(ids('all')).not.toContain('retired');
+  });
+
   it('sizes each cut on its own scale', () => {
     setItemTypes(TYPES);
     expect(sizeSetFor('polo')).toBe('tops');            // co-ed, youth scale

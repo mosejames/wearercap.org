@@ -283,7 +283,7 @@ function Home({ bins, inv, commitments, refresh }) {
                   setType(''); setSize('');
                 }
               }}>
-              For a {g.label.replace(/s$/, '')}
+              {g.label}
             </button>
           ))}
         </div>
@@ -320,7 +320,7 @@ function Home({ bins, inv, commitments, refresh }) {
 
         <p className="fine ask-note">
           {!gender
-            ? 'Start by saying who it\u2019s for — the list is different for girls and boys.'
+            ? 'Start by saying who it\u2019s for — or show everything, if you already know the item.'
             : needsHouse
               ? `${typeLabel(type)} comes in house colors — pick your house above.`
               : !type || !size
