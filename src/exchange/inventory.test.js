@@ -76,3 +76,57 @@ describe('drift', () => {
     ]);
   });
 });
+
+// One trip beats two: a bin already answering part of a request should answer
+// the rest of it when it can.
+describe('keeping a request in one pair of hands', () => {
+  const rows = [
+    // Shekita (Amistad) has polos but no khakis.
+    { bin_id: 'ami', item_type: 'polo', size: 'M', house: 'amistad', qty: 6 },
+    // Yelena (Altruismo) has both.
+    { bin_id: 'alt', item_type: 'polo', size: 'M', house: 'amistad', qty: 2 },
+    { bin_id: 'alt', item_type: 'pants-boys', size: '12', house: '', qty: 3 },
+  ];
+
+  it('sends a second item to the bin already chosen, when it has it', () => {
+    // First line went to Shekita's bin on house preference.
+    const first = pickBin(rows, [], 'polo', 'M', 'amistad', 1, ['ami']);
+    expect(first).toBe('ami');
+    // Second line: Shekita has no khakis, so the same-bin attempt can't hold.
+    const same = pickBin(rows, [], 'pants-boys', '12', '', 1, ['ami']);
+    expect(same).toBe('alt');
+  });
+
+  it('keeps both together when one holder can do both', () => {
+    const both = [
+      { bin_id: 'alt', item_type: 'polo', size: 'M', house: 'amistad', qty: 2 },
+      { bin_id: 'alt', item_type: 'pants-boys', size: '12', house: '', qty: 3 },
+      { bin_id: 'isi', item_type: 'pants-boys', size: '12', house: '', qty: 9 },
+    ];
+    // Even though Isibindi has far more khakis, preferring the bin already
+    // chosen keeps it to one handoff.
+    expect(pickBin(both, [], 'pants-boys', '12', '', 1, ['alt'])).toBe('alt');
+  });
+});
+
+// A holder can carry several tubs. Polos in one and ties in another is still
+// one car at one window, so the preference is over all of that person's bins.
+describe('a holder with more than one bin', () => {
+  const rows = [
+    { bin_id: 'shek-polos', item_type: 'polo', size: 'M', house: 'amistad', qty: 4 },
+    { bin_id: 'shek-ties', item_type: 'tie', size: 'OS', house: 'amistad', qty: 3 },
+    { bin_id: 'kya-ties', item_type: 'tie', size: 'OS', house: 'amistad', qty: 20 },
+  ];
+
+  it('stays with the same person across their tubs', () => {
+    // Shekita carries both of hers; pass both ids as preferred.
+    const shekitas = ['shek-polos', 'shek-ties'];
+    expect(pickBin(rows, [], 'polo', 'M', 'amistad', 1, shekitas)).toBe('shek-polos');
+    // Even though Kya has far more ties, the tie comes from Shekita's other tub.
+    expect(pickBin(rows, [], 'tie', 'OS', 'amistad', 1, shekitas)).toBe('shek-ties');
+  });
+
+  it('still goes elsewhere when that person genuinely does not have it', () => {
+    expect(pickBin(rows, [], 'tie', 'OS', 'amistad', 1, ['shek-polos'])).toBe('kya-ties');
+  });
+});

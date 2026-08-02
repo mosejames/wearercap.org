@@ -254,7 +254,7 @@ function Home({ bins, inv, commitments, refresh }) {
   // whether a list was other people's requests, why the thing on screen wasn't
   // reserved for them. None of that is a parent's problem to solve.
   const requesterHouse = house === 'all' ? '' : house;
-  const needsHouse = typeHoused(type) && house === 'all';
+  const needsHouse = house === 'all';
   const items = typesForGender(gender);
   const cap = typeMaxQty(type);
   const full = order.length >= REQUEST_MAX_ITEMS;
@@ -328,7 +328,6 @@ function Home({ bins, inv, commitments, refresh }) {
           <select value={house} onChange={(e) => setHouse(e.target.value)}>
             <option value="all">Choose your house</option>
             {HOUSES.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-            <option value="">My student is new / not sorted yet</option>
           </select>
           <select
             value={type}
@@ -380,7 +379,7 @@ function Home({ bins, inv, commitments, refresh }) {
               : already
                 ? 'That one\u2019s already on your request.'
                 : needsHouse
-                  ? `${typeLabel(type)} comes in house colors — pick your house above.`
+                  ? 'Pick your house — we ask your own house\u2019s bin first.'
                   : !type || !size
                     ? 'Pick an item and a size to get started.'
                     : onlySize(type)
@@ -463,13 +462,29 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
       // over on its own — a polo may be waiting in your house's bin while the
       // shorts are still on the waitlist.
       const out = [];
+      const holdersChosen = new Set();
       for (const line of order) {
         const houseBins = bins
           .filter((b) => !b.retired && b.holder_house === line.requesterHouse)
           .map((b) => b.id);
-        const binId = pickBin(
-          inv, assigned, line.itemType, line.size, line.house, line.qty || 1, houseBins
-        );
+
+        // One trip beats two, and a trip is a PERSON, not a tub — Shekita may
+        // keep polos in one bin and ties in another, but that's one car at one
+        // window. So prefer any bin belonging to someone already answering part
+        // of this request; otherwise their own house's bin, then the deepest.
+        const sameHands = bins
+          .filter((b) => !b.retired && holdersChosen.has(b.holder_id))
+          .map((b) => b.id);
+        let binId = sameHands.length
+          ? pickBin(inv, assigned, line.itemType, line.size, line.house, line.qty || 1, sameHands)
+          : null;
+        if (!binId || !sameHands.includes(binId)) {
+          binId = pickBin(
+            inv, assigned, line.itemType, line.size, line.house, line.qty || 1, houseBins
+          );
+        }
+        const holderOf = bins.find((b) => b.id === binId)?.holder_id;
+        if (holderOf) holdersChosen.add(holderOf);
         out.push(await db.addRequest({ ...form, ...line, qty: line.qty || 1 }, binId));
       }
       setResults(out);
@@ -504,6 +519,14 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
               Next: <a href="#/requests"><b>pick a handoff time</b></a> that works for you —
               carline or straight from student to student.
             </p>
+            {new Set(
+              ready.map((r) => bins.find((b) => b.id === r.bin_id)?.holder_id || r.bin_id)
+            ).size > 1 && (
+              <p className="fine">
+                These are with two different people, so you'll pick a morning for each.
+                Nothing is held back waiting on the other.
+              </p>
+            )}
           </>
         )}
         {waiting.length > 0 && (
