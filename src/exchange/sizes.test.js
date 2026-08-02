@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
-  typesForGender, typeGender,
+  typesForGender, typeGender, typeHoused,
 } from './config.js';
 
 setItemTypes([
@@ -236,5 +236,38 @@ describe('co-ed top sizes', () => {
   it('never renders a letter size as a quantity', () => {
     expect(sizeChip('M')).toBe('M · 10–12');
     expect(sizeChip('12')).toBe('Size 12');
+  });
+});
+
+// A vest and a tie both carry the house on them — an Amistad family needs an
+// Amistad one, and nothing else will do.
+describe('house-embroidered pieces', () => {
+  const TYPES = [
+    { id: 'vest', label: 'Sweater Vest', gender: 'coed', housed: true, hidden: false, size_set: 'tops' },
+    { id: 'tie', label: 'House Tie', gender: 'coed', housed: true, hidden: false, size_set: 'neckwear' },
+    { id: 'pants-boys', label: 'Khaki Pants', gender: 'boys', housed: false, hidden: false, size_set: 'boys-bottoms' },
+  ];
+
+  it('marks the vest and the tie house-colored', () => {
+    setItemTypes(TYPES);
+    expect(typeHoused('vest')).toBe(true);
+    expect(typeHoused('tie')).toBe(true);
+    expect(typeHoused('pants-boys')).toBe(false);   // khakis fit anyone
+  });
+
+  it('offers both to either student', () => {
+    setItemTypes(TYPES);
+    expect(typesForGender('girls').map((t) => t.id)).toContain('tie');
+    expect(typesForGender('boys').map((t) => t.id)).toContain('tie');
+    expect(typeGender('tie')).toBe('coed');
+  });
+
+  it('sizes a tie as a length, not a chest', () => {
+    setItemTypes(TYPES);
+    expect(sizeSetFor('tie')).toBe('neckwear');
+    expect(sizeGroups('tie')[0].sizes.map((s) => s.v)).toEqual(['OS', 'TY', 'TA']);
+    expect(sizeLabel('OS')).toBe('One size');
+    expect(sizeLabel('TA')).toBe('Adult length');
+    expect(firstSize('tie')).toBe('OS');
   });
 });

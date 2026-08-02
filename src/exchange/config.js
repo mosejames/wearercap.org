@@ -35,7 +35,8 @@ const DEFAULT_TYPES = [
   { id: 'polo-girls',   label: 'House Polo · Fem Fit',    gender: 'girls', housed: true,  hidden: false, size_set: 'girls-tops' },
   { id: 'blouse',       label: 'Oxford Blouse',           gender: 'girls', housed: false, hidden: false, size_set: 'girls-tops' },
   { id: 'dress-shirt',  label: 'Oxford Shirt',            gender: 'boys',  housed: false, hidden: false, size_set: 'tops' },
-  { id: 'vest',         label: 'Sweater Vest',            gender: 'coed',  housed: false, hidden: false, size_set: 'tops' },
+  { id: 'vest',         label: 'Sweater Vest',            gender: 'coed',  housed: true,  hidden: false, size_set: 'tops' },
+  { id: 'tie',          label: 'House Tie',               gender: 'coed',  housed: true,  hidden: false, size_set: 'neckwear' },
   { id: 'pants-girls',  label: 'Khaki Pants · Straight',  gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
   { id: 'pants-girls-boot', label: 'Khaki Pants · Bootcut', gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
   { id: 'shorts-girls', label: 'Khaki Bermuda Shorts',    gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
@@ -118,6 +119,14 @@ export const SIZE_SETS = {
     { group: '', sizes: [n('Other')] },
   ],
 
+  // Ties don't size like clothes — a length, if anything.
+  neckwear: [
+    { group: 'Tie', sizes: [
+      n('OS', 'One size'), n('TY', 'Youth length'), n('TA', 'Adult length'),
+    ] },
+    { group: '', sizes: [n('Other')] },
+  ],
+
   'girls-bottoms': [
     { group: 'Girls', sizes: [n('7'), n('8'), n('10'), n('12'), n('14'), n('16')] },
     { group: 'Juniors', sizes: [
@@ -142,6 +151,7 @@ export const SIZE_SETS = {
 
 export const SIZE_SET_LABEL = {
   tops: 'Shirts & vests',
+  neckwear: 'Ties',
   'girls-tops': "Girls' polos",
   'girls-bottoms': "Girls' bottoms",
   'boys-bottoms': "Boys' bottoms",
