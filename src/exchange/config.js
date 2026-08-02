@@ -31,8 +31,8 @@ export const APPROX_NOTE =
 const DEFAULT_TYPES = [
   // gender: 'girls' | 'boys' | 'coed'. A co-ed piece is one garment and one
   // pile — it shows up on both lists and both draw down the same total.
-  { id: 'polo',         label: 'House Polo · Co-Ed',      gender: 'coed',  housed: true,  hidden: false, size_set: 'tops' },
-  { id: 'polo-girls',   label: 'House Polo · Fem Fit',    gender: 'girls', housed: true,  hidden: false, size_set: 'girls-tops' },
+  { id: 'polo',         label: 'House Polo · Co-Ed',      gender: 'coed',  housed: true,  hidden: false, size_set: 'tops',       max_qty: 2 },
+  { id: 'polo-girls',   label: 'House Polo · Fem Fit',    gender: 'girls', housed: true,  hidden: false, size_set: 'girls-tops', max_qty: 2 },
   { id: 'blouse',       label: 'Oxford Blouse',           gender: 'girls', housed: false, hidden: false, size_set: 'girls-tops' },
   { id: 'dress-shirt',  label: 'Oxford Shirt',            gender: 'boys',  housed: false, hidden: false, size_set: 'tops' },
   { id: 'vest',         label: 'Sweater Vest',            gender: 'coed',  housed: true,  hidden: false, size_set: 'tops' },
@@ -55,6 +55,19 @@ export const allItemTypes = () => TYPES;
 export const visibleItemTypes = () => TYPES.filter((t) => !t.hidden);
 export const typeHoused = (id) => !!TYPES.find((t) => t.id === id)?.housed;
 export const typeGender = (id) => TYPES.find((t) => t.id === id)?.gender || 'coed';
+
+// ---------------------------------------------------------------------------
+// How much of one thing a family may ask for at once, and how many different
+// things one order may hold.
+//
+// A student wears one vest and one tie, so asking for two of either is asking
+// for somebody else's. Polos get worn every day and go through the wash, so two
+// is reasonable. Everything else is one — these bins are shallow, and the point
+// is that the next family finds something too.
+// ---------------------------------------------------------------------------
+export const ORDER_MAX_ITEMS = 2;
+export const typeMaxQty = (id) =>
+  Math.max(1, TYPES.find((t) => t.id === id)?.max_qty || 1);
 
 // ---------------------------------------------------------------------------
 // Ask who it's for first, and the list stops being a list of everything.

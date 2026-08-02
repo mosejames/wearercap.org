@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
-  typesForGender, typeGender, typeHoused,
+  typesForGender, typeGender, typeHoused, typeMaxQty, ORDER_MAX_ITEMS,
 } from './config.js';
 
 setItemTypes([
@@ -269,5 +269,35 @@ describe('house-embroidered pieces', () => {
     expect(sizeLabel('OS')).toBe('One size');
     expect(sizeLabel('TA')).toBe('Adult length');
     expect(firstSize('tie')).toBe('OS');
+  });
+});
+
+// Bins are shallow. One order holds two different things, and how many of
+// each depends on the thing.
+describe('order limits', () => {
+  const TYPES = [
+    { id: 'polo', label: 'House Polo · Co-Ed', gender: 'coed', housed: true, hidden: false, size_set: 'tops', max_qty: 2 },
+    { id: 'polo-girls', label: 'House Polo · Fem Fit', gender: 'girls', housed: true, hidden: false, size_set: 'girls-tops', max_qty: 2 },
+    { id: 'tie', label: 'House Tie', gender: 'coed', housed: true, hidden: false, size_set: 'neckwear', max_qty: 1 },
+    { id: 'vest', label: 'Sweater Vest', gender: 'coed', housed: true, hidden: false, size_set: 'tops', max_qty: 1 },
+    { id: 'pants-boys', label: 'Khaki Pants', gender: 'boys', housed: false, hidden: false, size_set: 'boys-bottoms' },
+  ];
+
+  it('lets a family take two polos and one of everything else', () => {
+    setItemTypes(TYPES);
+    expect(typeMaxQty('polo')).toBe(2);
+    expect(typeMaxQty('polo-girls')).toBe(2);
+    expect(typeMaxQty('tie')).toBe(1);
+    expect(typeMaxQty('vest')).toBe(1);
+  });
+
+  it('treats a missing cap as one, never as unlimited', () => {
+    setItemTypes(TYPES);
+    expect(typeMaxQty('pants-boys')).toBe(1);
+    expect(typeMaxQty('nonsense')).toBe(1);
+  });
+
+  it('holds two different items in one order', () => {
+    expect(ORDER_MAX_ITEMS).toBe(2);
   });
 });

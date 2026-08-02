@@ -4,6 +4,7 @@ import {
   SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
+  typeMaxQty, ORDER_MAX_ITEMS,
   typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
@@ -215,8 +216,10 @@ function Home({ bins, inv, commitments, refresh }) {
   const [gender, setGender] = useState('');
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
+  const [qty, setQty] = useState(1);
   const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
-  const [sheet, setSheet] = useState(null); // { itemType, size, house } or 'waitlist'
+  const [order, setOrder] = useState([]);    // up to ORDER_MAX_ITEMS lines
+  const [sheet, setSheet] = useState(false);
   const [offering, setOffering] = useState(false);
 
   const assigned = commitments; // already only what's promised out, no people
@@ -227,17 +230,25 @@ function Home({ bins, inv, commitments, refresh }) {
   // reserved for them. None of that is a parent's problem to solve.
   const requesterHouse = house === 'all' ? '' : house;
   const needsHouse = typeHoused(type) && house === 'all';
-  const ready = !!gender && !!type && !!size && !needsHouse;
   const items = typesForGender(gender);
+  const cap = typeMaxQty(type);
+  const full = order.length >= ORDER_MAX_ITEMS;
+  const already = order.some((l) => l.itemType === type && l.size === size);
+  const ready = !!gender && !!type && !!size && !needsHouse && !full && !already;
 
-  const ask = () => setSheet({
-    itemType: type,
-    size,
-    // Polos and vests belong to a house; khakis and dress shirts fit anyone.
-    house: typeHoused(type) ? requesterHouse : '',
-    requesterHouse,
-    gender,
-  });
+  const addToOrder = () => {
+    setOrder([...order, {
+      itemType: type,
+      size,
+      // Polos, vests and ties belong to a house; khakis fit anyone.
+      house: typeHoused(type) ? requesterHouse : '',
+      requesterHouse,
+      qty: Math.min(qty, cap),
+    }]);
+    setType(''); setSize(''); setQty(1);
+  };
+
+  const drop = (i) => setOrder(order.filter((_, n) => n !== i));
 
   return (
     <>
@@ -310,33 +321,71 @@ function Home({ bins, inv, commitments, refresh }) {
           </select>
           <SizePicker
             itemType={type} value={size} placeholder="Choose your size"
-            onChange={(e) => setSize(e.target.value)}
+            onChange={(e) => { setSize(e.target.value); setQty(1); }}
           />
         </div>
 
-        <button className="btn flame wide" disabled={!ready} onClick={ask}>
-          {ready ? `Request ${typeLabel(type)}` : 'Request an item'}
+        {/* Only worth asking when there's a choice. A student wears one vest. */}
+        {cap > 1 && !!type && (
+          <label className="qty-line">
+            How many?
+            <select value={qty} onChange={(e) => setQty(Number(e.target.value))}>
+              {Array.from({ length: cap }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <button className="btn ghost wide" disabled={!ready} onClick={addToOrder}>
+          {type && size && ready ? `Add ${typeLabel(type)} to my order` : 'Add to my order'}
         </button>
 
         <p className="fine ask-note">
           {!gender
             ? 'Start by saying who it\u2019s for — or show everything, if you already know the item.'
-            : needsHouse
-              ? `${typeLabel(type)} comes in house colors — pick your house above.`
-              : !type || !size
-                ? 'Pick an item and a size to get started.'
-                : "Not sure of the size? Ask anyway \u2014 say so in the notes and your bin holder will work it out with you."}
+            : full
+              ? `That\u2019s ${ORDER_MAX_ITEMS} — the most one order can hold, so the next family finds something too. Send these and you can always ask again.`
+              : already
+                ? 'That one\u2019s already on your order.'
+                : needsHouse
+                  ? `${typeLabel(type)} comes in house colors — pick your house above.`
+                  : !type || !size
+                    ? 'Pick an item and a size to get started.'
+                    : "Not sure of the size? Ask anyway \u2014 say so in the notes and your bin holder will work it out with you."}
         </p>
+
+        {order.length > 0 && (
+          <div className="order">
+            <h3>Your order</h3>
+            <ul className="order-list">
+              {order.map((l, i) => (
+                <li key={`${l.itemType}|${l.size}`}>
+                  <div className="order-what">
+                    <b>{typeLabel(l.itemType)}</b>
+                    {l.house ? <HouseTag id={l.house} /> : null}
+                    <span className="size-chip">{sizeChip(l.size)}</span>
+                    {l.qty > 1 && <span className="order-qty">×{l.qty}</span>}
+                  </div>
+                  <button className="linkish" onClick={() => drop(i)}>remove</button>
+                </li>
+              ))}
+            </ul>
+            <button className="btn flame wide" onClick={() => setSheet(true)}>
+              Request {order.length === 1 ? 'this item' : `these ${order.length} items`}
+            </button>
+          </div>
+        )}
       </section>
 
       {sheet && (
         <RequestSheet
-          preset={sheet}
+          order={order}
           inv={inv}
           assigned={assigned}
           bins={bins}
-          onDone={() => { setSheet(null); refresh(); }}
-          onClose={() => setSheet(null)}
+          onDone={() => { setSheet(false); setOrder([]); refresh(); }}
+          onClose={() => setSheet(false)}
         />
       )}
       {offering && (
@@ -354,18 +403,10 @@ function Home({ bins, inv, commitments, refresh }) {
 // The request sheet — name + student, then the app matches a bin and starts
 // the three-day clock.
 // ---------------------------------------------------------------------------
-function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
-  const [form, setForm] = useState({
-    parentName: '', student: '', contact: '', note: '',
-    itemType: preset.itemType || visibleItemTypes()[0]?.id || 'polo',
-    size: preset.size || firstSize(preset.itemType || visibleItemTypes()[0]?.id),
-    house: preset.house || '',
-    requesterHouse: preset.requesterHouse ?? preset.house ?? '',
-    gender: preset.gender || '',
-    qty: 1,
-  });
+function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
+  const [form, setForm] = useState({ parentName: '', student: '', contact: '', note: '' });
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState(null);
   const [err, setErr] = useState('');
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target ? e.target.value : e });
@@ -385,17 +426,20 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     }
     setBusy(true); setErr('');
     try {
-      // Relationships first: route to the requester's own house bin when it
-      // has the item, even for house-neutral pieces like khakis.
-      const houseBins = bins
-        .filter((b) => !b.retired && b.holder_house === form.requesterHouse)
-        .map((b) => b.id);
-      const binId = pickBin(
-        inv, assigned, form.itemType, form.size, form.house,
-        Number(form.qty) || 1, houseBins
-      );
-      const row = await db.addRequest({ ...form, qty: Number(form.qty) || 1 }, binId);
-      setResult(row);
+      // One row per line, because each one is matched, promised and handed
+      // over on its own — a polo may be waiting in your house's bin while the
+      // shorts are still on the waitlist.
+      const out = [];
+      for (const line of order) {
+        const houseBins = bins
+          .filter((b) => !b.retired && b.holder_house === line.requesterHouse)
+          .map((b) => b.id);
+        const binId = pickBin(
+          inv, assigned, line.itemType, line.size, line.house, line.qty || 1, houseBins
+        );
+        out.push(await db.addRequest({ ...form, ...line, qty: line.qty || 1 }, binId));
+      }
+      setResults(out);
     } catch (e) {
       setErr(e.message || "That didn't go through — try again.");
     } finally {
@@ -403,26 +447,45 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     }
   };
 
-  if (result) {
-    const bin = bins.find((b) => b.id === result.bin_id);
+  if (results) {
+    const ready = results.filter((r) => r.bin_id);
+    const waiting = results.filter((r) => !r.bin_id);
+    const named = (r) => {
+      const bin = bins.find((b) => b.id === r.bin_id);
+      return `${typeLabel(r.item_type)} · ${sizeLabel(r.size)}${bin ? ` — ${bin.name}` : ''}`;
+    };
+
     return (
-      <Sheet onClose={onDone} title="Request in!">
-        {result.status === 'assigned' ? (
+      <Sheet onClose={onDone} title="You're all set">
+        {ready.length > 0 && (
           <>
             <p className="big">
-              <b>{typeLabel(result.item_type)}{result.house ? ` (${houseInfo(result.house).name})` : ''} · {sizeLabel(result.size)}</b> is with the{' '}
-            <b>{bin ? bin.name : 'bin'}</b>{bin?.holder_name ? ` (${bin.holder_name})` : ''}.
+              {ready.length === results.length && results.length > 1
+                ? 'Both are waiting for you.'
+                : ready.length > 1 ? `${ready.length} of these are waiting for you.` : 'It\u2019s waiting for you.'}
             </p>
+            <ul className="plainlist">
+              {ready.map((r) => <li key={r.id}>{named(r)}</li>)}
+            </ul>
             <p>
               Next: <a href="#/requests"><b>pick a handoff time</b></a> that works for you —
               carline or straight from student to student.
             </p>
           </>
-        ) : (
-          <p className="big">
-            Nothing in the bins right now, so you're on the <b>waitlist</b> — the moment a match
-            is added to any bin we'll match it to you and text you to set up a handoff.
-          </p>
+        )}
+        {waiting.length > 0 && (
+          <>
+            <p className={ready.length ? '' : 'big'}>
+              {ready.length ? 'Still looking for ' : 'Nothing in the bins right now, so you\u2019re on the '}
+              {ready.length ? null : <b>waitlist</b>}
+              {ready.length
+                ? waiting.map((r) => `${typeLabel(r.item_type)} · ${sizeLabel(r.size)}`).join(' and ')
+                : ' — '}
+              {ready.length
+                ? ' — we\u2019ll text you the moment one turns up.'
+                : 'the moment a match lands in any bin we\u2019ll match it to you and text you.'}
+            </p>
+          </>
         )}
         <button className="btn flame wide" onClick={onDone}>Done</button>
       </Sheet>
@@ -430,43 +493,19 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
   }
 
   return (
-    <Sheet onClose={onClose} title="Request an item">
-      <div className="grid2">
-        <label>Item
-          <select
-            value={form.itemType}
-            onChange={(e) => {
-              const itemType = e.target.value;
-              setForm({
-                ...form, itemType, size: firstSize(itemType),
-                house: typeHoused(itemType) ? form.requesterHouse : '',
-              });
-            }}>
-            {typesForGender(form.gender).map((t) => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
-        </label>
-        <label>Size
-          <SizePicker itemType={form.itemType} value={form.size} onChange={set('size')} />
-        </label>
-      </div>
-      <label>Your house
-        <select
-          value={form.requesterHouse}
-          onChange={(e) => {
-            const requesterHouse = e.target.value;
-            // Polos and vests come in house colors; everything else is neutral,
-            // so the family's house only decides which bin we ask first.
-            setForm({
-              ...form, requesterHouse,
-              house: typeHoused(form.itemType) ? requesterHouse : '',
-            });
-          }}>
-          <option value="">My student is new / not sorted yet</option>
-          {HOUSES.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-        </select>
-      </label>
+    <Sheet onClose={onClose} title={order.length > 1 ? 'Request these items' : 'Request an item'}>
+      <ul className="order-list confirm">
+        {order.map((l) => (
+          <li key={`${l.itemType}|${l.size}`}>
+            <div className="order-what">
+              <b>{typeLabel(l.itemType)}</b>
+              {l.house ? <HouseTag id={l.house} /> : null}
+              <span className="size-chip">{sizeChip(l.size)}</span>
+              {l.qty > 1 && <span className="order-qty">×{l.qty}</span>}
+            </div>
+          </li>
+        ))}
+      </ul>
       <p className="fine">
         We ask your own house's bin first whenever it has the item — that's how the
         swap has always worked.
@@ -489,14 +528,9 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
       <label>Anything else? (optional)
         <input value={form.note} onChange={set('note')} placeholder={FIT_HINT} maxLength={200} />
       </label>
-      <label className="qty">How many?
-        <select value={form.qty} onChange={set('qty')}>
-          {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-      </label>
       {err && <p className="err">{err}</p>}
       <button className="btn flame wide" disabled={busy} onClick={submit}>
-        {busy ? 'Sending…' : 'Submit request'}
+        {busy ? 'Sending…' : order.length > 1 ? `Submit ${order.length} requests` : 'Submit request'}
       </button>
       <p className="fine">
         You'll pick a handoff that fits your week — carline, or student to student. Free, always.
@@ -2544,6 +2578,7 @@ function AdminItemTypes({ pass, act }) {
                 {GENDER_LABEL[t.gender || 'coed']}
                 {' · '}{SIZE_SET_LABEL[t.size_set || 'tops']} sizes
                 {' · '}{t.housed ? 'house-colored' : 'any house'}
+                {' · '}max {t.max_qty || 1} per request
                 {t.hidden ? ' · hidden' : ''}
               </span>
             </div>
