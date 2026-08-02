@@ -88,10 +88,12 @@ export const typesForGender = (g) =>
 const n = (v, label) => ({ v, label: label || v });
 
 export const SIZE_SETS = {
+  // Co-Ed Big Kids, as the RCA order page actually sells them: one letter
+  // covering two numbers. A parent who knows "he's a 12" needs to land on M,
+  // not guess between YM and YL, so the numbers ride along in the label.
   tops: [
-    { group: 'Youth', sizes: [
-      n('YXS', 'YXS · 4–5'), n('YS', 'YS · 6–7'), n('YM', 'YM · 8–10'),
-      n('YL', 'YL · 12–14'), n('YXL', 'YXL · 16–18'),
+    { group: 'Kids', sizes: [
+      n('S', 'S · 8'), n('M', 'M · 10–12'), n('L', 'L · 14–16'), n('XL', 'XL · 18–20'),
     ] },
     { group: 'Adult', sizes: [
       n('AXS', 'Adult XS'), n('AS', 'Adult S'), n('AM', 'Adult M'),
@@ -168,10 +170,14 @@ export function sizeGroups(typeId) {
 export const allSizes = () =>
   Object.values(SIZE_SETS).flatMap((gs) => gs.flatMap((g) => g.sizes.map((x) => x.v)));
 
-// Slim, husky and plus used to be their own options. They're a fit
-// preference, not a size, so they live in "anything else" now — but bins
-// logged before that change still hold them, and they should read properly.
+// Sizes that were retired along the way. Nothing should still be logged
+// against them, but if anything is, it reads properly rather than blank:
+// slim/husky/plus were a fit preference rather than a size, and the co-ed
+// tops used to run YXS–YXL before we checked the order page.
 const LEGACY_LABELS = {
+  // The co-ed tops ran on a youth scale before we read the order page.
+  'YXS': 'YXS · 4–5', 'YS': 'YS · 6–7', 'YM': 'YM · 8–10',
+  'YL': 'YL · 12–14', 'YXL': 'YXL · 16–18',
   '8S': '8 Slim', '10S': '10 Slim', '12S': '12 Slim', '14S': '14 Slim',
   '16S': '16 Slim', '18S': '18 Slim', '20S': '20 Slim',
   '10H': '10 Husky', '12H': '12 Husky', '14H': '14 Husky',

@@ -35,9 +35,9 @@ describe('size sets follow the item', () => {
 
   it('leaves shirts and vests on letter sizes', () => {
     const v = values('polo');
-    expect(v).toContain('YM');
+    expect(v).toContain('M');       // M · 10–12, the way the order page sells it
     expect(v).toContain('A2XL');
-    expect(v).not.toContain('12');
+    expect(v).not.toContain('12');  // a bare 12 is a bottoms size
   });
 
   it('sends skirts down the girls scale', () => {
@@ -61,7 +61,7 @@ describe('browsing with no item chosen', () => {
 
 describe('sizeLabel', () => {
   it('spells out what a size means', () => {
-    expect(sizeLabel('YM')).toBe('YM · 8–10');
+    expect(sizeLabel('M')).toBe('M · 10–12');
     expect(sizeLabel('W32')).toBe('32 waist');
   });
 
@@ -80,7 +80,7 @@ describe('firstSize', () => {
   it('opens each form on a sensible size for that item', () => {
     expect(firstSize('pants-girls')).toBe('7');
     expect(firstSize('pants-boys')).toBe('8');
-    expect(firstSize('polo')).toBe('YXS');
+    expect(firstSize('polo')).toBe('S');
   });
 });
 
@@ -204,5 +204,37 @@ describe('gender-first item lists', () => {
     expect(sizeSetFor('polo-girls')).toBe('girls-tops'); // Big Girls 7–16
     expect(sizeSetFor('pants-girls-boot')).toBe('girls-bottoms');
     expect(sizeSetFor('pants-boys')).toBe('boys-bottoms');
+  });
+});
+
+// The co-ed pieces size the way the RCA order page sells them: one letter
+// covering two numbers, 8 / 10-12 / 14-16 / 18-20.
+describe('co-ed top sizes', () => {
+  it('is S M L XL over 8 to 20, with the numbers spelled out', () => {
+    setItemTypes([{ id: 'polo', label: 'House Polo · Co-Ed', gender: 'coed', housed: true, hidden: false, size_set: 'tops' }]);
+    const kids = sizeGroups('polo')[0];
+    expect(kids.group).toBe('Kids');
+    expect(kids.sizes.map((x) => x.v)).toEqual(['S', 'M', 'L', 'XL']);
+    expect(kids.sizes.map((x) => x.label)).toEqual(['S · 8', 'M · 10–12', 'L · 14–16', 'XL · 18–20']);
+  });
+
+  it('starts a new co-ed line on the smallest kids size', () => {
+    setItemTypes([{ id: 'polo', label: 'x', gender: 'coed', housed: true, hidden: false, size_set: 'tops' }]);
+    expect(firstSize('polo')).toBe('S');
+  });
+
+  it('keeps adult sizes distinct from the kids letters', () => {
+    expect(sizeLabel('S')).toBe('S · 8');
+    expect(sizeLabel('AS')).toBe('Adult S');
+  });
+
+  it('still reads anything logged on the old youth scale', () => {
+    expect(sizeLabel('YM')).toBe('YM · 8–10');
+    expect(sizeLabel('YXL')).toBe('YXL · 16–18');
+  });
+
+  it('never renders a letter size as a quantity', () => {
+    expect(sizeChip('M')).toBe('M · 10–12');
+    expect(sizeChip('12')).toBe('Size 12');
   });
 });
