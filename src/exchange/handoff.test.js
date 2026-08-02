@@ -99,3 +99,42 @@ describe('myRequestsLead', () => {
     expect(myRequestsLead([])).toBe('Nothing needs you right now.');
   });
 });
+
+// A holder said which mornings they're around, not that they'd drive in every
+// one of them. Two mechanisms keep a week from filling up.
+describe('nextSlots — clustering and the cap', () => {
+  const bin = { offers_carline: true, carline_days: [1, 2, 3, 4, 5], carline_when: 'am' };
+  const from = new Date(2026, 7, 3);   // Monday 3 Aug 2026
+
+  it('puts a morning they are already coming for first, and says so', () => {
+    const s = nextSlots(bin, from, 4, { booked: ['2026-08-06'], maxDays: 2 });
+    expect(s[0].date).toBe('2026-08-06');
+    expect(s[0].already).toBe(true);
+    expect(s.slice(1).every((x) => x.already === false)).toBe(true);
+  });
+
+  it('stops offering new mornings once they are at their cap', () => {
+    const s = nextSlots(bin, from, 4, { booked: ['2026-08-04', '2026-08-06'], maxDays: 2 });
+    expect(s.map((x) => x.date)).toEqual(['2026-08-04', '2026-08-06']);
+    expect(s.every((x) => x.already)).toBe(true);
+  });
+
+  it('never leaves a family with nothing when the cap is already exceeded', () => {
+    const s = nextSlots(bin, from, 4, {
+      booked: ['2026-08-04', '2026-08-05', '2026-08-06'], maxDays: 2,
+    });
+    expect(s.length).toBe(3);
+  });
+
+  it('behaves exactly as before when nothing is booked', () => {
+    const s = nextSlots(bin, from, 4, { booked: [], maxDays: 2 });
+    expect(s.length).toBe(4);
+    expect(s[0].date).toBe('2026-08-04');
+    expect(s.every((x) => x.already === false)).toBe(true);
+  });
+
+  it('is unchanged for callers that pass no options at all', () => {
+    expect(nextSlots(bin, from, 4).map((x) => x.date))
+      .toEqual(['2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07']);
+  });
+});

@@ -256,6 +256,44 @@ export async function setAvailability(binId, f) {
   if (error) throw error;
 }
 
+// The mornings this bin's holder is already committed to. No names, no items —
+// just the dates, so a family's slot list can point at the one they're already
+// making the trip for.
+export async function binHandoffDays(binId) {
+  const { data, error } = await supabase.rpc('ue_bin_handoff_days', { p_bin: binId });
+  if (error) throw error;
+  return (data || []).map((d) => d.handoff_date);
+}
+
+// The holder moving or handing back a morning they can't make.
+export async function rescheduleHandoff(token, id, date = null, slot = 'am', note = '') {
+  const { error } = await supabase.rpc('ue_handoff_reschedule', {
+    p_token: token, p_id: id, p_date: date, p_slot: slot, p_note: note,
+  });
+  if (error) throw error;
+}
+
+// One side choosing to hand over their number for one handoff.
+export async function shareContact(id, who, { token = null, access = null } = {}) {
+  const { error } = await supabase.rpc('ue_share_contact', {
+    p_id: id, p_who: who, p_token: token, p_access: access,
+  });
+  if (error) throw error;
+}
+
+// A holder's photo. Unguessable path, public read — the same trust model the
+// token links already run on.
+export async function uploadHolderPhoto(token, file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const path = `${token.slice(0, 12)}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('holder-photos')
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('holder-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function scheduleHandoff(id, mode, date = null, slot = '', student = null) {
   const { error } = await supabase.rpc('ue_handoff_schedule', {
     p_id: id, p_mode: mode, p_date: date, p_slot: slot, p_student: student,
@@ -396,6 +434,8 @@ export async function holderUpdateSelf(token, f) {
     p_notify_mode: f.notifyMode ?? null,
     p_special: f.special ?? null,
     p_special_note: f.specialNote ?? null,
+    p_photo_url: f.photoUrl ?? null,
+    p_max_days: f.maxDays ?? null,
   });
   if (error) throw error;
 }

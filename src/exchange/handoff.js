@@ -26,7 +26,16 @@ const iso = (d) =>
 
 // Dates only — no times, no timezone math to get wrong. "Tomorrow" is the
 // earliest offer, so nobody is asked to make a handoff happen in an hour.
-export function nextSlots(bin, from = new Date(), count = 4) {
+//
+// Two things keep this from eating a holder's week. Mornings they're ALREADY
+// coming in for somebody else come first and say so, which quietly funnels
+// every family onto the same day. And once they're committed to as many
+// mornings as they said they'd do, those are the only ones on offer — the
+// list stops growing rather than the holder having to say no five times.
+//
+// booked: ['2026-08-11', …] the mornings already spoken for
+// maxDays: how many separate mornings this holder will do at once
+export function nextSlots(bin, from = new Date(), count = 4, opts = {}) {
   if (!bin || bin.offers_carline === false) return [];
   const days = (bin.carline_days && bin.carline_days.length ? bin.carline_days : [1, 2, 3, 4, 5])
     .filter((d) => d >= 1 && d <= 5);
@@ -34,21 +43,27 @@ export function nextSlots(bin, from = new Date(), count = 4) {
 
   const when = MORNING_ONLY ? 'am' : (bin.carline_when || 'am');
   const slots = when === 'both' ? ['am', 'pm'] : [when];
+  const booked = new Set(opts.booked || []);
+  const maxDays = Math.max(1, opts.maxDays || 5);
 
   const out = [];
   const cur = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   cur.setDate(cur.getDate() + 1); // start tomorrow
 
-  for (let i = 0; i < 21 && out.length < count; i++) {
+  for (let i = 0; i < 21; i++) {
     const dow = cur.getDay() === 0 ? 7 : cur.getDay();
     if (days.includes(dow)) {
       for (const s of slots) {
-        if (out.length < count) out.push({ date: iso(cur), slot: s, dow });
+        out.push({ date: iso(cur), slot: s, dow, already: booked.has(iso(cur)) });
       }
     }
     cur.setDate(cur.getDate() + 1);
   }
-  return out;
+
+  const already = out.filter((s) => s.already);
+  // At the cap, the only mornings left are the ones they're already making.
+  const fresh = already.length >= maxDays ? [] : out.filter((s) => !s.already);
+  return [...already, ...fresh].slice(0, Math.max(count, already.length));
 }
 
 // "Tue, Aug 4 · afternoon carline"

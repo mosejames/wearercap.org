@@ -101,6 +101,31 @@ function HouseTag({ id }) {
 const itemKey = (x) => `${x.itemType || x.item_type}|${x.size}|${x.house || ''}`;
 
 // The size list follows the item: girls' bottoms, boys' bottoms, or tops.
+// Who you're looking for. A name and a car description go a long way; a face
+// goes further, which is why a holder can put one up.
+function HolderCard({ bin, photo, name, spot, student, phone, children }) {
+  const who = name || bin?.holder_name || '';
+  const pic = photo || bin?.holder_photo || bin?.holder?.photo_url || '';
+  const where = spot || bin?.carline_spot || '';
+  const kid = student || bin?.holder_student || '';
+  if (!who && !pic && !where) return null;
+
+  return (
+    <div className="who">
+      {pic
+        ? <img className="who-face" src={pic} alt={who ? `${who}` : 'Your bin holder'} />
+        : <div className="who-face who-blank">{(who || '?').slice(0, 1)}</div>}
+      <div className="who-text">
+        {who && <b>{who}</b>}
+        {where && <span>📍 {where}</span>}
+        {kid && <span>Their student: {kid}</span>}
+        {phone && <span><a href={`tel:${phone.replace(/\D/g, '')}`}>{phone}</a></span>}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function SizePicker({ itemType, value, onChange, placeholder, disabled = false }) {
   return (
     <select value={value} onChange={onChange} disabled={disabled}>
@@ -176,7 +201,7 @@ export default function App() {
         </div>
       </header>
 
-      {err && <div className="shell warn-wrap"><div className="warn">⚠ {err}</div></div>}
+      {err && <div className="shell warn-wrap"><div className="warn">{err}</div></div>}
 
       {!loaded ? (
         <div className="shell loading">Opening the bins…</div>
@@ -725,7 +750,26 @@ function MyRequests({ token, bins, settings }) {
               <div className="req-main">
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 {r.student && <span>for {r.student}</span>}
-                {plan && <span className="plan">🤝 {plan}{bin?.holder_name ? ` · with ${bin.holder_name}` : ''}</span>}
+                {plan && <span className="plan">🤝 {plan}{r.holder_name ? ` · with ${r.holder_name}` : ''}</span>}
+                {r.status === 'scheduled' && r.handoff_mode !== 'student' && (
+                  <HolderCard
+                    name={r.holder_name} photo={r.holder_photo}
+                    spot={r.holder_spot} phone={r.holder_phone}
+                  >
+                    {!r.family_shared && (
+                      <button className="linkish who-share" onClick={async () => {
+                        await db.shareContact(r.id, 'family', { access: token });
+                        load();
+                      }}>Share my number with {r.holder_name?.split(' ')[0] || 'them'}</button>
+                    )}
+                    {r.family_shared && !r.holder_phone && (
+                      <span>They have your number. Theirs is theirs to share.</span>
+                    )}
+                  </HolderCard>
+                )}
+                {r.status === 'scheduled' && r.handoff_mode === 'student' && r.holder_student && (
+                  <span className="plan">Coming in with {r.holder_student}</span>
+                )}
               </div>
               <div className="req-side">
                 <span className={`chip chip-${r.status}`}>{STATUS_LABEL[r.status]}</span>
@@ -741,7 +785,7 @@ function MyRequests({ token, bins, settings }) {
                   <button
                     className="btn small flame"
                     onClick={async () => { await db.handoffReceived(r.id); load(); }}
-                  >Got it ✓</button>
+                  >Got it</button>
                 )}
                 {(r.status === 'open' || r.status === 'assigned' || r.status === 'scheduled') && (
                   <button
@@ -784,7 +828,20 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const slots = nextSlots(bin, new Date(), 6);
+  // What this holder is already committed to, so the list can point at the
+  // morning they're already making the trip for.
+  const [booked, setBooked] = useState([]);
+  useEffect(() => {
+    let live = true;
+    if (bin?.id) db.binHandoffDays(bin.id).then((d) => live && setBooked(d)).catch(() => {});
+    return () => { live = false; };
+  }, [bin?.id]);
+
+  const slots = nextSlots(bin, new Date(), 6, {
+    booked,
+    maxDays: bin?.max_handoff_days || bin?.holder?.max_handoff_days || 2,
+  });
+  const capped = slots.length > 0 && slots.every((x) => x.already);
   const holder = bin?.holder_name || 'your bin holder';
 
   const save = async () => {
@@ -821,22 +878,22 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
       <div className="mode-tabs">
         {bin?.offers_carline !== false && (
           <button className={`mode ${mode === 'carline' ? 'on' : ''}`} onClick={() => setMode('carline')}>
-            🚗 Carline
+            Carline
           </button>
         )}
         {bin?.offers_student !== false && (
           <button className={`mode ${mode === 'student' ? 'on' : ''}`} onClick={() => setMode('student')}>
-            🎒 Student to student
+            Student to student
           </button>
         )}
         {bin?.holder?.special_arrangements && (
           <button className={`mode ${mode === 'other' ? 'on' : ''}`} onClick={() => setMode('other')}>
-            🤝 Another time
+            Another time
           </button>
         )}
         {frontDesk && (
           <button className={`mode ${mode === 'desk' ? 'on' : ''}`} onClick={() => setMode('desk')}>
-            🏫 Front desk
+            Front desk
           </button>
         )}
       </div>
@@ -844,17 +901,24 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
       {mode === 'carline' && (
         slots.length ? (
           <>
-            <p className="fine">{holder} is around on these days — tap one.</p>
+            <p className="fine">
+              {capped
+                ? `${holder} is already coming in on ${slots.length === 1 ? 'this morning' : 'these mornings'} — joining one is easiest on them.`
+                : `${holder} is around on these days — tap one.`}
+            </p>
             <div className="slots">
               {slots.map((s) => (
                 <button
                   key={s.date + s.slot}
                   className={`slot ${pick && pick.date === s.date && pick.slot === s.slot ? 'on' : ''}`}
                   onClick={() => setPick(s)}
-                >{slotLabel(s)}</button>
+                >
+                  {slotLabel(s)}
+                  {s.already && <em>already coming in</em>}
+                </button>
               ))}
             </div>
-            {bin?.carline_spot && <p className="fine">📍 Look for: {bin.carline_spot}</p>}
+            <HolderCard bin={bin} />
           </>
         ) : (
           <p className="fine">{holder} hasn't set carline days yet — try student to student.</p>
@@ -882,7 +946,7 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
             app steps out of the way here, so it's on you both to make it happen.
           </p>
           {bin?.holder?.special_note && (
-            <p className="fine">📝 {bin.holder.special_note}</p>
+            <p className="fine">{bin.holder.special_note}</p>
           )}
         </>
       )}
@@ -985,7 +1049,7 @@ function HolderHome({ token }) {
       )}
 
       {tab === 'todo' && (
-        <HolderTodo holder={holder} bins={bins} queue={queue} pickups={pickups} reload={load} />
+        <HolderTodo token={token} holder={holder} bins={bins} queue={queue} pickups={pickups} reload={load} />
       )}
 
       {tab === 'counts' && (
@@ -1023,10 +1087,27 @@ function HolderSettings({ token, holder, reload }) {
     phone: prettyPhone(holder.phone || ''),
     email: holder.email || '',
     notifyMode: holder.notify_mode || 'instant',
+    photoUrl: holder.photo_url || '',
+    maxDays: holder.max_handoff_days || 2,
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const pickPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setMsg('');
+    try {
+      const url = await db.uploadHolderPhoto(token, file);
+      setF((cur) => ({ ...cur, photoUrl: url }));
+      await db.holderUpdateSelf(token, { photoUrl: url });
+      setMsg('Photo saved.'); reload();
+    } catch (err) {
+      setMsg(err.message || "That photo didn't upload — try a smaller one.");
+    } finally { setUploading(false); }
+  };
 
   const save = async () => {
     setBusy(true); setMsg('');
@@ -1040,6 +1121,26 @@ function HolderSettings({ token, holder, reload }) {
 
   return (
     <div className="card avail">
+      {/* A face beats a car description at 7:40 in a carline. */}
+      <div className="avail-body">
+        <p className="fine">
+          A photo so a family knows who they're walking up to. Only families with a
+          handoff booked with you ever see it.
+        </p>
+        <div className="who">
+          {f.photoUrl
+            ? <img className="who-face" src={f.photoUrl} alt="" />
+            : <div className="who-face who-blank">{(holder.name || '?').slice(0, 1)}</div>}
+          <div className="who-text">
+            <b>{holder.name}</b>
+            <label className="linkish photo-pick">
+              {uploading ? 'Uploading…' : f.photoUrl ? 'Change photo' : 'Add a photo'}
+              <input type="file" accept="image/*" onChange={pickPhoto} disabled={uploading} />
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div className="avail-body">
         <label>Your cell — where request alerts go
           <input value={f.phone} onChange={set('phone')} inputMode="tel"
@@ -1064,6 +1165,26 @@ function HolderSettings({ token, holder, reload }) {
                 <b>{label}</b><span>{blurb}</span>
               </button>
             ))}
+        </div>
+      </div>
+
+      <div className="avail-body">
+        <p className="fine">
+          Most mornings you'd drive in for a handoff in one week. Families are
+          offered the mornings you're already coming for first, and once you're at
+          your number, that's all they can pick — nobody has to ask you for a sixth.
+        </p>
+        <div className="pick-row">
+          {[1, 2, 3].map((n) => (
+            <button
+              key={n}
+              className={`pick ${Number(f.maxDays) === n ? 'on' : ''}`}
+              onClick={() => setF({ ...f, maxDays: n })}
+            >
+              <b>{n} morning{n === 1 ? '' : 's'}</b>
+              <span>{n === 1 ? 'Everything on one day' : `Up to ${n} a week`}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -1113,7 +1234,7 @@ function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
         <ol className="start-steps">
           {steps.map((s, i) => (
             <li key={s.title} className={s.done ? 'done' : ''}>
-              <span className="start-mark">{s.done ? '✓' : s.informational ? '·' : i + 1}</span>
+              <span className="start-mark">{s.done ? '' : s.informational ? '·' : i + 1}</span>
               <div>
                 <b>{s.title}</b>
                 <span>{s.body}</span>
@@ -1129,7 +1250,8 @@ function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
   );
 }
 
-function HolderTodo({ holder, bins, queue, pickups, reload }) {
+function HolderTodo({ token, holder, bins, queue, pickups, reload }) {
+  const [moving, setMoving] = useState(null);
   const binCode = (id) => bins.find((b) => b.id === id)?.code || '';
 
   if (!queue.length && !pickups.length) {
@@ -1160,6 +1282,22 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
                       for {r.parent_name}{r.student ? ` (${r.student})` : ''}
                       {r.note ? ` — “${r.note}”` : ''}
                     </span>
+                    {r.status === 'scheduled' && (
+                      <span className="share-line">
+                        {r.family_phone
+                          ? <>Their cell: <a href={`tel:${r.family_phone.replace(/\D/g, '')}`}>{r.family_phone}</a></>
+                          : 'They haven’t shared a number.'}
+                        {' · '}
+                        {r.holder_shared
+                          ? 'They have yours.'
+                          : (
+                            <button className="linkish" onClick={async () => {
+                              await db.shareContact(r.id, 'holder', { token });
+                              reload();
+                            }}>Share my number</button>
+                          )}
+                      </span>
+                    )}
                     <span className="plan">
                       {binCode(r.bin_id)}{' · '}
                       {r.status === 'assigned' ? '⏳ waiting on them to pick a time'
@@ -1170,10 +1308,15 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
                   <div className="req-side">
                     {due && r.status === 'scheduled' &&
                       <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+                    {r.status === 'scheduled' && (
+                      <button className="linkish" onClick={() => setMoving(r)}>
+                        Can't make it
+                      </button>
+                    )}
                     {r.status !== 'handed_off' && (
                       <button className="btn small flame"
                         onClick={async () => { await db.handoffSent(r.id, holder.name); reload(); }}>
-                        Handed it off ✓
+                        Handed it off
                       </button>
                     )}
                   </div>
@@ -1184,9 +1327,17 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
         </section>
       )}
 
+      {moving && (
+        <MoveHandoffSheet
+          token={token} req={moving} holder={holder}
+          onDone={() => { setMoving(null); reload(); }}
+          onClose={() => setMoving(null)}
+        />
+      )}
+
       {pickups.length > 0 && (
         <section className="shell section">
-          <h2 className="h2">Pickups to arrange</h2>
+          <h2 className="h2">Pickups to arrange 👕</h2>
           <p className="sub">Reach out, grab the bag, then add what came in under My bins.</p>
           <ul className="req-list">
             {pickups.map((o) => (
@@ -1202,8 +1353,7 @@ function HolderTodo({ holder, bins, queue, pickups, reload }) {
                     </button>
                   ) : <span className="chip chip-assigned">Scheduled</span>}
                   <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); reload(); }}>
-                    Collected ✓
-                  </button>
+                    Collected                   </button>
                   <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); reload(); }}>
                     cancel
                   </button>
@@ -1292,8 +1442,8 @@ function BinView({ bin, code, bins, inv, refresh }) {
                       {r.status === 'assigned'
                         ? '⏳ waiting on them to pick a time'
                         : r.status === 'handed_off'
-                          ? `✅ handed off · ${plan} — waiting on them to confirm`
-                          : `🤝 ${plan}`}
+                          ? `handed off · ${plan} — waiting on them to confirm`
+                          : `${plan}`}
                     </span>
                   </div>
                   <div className="req-side">
@@ -1303,7 +1453,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
                       <button
                         className="btn small flame"
                         onClick={async () => { await db.handoffSent(r.id, bin.holder_name); reload(); }}
-                      >Handed it off ✓</button>
+                      >Handed it off </button>
                     )}
                   </div>
                 </li>
@@ -1315,7 +1465,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
 
       {pickups.length > 0 && (
         <section className="shell section">
-          <h2 className="h2">Pickups to arrange</h2>
+          <h2 className="h2">Pickups to arrange 👕</h2>
           <p className="sub">Parents offering clothes for this bin. Reach out, grab the bag, then log what came in with “I'm adding items.”</p>
           <ul className="req-list">
             {pickups.map((o) => (
@@ -1333,8 +1483,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
                     <span className="chip chip-assigned">Scheduled</span>
                   )}
                   <button className="btn small flame" onClick={async () => { await db.updateOffer(o.id, 'collected'); reload(); }}>
-                    Collected ✓
-                  </button>
+                    Collected                   </button>
                   <button className="linkish" onClick={async () => { await db.updateOffer(o.id, 'canceled'); reload(); }}>
                     cancel
                   </button>
@@ -1442,7 +1591,7 @@ function AvailabilityCard({ bin, token, refresh }) {
       <div className="card avail">
         <div className="avail-now">
           <b>{availabilityLine(bin)}</b>
-          {bin.carline_spot && <span>📍 {bin.carline_spot}</span>}
+          {bin.carline_spot && <span>{bin.carline_spot}</span>}
         </div>
         <button className="btn small" onClick={() => setOpen(true)}>Edit my availability</button>
         <p className="fine">This is your schedule — it covers every bin you hold.</p>
@@ -1455,7 +1604,7 @@ function AvailabilityCard({ bin, token, refresh }) {
       <label className="check">
         <input type="checkbox" checked={f.offersCarline}
           onChange={(e) => setF({ ...f, offersCarline: e.target.checked })} />
-        <span>🚗 I can hand off at carline</span>
+        <span>I can hand off at carline</span>
       </label>
 
       {f.offersCarline && (
@@ -1483,7 +1632,7 @@ function AvailabilityCard({ bin, token, refresh }) {
       <label className="check">
         <input type="checkbox" checked={f.offersStudent}
           onChange={(e) => setF({ ...f, offersStudent: e.target.checked })} />
-        <span>🎒 I can send it in with my student</span>
+        <span>I can send it in with my student</span>
       </label>
 
       {f.offersStudent && (
@@ -1498,7 +1647,7 @@ function AvailabilityCard({ bin, token, refresh }) {
       <label className="check">
         <input type="checkbox" checked={f.special}
           onChange={(e) => setF({ ...f, special: e.target.checked })} />
-        <span>🤝 I'll arrange another time if neither works</span>
+        <span>I'll arrange another time if neither works</span>
       </label>
 
       {f.special && (
@@ -1809,6 +1958,88 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
         </Sheet>
       )}
     </section>
+  );
+}
+
+// "I can't make it." A doctor's appointment, a trip, a morning that got away
+// from you — the holder moves it or hands it back, and the family hears about
+// it either way rather than standing in a carline wondering.
+function MoveHandoffSheet({ token, req, holder, onDone, onClose }) {
+  const [choice, setChoice] = useState('move');   // 'move' | 'release'
+  const [pick, setPick] = useState(null);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  // Their own standing availability, minus the morning they just backed out of.
+  const slots = nextSlots(
+    { offers_carline: holder.offers_carline, carline_days: holder.carline_days, carline_when: holder.carline_when },
+    new Date(), 6
+  ).filter((s) => s.date !== req.handoff_date);
+
+  const save = async () => {
+    if (choice === 'move' && !pick) { setErr('Pick the morning that does work.'); return; }
+    setBusy(true); setErr('');
+    try {
+      await db.rescheduleHandoff(token, req.id, choice === 'move' ? pick.date : null,
+        choice === 'move' ? pick.slot : 'am', note);
+      onDone();
+    } catch (e) {
+      setErr(e.message || "That didn't go through — try again.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet onClose={onClose} title="Can't make it">
+      <p className="fine">
+        {typeLabel(req.item_type)} · {sizeLabel(req.size)} for {req.parent_name},
+        currently {handoffSummary(req).toLowerCase()}. Their item stays held for them
+        either way — this is only about the morning.
+      </p>
+
+      <div className="mode-tabs">
+        {[['move', 'Move it to another day'], ['release', 'Let them pick again']].map(([k, label]) => (
+          <button key={k} className={`mode ${choice === k ? 'on' : ''}`} onClick={() => setChoice(k)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {choice === 'move' ? (
+        slots.length ? (
+          <div className="slots">
+            {slots.map((s) => (
+              <button
+                key={s.date + s.slot}
+                className={`slot ${pick && pick.date === s.date ? 'on' : ''}`}
+                onClick={() => setPick(s)}
+              >{slotLabel(s)}</button>
+            ))}
+          </div>
+        ) : (
+          <p className="fine">
+            No other mornings in your availability — hand it back instead, or widen your
+            days under My setup.
+          </p>
+        )
+      ) : (
+        <p className="fine">
+          We'll text them that the morning didn't work and ask them to pick another
+          from your days. Nothing is cancelled.
+        </p>
+      )}
+
+      <label>Want to say why? (optional — they'll see this)
+        <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={140}
+          placeholder="Out of town that day — sorry!" />
+      </label>
+
+      {err && <p className="err">{err}</p>}
+      <button className="btn flame wide" disabled={busy} onClick={save}>
+        {busy ? 'Sending…' : choice === 'move' ? 'Move it and tell them' : 'Hand it back to them'}
+      </button>
+    </Sheet>
   );
 }
 
@@ -2153,7 +2384,7 @@ function AdminRequests({ pass, act, msg, bins, reqs }) {
                 </span>
                 <span className="plan">
                   {bin ? `${bin.code} · ${bin.holder_name || 'no holder'}` : 'no bin yet'}
-                  {handoffSummary(r) ? ` · 🤝 ${handoffSummary(r)}` : ''}
+                  {handoffSummary(r) ? ` · ${handoffSummary(r)}` : ''}
                   {` · asked ${fmtDay(r.created_at)}`}
                 </span>
               </div>
@@ -2272,7 +2503,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
 
       {noPhone.length > 0 && (
         <div className="card warn-card">
-          <h3>📱 {noPhone.length} holder{noPhone.length > 1 ? 's' : ''} with no phone</h3>
+          <h3>{noPhone.length} holder{noPhone.length > 1 ? 's' : ''} with no phone</h3>
           <p className="fine">
             No number means they never hear that a request landed in their bin —
             {' '}{noPhone.map((h) => h.name).join(', ')}. Tap Edit on their card to add it.
@@ -2295,10 +2526,10 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
               <div>
                 <b>{h.name}</b>
                 <span className={h.phone ? '' : 'missing'}>
-                  📱 {h.phone ? prettyPhone(h.phone) : 'no phone — they get no texts'}
+                  {h.phone ? prettyPhone(h.phone) : 'no phone — they get no texts'}
                 </span>
                 <span className={h.email ? '' : 'missing'}>
-                  ✉️ {h.email || 'no email on file'}
+                  {h.email || 'no email on file'}
                 </span>
                 <span className="fine">{availabilityLine(h)}</span>
               </div>
@@ -2360,7 +2591,7 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
 
       <p className="fine page-foot">
         <button className="linkish" onClick={() => setPrintBins(bins.filter((b) => !b.retired))}>
-          🖨 Print every QR label
+          Print every QR label
         </button>{' '}— handy for a stack to hand out; each holder can also print
         their own from their page.
       </p>
@@ -2969,7 +3200,7 @@ function Sheet({ title, children, onClose }) {
       <div className="sheet">
         <div className="sheet-head">
           <h3>{title}</h3>
-          <button className="x" onClick={onClose} aria-label="Close">✕</button>
+          <button className="x" onClick={onClose} aria-label="Close"></button>
         </div>
         {children}
       </div>
