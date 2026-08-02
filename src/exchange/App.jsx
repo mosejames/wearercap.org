@@ -3323,27 +3323,55 @@ function AdminReports({ bins, inv, reqs }) {
 }
 
 // The text-message outbox: what's queued, what's gone out.
+//
+// Folded shut by default. This is a delivery log — you want it when something
+// hasn't arrived and never otherwise, and left open it buries the two screens
+// it sits on under a wall of message bodies. The headline carries the only
+// thing worth glancing at: whether anything is stuck.
 function AdminNotifications({ notifications }) {
   const rows = notifications || [];
   if (!rows.length) return null;
   const pending = rows.filter((n) => n.status === 'pending').length;
+  const failed = rows.filter((n) => n.status === 'failed').length;
+  const shown = rows.slice(0, 30);
+  // Every body opens "RCAP Uniform Exchange (AMI-1):" and closes with a link,
+  // so at 80 characters every line in the log read identically. Strip the
+  // boilerplate and the message itself fits.
+  const gist = (body = '') => {
+    const t = body
+      .replace(/^RCAP Uniform Exchange\s*(\(([^)]*)\))?:\s*/, (_, __, code) => (code ? `${code} · ` : ''))
+      .replace(/\s*(Your bin page|Open your page|Your page):.*$/s, '')
+      .replace(/\s*https?:\/\/\S+/g, '')
+      .trim();
+    return t.length > 96 ? `${t.slice(0, 96)}…` : t;
+  };
   return (
-    <div className="card">
-      <h3>Text updates {pending > 0 ? `· ${pending} queued` : ''}</h3>
-      <p className="fine">
-        Texts go out the moment something happens — a request lands, a handoff is set,
-        an item changes hands. Anything stuck here is retried on the hour.
-      </p>
-      <ul className="activity">
-        {rows.slice(0, 12).map((n) => (
-          <li key={n.id}>
-            <span className={`chip ${n.status === 'sent' ? 'chip-fulfilled' : n.status === 'pending' ? 'chip-open' : 'chip-canceled'}`}>{n.status}</span>
-            <span className="notif-body">{n.body.slice(0, 80)}…</span>
-            <time>{fmtDay(n.created_at)}</time>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <details className="card fold">
+      <summary>
+        <span className="fold-title">Text updates</span>
+        <span className="fold-note">
+          {pending > 0 ? `${pending} queued` : failed > 0 ? `${failed} stuck` : `${rows.length} sent`}
+        </span>
+      </summary>
+      <div className="fold-body">
+        <p className="fine">
+          Texts go out the moment something happens — a request lands, a handoff is set,
+          an item changes hands. Anything stuck here is retried on the hour.
+        </p>
+        <ul className="activity">
+          {shown.map((n) => (
+            <li key={n.id}>
+              <span className={`chip ${n.status === 'sent' ? 'chip-fulfilled' : n.status === 'pending' ? 'chip-open' : n.status === 'failed' ? 'chip-failed' : 'chip-canceled'}`}>{n.status}</span>
+              <span className="notif-body">{gist(n.body)}</span>
+              <time>{fmtDay(n.created_at)}</time>
+            </li>
+          ))}
+        </ul>
+        {rows.length > shown.length && (
+          <p className="fine">Showing the most recent {shown.length} of {rows.length}.</p>
+        )}
+      </div>
+    </details>
   );
 }
 

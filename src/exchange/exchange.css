@@ -143,6 +143,7 @@ a{color:inherit}
 .chip-assigned{background:#ffe9d6;color:#a04708}
 .chip-fulfilled{background:#def5e7;color:#166b3d}
 .chip-canceled{background:#eee;color:#888}
+.chip-failed{background:#ffe1e0;color:#a3131c}
 .due{font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .due.urgent{color:var(--red)}
 .status-fulfilled .req-main,.status-canceled .req-main{opacity:.55}
@@ -163,6 +164,26 @@ a{color:inherit}
 .ticks{list-style:none;margin:0;padding:0;font-size:14px;line-height:2}
 .overdue-card{border-left:5px solid var(--red)}
 .narrow-card{max-width:420px}
+
+/* A card that folds. The summary row reads like the card's own h3 so a shut
+   fold doesn't look like a different species of thing sitting in the column. */
+.fold{padding:0}
+.fold>summary{
+  display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;
+  padding:var(--card-pad);border-radius:16px;
+}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{
+  content:'';margin-left:auto;width:8px;height:8px;flex:none;
+  border-right:2px solid var(--ink-soft);border-bottom:2px solid var(--ink-soft);
+  transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s ease;
+}
+.fold[open]>summary::after{transform:rotate(225deg) translate(-1px,-1px)}
+.fold>summary:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.fold-title{font-size:15px;font-weight:900;letter-spacing:.01em;text-transform:uppercase}
+.fold-note{font-size:11.5px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase}
+.fold-body{padding:0 var(--card-pad) var(--card-pad)}
+.fold-body>.fine:first-child{margin-top:0}
 
 /* ---------------- sheet ---------------- */
 .sheet-wrap{
