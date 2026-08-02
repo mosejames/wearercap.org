@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
-  typesForGender, typeGender, typeHoused, typeMaxQty, ORDER_MAX_ITEMS, onlySize,
+  typesForGender, typeGender, typeHoused, typeMaxQty, REQUEST_MAX_ITEMS, onlySize,
 } from './config.js';
 
 setItemTypes([
@@ -273,7 +273,7 @@ describe('house-embroidered pieces', () => {
 
 // Bins are shallow. One order holds two different things, and how many of
 // each depends on the thing.
-describe('order limits', () => {
+describe('request limits', () => {
   const TYPES = [
     { id: 'polo', label: 'House Polo · Co-Ed', gender: 'coed', housed: true, hidden: false, size_set: 'tops', max_qty: 2 },
     { id: 'polo-girls', label: 'House Polo · Fem Fit', gender: 'girls', housed: true, hidden: false, size_set: 'girls-tops', max_qty: 2 },
@@ -296,8 +296,8 @@ describe('order limits', () => {
     expect(typeMaxQty('nonsense')).toBe(1);
   });
 
-  it('holds two different items in one order', () => {
-    expect(ORDER_MAX_ITEMS).toBe(2);
+  it('holds two different items in one request', () => {
+    expect(REQUEST_MAX_ITEMS).toBe(2);
   });
 });
 

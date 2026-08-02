@@ -4,7 +4,7 @@ import {
   SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
-  typeMaxQty, ORDER_MAX_ITEMS, onlySize,
+  typeMaxQty, REQUEST_MAX_ITEMS, onlySize,
   typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
@@ -243,7 +243,7 @@ function Home({ bins, inv, commitments, refresh }) {
   const [size, setSize] = useState('');
   const [qty, setQty] = useState(1);
   const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
-  const [order, setOrder] = useState([]);    // up to ORDER_MAX_ITEMS lines
+  const [order, setOrder] = useState([]);    // up to REQUEST_MAX_ITEMS lines
   const [sheet, setSheet] = useState(false);
   const [offering, setOffering] = useState(false);
 
@@ -257,7 +257,7 @@ function Home({ bins, inv, commitments, refresh }) {
   const needsHouse = typeHoused(type) && house === 'all';
   const items = typesForGender(gender);
   const cap = typeMaxQty(type);
-  const full = order.length >= ORDER_MAX_ITEMS;
+  const full = order.length >= REQUEST_MAX_ITEMS;
   const already = order.some((l) => l.itemType === type && l.size === size);
   const ready = !!gender && !!type && !!size && !needsHouse && !full && !already;
 
@@ -369,16 +369,16 @@ function Home({ bins, inv, commitments, refresh }) {
         )}
 
         <button className="btn ghost wide" disabled={!ready} onClick={addToOrder}>
-          {type && size && ready ? `Add ${typeLabel(type)} to my order` : 'Add to my order'}
+          {type && size && ready ? `Add ${typeLabel(type)} to my request` : 'Add to my request'}
         </button>
 
         <p className="fine ask-note">
           {!gender
             ? 'Start by saying who it\u2019s for — or show everything, if you already know the item.'
             : full
-              ? `That\u2019s ${ORDER_MAX_ITEMS} — the most one order can hold, so the next family finds something too. Send these and you can always ask again.`
+              ? `That\u2019s ${REQUEST_MAX_ITEMS} — the most one request can hold, so the next family finds something too. Send it and you can always ask again.`
               : already
-                ? 'That one\u2019s already on your order.'
+                ? 'That one\u2019s already on your request.'
                 : needsHouse
                   ? `${typeLabel(type)} comes in house colors — pick your house above.`
                   : !type || !size
@@ -390,7 +390,7 @@ function Home({ bins, inv, commitments, refresh }) {
 
         {order.length > 0 && (
           <div className="order">
-            <h3>Your order</h3>
+            <h3>What you're asking for</h3>
             <ul className="order-list">
               {order.map((l, i) => (
                 <li key={`${l.itemType}|${l.size}`}>
@@ -405,7 +405,7 @@ function Home({ bins, inv, commitments, refresh }) {
               ))}
             </ul>
             <button className="btn flame wide" onClick={() => setSheet(true)}>
-              Request {order.length === 1 ? 'this item' : `these ${order.length} items`}
+              Send my request
             </button>
           </div>
         )}
@@ -526,7 +526,7 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
   }
 
   return (
-    <Sheet onClose={onClose} title={order.length > 1 ? 'Request these items' : 'Request an item'}>
+    <Sheet onClose={onClose} title="Send my request">
       <ul className="order-list confirm">
         {order.map((l) => (
           <li key={`${l.itemType}|${l.size}`}>
@@ -563,7 +563,7 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
       </label>
       {err && <p className="err">{err}</p>}
       <button className="btn flame wide" disabled={busy} onClick={submit}>
-        {busy ? 'Sending…' : order.length > 1 ? `Submit ${order.length} requests` : 'Submit request'}
+        {busy ? 'Sending…' : 'Send my request'}
       </button>
       <p className="fine">
         You'll pick a handoff that fits your week — carline, or student to student. Free, always.

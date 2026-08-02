@@ -58,14 +58,14 @@ export const typeGender = (id) => TYPES.find((t) => t.id === id)?.gender || 'coe
 
 // ---------------------------------------------------------------------------
 // How much of one thing a family may ask for at once, and how many different
-// things one order may hold.
+// things one request may hold.
 //
 // A student wears one vest and one tie, so asking for two of either is asking
 // for somebody else's. Polos get worn every day and go through the wash, so two
 // is reasonable. Everything else is one — these bins are shallow, and the point
 // is that the next family finds something too.
 // ---------------------------------------------------------------------------
-export const ORDER_MAX_ITEMS = 2;
+export const REQUEST_MAX_ITEMS = 2;
 export const typeMaxQty = (id) =>
   Math.max(1, TYPES.find((t) => t.id === id)?.max_qty || 1);
 
