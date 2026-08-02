@@ -3,13 +3,36 @@ import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
   SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
-  setItemTypes, allItemTypes, visibleItemTypes, typeHoused,
+  setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
   typeLabel, binUrl, holderUrl, CONTACT,
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
 import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
 import { qrSvg } from './qr.js';
+
+// A bin holds whatever a family outgrew, so a holder needs the whole list —
+// but grouped, because "Khaki Pants" means a different garment depending on
+// who wore it. Co-ed pieces sit in their own group: one line, one total.
+const GENDER_LABEL = { girls: 'Girls', boys: 'Boys', coed: 'Either' };
+
+function ItemPicker({ value, onChange, disabled = false }) {
+  const groups = [
+    ['Girls', visibleItemTypes().filter((t) => t.gender === 'girls')],
+    ['Boys', visibleItemTypes().filter((t) => t.gender === 'boys')],
+    ['Either', visibleItemTypes().filter((t) => (t.gender || 'coed') === 'coed')],
+  ].filter(([, list]) => list.length);
+
+  return (
+    <select value={value} onChange={onChange} disabled={disabled}>
+      {groups.map(([label, list]) => (
+        <optgroup key={label} label={label}>
+          {list.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Routing — tiny hash router, same style as the rest of the site.
@@ -189,6 +212,7 @@ export default function App() {
 // Home — search everything, request an item.
 // ---------------------------------------------------------------------------
 function Home({ bins, inv, commitments, refresh }) {
+  const [gender, setGender] = useState('');
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
   const [house, setHouse] = useState('all'); // 'all' | '' (any-house) | house id
@@ -203,7 +227,8 @@ function Home({ bins, inv, commitments, refresh }) {
   // reserved for them. None of that is a parent's problem to solve.
   const requesterHouse = house === 'all' ? '' : house;
   const needsHouse = typeHoused(type) && house === 'all';
-  const ready = !!type && !!size && !needsHouse;
+  const ready = !!gender && !!type && !!size && !needsHouse;
+  const items = typesForGender(gender);
 
   const ask = () => setSheet({
     itemType: type,
@@ -211,6 +236,7 @@ function Home({ bins, inv, commitments, refresh }) {
     // Polos and vests belong to a house; khakis and dress shirts fit anyone.
     house: typeHoused(type) ? requesterHouse : '',
     requesterHouse,
+    gender,
   });
 
   return (
@@ -241,6 +267,27 @@ function Home({ bins, inv, commitments, refresh }) {
           when it's ready — or put you on the list and text you the moment one
           turns up.
         </p>
+        {/* Who it's for comes first: a girl at RCA has two polos, two pant
+            cuts, a skort and a blouse to choose between; a boy has one of
+            each. Asking up front is shorter than one list of everything. */}
+        <div className="mode-tabs">
+          {GENDERS.map((g) => (
+            <button
+              key={g.id}
+              className={`mode ${gender === g.id ? 'on' : ''}`}
+              onClick={() => {
+                setGender(g.id);
+                // Keep the item only if the new list still has it — the co-ed
+                // pieces survive the switch, the rest don't.
+                if (type && !typesForGender(g.id).some((t) => t.id === type)) {
+                  setType(''); setSize('');
+                }
+              }}>
+              For a {g.label.replace(/s$/, '')}
+            </button>
+          ))}
+        </div>
+
         <div className="filters">
           <select value={house} onChange={(e) => setHouse(e.target.value)}>
             <option value="all">Choose your house</option>
@@ -249,6 +296,7 @@ function Home({ bins, inv, commitments, refresh }) {
           </select>
           <select
             value={type}
+            disabled={!gender}
             onChange={(e) => {
               const t = e.target.value;
               setType(t);
@@ -257,8 +305,8 @@ function Home({ bins, inv, commitments, refresh }) {
                 setSize('');
               }
             }}>
-            <option value="">Choose your item</option>
-            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            <option value="">{gender ? 'Choose your item' : 'Pick a student first'}</option>
+            {items.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
           <SizePicker
             itemType={type} value={size} placeholder="Choose your size"
@@ -271,11 +319,13 @@ function Home({ bins, inv, commitments, refresh }) {
         </button>
 
         <p className="fine ask-note">
-          {needsHouse
-            ? `${typeLabel(type)}s come in house colors — pick your house above.`
-            : !type || !size
-              ? 'Pick an item and a size to get started.'
-              : "Not sure of the size? Ask anyway — say so in the notes and your bin holder will work it out with you."}
+          {!gender
+            ? 'Start by saying who it\u2019s for — the list is different for girls and boys.'
+            : needsHouse
+              ? `${typeLabel(type)} comes in house colors — pick your house above.`
+              : !type || !size
+                ? 'Pick an item and a size to get started.'
+                : "Not sure of the size? Ask anyway \u2014 say so in the notes and your bin holder will work it out with you."}
         </p>
       </section>
 
@@ -311,6 +361,7 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
     size: preset.size || firstSize(preset.itemType || visibleItemTypes()[0]?.id),
     house: preset.house || '',
     requesterHouse: preset.requesterHouse ?? preset.house ?? '',
+    gender: preset.gender || '',
     qty: 1,
   });
   const [busy, setBusy] = useState(false);
@@ -391,7 +442,9 @@ function RequestSheet({ preset, inv, assigned, bins, onDone, onClose }) {
                 house: typeHoused(itemType) ? form.requesterHouse : '',
               });
             }}>
-            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            {typesForGender(form.gender).map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
           </select>
         </label>
         <label>Size
@@ -1598,7 +1651,7 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
         {rows.map((r) => (
           <li key={r.key}>
             <div className="count-what">
-              <select
+              <ItemPicker
                 value={r.item_type}
                 onChange={(e) => {
                   const t = e.target.value;
@@ -1607,9 +1660,8 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
                     size: firstSize(t),
                     house: typeHoused(t) ? (r.house || holder.house || '') : '',
                   });
-                }}>
-                {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
+                }}
+              />
               <SizePicker itemType={r.item_type} value={r.size}
                 onChange={(e) => set(r.key, { size: e.target.value })} />
               {typeHoused(r.item_type) && (
@@ -1690,7 +1742,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
       </p>
       <div className="grid2">
         <label>Item
-          <select
+          <ItemPicker
             value={cur.itemType}
             onChange={(e) => {
               const itemType = e.target.value;
@@ -1699,9 +1751,8 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
                 size: firstSize(itemType),
                 house: typeHoused(itemType) ? (cur.house || bin.holder_house || '') : '',
               });
-            }}>
-            {visibleItemTypes().map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
+            }}
+          />
         </label>
         <label>House
           <select value={cur.house} onChange={(e) => setCur({ ...cur, house: e.target.value })}>
@@ -2408,7 +2459,7 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
 // Bring one back (or add something new) without touching code.
 function AdminItemTypes({ pass, act }) {
   const [adding, setAdding] = useState(false);
-  const [nf, setNf] = useState({ id: '', label: '', housed: false, sizeSet: 'tops' });
+  const [nf, setNf] = useState({ id: '', label: '', housed: false, sizeSet: 'tops', gender: 'coed' });
   const types = allItemTypes();
 
   return (
@@ -2424,7 +2475,8 @@ function AdminItemTypes({ pass, act }) {
             <div className="bin-admin-main">
               <b>{t.label}</b>
               <span>
-                {SIZE_SET_LABEL[t.size_set || 'tops']} sizes
+                {GENDER_LABEL[t.gender || 'coed']}
+                {' · '}{SIZE_SET_LABEL[t.size_set || 'tops']} sizes
                 {' · '}{t.housed ? 'house-colored' : 'any house'}
                 {t.hidden ? ' · hidden' : ''}
               </span>
@@ -2456,6 +2508,13 @@ function AdminItemTypes({ pass, act }) {
               </select>
             </label>
           </div>
+          <label>Who wears it?
+            <select value={nf.gender} onChange={(e) => setNf({ ...nf, gender: e.target.value })}>
+              <option value="coed">Either — one shared total</option>
+              <option value="girls">Girls</option>
+              <option value="boys">Boys</option>
+            </select>
+          </label>
           <label>Which sizes does it use?
             <select value={nf.sizeSet} onChange={(e) => setNf({ ...nf, sizeSet: e.target.value })}>
               {Object.entries(SIZE_SET_LABEL).map(([k, v]) => (
@@ -2468,9 +2527,10 @@ function AdminItemTypes({ pass, act }) {
               if (!nf.id || !nf.label.trim()) throw new Error('Id and label are required.');
               await db.adminItemType(pass, nf.id, {
                 label: nf.label.trim(), housed: nf.housed, hidden: false,
-                sort: 65, sizeSet: nf.sizeSet,
+                sort: 65, sizeSet: nf.sizeSet, gender: nf.gender,
               });
-              setNf({ id: '', label: '', housed: false, sizeSet: 'tops' }); setAdding(false);
+              setNf({ id: '', label: '', housed: false, sizeSet: 'tops', gender: 'coed' });
+              setAdding(false);
             })}>Add type</button>
           <button className="linkish" onClick={() => setAdding(false)}>cancel</button>
         </>

@@ -29,16 +29,21 @@ export const APPROX_NOTE =
 // restore them without a deploy. This is the boot fallback until they load;
 // setItemTypes() replaces it with the live rows.
 const DEFAULT_TYPES = [
-  { id: 'polo',         label: 'RCA House Polo · Boys',  housed: true,  hidden: false, size_set: 'tops' },
-  { id: 'polo-girls',   label: 'RCA House Polo · Girls', housed: true,  hidden: false, size_set: 'girls-tops' },
-  { id: 'dress-shirt',  label: 'White Dress Shirt',   housed: false, hidden: false, size_set: 'tops' },
-  { id: 'vest',         label: 'Vest',                housed: true,  hidden: false, size_set: 'tops' },
-  { id: 'pants-girls',  label: 'Khaki Pants · Girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
-  { id: 'pants-boys',   label: 'Khaki Pants · Boys',  housed: false, hidden: false, size_set: 'boys-bottoms' },
-  { id: 'shorts-girls', label: 'Khaki Shorts · Girls',housed: false, hidden: false, size_set: 'girls-bottoms' },
-  { id: 'shorts-boys',  label: 'Khaki Shorts · Boys', housed: false, hidden: false, size_set: 'boys-bottoms' },
-  { id: 'skirt',        label: 'Khaki Skirt',         housed: false, hidden: false, size_set: 'girls-bottoms' },
+  // gender: 'girls' | 'boys' | 'coed'. A co-ed piece is one garment and one
+  // pile — it shows up on both lists and both draw down the same total.
+  { id: 'polo',         label: 'House Polo · Co-Ed',      gender: 'coed',  housed: true,  hidden: false, size_set: 'tops' },
+  { id: 'polo-girls',   label: 'House Polo · Fem Fit',    gender: 'girls', housed: true,  hidden: false, size_set: 'girls-tops' },
+  { id: 'blouse',       label: 'Oxford Blouse',           gender: 'girls', housed: false, hidden: false, size_set: 'girls-tops' },
+  { id: 'dress-shirt',  label: 'Oxford Shirt',            gender: 'boys',  housed: false, hidden: false, size_set: 'tops' },
+  { id: 'vest',         label: 'Sweater Vest',            gender: 'coed',  housed: false, hidden: false, size_set: 'tops' },
+  { id: 'pants-girls',  label: 'Khaki Pants · Straight',  gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+  { id: 'pants-girls-boot', label: 'Khaki Pants · Bootcut', gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+  { id: 'shorts-girls', label: 'Khaki Bermuda Shorts',    gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+  { id: 'skirt',        label: 'Pleated Skort',           gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+  { id: 'pants-boys',   label: 'Khaki Pants',             gender: 'boys',  housed: false, hidden: false, size_set: 'boys-bottoms' },
+  { id: 'shorts-boys',  label: 'Khaki Shorts',            gender: 'boys',  housed: false, hidden: false, size_set: 'boys-bottoms' },
 ];
+
 
 let TYPES = [...DEFAULT_TYPES];
 
@@ -48,6 +53,22 @@ export function setItemTypes(rows) {
 export const allItemTypes = () => TYPES;
 export const visibleItemTypes = () => TYPES.filter((t) => !t.hidden);
 export const typeHoused = (id) => !!TYPES.find((t) => t.id === id)?.housed;
+export const typeGender = (id) => TYPES.find((t) => t.id === id)?.gender || 'coed';
+
+// ---------------------------------------------------------------------------
+// Ask who it's for first, and the list stops being a list of everything.
+// A co-ed piece — the interlock polo, the sweater vest — is the same garment
+// whichever door you came in through, so it appears on both lists as ONE item
+// type. Twenty-five counted by a girl's family and twenty-five by a boy's are
+// fifty of one thing, not two piles of twenty-five.
+// ---------------------------------------------------------------------------
+export const GENDERS = [
+  { id: 'girls', label: 'Girls' },
+  { id: 'boys', label: 'Boys' },
+];
+
+export const typesForGender = (g) =>
+  visibleItemTypes().filter((t) => !g || t.gender === g || (t.gender || 'coed') === 'coed');
 
 // ---------------------------------------------------------------------------
 // Sizes depend on the item. Girls' bottoms run 7–16; boys' bottoms run 8–20

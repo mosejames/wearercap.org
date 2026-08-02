@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   setItemTypes, sizeGroups, sizeLabel, firstSize, sizeSetFor, SIZE_SETS, sizeChip,
+  typesForGender, typeGender,
 } from './config.js';
 
 setItemTypes([
@@ -137,5 +138,63 @@ describe('girls polos', () => {
   it("keeps the boys' polo exactly where it was, history and all", () => {
     expect(sizeSetFor('polo')).toBe('tops');
     expect(sizeLabel('YM')).toBe('YM · 8–10');
+  });
+});
+
+// Who it's for comes first, and a co-ed piece is one garment either way.
+describe('gender-first item lists', () => {
+  const TYPES = [
+    { id: 'polo', label: 'House Polo · Co-Ed', gender: 'coed', housed: true, hidden: false, size_set: 'tops' },
+    { id: 'polo-girls', label: 'House Polo · Fem Fit', gender: 'girls', housed: true, hidden: false, size_set: 'girls-tops' },
+    { id: 'blouse', label: 'Oxford Blouse', gender: 'girls', housed: false, hidden: false, size_set: 'girls-tops' },
+    { id: 'dress-shirt', label: 'Oxford Shirt', gender: 'boys', housed: false, hidden: false, size_set: 'tops' },
+    { id: 'vest', label: 'Sweater Vest', gender: 'coed', housed: false, hidden: false, size_set: 'tops' },
+    { id: 'pants-girls', label: 'Khaki Pants · Straight', gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+    { id: 'pants-girls-boot', label: 'Khaki Pants · Bootcut', gender: 'girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
+    { id: 'pants-boys', label: 'Khaki Pants', gender: 'boys', housed: false, hidden: false, size_set: 'boys-bottoms' },
+    { id: 'retired', label: 'Old thing', gender: 'coed', housed: false, hidden: true, size_set: 'tops' },
+  ];
+  const ids = (g) => typesForGender(g).map((t) => t.id);
+
+  it('shows a girl her own items plus the co-ed ones', () => {
+    setItemTypes(TYPES);
+    expect(ids('girls')).toEqual([
+      'polo', 'polo-girls', 'blouse', 'vest', 'pants-girls', 'pants-girls-boot',
+    ]);
+  });
+
+  it('shows a boy his, and never the fem fit or the skort', () => {
+    setItemTypes(TYPES);
+    expect(ids('boys')).toEqual(['polo', 'dress-shirt', 'vest', 'pants-boys']);
+    expect(ids('boys')).not.toContain('polo-girls');
+    expect(ids('boys')).not.toContain('blouse');
+  });
+
+  it('gives the co-ed pieces ONE id, so both doors draw the same total', () => {
+    setItemTypes(TYPES);
+    const shared = ids('girls').filter((id) => ids('boys').includes(id));
+    expect(shared).toEqual(['polo', 'vest']);
+    // 25 counted by a girl's family and 25 by a boy's is 50 of one thing.
+    expect(typeGender('polo')).toBe('coed');
+  });
+
+  it('leaves hidden types out of every list', () => {
+    setItemTypes(TYPES);
+    expect(ids('girls')).not.toContain('retired');
+    expect(ids('boys')).not.toContain('retired');
+    expect(ids('')).not.toContain('retired');
+  });
+
+  it('falls back to everything when no student is chosen yet', () => {
+    setItemTypes(TYPES);
+    expect(ids('').length).toBe(TYPES.length - 1);
+  });
+
+  it('sizes each cut on its own scale', () => {
+    setItemTypes(TYPES);
+    expect(sizeSetFor('polo')).toBe('tops');            // co-ed, youth scale
+    expect(sizeSetFor('polo-girls')).toBe('girls-tops'); // Big Girls 7–16
+    expect(sizeSetFor('pants-girls-boot')).toBe('girls-bottoms');
+    expect(sizeSetFor('pants-boys')).toBe('boys-bottoms');
   });
 });
