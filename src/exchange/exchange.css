@@ -531,3 +531,37 @@ a{color:inherit}
 .photo-pick input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
 .share-line{font-size:12.5px;color:var(--ink-soft)}
 .share-line a{font-weight:800;color:var(--ink)}
+
+/* ---------------- proof of life ---------------- */
+.proof{
+  position:fixed;left:var(--gutter);bottom:18px;z-index:40;
+  max-width:min(360px,calc(100vw - var(--gutter) * 2));
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--night);color:#fff;border-radius:16px;
+  padding:13px 14px 13px 15px;box-shadow:var(--shadow-lg);
+  opacity:0;transform:translateY(14px) scale(.97);
+  transition:opacity .5s ease,transform .5s cubic-bezier(.2,.9,.3,1.2);
+  pointer-events:none;
+}
+.proof.on{opacity:1;transform:none;pointer-events:auto}
+.proof p{margin:0;font-size:13.5px;line-height:1.45;font-weight:600;color:rgba(255,255,255,.92)}
+.proof-dot{
+  width:8px;height:8px;border-radius:50%;flex:none;margin-top:5px;
+  background:var(--flame);box-shadow:0 0 0 4px rgba(242,106,27,.18);
+}
+.proof-x{
+  background:none;border:0;color:rgba(255,255,255,.45);font-size:18px;line-height:1;
+  padding:0 2px;margin-left:2px;flex:none;
+}
+.proof-x:hover{color:#fff}
+@media (prefers-reduced-motion:reduce){
+  .proof{transition:opacity .3s ease;transform:none}
+  .proof.on{transform:none}
+}
+
+/* ---------------- tell your people ---------------- */
+.spread .post{
+  margin:14px 0;padding:14px var(--card-pad);
+  background:var(--paper);border-left:4px solid var(--orange);border-radius:0 12px 12px 0;
+  font-size:14px;line-height:1.6;white-space:pre-wrap;
+}

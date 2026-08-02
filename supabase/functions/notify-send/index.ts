@@ -100,6 +100,9 @@ Deno.serve(async (req) => {
     // Sweep time is also when the day's held messages get rolled into one
     // round-up for the holders who asked for that.
     await db.rpc('ue_send_digests').catch(() => {});
+    // And a fortnightly poke for a holder sitting on a quiet bin. Guarded
+    // server-side, so calling it every sweep is harmless.
+    await db.rpc('ue_nudge_holders').catch(() => {});
 
     // Everything still pending and actually due, plus recent failures worth
     // another go. After a day, or three tries, we stop rattling a bad number.

@@ -10,6 +10,7 @@ import {
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
 import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
+import { socialProof, suggestedPost } from './social.js';
 import { qrSvg } from './qr.js';
 
 // A bin holds whatever a family outgrew, so a holder needs the whole list —
@@ -235,9 +236,60 @@ export default function App() {
 }
 
 // ---------------------------------------------------------------------------
+// Proof of life.
+//
+// A swap dies quietly: the tubs are full, the page looks like a form, and every
+// family who lands on it assumes nothing's in there and nobody else is using
+// it. So one line at a time, something true drifts up from the corner —
+// somebody dropped off six polos, an Amistad family took khakis home, forty
+// polos are sitting in a tub right now.
+//
+// One at a time, never stacked, dismissible, and it stops after the last one
+// rather than looping forever and turning into wallpaper.
+// ---------------------------------------------------------------------------
+function ProofBubbles({ movements, inv, bins }) {
+  const lines = useMemo(
+    () => socialProof(movements, inv, bins, new Date(), 6),
+    [movements, inv, bins]
+  );
+  const [i, setI] = useState(0);
+  const [shown, setShown] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (done || !lines.length || i >= lines.length) return undefined;
+    // Someone reading with reduced motion gets the words and none of the drift.
+    const quick = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const inAt = setTimeout(() => setShown(true), i === 0 ? 1400 : 600);
+    const outAt = setTimeout(() => setShown(false), (i === 0 ? 1400 : 600) + (quick ? 9000 : 6500));
+    const nextAt = setTimeout(() => setI(i + 1), (i === 0 ? 1400 : 600) + (quick ? 9600 : 7100));
+    return () => { clearTimeout(inAt); clearTimeout(outAt); clearTimeout(nextAt); };
+  }, [i, lines.length, done]);
+
+  if (done || !lines.length || i >= lines.length) return null;
+
+  return (
+    <div className={`proof ${shown ? 'on' : ''}`} aria-live="polite">
+      <span className="proof-dot" aria-hidden="true" />
+      <p>{lines[i].text}</p>
+      <button className="proof-x" onClick={() => setDone(true)} aria-label="Hide these updates">×</button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Home — search everything, request an item.
 // ---------------------------------------------------------------------------
 function Home({ bins, inv, commitments, refresh }) {
+  // The movement log is already public and carries no names — it's what makes
+  // the front page feel like a place things happen rather than a form.
+  const [moves, setMoves] = useState([]);
+  useEffect(() => {
+    let live = true;
+    db.listMovements(null, 40).then((m) => live && setMoves(m)).catch(() => {});
+    return () => { live = false; };
+  }, []);
+
   const [gender, setGender] = useState('');
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
@@ -420,6 +472,8 @@ function Home({ bins, inv, commitments, refresh }) {
           onClose={() => setSheet(false)}
         />
       )}
+      <ProofBubbles movements={moves} inv={inv} bins={bins} />
+
       {offering && (
         <OfferSheet
           bins={bins}
@@ -1079,7 +1133,8 @@ function HolderHome({ token }) {
       )}
 
       {tab === 'todo' && (
-        <HolderTodo token={token} holder={holder} bins={bins} queue={queue} pickups={pickups} reload={load} />
+        <HolderTodo token={token} holder={holder} bins={bins} queue={queue} pickups={pickups}
+          inventory={inventory} reload={load} />
       )}
 
       {tab === 'counts' && (
@@ -1117,6 +1172,7 @@ function HolderSettings({ token, holder, reload }) {
     phone: prettyPhone(holder.phone || ''),
     email: holder.email || '',
     notifyMode: holder.notify_mode || 'instant',
+    notifyChannel: holder.notify_channel || 'sms',
     photoUrl: holder.photo_url || '',
     maxDays: holder.max_handoff_days || 2,
   });
@@ -1182,7 +1238,28 @@ function HolderSettings({ token, holder, reload }) {
       </div>
 
       <div className="avail-body">
-        <p className="fine">How would you like to hear about requests?</p>
+        <p className="fine">Where should we reach you?</p>
+        <div className="pick-row">
+          {[['sms', 'Text', 'Straight to your phone.'],
+            ['email', 'Email', 'Nothing on your phone.'],
+            ['both', 'Both', 'Belt and braces.']]
+            .map(([v, label, blurb]) => (
+              <button
+                key={v}
+                className={`pick ${f.notifyChannel === v ? 'on' : ''}`}
+                onClick={() => setF({ ...f, notifyChannel: v })}
+              >
+                <b>{label}</b><span>{blurb}</span>
+              </button>
+            ))}
+        </div>
+        {f.notifyChannel !== 'sms' && !f.email.trim() && (
+          <p className="err">Add an email above or we'll keep texting you.</p>
+        )}
+      </div>
+
+      <div className="avail-body">
+        <p className="fine">And how often?</p>
         <div className="pick-row">
           {[['instant', 'Right away', 'A text the moment a family requests something.'],
             ['daily', 'End of day', 'One round-up around 5pm with everything from that day.']]
@@ -1280,18 +1357,67 @@ function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
   );
 }
 
-function HolderTodo({ token, holder, bins, queue, pickups, reload }) {
+// ---------------------------------------------------------------------------
+// Something to paste.
+//
+// The way a swap dies isn't that nobody wants the clothes — it's that a tub
+// gets handed to a willing parent, goes in a closet, and is never mentioned
+// again. Nobody sits down to write a post about second-hand khakis, so the post
+// is already written, out of what's actually in their bins today.
+// ---------------------------------------------------------------------------
+function SpreadTheWord({ holder, inventory }) {
+  const [copied, setCopied] = useState(false);
+  const post = useMemo(() => suggestedPost(holder, inventory), [holder, inventory]);
+  if (!post) return null;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(post);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="card spread">
+      <h3>Tell your people</h3>
+      <p className="fine">
+        Most families still don't know this exists. One message in your house group
+        chat usually clears a shelf — here's one written from what's in your bins
+        right now.
+      </p>
+      <blockquote className="post">{post}</blockquote>
+      <div className="avail-actions">
+        <button className="btn small flame" onClick={copy}>
+          {copied ? 'Copied' : 'Copy this post'}
+        </button>
+        <a className="linkish" href={`sms:?&body=${encodeURIComponent(post)}`}>
+          or open it in Messages
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function HolderTodo({ token, holder, bins, queue, pickups, inventory, reload }) {
   const [moving, setMoving] = useState(null);
   const binCode = (id) => bins.find((b) => b.id === id)?.code || '';
 
   if (!queue.length && !pickups.length) {
     return (
-      <section className="shell section">
-        <p className="empty">
-          Nothing waiting on you. When a family requests something from one of your
-          bins, it lands here and we text you.
-        </p>
-      </section>
+      <>
+        <section className="shell section">
+          <p className="empty">
+            Nothing waiting on you. When a family requests something from one of your
+            bins, it lands here and we let you know.
+          </p>
+        </section>
+        <section className="shell section">
+          <SpreadTheWord holder={holder} inventory={inventory} />
+        </section>
+      </>
     );
   }
 
@@ -1356,6 +1482,10 @@ function HolderTodo({ token, holder, bins, queue, pickups, reload }) {
           </ul>
         </section>
       )}
+
+      <section className="shell section">
+        <SpreadTheWord holder={holder} inventory={inventory} />
+      </section>
 
       {moving && (
         <MoveHandoffSheet

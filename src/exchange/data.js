@@ -436,6 +436,7 @@ export async function holderUpdateSelf(token, f) {
     p_special_note: f.specialNote ?? null,
     p_photo_url: f.photoUrl ?? null,
     p_max_days: f.maxDays ?? null,
+    p_notify_channel: f.notifyChannel ?? null,
   });
   if (error) throw error;
 }
