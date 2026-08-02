@@ -29,7 +29,8 @@ export const APPROX_NOTE =
 // restore them without a deploy. This is the boot fallback until they load;
 // setItemTypes() replaces it with the live rows.
 const DEFAULT_TYPES = [
-  { id: 'polo',         label: 'RCA House Polo',      housed: true,  hidden: false, size_set: 'tops' },
+  { id: 'polo',         label: 'RCA House Polo · Boys',  housed: true,  hidden: false, size_set: 'tops' },
+  { id: 'polo-girls',   label: 'RCA House Polo · Girls', housed: true,  hidden: false, size_set: 'girls-tops' },
   { id: 'dress-shirt',  label: 'White Dress Shirt',   housed: false, hidden: false, size_set: 'tops' },
   { id: 'vest',         label: 'Vest',                housed: true,  hidden: false, size_set: 'tops' },
   { id: 'pants-girls',  label: 'Khaki Pants · Girls', housed: false, hidden: false, size_set: 'girls-bottoms' },
@@ -54,8 +55,8 @@ export const typeHoused = (id) => !!TYPES.find((t) => t.id === id)?.housed;
 // stay on letter sizes, with the numeric equivalent spelled out so a parent who
 // only knows "he's a 12" can still find it.
 //
-// Checked against Tommy Hilfiger's kids guide (Big Boys 8–20, Big Girls 7–16),
-// since RCA bottoms are Hilfiger-only.
+// Checked against Tommy Hilfiger's kids guide (Big Boys 8–20, Big Girls 7–16,
+// girls' tops XXS–XL), since RCA uniforms are Hilfiger-only.
 // ---------------------------------------------------------------------------
 const n = (v, label) => ({ v, label: label || v });
 
@@ -68,6 +69,22 @@ export const SIZE_SETS = {
     { group: 'Adult', sizes: [
       n('AXS', 'Adult XS'), n('AS', 'Adult S'), n('AM', 'Adult M'),
       n('AL', 'Adult L'), n('AXL', 'Adult XL'), n('A2XL', 'Adult 2XL'),
+    ] },
+    { group: '', sizes: [n('Other')] },
+  ],
+
+  // Girls' polos don't run on the youth scale. Tommy Hilfiger sells girls'
+  // tops as XXS–XL over sizes 4–16 (Big Girls: S=7, M=8–10, L=12–14, XL=16),
+  // then straight into juniors — so that's what a family sees, with the
+  // numbers spelled out for anyone who only knows "she's a 10".
+  'girls-tops': [
+    { group: 'Girls', sizes: [
+      n('GXS', 'Girls XS · 4–6'), n('GS', 'Girls S · 7'), n('GM', 'Girls M · 8–10'),
+      n('GL', 'Girls L · 12–14'), n('GXL', 'Girls XL · 16'),
+    ] },
+    { group: 'Juniors', sizes: [
+      n('JXS', 'Juniors XS'), n('JS', 'Juniors S'), n('JM', 'Juniors M'),
+      n('JL', 'Juniors L'), n('JXL', 'Juniors XL'),
     ] },
     { group: '', sizes: [n('Other')] },
   ],
@@ -96,6 +113,7 @@ export const SIZE_SETS = {
 
 export const SIZE_SET_LABEL = {
   tops: 'Shirts & vests',
+  'girls-tops': "Girls' polos",
   'girls-bottoms': "Girls' bottoms",
   'boys-bottoms': "Boys' bottoms",
 };

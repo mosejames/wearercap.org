@@ -106,3 +106,36 @@ describe('sizeChip', () => {
     expect(sizeChip('12H')).toBe('12 Husky');
   });
 });
+
+// The house polo comes in a girls' cut, and a girls' top doesn't size like a
+// youth top. Checked against Tommy Hilfiger's girls chart (XXS–XL over 4–16).
+describe('girls polos', () => {
+  it('has its own scale, not the youth one', () => {
+    setItemTypes([
+      { id: 'polo', label: 'RCA House Polo · Boys', housed: true, hidden: false, size_set: 'tops' },
+      { id: 'polo-girls', label: 'RCA House Polo · Girls', housed: true, hidden: false, size_set: 'girls-tops' },
+    ]);
+    expect(sizeSetFor('polo-girls')).toBe('girls-tops');
+    const values = sizeGroups('polo-girls').flatMap((g) => g.sizes.map((s) => s.v));
+    expect(values).toEqual(['GXS', 'GS', 'GM', 'GL', 'GXL', 'JXS', 'JS', 'JM', 'JL', 'JXL', 'Other']);
+    // and none of the youth values leak in
+    expect(values).not.toContain('YM');
+  });
+
+  it('spells out the numbers a parent actually knows', () => {
+    expect(sizeLabel('GS')).toBe('Girls S · 7');
+    expect(sizeLabel('GM')).toBe('Girls M · 8–10');
+    expect(sizeLabel('GL')).toBe('Girls L · 12–14');
+    expect(sizeLabel('GXL')).toBe('Girls XL · 16');
+    expect(sizeLabel('JM')).toBe('Juniors M');
+  });
+
+  it('starts a new girls polo on a girls size', () => {
+    expect(firstSize('polo-girls')).toBe('GXS');
+  });
+
+  it("keeps the boys' polo exactly where it was, history and all", () => {
+    expect(sizeSetFor('polo')).toBe('tops');
+    expect(sizeLabel('YM')).toBe('YM · 8–10');
+  });
+});
