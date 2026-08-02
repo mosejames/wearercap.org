@@ -1573,11 +1573,24 @@ function BinBar({ token, bins, binId, setBinId, reload }) {
   );
 }
 
+// What the grid holds right now, in a form two versions can be compared by.
+// The row keys are throwaway, so they're left out.
+const countSig = (rs) =>
+  JSON.stringify(
+    (rs || [])
+      .filter((r) => r.item_type && r.size)
+      .map((r) => [r.item_type, r.size, r.house || '', Number(r.qty) || 0])
+      .sort()
+  );
+
 function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   const [binId, setBinId] = useState(bins[0]?.id || '');
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  // The last state we know is on the server, and what to say once it lands.
+  const [clean, setClean] = useState('');
+  const [saved, setSaved] = useState(null);
 
   const blank = () => ({
     key: Math.random().toString(36).slice(2),
@@ -1598,9 +1611,22 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
         item_type: i.item_type, size: i.size, house: i.house || '',
         qty: Math.max(0, i.qty), existing: true,
       }));
-    setRows(mine.length ? mine : [blank()]);
+    const start = mine.length ? mine : [blank()];
+    setRows(start);
+    setClean(countSig(mine));   // a fresh blank row isn't a change yet
     setMsg('');
   }, [binId, inventory]);
+
+  const dirty = countSig(rows) !== clean;
+
+  // Counting a bin is the one screen someone walks away from mid-task, so say
+  // it out loud rather than letting the browser eat it.
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   const set = (key, patch) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -1615,7 +1641,13 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
           house: r.house || '', qty: Number(r.qty) || 0,
         }));
       const changed = await db.setHolderInventory(token, lines, holder.name);
-      setMsg(changed ? `Saved — ${changed} line${changed === 1 ? '' : 's'} updated.` : 'Nothing had changed.');
+      setClean(countSig(rows));
+      setSaved({
+        changed,
+        total: lines.reduce((n, l) => n + Math.max(0, l.qty), 0),
+        kinds: lines.filter((l) => l.qty > 0).length,
+        code: bins.find((b) => b.id === binId)?.code || '',
+      });
       reload();
     } catch (e) {
       setMsg(e.message || "That didn't save — try again.");
@@ -1691,15 +1723,49 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
         ＋ Another line
       </button>
 
-      {msg && <p className="fine">{msg}</p>}
+      {msg && <p className="err">{msg}</p>}
       <button className="btn flame wide" disabled={busy} onClick={save}>
         {busy ? 'Saving…' : `Save ${bin ? bin.code : ''} counts`}
       </button>
+      <p className={`fine save-state ${dirty ? 'unsaved' : ''}`}>
+        {dirty
+          ? 'You have changes that aren’t saved yet.'
+          : 'Everything here is saved.'}
+      </p>
 
       <p className="fine count-foot">
         Every change is logged, so the history still shows what moved and when.
         {' '}<button className="linkish" onClick={onPrint}>Print my QR labels</button>
       </p>
+
+      {saved && (
+        <Sheet onClose={() => setSaved(null)} title="Thank you">
+          {saved.changed ? (
+            <>
+              <p className="big">
+                <b>{saved.code}</b> is up to date — {saved.changed} line
+                {saved.changed === 1 ? '' : 's'} changed.
+              </p>
+              <p>
+                That bin now holds about <b>{saved.total}</b> item
+                {saved.total === 1 ? '' : 's'} across {saved.kinds} line
+                {saved.kinds === 1 ? '' : 's'}. Families searching for those sizes
+                can find them from this minute on.
+              </p>
+            </>
+          ) : (
+            <p className="big">
+              Nothing needed changing — <b>{saved.code}</b> already matched what you
+              typed. Saved anyway, no harm done.
+            </p>
+          )}
+          <p className="fine">
+            Counting is the whole job, and it's the part nobody sees. Thank you for
+            keeping it honest.
+          </p>
+          <button className="btn flame wide" onClick={() => setSaved(null)}>Done</button>
+        </Sheet>
+      )}
     </section>
   );
 }

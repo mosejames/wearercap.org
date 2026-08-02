@@ -478,3 +478,7 @@ a{color:inherit}
 
 /* the one ask on the landing page */
 .ask-note{margin-top:12px}
+
+/* saved / not saved, right under the button that decides it */
+.save-state{margin-top:10px;text-align:center}
+.save-state.unsaved{color:var(--orange);font-weight:800}
