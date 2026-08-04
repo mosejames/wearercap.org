@@ -129,7 +129,7 @@ export function asHtml(subject: string, body: string) {
         <a href="mailto:hello@wearercap.org" style="color:#e8a516;text-decoration:none">hello@wearercap.org</a>
       </p>
       <p style="margin:0;font-family:${FONT};font-size:11.5px;color:#8c8480">
-        RCAP \u00b7 Ron Clark Academy Parents \u00b7 parent-run, alongside RCA
+        RCAP \u00b7 a parent-run organization \u00b7 wearercap.org
       </p>
     </td></tr>
 
