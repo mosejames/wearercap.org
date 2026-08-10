@@ -36,7 +36,8 @@ export const sizeClass = (text) => {
   return 'md';
 };
 
-export const classesFor = (mode) => (mode === 'question' ? [CURRENT.incoming] : CURRENT.veterans);
+// Anyone may ask; only the classes who have been here may advise or answer.
+export const classesFor = (mode) => (mode === 'question' ? CURRENT.askers : CURRENT.veterans);
 
 export function shareThisPage(url = window.location.origin + FORM_URL) {
   if (navigator.share) navigator.share({ title: 'One Thing I Wish I Knew', url });
@@ -155,7 +156,9 @@ export function ComposeFields({ f, mode }) {
   const help = isAnswer ? ANSWER_HELP : isQuestion ? QUESTION_HELP : ADVICE_HELP;
   const bodyPrompt = isQuestion ? QUESTION_BODY_PROMPT : ADVICE_BODY_PROMPT;
   const bodyHelp = isQuestion ? QUESTION_BODY_HELP : ADVICE_BODY_HELP;
-  const classLabel = isQuestion ? 'Your student starts' : 'Your student’s class';
+  // One label for both lanes now that asking is open to every class. "Your
+  // student starts" only ever made sense for the incoming families.
+  const classLabel = 'Your student’s class';
 
   return (
     <>

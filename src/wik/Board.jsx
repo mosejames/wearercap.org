@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CURRENT, TOPICS, SEEDS } from './config.js';
+import { TOPICS, SEEDS } from './config.js';
 import { listPublic } from './data.js';
 import {
   FORM_URL, byline, useCompose, ComposeFields,
@@ -182,7 +182,7 @@ export default function Board() {
 
           {lane !== 'advice' && shownQuestions.length > 0 && (
             <>
-              {lane === 'all' && <h2 className="lane-head">Asked by Class of {CURRENT.incoming}</h2>}
+              {lane === 'all' && <h2 className="lane-head">Questions from parents</h2>}
               <div className="grid">
                 {shownQuestions.map((p) => (
                   <QuestionCard

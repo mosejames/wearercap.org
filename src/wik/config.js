@@ -10,10 +10,15 @@
 export const ROUNDS = [
   {
     slug: 'class-of-2031',
-    // The class walking in the door. They ask; they do not give advice yet.
+    // The class walking in the door. The advice is aimed at them.
     incoming: '2031',
-    // The classes who have been here and can answer.
+    // The classes who have been here, and so are the ones who answer.
     veterans: ['2027', '2028', '2029', '2030'],
+    // Who may ask: everybody. Being new to RCA is not the only way to be new
+    // to something here — a first-time 7th grade parent and a first-time 8th
+    // grade parent both have questions, and gatekeeping the asking by class
+    // was never the point. Answering still belongs to the veterans.
+    askers: ['2027', '2028', '2029', '2030', '2031'],
     label: 'FOR THE CLASS OF 2031',
     name: 'Class of 2031',
   },
@@ -40,7 +45,7 @@ export const MODES = {
   question: {
     label: 'I’d like to ask',
     title: 'One Thing I’d Like to Ask',
-    lead: 'You are just starting. Ask the small practical thing; somebody has already lived it.',
+    lead: 'Ask the small practical thing. Somebody here has already lived it.',
   },
 };
 
@@ -61,7 +66,7 @@ export const TOPICS = [
   { id: 'houses',      label: 'House life',          hint: 'Sorting, points, and what it means to your kid.' },
   { id: 'traditions',  label: 'Traditions & events', hint: 'The dates that matter and why.' },
   { id: 'money',       label: 'Money & fundraisers', hint: 'Planning ahead so nothing lands as a surprise.' },
-  { id: 'teachers',    label: 'Talking to teachers', hint: 'How to reach out and when.' },
+  { id: 'teachers',    label: 'Talking to teachers', hint: 'How to reach out and when. Keep it general, not about a particular teacher.' },
   { id: 'packing',     label: 'Lunch & packing',     hint: 'What goes in the bag.' },
   { id: 'parents',     label: 'Just for parents',    hint: 'Finding your own footing here.' },
   // Always last. Nobody should stall out because their thing has no box.
@@ -85,8 +90,12 @@ export const ADVICE_BODY_HELP =
   'Optional. A sentence or two on what it changed for your family.';
 
 export const QUESTION_PROMPT = 'What do you want to ask a parent who has been here?';
+// The second half of the "keep it kind" guardrail, after the approval queue.
+// Naming a teacher is the one thing most likely to turn a useful thread into a
+// problem, so the form says so plainly rather than leaving it to be caught.
 export const QUESTION_HELP =
-  'Ask the small, practical thing. Somebody has already lived it.';
+  'Ask the small, practical thing. Somebody has already lived it. Keep it ' +
+  'about how things work here, not about a particular teacher or student.';
 export const QUESTION_BODY_PROMPT = 'Anything else that would help someone answer';
 export const QUESTION_BODY_HELP = 'Optional.';
 
