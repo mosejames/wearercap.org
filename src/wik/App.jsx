@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  CURRENT, SITE, RELATIONS, TOPICS, topicById,
+  CURRENT, SITE, MODES, RELATIONS, TOPICS, topicById,
   ADVICE_PROMPT, ADVICE_HELP, ADVICE_BODY_PROMPT, ADVICE_BODY_HELP,
   QUESTION_PROMPT, QUESTION_HELP, QUESTION_BODY_PROMPT, QUESTION_BODY_HELP,
   ANSWER_PROMPT, ANSWER_HELP,
@@ -31,87 +31,43 @@ const sizeClass = (text) => {
   return 'md';
 };
 
-/* -------------------------------------------------------------------- form */
+const classesFor = (mode) => (mode === 'question' ? [CURRENT.incoming] : CURRENT.veterans);
 
-function useIdentity() {
+/* --------------------------------------------------------------------- form */
+
+// One hook drives the form in all three places it appears: the landing page in
+// either mode, and the answer modal.
+function useCompose(mode, question = null) {
   const [name, setName] = useState('');
   const [relation, setRelation] = useState('');
   const [gradClass, setGradClass] = useState('');
-  return { name, setName, relation, setRelation, gradClass, setGradClass };
-}
-
-function IdentityFields({ id, classes, classLabel }) {
-  return (
-    <>
-      <label className="lab">
-        Your first name <span className="opt">optional</span>
-        <input
-          className="field"
-          value={id.name}
-          maxLength={40}
-          placeholder="Leave blank to stay anonymous"
-          onChange={(e) => id.setName(e.target.value)}
-        />
-      </label>
-
-      <div className="two">
-        <label className="lab">
-          You are
-          <select className="field" value={id.relation} onChange={(e) => id.setRelation(e.target.value)}>
-            <option value="">Choose…</option>
-            {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
-        <label className="lab">
-          {classLabel}
-          <select className="field" value={id.gradClass} onChange={(e) => id.setGradClass(e.target.value)}>
-            <option value="">Choose…</option>
-            {classes.map((c) => <option key={c} value={c}>Class of {c}</option>)}
-          </select>
-        </label>
-      </div>
-    </>
-  );
-}
-
-// One sheet, three jobs. `mode` is 'advice' | 'question' | 'answer'.
-function Sheet({ mode, question, onClose, onDone }) {
-  const id = useIdentity();
   const [topic, setTopic] = useState(question ? question.topic : '');
   const [headline, setHeadline] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const isQuestion = mode === 'question';
-  const isAnswer = mode === 'answer';
+  const classes = classesFor(mode);
 
-  const classes = isQuestion ? [CURRENT.incoming] : CURRENT.veterans;
-  const classLabel = isQuestion ? 'Your student starts' : 'Your student’s class';
-
-  const prompt = isAnswer ? ANSWER_PROMPT : isQuestion ? QUESTION_PROMPT : ADVICE_PROMPT;
-  const help = isAnswer ? ANSWER_HELP : isQuestion ? QUESTION_HELP : ADVICE_HELP;
-  const bodyPrompt = isQuestion ? QUESTION_BODY_PROMPT : ADVICE_BODY_PROMPT;
-  const bodyHelp = isQuestion ? QUESTION_BODY_HELP : ADVICE_BODY_HELP;
-
-  const title = isAnswer ? 'Answer this' : isQuestion ? 'Ask a parent' : 'Share one thing';
-
-  // A single incoming class means there is nothing to choose; pick it for them.
+  // Flipping the toggle changes which classes are on offer, so a class picked
+  // under the old mode has to go. One incoming class means nothing to choose.
   useEffect(() => {
-    if (classes.length === 1) id.setGradClass(classes[0]);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    setGradClass(classes.length === 1 ? classes[0] : '');
+    setErr('');
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ready =
-    !!id.relation && !!id.gradClass && !!topic &&
+    !!relation && !!gradClass && !!topic &&
     headline.trim().length >= 3 && headline.trim().length <= HEADLINE_MAX;
 
-  async function submit() {
+  function reset() {
+    setTopic(question ? question.topic : '');
+    setHeadline('');
+    setBody('');
+    setErr('');
+  }
+
+  async function submit(onDone) {
     if (!ready || busy) return;
     setBusy(true); setErr('');
     try {
@@ -120,10 +76,10 @@ function Sheet({ mode, question, onClose, onDone }) {
         topic,
         headline,
         body,
-        authorName: id.name,
-        relation: id.relation,
-        gradClass: id.gradClass,
-        answersTo: isAnswer ? question.id : null,
+        authorName: name,
+        relation,
+        gradClass,
+        answersTo: mode === 'answer' ? question.id : null,
       });
       onDone(post);
     } catch (e) {
@@ -132,108 +88,271 @@ function Sheet({ mode, question, onClose, onDone }) {
     setBusy(false);
   }
 
+  return {
+    name, setName, relation, setRelation, gradClass, setGradClass,
+    topic, setTopic, headline, setHeadline, body, setBody,
+    classes, busy, err, ready, submit, reset,
+  };
+}
+
+function ComposeFields({ f, mode }) {
+  const isQuestion = mode === 'question';
+  const isAnswer = mode === 'answer';
+
+  const prompt = isAnswer ? ANSWER_PROMPT : isQuestion ? QUESTION_PROMPT : ADVICE_PROMPT;
+  const help = isAnswer ? ANSWER_HELP : isQuestion ? QUESTION_HELP : ADVICE_HELP;
+  const bodyPrompt = isQuestion ? QUESTION_BODY_PROMPT : ADVICE_BODY_PROMPT;
+  const bodyHelp = isQuestion ? QUESTION_BODY_HELP : ADVICE_BODY_HELP;
+  const classLabel = isQuestion ? 'Your student starts' : 'Your student’s class';
+
   return (
-    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={title}>
-      <button className="sheet-scrim" onClick={onClose} aria-label="Close" tabIndex={-1} />
-      <div className={`sheet ${isQuestion ? 'ask' : ''}`}>
-        <div className="sheet-head">
-          <span className="eyebrow">{isQuestion ? 'Class of ' + CURRENT.incoming : 'Parent to parent'}</span>
-          <button className="sheet-x" onClick={onClose} aria-label="Close">×</button>
-        </div>
+    <>
+      <label className="lab">
+        Your first name <span className="opt">optional</span>
+        <input
+          className="field"
+          value={f.name}
+          maxLength={40}
+          placeholder="Leave blank to stay anonymous"
+          onChange={(e) => f.setName(e.target.value)}
+        />
+      </label>
 
-        <h2 className="sheet-title">{title}</h2>
-
-        {isAnswer && (
-          <blockquote className="quoted">
-            <p>{question.headline}</p>
-            <cite>{byline(question)}</cite>
-          </blockquote>
-        )}
-
-        <IdentityFields id={id} classes={classes} classLabel={classLabel} />
-
-        {!isAnswer && (
-          <div className="lab">
-            What is this about
-            <div className="chips">
-              {TOPICS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`chip ${topic === t.id ? 'on' : ''}`}
-                  onClick={() => setTopic(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            {topic && <p className="hint">{topicById(topic).hint}</p>}
-          </div>
-        )}
-
+      <div className="two">
         <label className="lab">
-          {prompt}
-          <textarea
-            className="field ta"
-            rows={isAnswer ? 4 : 3}
-            value={headline}
-            maxLength={HEADLINE_MAX}
-            placeholder={isQuestion ? 'How early do people actually line up for car line?' : ''}
-            onChange={(e) => setHeadline(e.target.value)}
-          />
-          <span className="count">{HEADLINE_MAX - headline.length}</span>
+          You are
+          <select className="field" value={f.relation} onChange={(e) => f.setRelation(e.target.value)}>
+            <option value="">Choose…</option>
+            {RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
         </label>
-        <p className="hint">{help}</p>
+        <label className="lab">
+          {classLabel}
+          <select className="field" value={f.gradClass} onChange={(e) => f.setGradClass(e.target.value)}>
+            <option value="">Choose…</option>
+            {f.classes.map((c) => <option key={c} value={c}>Class of {c}</option>)}
+          </select>
+        </label>
+      </div>
 
-        {!isAnswer && (
-          <>
-            <label className="lab">
-              {bodyPrompt} <span className="opt">optional</span>
-              <textarea
-                className="field ta"
-                rows={3}
-                value={body}
-                maxLength={BODY_MAX}
-                onChange={(e) => setBody(e.target.value)}
-              />
-              <span className="count">{BODY_MAX - body.length}</span>
-            </label>
-            <p className="hint">{bodyHelp}</p>
-          </>
-        )}
+      {!isAnswer && (
+        <div className="lab">
+          What is this about
+          <div className="chips">
+            {TOPICS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`chip ${f.topic === t.id ? 'on' : ''}`}
+                onClick={() => f.setTopic(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {f.topic && <p className="hint">{topicById(f.topic).hint}</p>}
+        </div>
+      )}
 
-        {err && <p className="err">{err}</p>}
+      <label className="lab">
+        {prompt}
+        <textarea
+          className="field ta"
+          rows={isAnswer ? 4 : 3}
+          value={f.headline}
+          maxLength={HEADLINE_MAX}
+          placeholder={isQuestion ? 'How early do people actually line up for car line?' : ''}
+          onChange={(e) => f.setHeadline(e.target.value)}
+        />
+        <span className="count">{HEADLINE_MAX - f.headline.length}</span>
+      </label>
+      <p className="hint">{help}</p>
 
-        <button className="btn flame wide" onClick={submit} disabled={!ready || busy}>
-          {busy ? 'Sending…' : isAnswer ? 'Send my answer' : isQuestion ? 'Send my question' : 'Send it in'}
+      {!isAnswer && (
+        <>
+          <label className="lab">
+            {bodyPrompt} <span className="opt">optional</span>
+            <textarea
+              className="field ta"
+              rows={3}
+              value={f.body}
+              maxLength={BODY_MAX}
+              onChange={(e) => f.setBody(e.target.value)}
+            />
+            <span className="count">{BODY_MAX - f.body.length}</span>
+          </label>
+          <p className="hint">{bodyHelp}</p>
+        </>
+      )}
+
+      {f.err && <p className="err">{f.err}</p>}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------- landing form */
+
+// The toggle IS the headline. "ONE THING" sits above it in display type and
+// each half of the switch finishes the sentence, so picking a lane and reading
+// the title are the same act.
+function ModeToggle({ mode, setMode }) {
+  return (
+    <div className="toggle" role="tablist" aria-label="What do you want to do">
+      {['advice', 'question'].map((m) => (
+        <button
+          key={m}
+          role="tab"
+          aria-selected={mode === m}
+          className={`toggle-half ${m === 'question' ? 'ask' : ''} ${mode === m ? 'on' : ''}`}
+          onClick={() => setMode(m)}
+        >
+          {MODES[m].label}
         </button>
+      ))}
+    </div>
+  );
+}
 
-        <p className="review-note">{REVIEW_NOTE}</p>
+function DonePanel({ post, onAgain }) {
+  const isQuestion = post.kind === 'question';
+  return (
+    <div className={`compose done-panel ${isQuestion ? 'ask' : ''}`}>
+      <span className="eyebrow">Got it</span>
+      <h2 className="compose-title">
+        {isQuestion ? 'Your question is in.' : 'Thank you. That is the good stuff.'}
+      </h2>
+      <p className="done-copy">
+        {isQuestion
+          ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
+          : 'A person reads every one before it goes on the board. Yours shows up once it is approved.'}
+      </p>
+      <blockquote className="quoted">
+        <p>{post.headline}</p>
+        <cite>{byline(post)}</cite>
+      </blockquote>
+      <div className="done-actions">
+        <button className="btn flame" onClick={onAgain}>
+          {isQuestion ? 'Ask another one' : 'Share another one'}
+        </button>
+        <button className="btn ghost" onClick={toBoard}>
+          Read what other parents wrote
+        </button>
       </div>
     </div>
   );
 }
 
-function Done({ post, onClose }) {
-  const isQuestion = post.kind === 'question';
+const toBoard = () =>
+  document.getElementById('board')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+function Landing({ mode, setMode, counts }) {
+  const [done, setDone] = useState(null);
+  const f = useCompose(mode);
+
+  // A finished submission clears when the toggle moves, so flipping the switch
+  // always lands on a fresh form rather than someone else's receipt.
+  useEffect(() => { setDone(null); }, [mode]);
+
   return (
-    <div className="sheet-wrap" role="dialog" aria-modal="true">
+    <>
+      <section className={`hero ${mode === 'question' ? 'ask' : ''}`}>
+        <div className="shell">
+          <p className="kicker">{SITE.kicker}</p>
+          <h1>{SITE.titleLead}</h1>
+          <ModeToggle mode={mode} setMode={setMode} />
+          <p className="intro">{MODES[mode].lead}</p>
+
+          <p className="mono strip">
+            {CURRENT.label}
+            <b>·</b>{counts.advice} {counts.advice === 1 ? 'ANSWER' : 'ANSWERS'}
+            <b>·</b>{counts.questions} {counts.questions === 1 ? 'QUESTION' : 'QUESTIONS'}
+          </p>
+
+          {/* The other reason people come: to read, not to write. Kept as the
+              quieter of the two so the form still owns the page. */}
+          <div className="hero-cta">
+            <button className="btn ghost" onClick={toBoard}>
+              Read what other parents wrote
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="compose-wrap">
+        <div className="narrow">
+          {done ? (
+            <DonePanel
+              post={done}
+              onAgain={() => { setDone(null); f.reset(); }}
+            />
+          ) : (
+            <div className={`compose ${mode === 'question' ? 'ask' : ''}`}>
+              <ComposeFields f={f} mode={mode} />
+              <button
+                className="btn flame wide"
+                onClick={() => f.submit((p) => { setDone(p); f.reset(); })}
+                disabled={!f.ready || f.busy}
+              >
+                {f.busy ? 'Sending…' : mode === 'question' ? 'Send my question' : 'Send it in'}
+              </button>
+              <p className="review-note">{REVIEW_NOTE}</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+/* ------------------------------------------------------- answer, in a modal */
+
+// Answering stays a modal because it is tied to one specific question on the
+// board. Pulling it up to the landing form would lose that context.
+function AnswerSheet({ question, onClose, onDone }) {
+  const f = useCompose('answer', question);
+  const [done, setDone] = useState(null);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label="Answer this">
       <button className="sheet-scrim" onClick={onClose} aria-label="Close" tabIndex={-1} />
-      <div className="sheet done">
-        <span className="eyebrow">Got it</span>
-        <h2 className="sheet-title">
-          {isQuestion ? 'Your question is in.' : 'Thank you. That is the good stuff.'}
-        </h2>
-        <p className="done-copy">
-          {isQuestion
-            ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
-            : 'A person reads every one before it goes on the board. Yours shows up once it is approved.'}
-        </p>
-        <blockquote className="quoted">
-          <p>{post.headline}</p>
-          <cite>{byline(post)}</cite>
-        </blockquote>
-        <button className="btn flame wide" onClick={onClose}>Back to the board</button>
+      <div className="sheet ask">
+        <div className="sheet-head">
+          <span className="eyebrow">Parent to parent</span>
+          <button className="sheet-x" onClick={onClose} aria-label="Close">×</button>
+        </div>
+
+        {done ? (
+          <>
+            <h2 className="sheet-title">Thank you. That is the good stuff.</h2>
+            <p className="done-copy">
+              A person reads every one before it goes on the board. Yours shows up once it is approved.
+            </p>
+            <button className="btn flame wide" onClick={onClose}>Back to the board</button>
+          </>
+        ) : (
+          <>
+            <h2 className="sheet-title">Answer this</h2>
+            <blockquote className="quoted">
+              <p>{question.headline}</p>
+              <cite>{byline(question)}</cite>
+            </blockquote>
+            <ComposeFields f={f} mode="answer" />
+            <button
+              className="btn flame wide"
+              onClick={() => f.submit((p) => { setDone(p); onDone(); })}
+              disabled={!f.ready || f.busy}
+            >
+              {f.busy ? 'Sending…' : 'Send my answer'}
+            </button>
+            <p className="review-note">{REVIEW_NOTE}</p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -440,8 +559,8 @@ export default function App() {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadErr, setLoadErr] = useState('');
-  const [sheet, setSheet] = useState(null); // {mode, question}
-  const [done, setDone] = useState(null);
+  const [mode, setMode] = useState('advice');
+  const [answering, setAnswering] = useState(null);
   const [lane, setLane] = useState('all');  // all | advice | questions
   const [topic, setTopic] = useState('all');
   const [isAdmin, setIsAdmin] = useState(
@@ -462,9 +581,7 @@ export default function App() {
     return () => { window.removeEventListener('hashchange', onHash); clearInterval(t); };
   }, [reload]);
 
-  useEffect(() => {
-    document.body.style.overflow = sheet || done ? 'hidden' : '';
-  }, [sheet, done]);
+  useEffect(() => { document.body.style.overflow = answering ? 'hidden' : ''; }, [answering]);
 
   const advice = useMemo(() => rows.filter((r) => r.kind === 'advice'), [rows]);
   const questions = useMemo(() => rows.filter((r) => r.kind === 'question'), [rows]);
@@ -474,7 +591,7 @@ export default function App() {
       if (r.kind !== 'answer' || !r.answersTo) continue;
       (m[r.answersTo] ||= []).push(r);
     }
-    // Oldest answer first — the thread should read in the order it happened.
+    // Oldest answer first, so a thread reads in the order it happened.
     for (const k of Object.keys(m)) m[k].reverse();
     return m;
   }, [rows]);
@@ -507,34 +624,16 @@ export default function App() {
         </div>
       </header>
 
-      <section className="hero">
+      <Landing
+        mode={mode}
+        setMode={setMode}
+        counts={{ advice: advice.length, questions: questions.length }}
+      />
+
+      <section className="board" id="board">
         <div className="shell">
-          <p className="kicker">{SITE.kicker}</p>
-          <h1>
-            {SITE.titleLead}<br />
-            <span className="flame">{SITE.titleGrad}</span>
-          </h1>
-          <p className="intro">{SITE.intro}</p>
+          <h2 className="board-head">{SITE.boardHead}</h2>
 
-          <p className="mono strip">
-            {CURRENT.label}
-            <b>·</b>{advice.length} {advice.length === 1 ? 'ANSWER' : 'ANSWERS'}
-            <b>·</b>{questions.length} {questions.length === 1 ? 'QUESTION' : 'QUESTIONS'}
-          </p>
-
-          <div className="hero-cta">
-            <button className="btn flame" onClick={() => setSheet({ mode: 'advice' })}>
-              I’ve been here. Share one thing.
-            </button>
-            <button className="btn ghost" onClick={() => setSheet({ mode: 'question' })}>
-              I’m new. Ask a question.
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="board">
-        <div className="shell">
           <div className="filters">
             <div className="lanes">
               {[
@@ -585,14 +684,14 @@ export default function App() {
 
           {lane !== 'advice' && shownQuestions.length > 0 && (
             <>
-              {lane === 'all' && <h2 className="lane-head">Asked by Class of {CURRENT.incoming}</h2>}
+              {lane === 'all' && <h3 className="lane-head">Asked by Class of {CURRENT.incoming}</h3>}
               <div className="grid">
                 {shownQuestions.map((p) => (
                   <QuestionCard
                     key={p.id}
                     post={p}
                     answers={answersFor[p.id] || []}
-                    onAnswer={(q) => setSheet({ mode: 'answer', question: q })}
+                    onAnswer={(q) => setAnswering(q)}
                   />
                 ))}
               </div>
@@ -635,15 +734,13 @@ export default function App() {
         </div>
       </footer>
 
-      {sheet && (
-        <Sheet
-          mode={sheet.mode}
-          question={sheet.question}
-          onClose={() => setSheet(null)}
-          onDone={(post) => { setSheet(null); setDone(post); }}
+      {answering && (
+        <AnswerSheet
+          question={answering}
+          onClose={() => setAnswering(null)}
+          onDone={reload}
         />
       )}
-      {done && <Done post={done} onClose={() => setDone(null)} />}
     </>
   );
 }

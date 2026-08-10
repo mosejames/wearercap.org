@@ -24,12 +24,24 @@ export const CURRENT = ROUNDS[0];
 export const SITE = {
   meta: ['WE ARE RCAP', 'PARENT TO PARENT'],
   kicker: 'Parent to parent',
-  titleLead: 'ONE THING I WISH',
-  titleGrad: 'I KNEW.',
-  intro:
-    'Every RCA family remembers the first month. The things nobody tells you, ' +
-    'that you figure out by week three. This is where we hand them over early. ' +
-    'Written by the parents already here, for the ones just walking in.',
+  // The headline is a shared lead-in; the toggle supplies the two endings.
+  titleLead: 'ONE THING',
+  boardHead: 'What parents have already shared',
+};
+
+// The two halves of the toggle. `label` is what shows on the switch and has to
+// read as a completion of "ONE THING…", so keep them short and parallel.
+export const MODES = {
+  advice: {
+    label: 'I wish I knew',
+    title: 'One Thing I Wish I Knew',
+    lead: 'You have been here a while. Hand something over to the families walking in.',
+  },
+  question: {
+    label: 'I’d like to ask',
+    title: 'One Thing I’d Like to Ask',
+    lead: 'You are just starting. Ask the small practical thing; somebody has already lived it.',
+  },
 };
 
 export const RELATIONS = ['Mom', 'Dad', 'Grandparent', 'Auntie', 'Uncle', 'Bonus Parent', 'Guardian'];
@@ -52,6 +64,8 @@ export const TOPICS = [
   { id: 'teachers',    label: 'Talking to teachers', hint: 'How to reach out and when.' },
   { id: 'packing',     label: 'Lunch & packing',     hint: 'What goes in the bag.' },
   { id: 'parents',     label: 'Just for parents',    hint: 'Finding your own footing here.' },
+  // Always last. Nobody should stall out because their thing has no box.
+  { id: 'other',       label: 'Something else',      hint: 'If it does not fit a box above, it still belongs here.' },
 ];
 
 export const topicById = (id) => TOPICS.find((t) => t.id === id) || { id, label: id, hint: '' };

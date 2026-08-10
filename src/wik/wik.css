@@ -81,7 +81,37 @@ a{color:inherit;text-decoration:none}
 .hero h1 .flame{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero .intro{
   font-size:clamp(15px,1.6vw,17.5px);line-height:1.6;color:rgba(255,255,255,.7);
-  max-width:52ch;margin:20px 0 0;text-wrap:pretty;
+  max-width:52ch;margin:18px 0 0;text-wrap:pretty;
+}
+
+/* ------------------------------------------------------------------ toggle
+   The switch finishes the sentence the H1 starts, so it is typeset as display
+   text rather than as a control. Two halves, always both visible: a parent has
+   to see the lane they are NOT in to know it exists. */
+.toggle{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin:14px 0 0;max-width:820px;
+}
+.toggle-half{
+  /* The unpicked half stays legible on purpose: it is the only signal that a
+     second lane exists, so it cannot fade into the background. */
+  background:transparent;color:rgba(255,255,255,.5);
+  border:2px solid rgba(255,255,255,.22);border-radius:8px;
+  padding:14px 16px;text-align:left;
+  font-size:clamp(19px,4.2vw,40px);line-height:1;letter-spacing:-.035em;
+  font-weight:900;text-transform:uppercase;
+  transition:color .14s ease,border-color .14s ease,background .14s ease;
+}
+.toggle-half:hover{color:rgba(255,255,255,.62);border-color:rgba(255,255,255,.3)}
+.toggle-half.on{
+  color:#fff;border-color:transparent;
+  background:var(--flame);
+}
+.toggle-half.ask.on{background:var(--blue);border-color:transparent}
+
+@media(max-width:560px){
+  .toggle{grid-template-columns:1fr;gap:7px}
+  .toggle-half{padding:12px 14px;font-size:24px}
 }
 
 /* The metadata strip — a signature move, and it doubles as live proof that
@@ -112,8 +142,34 @@ a{color:inherit;text-decoration:none}
 .btn.wide{width:100%}
 .btn.small{padding:9px 15px;font-size:13.5px;border-radius:5px}
 
+/* ------------------------------------------------- the form, on the page
+
+   The form is the landing page now, not something behind a button. It pulls up
+   over the seam of the night hero so the first field is visible without a
+   scroll on a phone. */
+.compose-wrap{padding:0 0 56px;margin-top:-38px}
+.compose{
+  background:#fff;border:1px solid var(--line);border-radius:12px;
+  border-top:5px solid var(--orange);
+  padding:26px 22px 28px;box-shadow:0 12px 34px rgba(14,12,11,.10);
+}
+.compose.ask{border-top-color:var(--blue)}
+.compose.ask .field:focus{border-color:var(--blue)}
+.compose-title{font-size:26px;font-weight:900;letter-spacing:-.03em;line-height:1.1;margin:10px 0 14px}
+/* The receipt keeps the accent of the lane it came from, so the page does not
+   change colour under someone the moment they hit send. */
+.done-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+
+@media(min-width:700px){
+  .compose{padding:32px 32px 34px}
+}
+
 /* ------------------------------------------------------------------- board */
-.board{padding:36px 0 70px}
+.board{padding:10px 0 70px}
+.board-head{
+  font-size:clamp(22px,3.4vw,32px);font-weight:900;letter-spacing:-.035em;
+  text-transform:uppercase;margin:0 0 20px;
+}
 
 .filters{
   display:flex;flex-direction:column;gap:16px;
