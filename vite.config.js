@@ -12,6 +12,7 @@ export default defineConfig({
         recap: resolve(__dirname, 'rcap-recap/index.html'),
         exchange: resolve(__dirname, 'uniform-exchange/index.html'),
         wishiknew: resolve(__dirname, 'wish-i-knew/index.html'),
+        wishiknewread: resolve(__dirname, 'wish-i-knew/read/index.html'),
       },
     },
   },

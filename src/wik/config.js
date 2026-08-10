@@ -65,7 +65,7 @@ export const TOPICS = [
   { id: 'packing',     label: 'Lunch & packing',     hint: 'What goes in the bag.' },
   { id: 'parents',     label: 'Just for parents',    hint: 'Finding your own footing here.' },
   // Always last. Nobody should stall out because their thing has no box.
-  { id: 'other',       label: 'Something else',      hint: 'If it does not fit a box above, it still belongs here.' },
+  { id: 'other',       label: 'Something else',      hint: 'If it does not fit anything on the list, it still belongs here.' },
 ];
 
 export const topicById = (id) => TOPICS.find((t) => t.id === id) || { id, label: id, hint: '' };
