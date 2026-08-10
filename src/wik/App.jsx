@@ -192,18 +192,23 @@ function ComposeFields({ f, mode }) {
 
 /* ------------------------------------------------------------- landing form */
 
-// The toggle IS the headline. "ONE THING" sits above it in display type and
-// each half of the switch finishes the sentence, so picking a lane and reading
-// the title are the same act.
+// A segmented pill: one track, two labels, and a thumb that slides between
+// them. The thumb is a separate element rather than a background on the active
+// half so it can animate across instead of blinking from one side to the other.
 function ModeToggle({ mode, setMode }) {
   return (
-    <div className="toggle" role="tablist" aria-label="What do you want to do">
+    <div
+      className={`toggle ${mode === 'question' ? 'ask' : ''}`}
+      role="tablist"
+      aria-label="What do you want to do"
+    >
+      <span className="toggle-thumb" aria-hidden="true" />
       {['advice', 'question'].map((m) => (
         <button
           key={m}
           role="tab"
           aria-selected={mode === m}
-          className={`toggle-half ${m === 'question' ? 'ask' : ''} ${mode === m ? 'on' : ''}`}
+          className={`toggle-half ${mode === m ? 'on' : ''}`}
           onClick={() => setMode(m)}
         >
           {MODES[m].label}
@@ -258,8 +263,16 @@ function Landing({ mode, setMode, counts }) {
       <section className={`hero ${mode === 'question' ? 'ask' : ''}`}>
         <div className="shell">
           <p className="kicker">{SITE.kicker}</p>
-          <h1>{SITE.titleLead}</h1>
+
+          {/* Switch first, then the headline it rewrites. Flipping the pill and
+              watching the title change is the clearest way to show a parent
+              that there are two lanes and which one they are standing in. */}
           <ModeToggle mode={mode} setMode={setMode} />
+
+          <h1>
+            {SITE.titleLead}<br />
+            <span className="grad">{MODES[mode].label}.</span>
+          </h1>
           <p className="intro">{MODES[mode].lead}</p>
 
           <p className="mono strip">
