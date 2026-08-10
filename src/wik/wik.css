@@ -1,0 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=Newsreader:ital,opsz,wght@1,18,400&display=swap');
+
+/* ---------------------------------------------------------------------------
+   One Thing I Wish I Knew
+
+   Palette is the RCAP family palette from src/recap/recap.css so this page sits
+   next to the Recap without looking imported from somewhere else. Two
+   deliberate departures, both toward the house style:
+
+   1. The board surface is near-white (#fbfbfa), not the Recap's cream. The
+      house rule fences warm paper to civic journalism, and this page is neither
+      that nor an event recap — it is a utility a new family reads on a phone.
+   2. A real monospace strip (IBM Plex Mono) carries the metadata. The Recap
+      leaned on letter-spaced Archivo for that job; this does it properly.
+--------------------------------------------------------------------------- */
+
+:root{
+  --ink:#14110F;
+  --ink-soft:#5a5350;
+  --surface:#fbfbfa;
+  --card:#ffffff;
+  --line:#e6e2dd;
+  --line-soft:#f0edea;
+  --night:#0E0C0B;
+  --night-2:#171310;
+  --blue:#1f55c0;
+  --blue-soft:#eef3fd;
+  --red:#d8202d;
+  --gold:#e8a516;
+  --orange:#f26a1b;
+  --magenta:#e0218a;
+  --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
+  --shadow:0 1px 2px rgba(14,12,11,.05);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--surface);color:var(--ink);
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button{font:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:16px}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(242,106,27,.26)}
+
+.shell{max-width:1180px;margin:0 auto;padding:0 22px}
+.narrow{max-width:720px;margin:0 auto;padding:0 22px}
+
+.mono{
+  font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+}
+.dim{color:var(--ink-soft);font-size:11px}
+
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ topbar */
+.topbar{background:var(--night);color:#fff}
+.topbar-in{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:20px 22px}
+.mark{font-size:23px;font-weight:900;letter-spacing:-.025em;line-height:1;display:block}
+.mark span{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:500;letter-spacing:.2em;color:rgba(255,255,255,.5);margin-top:6px}
+.topmeta{text-align:right;font-size:9.5px;color:rgba(255,255,255,.55);line-height:1.9;margin:0}
+
+/* -------------------------------------------------------------------- hero */
+.hero{background:var(--night);color:#fff;padding:26px 0 60px}
+.hero .kicker{
+  font-family:'Newsreader',Georgia,serif;font-style:italic;
+  font-size:clamp(17px,2vw,21px);color:rgba(255,255,255,.8);margin:0 0 12px;
+}
+.hero h1{
+  font-size:clamp(40px,8.4vw,86px);line-height:.86;letter-spacing:-.045em;
+  font-weight:900;text-transform:uppercase;margin:0;
+}
+.hero h1 .flame{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .intro{
+  font-size:clamp(15px,1.6vw,17.5px);line-height:1.6;color:rgba(255,255,255,.7);
+  max-width:52ch;margin:20px 0 0;text-wrap:pretty;
+}
+
+/* The metadata strip — a signature move, and it doubles as live proof that
+   other parents already showed up. */
+.strip{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  font-size:11px;color:rgba(255,255,255,.62);
+  margin:26px 0 0;padding:12px 0;
+  border-top:1px solid rgba(255,255,255,.14);
+  border-bottom:1px solid rgba(255,255,255,.14);
+}
+.strip b{color:rgba(255,255,255,.3);font-weight:500}
+
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+
+/* ----------------------------------------------------------------- buttons */
+.btn{
+  border:0;border-radius:6px;padding:14px 22px;
+  font-weight:800;font-size:15px;letter-spacing:-.01em;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:transform .12s ease,opacity .12s ease,background .12s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.flame{background:var(--flame);color:#fff}
+.btn.ghost{background:transparent;color:inherit;border:1.5px solid currentColor}
+.hero .btn.ghost{color:rgba(255,255,255,.85)}
+.btn.wide{width:100%}
+.btn.small{padding:9px 15px;font-size:13.5px;border-radius:5px}
+
+/* ------------------------------------------------------------------- board */
+.board{padding:36px 0 70px}
+
+.filters{
+  display:flex;flex-direction:column;gap:16px;
+  padding-bottom:22px;margin-bottom:26px;border-bottom:1px solid var(--line);
+}
+.lanes{display:flex;gap:6px;flex-wrap:wrap}
+.lane{
+  background:transparent;border:0;padding:9px 0;margin-right:22px;
+  font-weight:800;font-size:15px;color:var(--ink-soft);
+  border-bottom:3px solid transparent;
+}
+.lane.on{color:var(--ink);border-bottom-color:var(--orange)}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.chip{
+  background:#fff;border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;font-size:13.5px;font-weight:600;color:var(--ink-soft);
+  transition:border-color .12s ease,color .12s ease,background .12s ease;
+}
+.chip:hover{border-color:var(--ink-soft)}
+.chip.on{background:var(--night);border-color:var(--night);color:#fff}
+.topics{margin-top:0}
+
+.lane-head{
+  font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);margin:44px 0 18px;
+  padding-bottom:10px;border-bottom:1px solid var(--line);
+}
+
+.grid{
+  display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  align-items:start;
+}
+
+/* -------------------------------------------------------------------- card */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:20px;box-shadow:var(--shadow);
+}
+/* Color block as structure: advice reads warm, questions read blue. The bar is
+   the only thing telling them apart at a glance, so it does real work. */
+.card.advice{border-top:4px solid var(--orange)}
+.card.question{border-top:4px solid var(--blue);background:var(--blue-soft)}
+.card.seed{border-top-color:var(--line);opacity:.72}
+
+.card-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.topic-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--orange);
+}
+.topic-tag.ask{color:var(--blue)}
+
+.card-headline{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.16;text-wrap:pretty}
+.card-headline.xl{font-size:25px}
+.card-headline.lg{font-size:21px}
+.card-headline.md{font-size:18px}
+
+.card-body{margin:12px 0 0;font-size:15px;line-height:1.55;color:var(--ink-soft);text-wrap:pretty}
+.card-by{
+  margin:14px 0 0;font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-soft);
+}
+
+.answers{margin-top:16px;border-top:1px solid rgba(31,85,192,.18);padding-top:14px;display:grid;gap:14px}
+.answer{border-left:3px solid var(--blue);padding-left:12px}
+.answer p:first-child{margin:0;font-size:15px;line-height:1.55}
+.card.question .btn.ghost{margin-top:16px;border-color:rgba(31,85,192,.4);color:var(--blue)}
+
+.seed-note{
+  margin:0 0 20px;font-size:14.5px;line-height:1.55;color:var(--ink-soft);
+  max-width:60ch;
+}
+.empty{color:var(--ink-soft);font-size:15px;padding:26px 0}
+
+/* ------------------------------------------------------------------ closer */
+.closer{background:var(--night);color:#fff;padding:64px 0}
+.closer h2{font-size:clamp(26px,4.4vw,40px);line-height:1.05;letter-spacing:-.035em;font-weight:900;margin:0 0 14px;text-transform:uppercase}
+.closer p{color:rgba(255,255,255,.68);font-size:16px;line-height:1.6;margin:0;max-width:48ch}
+.closer .btn.ghost{color:rgba(255,255,255,.85)}
+
+.foot{background:var(--night-2);color:rgba(255,255,255,.5);padding:26px 0}
+.foot .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.foot p{margin:0;font-size:11px}
+.foot a{color:rgba(255,255,255,.75)}
+
+/* ------------------------------------------------------------------- sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:700px){.sheet-wrap{align-items:center}}
+.sheet-scrim{position:absolute;inset:0;background:rgba(14,12,11,.62);border:0;padding:0}
+.sheet{
+  position:relative;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;
+  background:#fff;border-radius:14px 14px 0 0;padding:24px 22px 30px;
+  border-top:5px solid var(--orange);
+}
+.sheet.ask{border-top-color:var(--blue)}
+.sheet.done{border-top-color:var(--orange)}
+@media(min-width:700px){.sheet{border-radius:12px}}
+
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sheet-x{background:transparent;border:0;font-size:28px;line-height:1;color:var(--ink-soft);padding:0 4px}
+.sheet-title{font-size:27px;font-weight:900;letter-spacing:-.03em;line-height:1.08;margin:0 0 18px}
+
+.lab{display:block;margin:0 0 4px;font-size:13.5px;font-weight:700;color:var(--ink);position:relative}
+.lab .opt{font-weight:500;color:var(--ink-soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+
+.field{
+  display:block;width:100%;margin-top:7px;margin-bottom:14px;
+  background:#fff;border:1.5px solid var(--line);border-radius:6px;
+  padding:12px 13px;color:var(--ink);
+}
+.field:focus{outline:0;border-color:var(--orange)}
+.sheet.ask .field:focus{border-color:var(--blue)}
+.ta{resize:vertical;line-height:1.5}
+/* Sits inside the textarea, clear of the resize grip in the bottom corner. */
+.count{
+  position:absolute;right:14px;bottom:22px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);
+  pointer-events:none;
+}
+
+.hint{margin:-8px 0 18px;font-size:13px;line-height:1.5;color:var(--ink-soft)}
+.err{color:var(--red);font-size:14px;font-weight:600;margin:8px 0}
+
+.quoted{
+  margin:0 0 18px;padding:14px 16px;background:var(--surface);
+  border-left:3px solid var(--blue);border-radius:0 6px 6px 0;
+}
+.quoted p{margin:0;font-size:16px;line-height:1.45;font-weight:700;letter-spacing:-.015em}
+.quoted cite{
+  display:block;margin-top:8px;font-style:normal;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+
+.review-note{
+  margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line-soft);
+  font-size:12.5px;line-height:1.55;color:var(--ink-soft);
+}
+.done-copy{font-size:16px;line-height:1.6;color:var(--ink-soft);margin:0 0 18px}
+
+/* -------------------------------------------------------------- back office */
+.admin-gate{padding-top:80px;max-width:420px}
+.admin-gate h1{font-size:32px;letter-spacing:-.03em;margin:14px 0 20px}
+.admin{padding:44px 22px 80px}
+.admin h1{font-size:34px;letter-spacing:-.035em;margin:14px 0 4px}
+.admin-sub{color:var(--ink-soft);margin:0 0 22px}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:24px}
+.tab{
+  background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 14px;
+  font-size:13.5px;font-weight:700;color:var(--ink-soft);text-transform:capitalize;
+}
+.tab.on{background:var(--night);border-color:var(--night);color:#fff}
+
+.admin-list{display:grid;gap:14px;max-width:760px}
+.admin-row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px}
+.admin-parent{margin:0 0 8px;font-size:13px;color:var(--ink-soft);font-style:italic}
+.admin-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+  html{scroll-behavior:auto}
+}

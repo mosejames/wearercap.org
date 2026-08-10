@@ -417,6 +417,7 @@ function App() {
           <a href="#events">Events</a>
           <a href="#committees">Committees</a>
           <a href="/what-to-expect/">What to Expect at EXP</a>
+          <a href="/wish-i-knew/">One Thing I Wish I Knew</a>
         </nav>
       </section>
 

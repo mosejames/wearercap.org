@@ -11,6 +11,7 @@ export default defineConfig({
         carpool: resolve(__dirname, 'carpool/index.html'),
         recap: resolve(__dirname, 'rcap-recap/index.html'),
         exchange: resolve(__dirname, 'uniform-exchange/index.html'),
+        wishiknew: resolve(__dirname, 'wish-i-knew/index.html'),
       },
     },
   },
