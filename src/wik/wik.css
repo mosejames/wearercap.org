@@ -71,7 +71,11 @@ a{color:inherit;text-decoration:none}
 .topmeta{text-align:right;font-size:9.5px;color:rgba(255,255,255,.55);line-height:1.9;margin:0}
 
 /* -------------------------------------------------------------------- hero */
-.hero{background:var(--night);color:#fff;padding:26px 0 60px}
+/* The bottom padding and the card's negative margin below move together: add
+   to one, subtract the same from the other. That deepens the notch without
+   moving the card down the page, which matters because the first field is
+   supposed to be reachable without a scroll on a phone. */
+.hero{background:var(--night);color:#fff;padding:26px 0 110px}
 .hero .kicker{
   font-family:'Newsreader',Georgia,serif;font-style:italic;
   font-size:clamp(17px,2vw,21px);color:rgba(255,255,255,.8);margin:0 0 12px;
@@ -202,7 +206,7 @@ a{color:inherit;text-decoration:none}
 .compose-wrap.ask::after{opacity:1}
 
 .compose{
-  margin-top:-38px;
+  margin-top:-88px;   /* paired with .hero's bottom padding — see the note there */
   color:var(--ink);
   background:#fff;border:1px solid var(--line);border-radius:12px;
   border-top:5px solid var(--orange);
