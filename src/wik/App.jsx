@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BookOpen, Share2 } from 'lucide-react';
 import { CURRENT, SITE, MODES, topicById } from './config.js';
 import { listPublic, adminAll, setStatus, declineThread } from './data.js';
 import {
@@ -289,12 +290,20 @@ export default function App() {
             </div>
           )}
 
-          {/* Everything that is not the form sits down here, after the ask. */}
+          {/* Everything that is not the form sits down here, after the ask.
+              Reading is the more useful next step of the two, so it gets the
+              solid button and sharing keeps the outline. */}
           <div className="under-form">
             <CountStrip counts={counts} />
             <div className="under-actions">
-              <a className="btn ghost" href={BOARD_URL}>Read what other parents wrote</a>
-              <button className="btn ghost" onClick={() => shareThisPage()}>Share this page</button>
+              <a className="btn solid" href={BOARD_URL}>
+                <BookOpen size={18} aria-hidden="true" />
+                Read what other parents wrote
+              </a>
+              <button className="btn ghost" onClick={() => shareThisPage()}>
+                <Share2 size={17} aria-hidden="true" />
+                Share this page
+              </button>
             </div>
           </div>
         </div>
