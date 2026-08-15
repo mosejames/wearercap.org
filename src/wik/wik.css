@@ -170,6 +170,11 @@ a{color:inherit;text-decoration:none}
    slides, so the two movements read as one. */
 .compose-wrap{
   position:relative;isolation:isolate;
+  /* flow-root, not for layout but to stop the card's negative top margin
+     collapsing out through the section. Without it the whole colour block
+     rides up 38px with the card and covers the bottom of the hero, which
+     kills the overlap instead of creating it. */
+  display:flow-root;
   padding:0 0 56px;
   color:#fff;
 }
