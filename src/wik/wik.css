@@ -30,6 +30,8 @@
   --orange:#f26a1b;
   --magenta:#e0218a;
   --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
+  /* The ask lane's answer to the flame. Same angle, so the two read as a pair. */
+  --deep-blue:linear-gradient(96deg,#4d8bf5 0%,#1f55c0 55%,#16357d 100%);
   --shadow:0 1px 2px rgba(14,12,11,.05);
 }
 
@@ -134,9 +136,9 @@ a{color:inherit;text-decoration:none}
   border-bottom:1px solid rgba(255,255,255,.14);
 }
 .strip b{color:rgba(255,255,255,.3);font-weight:500}
-/* Same strip, on the light surface below the form. */
-.strip.light{color:var(--ink-soft);border-color:var(--line);margin:0}
-.strip.light b{color:var(--line)}
+/* The strip below the form now sits on the lane's colour, not on paper. */
+.under-form .strip{color:rgba(255,255,255,.92);border-color:rgba(255,255,255,.32);margin:0}
+.under-form .strip b{color:rgba(255,255,255,.5)}
 
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
 
@@ -157,17 +159,42 @@ a{color:inherit;text-decoration:none}
 
 /* ------------------------------------------------- the form, on the page
 
-   The form is the landing page now, not something behind a button. It pulls up
-   over the seam of the night hero so the first field is visible without a
-   scroll on a phone. */
-.compose-wrap{padding:0 0 56px;margin-top:-38px}
+   The form is the landing page now, not something behind a button. The card
+   pulls up over the seam of the night hero so the first field is visible
+   without a scroll on a phone.
+
+   The field the card sits on carries the colour of the lane you picked, so the
+   choice is not just a state on a switch — it is the ground under the whole
+   page. Two stacked layers rather than one background, because a gradient
+   cannot be transitioned; they cross-fade at the same speed the pill's thumb
+   slides, so the two movements read as one. */
+.compose-wrap{
+  position:relative;isolation:isolate;
+  padding:0 0 56px;
+  color:#fff;
+}
+.compose-wrap::before,
+.compose-wrap::after{
+  content:'';position:absolute;inset:0;z-index:-1;
+  transition:opacity .3s ease;
+}
+.compose-wrap::before{background:var(--flame);opacity:1}
+.compose-wrap::after{background:var(--deep-blue);opacity:0}
+.compose-wrap.ask::before{opacity:0}
+.compose-wrap.ask::after{opacity:1}
+
 .compose{
+  margin-top:-38px;
+  color:var(--ink);
   background:#fff;border:1px solid var(--line);border-radius:12px;
   border-top:5px solid var(--orange);
-  padding:26px 22px 28px;box-shadow:0 12px 34px rgba(14,12,11,.10);
+  padding:26px 22px 28px;box-shadow:0 16px 40px rgba(14,12,11,.22);
 }
 .compose.ask{border-top-color:var(--blue)}
 .compose.ask .field:focus{border-color:var(--blue)}
+/* The whole page keys to the lane now, so a flame button in the blue lane is
+   the one thing left arguing with it. */
+.compose.ask .btn.flame{background:var(--deep-blue)}
 .compose-title{font-size:26px;font-weight:900;letter-spacing:-.03em;line-height:1.1;margin:10px 0 14px}
 /* The receipt keeps the accent of the lane it came from, so the page does not
    change colour under someone the moment they hit send. */

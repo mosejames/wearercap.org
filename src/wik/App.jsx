@@ -267,7 +267,7 @@ export default function App() {
         </div>
       </section>
 
-      <section className="compose-wrap">
+      <section className={`compose-wrap ${mode === 'question' ? 'ask' : ''}`}>
         <div className="narrow">
           {done ? (
             <DonePanel post={done} onAgain={() => { setDone(null); f.reset(); }} />
@@ -291,7 +291,7 @@ export default function App() {
 
           {/* Everything that is not the form sits down here, after the ask. */}
           <div className="under-form">
-            <CountStrip counts={counts} className="light" />
+            <CountStrip counts={counts} />
             <div className="under-actions">
               <a className="btn ghost" href={BOARD_URL}>Read what other parents wrote</a>
               <button className="btn ghost" onClick={() => shareThisPage()}>Share this page</button>
