@@ -96,3 +96,74 @@ and re-issuing the new value to the people who use the exchange back office.
 cheapest first: give it a real path (`/wish-i-knew/admin/`), and once Telegram
 is wired the notification itself carries the link, which mostly retires the
 problem.
+
+---
+
+# Setup walkthrough
+
+Three things to create. None of them should ever be pasted into a chat or into
+this repo — they go straight into Supabase Edge Function secrets, and the
+functions read them with `Deno.env.get()`.
+
+## 1. The Telegram bot (about two minutes, works fine on a phone)
+
+1. Open Telegram and search for **@BotFather** (the one with the blue check).
+2. Send `/newbot`.
+3. It asks for a **display name** — anything, e.g. `RCAP Wish I Knew`.
+4. It asks for a **username** — must be unique and must end in `bot`,
+   e.g. `wearercap_wik_bot`.
+5. It replies with a **token** shaped like `8123456789:AAH...`. That token is
+   the bot. Anyone holding it can post as the bot, so treat it as a password.
+
+## 2. Your chat id
+
+A bot cannot message you first — you have to speak to it once so it has a
+conversation to reply into.
+
+1. Open your new bot in Telegram (BotFather's message links to it) and send it
+   anything at all, e.g. `hi`.
+2. In a browser, open:
+   `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   (paste the whole token in place of `<TOKEN>`, keeping the word `bot` in
+   front of it).
+3. Find `"chat":{"id":123456789` — that number is your chat id.
+
+**Do this before the webhook is set.** Once a webhook exists, `getUpdates`
+stops returning anything and this step gets confusing. Telegram also only keeps
+undelivered updates for 24 hours, so if the response is empty, message the bot
+again and refresh.
+
+## 3. The model API key
+
+The screen needs one call per submission. `claude-haiku-4-5-20251001` is the
+right model here: fast enough to fit inside the writer's 12-second poll, and
+cheap enough that the cost is not a consideration — a moderation call is a few
+hundred tokens, so a hundred submissions lands in the pennies.
+
+Create the key at **console.anthropic.com → API Keys**. Note that API usage is
+billed separately from a Claude subscription and needs credit on the account;
+having Claude does not mean the API works.
+
+## 4. Put all three into Supabase
+
+Supabase dashboard → this project → **Edge Functions → Secrets** (also
+reachable via Project Settings → Edge Functions). Add:
+
+| Name | Value |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | from step 1 |
+| `TELEGRAM_CHAT_ID` | from step 2 |
+| `ANTHROPIC_API_KEY` | from step 3 |
+
+## 5. Point Telegram at the button handler — LAST
+
+Only after `wik-telegram` is deployed:
+
+`https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://kcsrtwwpnekqdrfgcfys.supabase.co/functions/v1/wik-telegram`
+
+A `{"ok":true}` response means it took. To undo it and go back to `getUpdates`,
+call `deleteWebhook` the same way.
+
+Anyone who finds the bot can message it, so `wik-telegram` must check that the
+incoming `callback_query` came from `TELEGRAM_CHAT_ID` and ignore everything
+else. Otherwise a stranger who guesses the bot name could approve posts.
