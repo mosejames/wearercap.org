@@ -3,9 +3,22 @@ import { BookOpen, Share2 } from 'lucide-react';
 import { CURRENT, SITE, MODES, topicById } from './config.js';
 import { listPublic, waitForPublish, adminAll, setStatus, declineThread } from './data.js';
 import {
-  BOARD_URL, byline, shortDate, useCompose, ComposeFields,
+  BOARD_URL, FORM_URL, byline, shortDate, useCompose, ComposeFields,
   Topbar, Footer, CountStrip, shareThisPage,
 } from './shared.jsx';
+
+// The back office is reached by typing #admin and has no chrome of its own, so
+// without this it is a dead end: you deal with the queue and the only way out
+// is the address bar. Every screen in here carries it.
+function AdminNav() {
+  return (
+    <nav className="admin-nav" aria-label="Go to">
+      <a href={BOARD_URL}>← The board</a>
+      <a href={FORM_URL}>The form</a>
+      <a href="/">We Are RCAP</a>
+    </nav>
+  );
+}
 
 /* ------------------------------------------------------------- landing form */
 
@@ -173,6 +186,7 @@ function Admin() {
         </form>
         {err && <p className="err">{err}</p>}
         <p className="hint">Nothing on this page is readable without the passcode. Pending posts are invisible to the public site.</p>
+        <AdminNav />
       </div>
     );
   }
@@ -182,6 +196,7 @@ function Admin() {
       <span className="eyebrow">RCAP · Wish I Knew back office</span>
       <h1>{counts.pending} waiting on you</h1>
       <p className="admin-sub">{counts.approved} live on the board · {counts.declined} declined</p>
+      <AdminNav />
 
       <div className="tabs">
         {['pending', 'approved', 'declined'].map((t) => (
@@ -195,7 +210,29 @@ function Admin() {
 
       {err && <p className="err">{err}</p>}
 
-      {shown.length === 0 && <p className="empty">Nothing here.</p>}
+      {/* An empty queue is the normal state now that the screen publishes the
+          clean ones itself, so it should read as finished rather than as a
+          blank page, and it should offer somewhere to go. */}
+      {shown.length === 0 && (
+        <div className="empty-state">
+          <p className="empty">
+            {tab === 'pending'
+              ? counts.approved > 0
+                ? 'Nothing waiting on you. Everything that came in has been dealt with.'
+                : 'Nothing waiting on you yet.'
+              : tab === 'approved'
+                ? 'Nothing has been published yet.'
+                : 'Nothing has been declined.'}
+          </p>
+          <div className="under-actions">
+            <a className="btn ghost" href={BOARD_URL}>
+              <BookOpen size={18} aria-hidden="true" />
+              See the board
+            </a>
+            <a className="btn ghost" href={FORM_URL}>Write one yourself</a>
+          </div>
+        </div>
+      )}
 
       <div className="admin-list">
         {shown.map((r) => (
