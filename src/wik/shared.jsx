@@ -353,9 +353,22 @@ export function AdviceCard({ post, seed = false }) {
           ? <span className="mono dim">EXAMPLE</span>
           : <span className="mono dim">{shortDate(post.createdAt)}</span>}
       </div>
+      {/* When a question was taken, the writer only supplied the second half,
+          so the two halves are set differently: the lead quiet and light, their
+          words heavy and underlined in the flame. That is what stops
+          "…don't know anyone yet, Just continue to show up." reading as a
+          run-on — the capital is obviously the start of a filled-in blank
+          rather than a botched clause. Someone who wrote their own thing has
+          no lead, and the whole line is theirs, so nothing is marked. */}
       <p className={`card-headline ${sizeClass((post.prompt || '') + post.headline)}`}>
-        {post.prompt && <span className="card-lead">{post.prompt} </span>}
-        {post.headline}
+        {post.prompt
+          ? (
+            <>
+              <span className="card-lead">{post.prompt} </span>
+              <span className="card-answer">{post.headline}</span>
+            </>
+          )
+          : post.headline}
       </p>
       {post.body && <p className="card-body">{post.body}</p>}
       <p className="card-by">{seed ? 'An RCA parent' : byline(post)}</p>

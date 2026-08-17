@@ -513,6 +513,20 @@ a{color:inherit;text-decoration:none}
 .picked-q{margin:7px 0 10px;font-size:17px;line-height:1.28;font-weight:800;letter-spacing:-.02em;text-wrap:pretty}
 .picked-foot{display:flex;flex-wrap:wrap;gap:16px}
 
-/* On the board the lead-in and the answer are one sentence, so the lead is
-   set quieter rather than broken onto its own line. */
-.card-lead{color:var(--ink-soft);font-weight:700}
+/* On the board the lead-in and the answer are one sentence, but they are not
+   the same voice: the site supplied the first half, a parent supplied the
+   second. Setting the lead lighter and quieter, and underlining their words in
+   the flame, marks the join as a filled-in blank. Bold-on-bold was what made
+   it read as a run-on. */
+.card-lead{color:var(--ink-soft);font-weight:500}
+.card-answer{
+  font-weight:800;
+  /* clone so each wrapped line gets its own rule rather than one bar drawn
+     across the whole inline box */
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+  background-image:var(--flame);
+  background-repeat:no-repeat;
+  background-size:100% 3px;
+  background-position:0 100%;
+  padding-bottom:3px;
+}
