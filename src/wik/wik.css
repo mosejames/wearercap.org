@@ -420,3 +420,12 @@ a{color:inherit;text-decoration:none}
   *{transition:none !important;animation:none !important}
   html{scroll-behavior:auto}
 }
+
+/* The few seconds between hitting send and knowing whether it published. */
+.done-copy.waiting{opacity:.62}
+.done-copy.waiting::after{
+  content:'';display:inline-block;width:.5em;height:.5em;margin-left:.4em;
+  border-radius:50%;background:currentColor;
+  animation:wik-pulse 1s ease-in-out infinite;
+}
+@keyframes wik-pulse{0%,100%{opacity:.2}50%{opacity:1}}

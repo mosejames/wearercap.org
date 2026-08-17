@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Share2 } from 'lucide-react';
 import { CURRENT, SITE, MODES, topicById } from './config.js';
-import { listPublic, adminAll, setStatus, declineThread } from './data.js';
+import { listPublic, waitForPublish, adminAll, setStatus, declineThread } from './data.js';
 import {
   BOARD_URL, byline, shortDate, useCompose, ComposeFields,
   Topbar, Footer, CountStrip, shareThisPage,
@@ -35,26 +35,56 @@ function ModeToggle({ mode, setMode }) {
   );
 }
 
+// Three states, because the honest answer is not known the instant someone
+// hits send: waiting on the screen, live, or held for a person. The waiting
+// state is deliberately short-lived and says nothing it might have to take
+// back.
 function DonePanel({ post, onAgain }) {
   const isQuestion = post.kind === 'question';
+  const [state, setState] = useState('checking'); // checking | live | held
+
+  useEffect(() => {
+    let alive = true;
+    waitForPublish(post.id).then((live) => {
+      if (alive) setState(live ? 'live' : 'held');
+    });
+    return () => { alive = false; };
+  }, [post.id]);
+
+  const title = state === 'live'
+    ? 'It’s live.'
+    : isQuestion ? 'Your question is in.' : 'Thank you. That is the good stuff.';
+
+  const copy = {
+    checking: 'Putting it on the board…',
+    live: isQuestion
+      ? 'It is on the board now, where a parent who has been here can answer it.'
+      : 'It is on the board now, where the families coming in will read it.',
+    held: isQuestion
+      ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
+      : 'A person reads every one before it goes on the board. Yours shows up once it is approved.',
+  }[state];
+
   return (
     <div className={`compose done-panel ${isQuestion ? 'ask' : ''}`}>
-      <span className="eyebrow">Got it</span>
-      <h2 className="compose-title">
-        {isQuestion ? 'Your question is in.' : 'Thank you. That is the good stuff.'}
-      </h2>
-      <p className="done-copy">
-        {isQuestion
-          ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
-          : 'A person reads every one before it goes on the board. Yours shows up once it is approved.'}
-      </p>
+      <span className="eyebrow">{state === 'live' ? 'Published' : 'Got it'}</span>
+      <h2 className="compose-title">{title}</h2>
+      <p className={`done-copy ${state === 'checking' ? 'waiting' : ''}`}>{copy}</p>
       <blockquote className="quoted">
         <p>{post.headline}</p>
         <cite>{byline(post)}</cite>
       </blockquote>
-      <button className="btn flame wide" onClick={onAgain}>
-        {isQuestion ? 'Ask another one' : 'Share another one'}
-      </button>
+      <div className="done-actions">
+        <button className="btn flame" onClick={onAgain}>
+          {isQuestion ? 'Ask another one' : 'Share another one'}
+        </button>
+        {state === 'live' && (
+          <a className="btn ghost" href={BOARD_URL}>
+            <BookOpen size={18} aria-hidden="true" />
+            See it on the board
+          </a>
+        )}
+      </div>
     </div>
   );
 }
