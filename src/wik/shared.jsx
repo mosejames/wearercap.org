@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  CURRENT, SITE, RELATIONS, TOPICS, topicById,
+  CURRENT, SITE, RELATIONS, TOPICS, topicById, suggestThree,
   ADVICE_PROMPT, ADVICE_HELP, ADVICE_BODY_PROMPT, ADVICE_BODY_HELP,
   QUESTION_PROMPT, QUESTION_HELP, QUESTION_BODY_PROMPT, QUESTION_BODY_HELP,
   ANSWER_PROMPT, ANSWER_HELP,
@@ -100,6 +100,12 @@ export function useCompose(mode, question = null) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  // The chosen question, and whether they have opted out of being asked one.
+  // Null and false means "still deciding", which is the state the three cards
+  // are shown in.
+  const [picked, setPicked] = useState(null);
+  const [ownWay, setOwnWay] = useState(false);
+
   const classes = classesFor(mode);
 
   // Flipping the toggle changes which classes are on offer, so a class picked
@@ -107,17 +113,33 @@ export function useCompose(mode, question = null) {
   useEffect(() => {
     setGradClass(classes.length === 1 ? classes[0] : '');
     setErr('');
+    setPicked(null);
+    setOwnWay(false);
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ready =
     !!relation && !!gradClass && !!topic &&
     headline.trim().length >= 3 && headline.trim().length <= HEADLINE_MAX;
 
+  function choose(p) {
+    setPicked(p);
+    setTopic(p.topic);   // picking the question is picking the topic
+    setOwnWay(false);
+  }
+
+  function ownThing() {
+    setPicked(null);
+    setOwnWay(true);
+    setTopic('');
+  }
+
   function reset() {
     setTopic(question ? question.topic : '');
     setHeadline('');
     setBody('');
     setErr('');
+    setPicked(null);
+    setOwnWay(false);
   }
 
   async function submit(onDone) {
@@ -132,6 +154,7 @@ export function useCompose(mode, question = null) {
         authorName: name,
         relation,
         gradClass,
+        prompt: picked?.q || '',
         answersTo: mode === 'answer' ? question.id : null,
       });
       onDone(post);
@@ -144,11 +167,52 @@ export function useCompose(mode, question = null) {
   return {
     name, setName, relation, setRelation, gradClass, setGradClass,
     topic, setTopic, headline, setHeadline, body, setBody,
+    picked, ownWay, choose, ownThing,
     classes, busy, err, ready, submit, reset,
   };
 }
 
-export function ComposeFields({ f, mode }) {
+
+// Three questions, one per topic, biased toward whatever the board is thin on.
+// Cards rather than a list because the point is that they are pickable — and
+// because a list of questions reads as a form asking you three things rather
+// than an offer of one.
+function QuestionPicker({ f, counts }) {
+  const [trio, setTrio] = useState(() => suggestThree(counts));
+  const [seen, setSeen] = useState(() => trio.map((p) => p.q));
+
+  function shuffle() {
+    const next = suggestThree(counts, seen);
+    setTrio(next);
+    setSeen((prev) => [...prev, ...next.map((p) => p.q)]);
+  }
+
+  return (
+    <div className="picker">
+      <p className="picker-head">Pick one to answer</p>
+      <p className="picker-sub">
+        You have years of this. Starting from a real question is easier than
+        starting from a blank box.
+      </p>
+
+      <div className="picker-cards">
+        {trio.map((p) => (
+          <button type="button" className="qcard" key={p.q} onClick={() => f.choose(p)}>
+            <span className="qcard-tag mono">{topicById(p.topic).label}</span>
+            <span className="qcard-q">{p.q}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="picker-foot">
+        <button type="button" className="linky" onClick={shuffle}>↻ Three different ones</button>
+        <button type="button" className="linky" onClick={f.ownThing}>I have my own thing to say</button>
+      </div>
+    </div>
+  );
+}
+
+export function ComposeFields({ f, mode, topicCounts = {} }) {
   const isQuestion = mode === 'question';
   const isAnswer = mode === 'answer';
 
@@ -190,9 +254,29 @@ export function ComposeFields({ f, mode }) {
         </label>
       </div>
 
-      {/* A dropdown rather than a row of pills: eleven pills wrapped to three
-          lines and made the form look longer than it is. */}
-      {!isAnswer && (
+      {/* Advice only. A veteran parent has four years of material and no idea
+          which bit is useful, so they get three specific questions to pick
+          from. Asking is left open: a new family already arrives with the
+          thing they are worried about. */}
+      {mode === 'advice' && !f.picked && !f.ownWay && (
+        <QuestionPicker f={f} counts={topicCounts} />
+      )}
+
+      {/* Once they have picked, the question replaces the topic field — because
+          choosing the question already chose the topic. */}
+      {mode === 'advice' && f.picked && (
+        <div className="picked">
+          <span className="picked-tag mono">{topicById(f.picked.topic).label}</span>
+          <p className="picked-q">{f.picked.q}</p>
+          <button type="button" className="linky" onClick={f.ownThing}>
+            Answer something else instead
+          </button>
+        </div>
+      )}
+
+      {/* The dropdown is the write-your-own path, and the answer modal, which
+          inherits its topic from the question it is answering. */}
+      {(isQuestion || (mode === 'advice' && f.ownWay)) && (
         <>
           <label className="lab">
             What is this about
@@ -206,7 +290,7 @@ export function ComposeFields({ f, mode }) {
       )}
 
       <label className="lab">
-        {prompt}
+        {mode === 'advice' && f.picked ? 'Your answer' : prompt}
         <textarea
           className="field ta"
           rows={isAnswer ? 4 : 3}
@@ -217,7 +301,7 @@ export function ComposeFields({ f, mode }) {
         />
         <span className="count">{HEADLINE_MAX - f.headline.length}</span>
       </label>
-      <p className="hint">{help}</p>
+      <p className="hint">{mode === 'advice' && f.picked ? 'Speak from your own family. One or two lines is plenty.' : help}</p>
 
       {!isAnswer && (
         <>
@@ -252,6 +336,7 @@ export function AdviceCard({ post, seed = false }) {
           ? <span className="mono dim">EXAMPLE</span>
           : <span className="mono dim">{shortDate(post.createdAt)}</span>}
       </div>
+      {post.prompt && <p className="card-q">{post.prompt}</p>}
       <p className={`card-headline ${sizeClass(post.headline)}`}>{post.headline}</p>
       {post.body && <p className="card-body">{post.body}</p>}
       <p className="card-by">{seed ? 'An RCA parent' : byline(post)}</p>

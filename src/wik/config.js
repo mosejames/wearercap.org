@@ -65,7 +65,11 @@ export const TOPICS = [
   { id: 'homework',    label: 'Homework & nights',   hint: 'The nightly routine that worked for you.' },
   { id: 'houses',      label: 'House life',          hint: 'Sorting, points, and what it means to your kid.' },
   { id: 'traditions',  label: 'Traditions & events', hint: 'The dates that matter and why.' },
-  { id: 'money',       label: 'Money & fundraisers', hint: 'Planning ahead so nothing lands as a surprise.' },
+  // Deliberately not "Money". RCA is not a school that keeps asking families to
+  // buy things — tuition covers it — so framing this around cost would describe
+  // a place this isn't. What actually exists is the raffle and the drives, and
+  // those are about pitching in.
+  { id: 'money',       label: 'Fundraisers & pitching in', hint: 'The raffle, the drives, and how families get involved.' },
   { id: 'teachers',    label: 'Talking to teachers', hint: 'How to reach out and when. Keep it general, not about a particular teacher.' },
   { id: 'packing',     label: 'Lunch & packing',     hint: 'What goes in the bag.' },
   { id: 'parents',     label: 'Just for parents',    hint: 'Finding your own footing here.' },
@@ -130,3 +134,83 @@ export const SEEDS = [
     body: 'One shift at one event is how you meet the parents who end up answering your texts for the next four years.',
   },
 ];
+
+// ---------------------------------------------------------------------------
+// THE QUESTIONS
+//
+// The Recap proved this earns its keep: 34 of its 38 entries answered an
+// assigned prompt, across 14 different ones. People are not short of things to
+// say, they are short of a place to start — a veteran parent has four years of
+// material and no idea which bit is useful.
+//
+// Every question below points at one specific afternoon somebody actually
+// lived. That is the whole trick. "What was your first year like?" is the blank
+// page again with a question mark on it; "What did you buy in August that you
+// never used?" retrieves an actual memory.
+//
+// None of these invite a complaint, a name, or a cost. Keep it that way.
+// ---------------------------------------------------------------------------
+export const PROMPTS = [
+  { topic: 'first-weeks', q: 'What surprised you most in the first two weeks?' },
+  { topic: 'first-weeks', q: 'What did you worry about that turned out to be fine?' },
+  { topic: 'first-weeks', q: 'What did the first month actually feel like at your house?' },
+
+  { topic: 'mornings',    q: 'What time do you actually leave the house?' },
+  { topic: 'mornings',    q: 'What did you change about your mornings after the first month?' },
+  { topic: 'mornings',    q: 'What do you know about car line now that you didn’t in August?' },
+
+  { topic: 'uniforms',    q: 'What did you buy in August that you never used?' },
+  { topic: 'uniforms',    q: 'What did you end up needing more of?' },
+  { topic: 'uniforms',    q: 'What would you tell someone before they place the first uniform order?' },
+
+  { topic: 'homework',    q: 'What does a normal weeknight look like at your house?' },
+  { topic: 'homework',    q: 'What did you stop doing once your family found the rhythm?' },
+  { topic: 'homework',    q: 'How long does homework really take?' },
+
+  { topic: 'houses',      q: 'What did your kid say the night they got sorted?' },
+  { topic: 'houses',      q: 'What does the house actually mean to your student day to day?' },
+
+  { topic: 'traditions',  q: 'Which date should a new family put on the calendar right now?' },
+  { topic: 'traditions',  q: 'What event did you almost skip and are glad you didn’t?' },
+
+  { topic: 'money',       q: 'How did your family end up helping with the raffle?' },
+  { topic: 'money',       q: 'What is the easiest way for a new family to pitch in?' },
+
+  { topic: 'teachers',    q: 'When did you first reach out to the school, and how did you do it?' },
+  { topic: 'teachers',    q: 'What do you know now about staying in the loop that you didn’t at first?' },
+
+  { topic: 'packing',     q: 'What goes in the bag every single day?' },
+  { topic: 'packing',     q: 'What did you figure out about lunch after a few weeks?' },
+
+  { topic: 'parents',     q: 'How did you meet the first RCA parent you actually knew?' },
+  { topic: 'parents',     q: 'What did you say yes to that you’re glad you did?' },
+  { topic: 'parents',     q: 'What would you tell a parent who feels like they don’t know anyone yet?' },
+];
+
+// Three questions, biased toward the corners of the board nobody has covered.
+//
+// Pure random is how you end up with six answers about car line and nothing
+// about the first week. Weighting by what is already published means the
+// suggestions quietly steer toward the gaps — the useful half of a leaderboard
+// with none of the part that produces a losing house.
+export function suggestThree(counts = {}, exclude = []) {
+  const skip = new Set(exclude);
+  const pool = PROMPTS.filter((p) => !skip.has(p.q));
+  const usable = pool.length >= 3 ? pool : PROMPTS;
+
+  // Shuffle first so equal-weight topics don't always surface in file order.
+  const shuffled = [...usable].sort(() => Math.random() - 0.5);
+  shuffled.sort((a, b) => (counts[a.topic] ?? 0) - (counts[b.topic] ?? 0));
+
+  // One per topic, so the three on screen never look like the same question
+  // asked three ways.
+  const out = [];
+  const seen = new Set();
+  for (const p of shuffled) {
+    if (seen.has(p.topic)) continue;
+    seen.add(p.topic);
+    out.push(p);
+    if (out.length === 3) break;
+  }
+  return out;
+}

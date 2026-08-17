@@ -11,6 +11,7 @@ const fromRow = (r) => ({
   topic: r.topic,
   headline: r.headline,
   body: r.body || '',
+  prompt: r.prompt || '',
   authorName: r.author_name || '',
   relation: r.relation,
   gradClass: r.grad_class,
@@ -40,7 +41,7 @@ export async function listPublic(slug = CURRENT.slug) {
 // design. Adding .select() back here fails every submission with a misleading
 // "violates row-level security policy" error. The row is echoed from what we
 // sent instead; the caller only needs it to render the thank-you card.
-export async function addPost({ kind, topic, headline, body, authorName, relation, gradClass, answersTo = null }) {
+export async function addPost({ kind, topic, headline, body, authorName, relation, gradClass, prompt = '', answersTo = null }) {
   const row = {
     // Generated here rather than in the database so the browser knows which
     // row is its own. It has to: the read policy hides pending rows, so there
@@ -55,6 +56,7 @@ export async function addPost({ kind, topic, headline, body, authorName, relatio
     author_name: (authorName || '').trim(),
     relation,
     grad_class: gradClass,
+    prompt: (prompt || '').trim(),
   };
   const { error } = await supabase.from(TABLE).insert(row);
   if (error) throw error;

@@ -285,6 +285,7 @@ export default function App() {
   const [mode, setMode] = useState('advice');
   const [done, setDone] = useState(null);
   const [counts, setCounts] = useState({ advice: 0, questions: 0 });
+  const [topicCounts, setTopicCounts] = useState({});
   const [isAdmin, setIsAdmin] = useState(
     () => typeof window !== 'undefined' && window.location.hash === '#admin'
   );
@@ -302,6 +303,10 @@ export default function App() {
         advice: rows.filter((r) => r.kind === 'advice').length,
         questions: rows.filter((r) => r.kind === 'question').length,
       });
+      // What the board already covers, so the suggestions can steer at the gaps.
+      const byTopic = {};
+      for (const r of rows) byTopic[r.topic] = (byTopic[r.topic] || 0) + 1;
+      setTopicCounts(byTopic);
     } catch { /* the tally is decoration; a failure here must not block the form */ }
   }, []);
 
@@ -341,7 +346,7 @@ export default function App() {
             <DonePanel post={done} onAgain={() => { setDone(null); f.reset(); }} />
           ) : (
             <div className={`compose ${mode === 'question' ? 'ask' : ''}`}>
-              <ComposeFields f={f} mode={mode} />
+              <ComposeFields f={f} mode={mode} topicCounts={topicCounts} />
               <button
                 className="btn flame wide"
                 onClick={() => f.submit((p) => { setDone(p); f.reset(); loadCounts(); })}
