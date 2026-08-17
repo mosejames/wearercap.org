@@ -65,13 +65,12 @@ export const TOPICS = [
   { id: 'homework',    label: 'Homework & nights',   hint: 'The nightly routine that worked for you.' },
   { id: 'houses',      label: 'House life',          hint: 'Sorting, points, and what it means to your kid.' },
   { id: 'traditions',  label: 'Traditions & events', hint: 'The dates that matter and why.' },
-  // Deliberately not "Money". RCA is not a school that keeps asking families to
-  // buy things — tuition covers it — so framing this around cost would describe
-  // a place this isn't. What actually exists is the raffle and the drives, and
-  // those are about pitching in.
-  { id: 'money',       label: 'Fundraisers & pitching in', hint: 'The raffle, the drives, and how families get involved.' },
+  // Not money, and not fundraising either. RCA does not keep asking families to
+  // buy things, and framing this around raising money describes a place this
+  // isn't. What a new family actually needs to know is how to show up.
+  { id: 'volunteer',   label: 'Volunteering & pitching in', hint: 'Showing up, signing up, and how families help out.' },
   { id: 'teachers',    label: 'Talking to teachers', hint: 'How to reach out and when. Keep it general, not about a particular teacher.' },
-  { id: 'packing',     label: 'Lunch & packing',     hint: 'What goes in the bag.' },
+  { id: 'packing',     label: 'Packing the bag',    hint: 'What your student needs on them every single day.' },
   { id: 'parents',     label: 'Just for parents',    hint: 'Finding your own footing here.' },
   // Always last. Nobody should stall out because their thing has no box.
   { id: 'other',       label: 'Something else',      hint: 'If it does not fit anything on the list, it still belongs here.' },
@@ -157,11 +156,11 @@ export const PROMPTS = [
 
   { topic: 'mornings',    q: 'What time do you actually leave the house?' },
   { topic: 'mornings',    q: 'What did you change about your mornings after the first month?' },
-  { topic: 'mornings',    q: 'What do you know about car line now that you didn’t in August?' },
+  { topic: 'mornings',    q: 'How long does the drive really take at that hour?' },
 
-  { topic: 'uniforms',    q: 'What did you buy in August that you never used?' },
   { topic: 'uniforms',    q: 'What did you end up needing more of?' },
-  { topic: 'uniforms',    q: 'What would you tell someone before they place the first uniform order?' },
+  { topic: 'uniforms',    q: 'How does your family keep up with uniforms during the week?' },
+  { topic: 'uniforms',    q: 'What is worth knowing about the uniform exchange?' },
 
   { topic: 'homework',    q: 'What does a normal weeknight look like at your house?' },
   { topic: 'homework',    q: 'What did you stop doing once your family found the rhythm?' },
@@ -173,14 +172,27 @@ export const PROMPTS = [
   { topic: 'traditions',  q: 'Which date should a new family put on the calendar right now?' },
   { topic: 'traditions',  q: 'What event did you almost skip and are glad you didn’t?' },
 
-  { topic: 'money',       q: 'How did your family end up helping with the raffle?' },
-  { topic: 'money',       q: 'What is the easiest way for a new family to pitch in?' },
+  // The widest set on purpose. Getting a new family to show up once is the
+  // thing most likely to make the rest of this work, and "volunteer" means
+  // twelve different jobs here — the questions should show that range rather
+  // than imply there is one way in.
+  { topic: 'volunteer',   q: 'What was the first thing you volunteered for?' },
+  { topic: 'volunteer',   q: 'What is the easiest way for a new family to pitch in?' },
+  { topic: 'volunteer',   q: 'How much time does helping out actually take?' },
+  { topic: 'volunteer',   q: 'What did you sign up for that you would do again?' },
+  { topic: 'volunteer',   q: 'What is a good first thing to say yes to if you don’t know anyone yet?' },
+  { topic: 'volunteer',   q: 'How do you find out what help is needed?' },
+  { topic: 'volunteer',   q: 'What surprised you about volunteering here?' },
 
-  { topic: 'teachers',    q: 'When did you first reach out to the school, and how did you do it?' },
+  { topic: 'teachers',    q: 'Where do you actually find out what is going on each week?' },
   { topic: 'teachers',    q: 'What do you know now about staying in the loop that you didn’t at first?' },
 
+  // Not lunch. What a kid has to physically have on them, which is the thing
+  // that goes wrong in week one.
   { topic: 'packing',     q: 'What goes in the bag every single day?' },
-  { topic: 'packing',     q: 'What did you figure out about lunch after a few weeks?' },
+  { topic: 'packing',     q: 'What does your student always need that is easy to forget?' },
+  { topic: 'packing',     q: 'What is worth keeping a spare of in the bag?' },
+  { topic: 'packing',     q: 'What did your family add to the bag after the first month?' },
 
   { topic: 'parents',     q: 'How did you meet the first RCA parent you actually knew?' },
   { topic: 'parents',     q: 'What did you say yes to that you’re glad you did?' },
