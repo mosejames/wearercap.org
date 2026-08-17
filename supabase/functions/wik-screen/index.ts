@@ -15,7 +15,11 @@ const SECRET = Deno.env.get('WEBHOOK_SECRET') || '';
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') || '';
 const TG_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 const TG_CHAT = Deno.env.get('TELEGRAM_CHAT_ID') || '';
-const SITE = Deno.env.get('SITE_URL') || 'https://wearercap.org';
+// Deliberately not SITE_URL. That secret is shared with the carpool notifier
+// and already carries a path on the end (.../carpool/), so building a link on
+// it produced wearercap.org/carpool//wish-i-knew/read/ and a 404. This is the
+// only site these messages are ever about, so it is a constant.
+const BOARD_URL = 'https://wearercap.org/wish-i-knew/read/';
 
 const MODEL = 'claude-haiku-4-5-20251001';
 
@@ -168,7 +172,7 @@ async function telegram(p: Post, v: Verdict, published: boolean) {
       reply_markup: {
         inline_keyboard: [
           ...keyboard,
-          [{ text: 'Open the board', url: `${SITE}/wish-i-knew/read/` }],
+          [{ text: 'Open the board', url: BOARD_URL }],
         ],
       },
     }),

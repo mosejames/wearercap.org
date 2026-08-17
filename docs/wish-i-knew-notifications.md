@@ -1,169 +1,98 @@
 # Wish I Knew — instant publishing and one-tap moderation
 
-Handoff written 2026-08-10. Everything below is decided, not open for
-re-litigation; what is left is credentials and build.
+**Status: built, deployed and working as of 2026-08-17.** This file was a plan;
+it is now a record. Read it to understand why the pieces are shaped the way
+they are before changing any of them.
 
-## Where things stand today
+## What it does
 
-`/wish-i-knew/` is live. Nothing publishes until Mose opens
-`/wish-i-knew/#admin` (passcode in the migration) and approves it. The queue is
-silent — no notification of any kind — and there is no link to the back office
-from anywhere, so it is easy to forget it exists. Result: a parent writes
-something and has no idea whether it landed.
-
-## The decision
-
-**Invert the gate.** An AI screen runs the moment a post is inserted and sorts
-into three buckets:
+A parent submits on `/wish-i-knew/`. A Postgres trigger hands the row to the
+`wik-screen` edge function within a second or so. That function asks
+`claude-haiku-4-5` whether the post is plainly fine and sorts it:
 
 | Verdict | Behaviour |
 |---|---|
-| clean | published immediately; writer sees "it's live" with a link to their post |
-| borderline | held as `pending`; Mose gets Telegram with **Publish** / **Decline** |
-| violation | held as `pending`, pre-marked; same two buttons |
+| `clean` | published immediately; writer sees "It's live" and a link to their post |
+| `borderline` | stays `pending`; Telegram with **Publish** / **Decline** |
+| `violation` | stays `pending`; same buttons, flagged as a problem |
 
-Mose is out of the critical path for the majority. He still gets a Telegram for
-every post — for auto-published ones it carries a **Take it down** button.
+Either way a Telegram lands on Mose's phone. Published posts carry a single
+**Take it down**. Tapping any button hits `wik-telegram`, which flips the row
+and rewrites the original message in place so the buttons are replaced by the
+outcome and a timestamp.
 
-**Telegram, not email or SMS**, because it is the only one of the three that
-puts real buttons in the notification: one tap, no login, no browser. (Resend
-and Twilio are both already wired on this project and would be faster to build,
-but neither gives one-tap.)
+Verified live: ordinary advice auto-published; a post naming a teacher was held
+with the reason "Names teacher by name; complaint about a person".
 
-## What the writer sees — the actual point of this
+## The parts, and why
 
-Today the confirmation says "yours shows up once it is approved." That is the
-thing to kill. The client should:
+**Fail-closed by construction.** `wik-screen` can only ever move a row from
+`pending` to `approved`. No key, a model outage, a timeout, unparseable JSON —
+every one of those returns `borderline`, which means the row sits exactly where
+it started and a human gets asked. A broken screen degrades to the behaviour
+the site had before the screen existed. The prompt is also told, explicitly,
+that unsure means borderline and never to stretch to clean.
 
-1. Generate a UUID client-side and pass it as the row's `id` on insert. The
-   insert policy permits this; the column default is only a fallback.
-2. Poll `wik_posts?id=eq.<uuid>` every ~1.5s for ~12s. The read policy already
-   returns approved rows only, so **the row becoming visible IS the signal that
-   it published** — no new endpoint, no status leak, nothing to secure.
-3. Row appears → "It's live" plus a link to it on the board.
-   Timeout → fall back to today's "a person reads every one" copy.
+**The writer's own row id comes from the browser.** `addPost` generates a UUID
+rather than letting Postgres do it. It has to: the read policy hides `pending`
+rows, so there is otherwise no way to ask "what happened to the thing I just
+wrote". The client then polls `wik_posts?id=eq.<uuid>` for twelve seconds —
+**the row coming back at all is the confirmation that it published**, because
+approved is the only thing that policy returns. No status endpoint, nothing new
+to secure.
 
-This is why the screen has to be fast. A single cheap-model call is 1-2s;
-pg_net fires the trigger near-instantly. Budget 2-4s end to end.
+**`wik-telegram` needs two locks, not one.** Telegram's `secret_token` (sent
+back in `X-Telegram-Bot-Api-Secret-Token`) *and* a chat id match. The project
+ref is in the site's own JS bundle so the function URL is effectively public,
+and the client picks its own post id — without the secret token an author could
+forge a callback approving their own post, which would make the screen theatre.
 
-## Build list
+**The board link is a constant, not `SITE_URL`.** That secret is shared with the
+carpool notifier and already ends in `/carpool/`, so building on it produced
+`wearercap.org/carpool//wish-i-knew/read/` and a 404. Cost one round trip to
+find. Do not reintroduce it.
 
-1. **Migration** — add `ai_verdict` (clean/borderline/violation), `ai_reason`,
-   `screened_at` to `wik_posts`. Add an insert trigger calling `net.http_post`
-   into a new `wik-screen` function. Match `0004_notify_triggers.sql` exactly:
-   pg_net direct, `x-webhook-secret` header, `{type, table, record}` body. This
-   project has no managed `supabase_functions` schema.
-2. **`wik-screen` edge function** — reads the row, calls the model with the
-   house rules (positive, practical, no named teachers or students, no
-   contact details), writes the verdict, flips `status` to `approved` when
-   clean, then sends the Telegram message with an inline keyboard.
-3. **`wik-telegram` edge function** — receives `callback_query` from the button
-   tap, verifies it came from Mose's chat id, updates `status`, and edits the
-   original message in place so the button is replaced by "Published ✓" or
-   "Declined ✓". Editing rather than replying is what makes it feel instant.
-4. **Frontend** — client-generated id, the poll, and the new confirmation.
-5. **Back office link** — see below.
+**The webhook secret is never written into the repo.** Migration `0044` reads it
+back out of `notify_carpool_webhook`'s own definition at apply time, so the two
+webhooks stay in step and the value never lands in a public repository.
 
-## Credentials needed (only Mose can create these)
+## Moving parts
 
-- **Telegram bot token** — @BotFather → `/newbot` → copy the token. Two minutes
-  on a phone.
-- **Mose's Telegram chat id** — message the new bot once, then
-  `getUpdates` returns it. Can be fetched automatically given the token.
-- **A model API key** for the screen.
-
-All three go in **Supabase Edge Function secrets**, never in this repo — it is
-public. See the warning below.
-
-## ⚠ The passcode is in this public repository
-
-`rcap2026` appears in **25 places across the migrations**, and this repo is
-public. Anyone who reads it can open:
-
-- the Wish I Knew back office — read, approve and decline pending posts
-- the **Uniform Exchange** back office — which holds family names and phone
-  numbers
-
-That is the more serious of the two. The whole safety model of the moderation
-work above rests on this passcode, so it should be rotated **before** any of it
-ships, and moved out of the SQL into a secret the functions read. Rotating it
-means one migration replacing every `p_pass is distinct from '...'` comparison
-and re-issuing the new value to the people who use the exchange back office.
-
-## Back office discoverability
-
-`#admin` on a page with no link to it is why Mose could not find it. Options,
-cheapest first: give it a real path (`/wish-i-knew/admin/`), and once Telegram
-is wired the notification itself carries the link, which mostly retires the
-problem.
-
----
-
-# Setup walkthrough
-
-Three things to create. None of them should ever be pasted into a chat or into
-this repo — they go straight into Supabase Edge Function secrets, and the
-functions read them with `Deno.env.get()`.
-
-## 1. The Telegram bot (about two minutes, works fine on a phone)
-
-1. Open Telegram and search for **@BotFather** (the one with the blue check).
-2. Send `/newbot`.
-3. It asks for a **display name** — anything, e.g. `RCAP Wish I Knew`.
-4. It asks for a **username** — must be unique and must end in `bot`,
-   e.g. `wearercap_wik_bot`.
-5. It replies with a **token** shaped like `8123456789:AAH...`. That token is
-   the bot. Anyone holding it can post as the bot, so treat it as a password.
-
-## 2. Your chat id
-
-A bot cannot message you first — you have to speak to it once so it has a
-conversation to reply into.
-
-1. Open your new bot in Telegram (BotFather's message links to it) and send it
-   anything at all, e.g. `hi`.
-2. In a browser, open:
-   `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   (paste the whole token in place of `<TOKEN>`, keeping the word `bot` in
-   front of it).
-3. Find `"chat":{"id":123456789` — that number is your chat id.
-
-**Do this before the webhook is set.** Once a webhook exists, `getUpdates`
-stops returning anything and this step gets confusing. Telegram also only keeps
-undelivered updates for 24 hours, so if the response is empty, message the bot
-again and refresh.
-
-## 3. The model API key
-
-The screen needs one call per submission. `claude-haiku-4-5-20251001` is the
-right model here: fast enough to fit inside the writer's 12-second poll, and
-cheap enough that the cost is not a consideration — a moderation call is a few
-hundred tokens, so a hundred submissions lands in the pennies.
-
-Create the key at **console.anthropic.com → API Keys**. Note that API usage is
-billed separately from a Claude subscription and needs credit on the account;
-having Claude does not mean the API works.
-
-## 4. Put all three into Supabase
-
-Supabase dashboard → this project → **Edge Functions → Secrets** (also
-reachable via Project Settings → Edge Functions). Add:
-
-| Name | Value |
+| Thing | Where |
 |---|---|
-| `TELEGRAM_BOT_TOKEN` | from step 1 |
-| `TELEGRAM_CHAT_ID` | from step 2 |
-| `ANTHROPIC_API_KEY` | from step 3 |
+| Trigger + verdict columns + `wik_apply_verdict` | `supabase/migrations/0044_wik_screen.sql` |
+| The screen | `supabase/functions/wik-screen/` (`verify_jwt: false`) |
+| Button taps | `supabase/functions/wik-telegram/` (`verify_jwt: false`) |
+| Client poll | `waitForPublish` in `src/wik/data.js` |
+| Three-state confirmation | `DonePanel` in `src/wik/App.jsx` |
+| Bot | `@wearercap_wik_bot` |
 
-## 5. Point Telegram at the button handler — LAST
+Secrets live in Supabase → Edge Functions → Secrets on project
+**`kcsrtwwpnekqdrfgcfys` (wearercap-carpool)**: `ANTHROPIC_API_KEY`,
+`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET`.
 
-Only after `wik-telegram` is deployed:
+> Mose has more than one Supabase project and they look identical in the
+> dashboard. The first attempt put all three secrets on `reps`
+> (`yyhitkfxbjqrhuphqlck`) and everything silently failed closed. If something
+> here stops working, check the project ref in the URL first.
 
-`https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://kcsrtwwpnekqdrfgcfys.supabase.co/functions/v1/wik-telegram`
+`wik-envcheck` is a retired one-off that returns 410. It reported which secret
+*names* were present, never values, and later registered the Telegram webhook
+from inside the project so the bot token never had to travel. Left inert rather
+than deleted.
 
-A `{"ok":true}` response means it took. To undo it and go back to `getUpdates`,
-call `deleteWebhook` the same way.
+## Still open
 
-Anyone who finds the bot can message it, so `wik-telegram` must check that the
-incoming `callback_query` came from `TELEGRAM_CHAT_ID` and ignore everything
-else. Otherwise a stranger who guesses the bot name could approve posts.
+- **Mose's own post has never been published** — "There are no off days",
+  submitted 2026-08-16, predates the screen so it never got a verdict.
+- **The passcode is in this public repo.** `rcap2026` appears in 25 places
+  across the migrations. It opens the Wish I Knew back office and, more
+  seriously, the Uniform Exchange one, which holds family names and phone
+  numbers. Less urgent now that nobody has to live in the back office, but
+  unresolved.
+- **Test rows** prefixed `SCREENTEST` may still be in `wik_posts`.
+
+## Next
+
+The morning briefing moves onto the same rails — see
+`docs/telegram-notify.md`.
