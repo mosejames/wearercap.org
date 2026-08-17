@@ -150,53 +150,59 @@ export const SEEDS = [
 // None of these invite a complaint, a name, or a cost. Keep it that way.
 // ---------------------------------------------------------------------------
 export const PROMPTS = [
-  { topic: 'first-weeks', q: 'What surprised you most in the first two weeks?' },
-  { topic: 'first-weeks', q: 'What did you worry about that turned out to be fine?' },
-  { topic: 'first-weeks', q: 'What did the first month actually feel like at your house?' },
+  // Each entry carries two forms of the same thing, and they are not
+  // interchangeable. `q` is the question on the Quick Pick card — it exists to
+  // jog a memory. `lead` is what the writer actually completes, and what gets
+  // stored and printed on the board, so it has to be a sentence somebody would
+  // say out loud. Leaving a question there produced cards that asked the reader
+  // something instead of telling them something.
+  { topic: 'first-weeks', q: 'What surprised you most in the first two weeks?',                     lead: 'What surprised me most was' },
+  { topic: 'first-weeks', q: 'What did you worry about that turned out to be fine?',                lead: 'I worried about this, and it turned out fine:' },
+  { topic: 'first-weeks', q: 'What did the first month actually feel like at your house?',          lead: 'At our house, the first month felt like' },
 
-  { topic: 'mornings',    q: 'What time do you actually leave the house?' },
-  { topic: 'mornings',    q: 'What did you change about your mornings after the first month?' },
-  { topic: 'mornings',    q: 'How long does the drive really take at that hour?' },
+  { topic: 'mornings',    q: 'What time do you actually leave the house?',                          lead: 'We actually leave the house at' },
+  { topic: 'mornings',    q: 'What did you change about your mornings after the first month?',      lead: 'After the first month, we changed' },
+  { topic: 'mornings',    q: 'How long does the drive really take at that hour?',                   lead: 'At that hour, the drive really takes' },
 
-  { topic: 'uniforms',    q: 'What did you end up needing more of?' },
-  { topic: 'uniforms',    q: 'How does your family keep up with uniforms during the week?' },
-  { topic: 'uniforms',    q: 'What is worth knowing about the uniform exchange?' },
+  { topic: 'uniforms',    q: 'What did you end up needing more of?',                                lead: 'We ended up needing more' },
+  { topic: 'uniforms',    q: 'How does your family keep up with uniforms during the week?',         lead: 'We keep up with uniforms by' },
+  { topic: 'uniforms',    q: 'What is worth knowing about the uniform exchange?',                   lead: 'What is worth knowing about the uniform exchange is' },
 
-  { topic: 'homework',    q: 'What does a normal weeknight look like at your house?' },
-  { topic: 'homework',    q: 'What did you stop doing once your family found the rhythm?' },
-  { topic: 'homework',    q: 'How long does homework really take?' },
+  { topic: 'homework',    q: 'What does a normal weeknight look like at your house?',               lead: 'A normal weeknight at our house looks like' },
+  { topic: 'homework',    q: 'What did you stop doing once your family found the rhythm?',          lead: 'Once we found the rhythm, we stopped' },
+  { topic: 'homework',    q: 'How long does homework really take?',                                 lead: 'Homework really takes' },
 
-  { topic: 'houses',      q: 'What did your kid say the night they got sorted?' },
-  { topic: 'houses',      q: 'What does the house actually mean to your student day to day?' },
+  { topic: 'houses',      q: 'What did your kid say the night they got sorted?',                    lead: 'The night mine got sorted, they said' },
+  { topic: 'houses',      q: 'What does the house actually mean to your student day to day?',       lead: 'Day to day, the house means' },
 
-  { topic: 'traditions',  q: 'Which date should a new family put on the calendar right now?' },
-  { topic: 'traditions',  q: 'What event did you almost skip and are glad you didn’t?' },
+  { topic: 'traditions',  q: 'Which date should a new family put on the calendar right now?',       lead: 'Put this on your calendar right now:' },
+  { topic: 'traditions',  q: 'What event did you almost skip and are glad you didn’t?',             lead: 'I almost skipped this one and I am glad I didn’t:' },
 
   // The widest set on purpose. Getting a new family to show up once is the
-  // thing most likely to make the rest of this work, and "volunteer" means
-  // twelve different jobs here — the questions should show that range rather
+  // thing most likely to make the rest of this work, and "volunteer" means a
+  // dozen different jobs here — the questions should show that range rather
   // than imply there is one way in.
-  { topic: 'volunteer',   q: 'What was the first thing you volunteered for?' },
-  { topic: 'volunteer',   q: 'What is the easiest way for a new family to pitch in?' },
-  { topic: 'volunteer',   q: 'How much time does helping out actually take?' },
-  { topic: 'volunteer',   q: 'What did you sign up for that you would do again?' },
-  { topic: 'volunteer',   q: 'What is a good first thing to say yes to if you don’t know anyone yet?' },
-  { topic: 'volunteer',   q: 'How do you find out what help is needed?' },
-  { topic: 'volunteer',   q: 'What surprised you about volunteering here?' },
+  { topic: 'volunteer',   q: 'What was the first thing you volunteered for?',                       lead: 'The first thing I volunteered for was' },
+  { topic: 'volunteer',   q: 'What is the easiest way for a new family to pitch in?',               lead: 'The easiest way to pitch in is' },
+  { topic: 'volunteer',   q: 'How much time does helping out actually take?',                       lead: 'Helping out actually takes' },
+  { topic: 'volunteer',   q: 'What did you sign up for that you would do again?',                   lead: 'I would sign up again for' },
+  { topic: 'volunteer',   q: 'What is a good first thing to say yes to if you don’t know anyone yet?', lead: 'If you don’t know anyone yet, say yes to' },
+  { topic: 'volunteer',   q: 'How do you find out what help is needed?',                            lead: 'I find out what help is needed by' },
+  { topic: 'volunteer',   q: 'What surprised you about volunteering here?',                         lead: 'What surprised me about volunteering here was' },
 
-  { topic: 'teachers',    q: 'Where do you actually find out what is going on each week?' },
-  { topic: 'teachers',    q: 'What do you know now about staying in the loop that you didn’t at first?' },
+  { topic: 'teachers',    q: 'Where do you actually find out what is going on each week?',          lead: 'I find out what is going on each week from' },
+  { topic: 'teachers',    q: 'What do you know now about staying in the loop that you didn’t at first?', lead: 'About staying in the loop, I know now that' },
 
   // Not lunch. What a kid has to physically have on them, which is the thing
   // that goes wrong in week one.
-  { topic: 'packing',     q: 'What goes in the bag every single day?' },
-  { topic: 'packing',     q: 'What does your student always need that is easy to forget?' },
-  { topic: 'packing',     q: 'What is worth keeping a spare of in the bag?' },
-  { topic: 'packing',     q: 'What did your family add to the bag after the first month?' },
+  { topic: 'packing',     q: 'What goes in the bag every single day?',                              lead: 'Every single day, the bag has' },
+  { topic: 'packing',     q: 'What does your student always need that is easy to forget?',          lead: 'The easy thing to forget is' },
+  { topic: 'packing',     q: 'What is worth keeping a spare of in the bag?',                        lead: 'It is worth keeping a spare' },
+  { topic: 'packing',     q: 'What did your family add to the bag after the first month?',          lead: 'After the first month, we added' },
 
-  { topic: 'parents',     q: 'How did you meet the first RCA parent you actually knew?' },
-  { topic: 'parents',     q: 'What did you say yes to that you’re glad you did?' },
-  { topic: 'parents',     q: 'What would you tell a parent who feels like they don’t know anyone yet?' },
+  { topic: 'parents',     q: 'How did you meet the first RCA parent you actually knew?',            lead: 'I met the first parent I actually knew' },
+  { topic: 'parents',     q: 'What did you say yes to that you’re glad you did?',                   lead: 'I am glad I said yes to' },
+  { topic: 'parents',     q: 'What would you tell a parent who feels like they don’t know anyone yet?', lead: 'If you feel like you don’t know anyone yet,' },
 ];
 
 // Three questions, biased toward the corners of the board nobody has covered.

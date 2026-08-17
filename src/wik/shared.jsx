@@ -123,7 +123,7 @@ export function useCompose(mode, question = null) {
 
   function choose(p) {
     setPicked(p);
-    setTopic(p.topic);   // picking the question is picking the topic
+    setTopic(p ? p.topic : '');   // picking the question is picking the topic
     setOwnWay(false);
   }
 
@@ -154,7 +154,11 @@ export function useCompose(mode, question = null) {
         authorName: name,
         relation,
         gradClass,
-        prompt: picked?.q || '',
+        // The lead-in, not the question. This is what prints on the board, and
+        // it has to read as the first half of a sentence somebody said — a
+        // question there makes the card interrogate the reader instead of
+        // telling them something.
+        prompt: picked?.lead || '',
         answersTo: mode === 'answer' ? question.id : null,
       });
       onDone(post);
@@ -189,7 +193,10 @@ function QuestionPicker({ f, counts }) {
 
   return (
     <div className="picker">
-      <p className="picker-head">Pick one to answer</p>
+      <div className="picker-top">
+        <span className="picker-badge mono">Quick pick</span>
+        <button type="button" className="picker-shuffle" onClick={shuffle}>↻ Swap these out</button>
+      </div>
       <p className="picker-sub">
         You have years of this. Starting from a real question is easier than
         starting from a blank box.
@@ -204,9 +211,14 @@ function QuestionPicker({ f, counts }) {
         ))}
       </div>
 
-      <div className="picker-foot">
-        <button type="button" className="linky" onClick={shuffle}>↻ Three different ones</button>
-        <button type="button" className="linky" onClick={f.ownThing}>I have my own thing to say</button>
+      {/* Not a footnote. Someone who arrived with the thing they wanted to say
+          should see this as an equal option, not as an escape hatch they have
+          to go looking for. */}
+      <div className="picker-own">
+        <span className="picker-or mono">or</span>
+        <button type="button" className="btn ghost wide" onClick={f.ownThing}>
+          Write my own thing
+        </button>
       </div>
     </div>
   );
@@ -268,9 +280,10 @@ export function ComposeFields({ f, mode, topicCounts = {} }) {
         <div className="picked">
           <span className="picked-tag mono">{topicById(f.picked.topic).label}</span>
           <p className="picked-q">{f.picked.q}</p>
-          <button type="button" className="linky" onClick={f.ownThing}>
-            Answer something else instead
-          </button>
+          <div className="picked-foot">
+            <button type="button" className="linky" onClick={() => f.choose(null)}>Pick a different one</button>
+            <button type="button" className="linky" onClick={f.ownThing}>Write my own instead</button>
+          </div>
         </div>
       )}
 
@@ -290,7 +303,7 @@ export function ComposeFields({ f, mode, topicCounts = {} }) {
       )}
 
       <label className="lab">
-        {mode === 'advice' && f.picked ? 'Your answer' : prompt}
+        {mode === 'advice' && f.picked ? f.picked.lead : prompt}
         <textarea
           className="field ta"
           rows={isAnswer ? 4 : 3}
@@ -301,7 +314,11 @@ export function ComposeFields({ f, mode, topicCounts = {} }) {
         />
         <span className="count">{HEADLINE_MAX - f.headline.length}</span>
       </label>
-      <p className="hint">{mode === 'advice' && f.picked ? 'Speak from your own family. One or two lines is plenty.' : help}</p>
+      <p className="hint">
+        {mode === 'advice' && f.picked
+          ? 'Finish the sentence. One or two lines is plenty.'
+          : help}
+      </p>
 
       {!isAnswer && (
         <>
@@ -336,8 +353,10 @@ export function AdviceCard({ post, seed = false }) {
           ? <span className="mono dim">EXAMPLE</span>
           : <span className="mono dim">{shortDate(post.createdAt)}</span>}
       </div>
-      {post.prompt && <p className="card-q">{post.prompt}</p>}
-      <p className={`card-headline ${sizeClass(post.headline)}`}>{post.headline}</p>
+      <p className={`card-headline ${sizeClass((post.prompt || '') + post.headline)}`}>
+        {post.prompt && <span className="card-lead">{post.prompt} </span>}
+        {post.headline}
+      </p>
       {post.body && <p className="card-body">{post.body}</p>}
       <p className="card-by">{seed ? 'An RCA parent' : byline(post)}</p>
     </article>

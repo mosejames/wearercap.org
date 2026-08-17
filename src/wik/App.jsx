@@ -66,16 +66,16 @@ function DonePanel({ post, onAgain }) {
 
   const title = state === 'live'
     ? 'It’s live.'
-    : isQuestion ? 'Your question is in.' : 'Thank you. That is the good stuff.';
+    : isQuestion ? 'Your question is in.' : 'Each one teach one.';
 
   const copy = {
     checking: 'Putting it on the board…',
     live: isQuestion
       ? 'It is on the board now, where a parent who has been here can answer it.'
-      : 'It is on the board now, where the families coming in will read it.',
+      : 'Thank you for sharing. It is on the board now, where the families coming in will read it.',
     held: isQuestion
       ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
-      : 'A person reads every one before it goes on the board. Yours shows up once it is approved.',
+      : 'Thank you for sharing. Everything here gets read before it goes up, so yours will be on the board shortly.',
   }[state];
 
   return (
