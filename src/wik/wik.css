@@ -29,6 +29,12 @@
   --gold:#e8a516;
   --orange:#f26a1b;
   --magenta:#e0218a;
+  /* The Quick Pick block. Not a new colour — this is the flame sampled halfway
+     through its red-into-magenta blend, which is the pinkish red the gradient
+     already passes through. Taking the midpoint rather than the magenta end
+     also matters for legibility: white body text is 4.77:1 here and only
+     4.42:1 on --magenta, which fails at this size. */
+  --fuchsia:#DC205C;
   --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
   /* The ask lane's answer to the flame. Same angle, so the two read as a pair. */
   --deep-blue:linear-gradient(96deg,#4d8bf5 0%,#1f55c0 55%,#16357d 100%);
@@ -457,21 +463,23 @@ a{color:inherit;text-decoration:none}
    card, which is exactly why the eye lands on it. */
 .picker{
   margin:0 0 20px;padding:18px 16px 20px;
-  background:var(--night);color:#fff;border-radius:10px;
+  background:var(--fuchsia);color:#fff;border-radius:10px;
 }
 .picker-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+/* Inverted against the block rather than the flame gradient, which fought the
+   pink it was sitting on. */
 .picker-badge{
   display:inline-block;
-  background:var(--flame);color:#fff;
-  font-size:10px;font-weight:600;letter-spacing:.18em;
+  background:#fff;color:var(--fuchsia);
+  font-size:10px;font-weight:700;letter-spacing:.18em;
   padding:5px 10px;border-radius:999px;
 }
 .picker-shuffle{
   background:transparent;border:0;padding:0;
-  font-size:12.5px;font-weight:700;color:rgba(255,255,255,.6);
+  font-size:12.5px;font-weight:700;color:rgba(255,255,255,.78);
 }
 .picker-shuffle:hover{color:#fff}
-.picker-sub{margin:0 0 14px;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.62);max-width:44ch}
+.picker-sub{margin:0 0 14px;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.9);max-width:44ch}
 
 .picker-cards{display:grid;gap:9px}
 .qcard{
@@ -480,14 +488,14 @@ a{color:inherit;text-decoration:none}
   padding:14px 15px;
   transition:transform .1s ease,box-shadow .16s ease;
 }
-.qcard:hover{box-shadow:0 0 0 2px var(--orange)}
+.qcard:hover{box-shadow:0 0 0 2px rgba(255,255,255,.95)}
 .qcard:active{transform:translateY(1px)}
-.qcard-tag{font-size:9.5px;font-weight:600;letter-spacing:.13em;color:var(--orange)}
+.qcard-tag{font-size:9.5px;font-weight:600;letter-spacing:.13em;color:var(--fuchsia)}
 .qcard-q{font-size:16px;line-height:1.3;font-weight:700;letter-spacing:-.015em;color:var(--ink);text-wrap:pretty}
 
 /* Equal billing with the three cards, not a footnote under them. */
 .picker-own{display:grid;gap:10px;justify-items:center;margin-top:16px}
-.picker-or{font-size:10px;letter-spacing:.2em;color:rgba(255,255,255,.4)}
+.picker-or{font-size:10px;letter-spacing:.2em;color:rgba(255,255,255,.62)}
 .picker-own .btn.ghost{color:#fff;width:100%}
 
 .linky{
