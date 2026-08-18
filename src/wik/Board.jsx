@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { TOPICS, SEEDS } from './config.js';
 import { listPublic } from './data.js';
 import {
-  FORM_URL, byline, useCompose, ComposeFields,
+  FORM_URL, byline, useCompose, ComposeFields, useMasonry,
   Topbar, Footer, CountStrip, AdviceCard, QuestionCard,
 } from './shared.jsx';
 
@@ -111,6 +111,11 @@ export default function Board() {
 
   const showSeeds = loaded && advice.length === 0 && topic === 'all' && lane !== 'questions';
 
+  // A ref each, because each grid packs itself independently.
+  const seedGrid = useMasonry([showSeeds]);
+  const adviceGrid = useMasonry([shownAdvice, lane]);
+  const questionGrid = useMasonry([shownQuestions, answersFor, lane]);
+
   return (
     <>
       <Topbar />
@@ -168,14 +173,14 @@ export default function Board() {
                 Nothing has been approved yet. Here is the shape of it: three
                 examples so you can see what a good one looks like.
               </p>
-              <div className="grid">
+              <div className="grid" ref={seedGrid}>
                 {SEEDS.map((s, i) => <AdviceCard key={i} post={s} seed />)}
               </div>
             </>
           )}
 
           {lane !== 'questions' && shownAdvice.length > 0 && (
-            <div className="grid">
+            <div className="grid" ref={adviceGrid}>
               {shownAdvice.map((p) => <AdviceCard key={p.id} post={p} />)}
             </div>
           )}
@@ -183,7 +188,7 @@ export default function Board() {
           {lane !== 'advice' && shownQuestions.length > 0 && (
             <>
               {lane === 'all' && <h2 className="lane-head">Questions from parents</h2>}
-              <div className="grid">
+              <div className="grid" ref={questionGrid}>
                 {shownQuestions.map((p) => (
                   <QuestionCard
                     key={p.id}

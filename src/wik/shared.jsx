@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   CURRENT, SITE, RELATIONS, TOPICS, topicById, suggestThree,
   ADVICE_PROMPT, ADVICE_HELP, ADVICE_BODY_PROMPT, ADVICE_BODY_HELP,
@@ -42,6 +42,69 @@ export const classesFor = (mode) => (mode === 'question' ? CURRENT.askers : CURR
 export function shareThisPage(url = window.location.origin + FORM_URL) {
   if (navigator.share) navigator.share({ title: 'One Thing I Wish I Knew', url });
   else navigator.clipboard?.writeText(url);
+}
+
+/* ----------------------------------------------------------------- masonry */
+
+// Columns packed tight, but read left to right.
+//
+// Plain CSS columns pack perfectly and destroy the order — cards run down a
+// column before moving across, so the newest post sits above the second newest
+// rather than beside it. Plain CSS grid keeps the order and wastes the space,
+// because every card in a row is locked to the height of the tallest one.
+//
+// This gets both: a grid whose rows are 8px tall, with each card told to span
+// however many of those its content actually needs. Auto-placement then drops
+// each card into the first gap it fits, which is directly under the shortest
+// column so far — masonry, in source order.
+export function useMasonry(deps = []) {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const grid = ref.current;
+    if (!grid) return undefined;
+
+    let working = false;
+    const relayout = () => {
+      // Writing a span can re-trigger the observer that called us.
+      if (working) return;
+      working = true;
+
+      const cs = getComputedStyle(grid);
+      const rowH = parseFloat(cs.gridAutoRows) || 8;
+      const gap = parseFloat(cs.rowGap) || 0;
+
+      for (const card of grid.children) {
+        card.style.gridRowEnd = 'auto';           // measure unconstrained
+        const h = card.getBoundingClientRect().height;
+        card.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + gap) / (rowH + gap)))}`;
+      }
+
+      requestAnimationFrame(() => { working = false; });
+    };
+
+    relayout();
+
+    // Observe the cards, not just the grid: a card growing on its own (a font
+    // finally loading, text reflowing) never changes the grid's own box,
+    // because the height of that box is the spans we just wrote.
+    const ro = new ResizeObserver(relayout);
+    ro.observe(grid);
+    for (const card of grid.children) ro.observe(card);
+
+    window.addEventListener('resize', relayout);
+    // Archivo and IBM Plex land after first paint and change every measurement.
+    document.fonts?.ready?.then(relayout).catch(() => {});
+    const settle = setTimeout(relayout, 400);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', relayout);
+      clearTimeout(settle);
+    };
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return ref;
 }
 
 /* ------------------------------------------------------------------ chrome */
