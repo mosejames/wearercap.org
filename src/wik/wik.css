@@ -286,10 +286,23 @@ a{color:inherit;text-decoration:none}
   padding-bottom:10px;border-bottom:1px solid var(--line);
 }
 
+/* Multi-column, not grid. A grid locks every card in a row to the height of
+   the tallest one in it, so a long piece of advice left a dead gap beside the
+   short ones and pushed the next card onto a fresh row far below. Columns let
+   each card sit directly under the one above it, which is what makes this read
+   as a board rather than a table with holes in it.
+
+   The trade is reading order: cards run down a column before moving across,
+   rather than left to right. Fine here — this is a browse surface, and nobody
+   reads a wall of advice in submission order. */
 .grid{
-  display:grid;gap:16px;
-  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
-  align-items:start;
+  columns:290px 3;
+  column-gap:16px;
+}
+.grid > *{
+  break-inside:avoid;
+  -webkit-column-break-inside:avoid;
+  margin-bottom:16px;
 }
 
 /* -------------------------------------------------------------------- card */
