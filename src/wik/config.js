@@ -203,6 +203,21 @@ export const PROMPTS = [
   { topic: 'parents',     q: 'How did you meet the first RCA parent you actually knew?',            lead: 'I met the first parent I actually knew' },
   { topic: 'parents',     q: 'What did you say yes to that you’re glad you did?',                   lead: 'I am glad I said yes to' },
   { topic: 'parents',     q: 'What would you tell a parent who feels like they don’t know anyone yet?', lead: 'If you feel like you don’t know anyone yet,' },
+
+  // ---------------------------------------------------------------------
+  // Drawn from the Parents section of RCA's Dragon Scales (2015). The scales
+  // are the school's, and they are written as instructions — "Trust the
+  // process", "Don't be a helicopter parent". These are not those lines. Each
+  // one turns a directive the school already gives into a question only a
+  // parent who has lived it can answer, which is the one thing the scales
+  // cannot do for a new family. Scale numbers noted so the provenance is not
+  // lost if this grows into something bigger.
+  // ---------------------------------------------------------------------
+  { topic: 'parents',     q: 'When did you first let your kid handle something themselves?', lead: 'I first let mine handle something themselves when' },              // scale 23
+  { topic: 'first-weeks', q: 'When did you stop worrying and start trusting it?',            lead: 'I stopped worrying and started trusting it when' },                // scale 2
+  { topic: 'homework',    q: 'When did you stop looking at the grade first?',                lead: 'I stopped looking at the grade first when' },                      // scale 5
+  { topic: 'teachers',    q: 'How do you keep up with everything the school sends?',         lead: 'I keep up with everything the school sends by' },                  // scale 16
+  { topic: 'volunteer',   q: 'What is a small thing you have done for a teacher that landed?', lead: 'One small thing we did for a teacher that landed was' },         // scale 10
 ];
 
 // Three questions, biased toward the corners of the board nobody has covered.
