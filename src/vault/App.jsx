@@ -714,7 +714,13 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, refr
             {event.open
               ? <button className="btn primary" onClick={() => onAdd(event)}>{I.plus} Add photos</button>
               : <span className="closed">Closed to new photos</span>}
-            {visible.length > 0 && <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>}
+            {/* Admins only. A whole event as one zip is both the most expensive
+                thing the vault can do and the easiest way for a forwarded link
+                to become a bulk copy of other people's children. One photo at a
+                time stays open to everyone, in the lightbox. */}
+            {admin && visible.length > 0 && (
+              <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
+            )}
             {visible.length > 1 && (
               <div className="sort">
                 {[['time', 'In order'], ['loved', 'Most loved'], ['new', 'Newest']].map(([k, l]) => (
@@ -745,7 +751,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, refr
           onHidden={(p, hidden) => { setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, hidden } : x))); refreshEvents(); }}
         />
       )}
-      {dl && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
+      {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
   );
 }
