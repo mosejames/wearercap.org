@@ -20,6 +20,11 @@
   --red:#db0032;
   --red-deep:#8a0026;
   --red-bright:#f2154e;
+  /* The chrome: top bar, hero, footer. Deep rather than bright on purpose.
+     White on #db0032 is 5.17:1 and collapses below 4.5 the moment you soften
+     it, which leaves no room for secondary text. On #8a0026 white is 9.96:1
+     and still passes at 70%. Same house red, room to build a hierarchy. */
+  --chrome:#8a0026;
   /* A ramp inside Amistad's own red rather than the RCAP flame. This is the
      house's room, so it does not borrow the four-house gradient. */
   --ember:linear-gradient(96deg,var(--red-bright) 0%,var(--red) 52%,var(--red-deep) 100%);
@@ -69,22 +74,35 @@ img{display:block;max-width:100%}
 .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
 .btn.ghost-light{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
 .btn.big{padding:16px 26px;font-size:16px;min-height:54px}
+.hero .btn.primary{background:#fff;color:var(--red-deep);box-shadow:0 10px 24px rgba(0,0,0,.22)}
 .btn.small{padding:9px 14px;font-size:13px;min-height:36px}
 .icon-btn{background:none;border:0;padding:8px;border-radius:999px;display:inline-flex;color:inherit;line-height:0}
 .icon-btn:hover{background:rgba(0,0,0,.06)}
 
 /* ---------------- top bar ---------------- */
-.topbar{background:var(--night);color:#fff;position:sticky;top:0;z-index:30}
-.topbar-in{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 0}
+.topbar{background:var(--chrome);color:#fff;position:sticky;top:0;z-index:30}
+/* padding-top/bottom, not the shorthand: the shorthand would wipe out the
+   horizontal padding .shell sets and the wordmark would sit on the edge. */
+.topbar-in{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:14px;padding-bottom:14px}
 .mark{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1;display:block;white-space:nowrap}
-.mark span{background:var(--ember);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark{color:rgba(255,255,255,.78)}
+.mark span{color:#fff}
 .mark small{display:none;font-size:9.5px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.5);margin-top:5px}
 @media(min-width:560px){.mark small{display:block}}
-.nav{display:flex;align-items:center;gap:2px}
+.nav{display:flex;align-items:center;gap:2px;min-width:0}
 @media(min-width:560px){.nav{gap:6px}}
 .nav a{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:9px 9px;white-space:nowrap;border-radius:999px;color:rgba(255,255,255,.75)}
 .nav a.on{color:#fff;background:rgba(255,255,255,.1)}
 .nav-btn{background:#fff;color:var(--ink);border:0;border-radius:999px;padding:9px 13px;font-weight:800;font-size:12.5px;white-space:nowrap;margin-left:4px}
+/* With the admin link present the bar is four items plus the wordmark, which
+   overflows a 390px phone at the normal padding. Tighten, don't wrap. */
+@media(max-width:419px){
+  .nav a{padding:9px 5px;font-size:11px;letter-spacing:.04em}
+  .nav-btn{padding:9px 11px;font-size:12px;margin-left:2px}
+  /* The wordmark is already the way home, so Timeline is a duplicate. Drop it
+     on a phone and the bar fits even with the admin link showing. */
+  .nav-home{display:none}
+}
 .nav-me{background:none;border:0;padding:2px}
 .avatar{
   display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;
@@ -94,17 +112,18 @@ img{display:block;max-width:100%}
 .avatar.lg{width:64px;height:64px;font-size:20px}
 
 /* ---------------- hero ---------------- */
-.hero{background:var(--night);color:#fff;padding:34px 0 54px}
+.hero{background:var(--chrome);color:#fff;padding:34px 0 54px}
 @media(min-width:760px){.hero{padding:64px 0 84px}}
 .hero .kicker{font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:clamp(17px,2vw,22px);color:rgba(255,255,255,.82);margin:0 0 10px}
-.hero h1{font-size:clamp(44px,9vw,96px);line-height:.88;letter-spacing:-.045em;font-weight:900;text-transform:uppercase;margin:0}
-.hero .ember{background:var(--ember);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero .intro{font-size:clamp(15px,1.6vw,18px);line-height:1.55;color:rgba(255,255,255,.72);max-width:560px;margin:18px 0 0;text-wrap:pretty}
+.hero h1{font-size:clamp(44px,9vw,96px);line-height:.88;letter-spacing:-.045em;font-weight:900;text-transform:uppercase;margin:0;color:rgba(255,255,255,.78)}
+/* On red the gradient is invisible, so the emphasis is weight of white. */
+.hero .ember{background:none;color:#fff}
+.hero .intro{font-size:clamp(15px,1.6vw,18px);line-height:1.55;color:rgba(255,255,255,.8);max-width:560px;margin:18px 0 0;text-wrap:pretty}
 .hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 0}
 .stats{display:flex;gap:26px;margin:34px 0 0;padding:0}
 .stats div{margin:0}
-.stats dt{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-.04em;line-height:1;background:var(--ember);-webkit-background-clip:text;background-clip:text;color:transparent}
-.stats dd{margin:6px 0 0;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.stats dt{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-.04em;line-height:1;color:#fff}
+.stats dd{margin:6px 0 0;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.72)}
 
 /* ---------------- photos wanted ---------------- */
 .asks{background:var(--cream);padding:44px 0 48px;border-bottom:1px solid var(--line)}
@@ -311,11 +330,47 @@ img{display:block;max-width:100%}
 .phones{display:flex;flex-direction:column;gap:6px}
 
 /* ---------------- footer ---------------- */
-.foot{background:var(--night);color:rgba(255,255,255,.7);padding:48px 0 calc(48px + env(safe-area-inset-bottom));margin-top:0}
+.foot{background:var(--chrome);color:rgba(255,255,255,.8);padding:48px 0 calc(48px + env(safe-area-inset-bottom));margin-top:0}
 .foot-mark{font-size:20px;font-weight:900;letter-spacing:-.02em;color:#fff;margin:0 0 8px}
-.foot-mark span{background:var(--ember);-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot-mark span{color:#fff}
 .foot p{margin:0 0 8px;font-size:15px;line-height:1.5}
-.foot .fine{color:rgba(255,255,255,.45)}
+.foot .fine{color:rgba(255,255,255,.7)}
 .foot a{text-decoration:underline;text-underline-offset:3px}
 .event+.foot{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .narrow-form{max-width:420px}
+
+/* ---------------- coming soon + invite ---------------- */
+/* The card that replaces thirty blank ones. */
+.soon-card{
+  display:block;width:100%;text-align:left;border:1.5px dashed var(--line);background:transparent;
+  border-radius:14px;padding:18px 18px 16px;margin:6px 0 0;
+}
+.soon-card:hover{border-color:var(--red);background:rgba(219,0,50,.03)}
+.soon-card b{display:block;font-size:20px;font-weight:900;letter-spacing:-.02em;margin-bottom:4px}
+.soon-names{display:block;font-size:13.5px;color:var(--ink-soft);line-height:1.45}
+.soon-card i{display:block;margin-top:10px;font-style:normal;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.soon-month{margin:0 0 6px}
+.soon-month h4{margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+.soon-row{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:9px 0}
+.soon-row a{flex:1;min-width:0}
+.soon-row b{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em}
+.soon-row span{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+
+/* Invite sits under its card rather than on top of the photos. */
+.ev-wrap{display:flex;flex-direction:column;min-width:0}
+.ev-wrap .ev{flex:1}
+.ev-invite{
+  margin-top:6px;border:0;background:transparent;color:var(--red);border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 10px;font-size:12px;font-weight:800;letter-spacing:.04em;
+}
+.ev-invite svg{width:15px;height:15px}
+.ev-invite:hover{background:rgba(219,0,50,.08)}
+.invite-card{
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.invite-card code{
+  font-size:13.5px;word-break:break-all;color:var(--red);font-weight:700;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}

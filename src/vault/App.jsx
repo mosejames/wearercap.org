@@ -63,6 +63,10 @@ const eventStatus = (e, today) => {
 
 const initials = (name) => (name || '?').split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
+// A real path, not a hash, so the link preview can be about this one event.
+// /ami-vault/e/<slug> is rewritten to api/vault-link.js by vercel.json.
+const inviteUrl = (slug) => `${SITE.origin}${SITE.base}e/${slug}`;
+
 /* --------------------------------------------------------------- icons */
 
 const I = {
@@ -338,6 +342,59 @@ function DownloadSheet({ event, photos, onClose }) {
   );
 }
 
+/* -------------------------------------------------------------- invite */
+
+function InviteSheet({ event, onClose }) {
+  const [copied, setCopied] = useState('');
+  const url = inviteUrl(event.slug);
+  const when = event.kind === 'everyday' ? 'all year' : fmtRange(event.startsOn, event.endsOn);
+  const message =
+    `${event.title} photos wanted. ` +
+    (event.photoCount
+      ? `${plural(event.photoCount, 'photo')} in so far from ${plural(event.contributorCount, 'family', 'families')}. `
+      : 'Nobody has added any yet. ') +
+    `Add yours here, no sign-in: ${url}`;
+
+  const copy = async (text, what) => {
+    try { await navigator.clipboard.writeText(text); }
+    catch { prompt('Copy this', text); }
+    setCopied(what);
+    setTimeout(() => setCopied(''), 1800);
+  };
+  const share = async () => {
+    if (navigator.share) { try { await navigator.share({ title: event.title, text: message }); return; } catch { /* cancelled */ } }
+    copy(message, 'message');
+  };
+
+  return (
+    <Sheet title="Invite to upload" onClose={onClose}>
+      <div className="stack">
+        <p className="lede">Send this and the preview card is about <b>{event.title}</b>, not the vault in general. Whoever taps it lands on that event with Add photos waiting.</p>
+        <div className="invite-card">
+          <span className="eyebrow">The link</span>
+          <code>{url}</code>
+          <span className="fine">{when}{event.photoCount ? ` · ${plural(event.photoCount, 'photo')} so far` : ' · no photos yet'}</span>
+        </div>
+        <div className="row">
+          <button className="btn primary" onClick={() => copy(url, 'link')}>{copied === 'link' ? 'Copied' : 'Copy link'}</button>
+          <button className="btn ghost" onClick={() => copy(message, 'message')}>{copied === 'message' ? 'Copied' : 'Copy message'}</button>
+          {typeof navigator !== 'undefined' && navigator.share && (
+            <button className="btn ghost" onClick={share}>{I.share} Share</button>
+          )}
+        </div>
+        <label className="field">
+          <span>The message</span>
+          <textarea rows={4} readOnly value={message} onFocus={(e) => e.target.select()} />
+        </label>
+        <p className="fine">
+          The card shows this event's newest photo once there is one, and the house card until then.
+          {!event.open && ' Heads up: this event is closed to new photos, so the link will not let anyone add.'}
+        </p>
+      </div>
+    </Sheet>
+  );
+}
+
 /* ------------------------------------------------------------ lightbox */
 
 function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLike, admin, pass, onHidden, onNeedName, event }) {
@@ -485,6 +542,43 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }
   );
 }
 
+/* --------------------------------------------------------- coming soon */
+
+// Thirty-odd blank cards for events months away buried the handful that
+// actually want photos today. Everything ahead folds into one card.
+function ComingSoonSheet({ events, onClose, onInvite, admin }) {
+  const byMonth = useMemo(() => {
+    const m = new Map();
+    for (const e of events) {
+      const k = monthKey(e.startsOn);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(e);
+    }
+    return [...m.entries()];
+  }, [events]);
+  return (
+    <Sheet title={`Coming up · ${events.length}`} onClose={onClose}>
+      <div className="stack">
+        <p className="fine">Every event still ahead this year. They open for photos on their own, but you can invite early.</p>
+        {byMonth.map(([k, list]) => (
+          <div key={k} className="soon-month">
+            <h4>{monthLabel(k)}</h4>
+            {list.map((e) => (
+              <div key={e.id} className="soon-row">
+                <a href={`#/e/${e.slug}`} onClick={onClose}>
+                  <b>{e.title}</b>
+                  <span>{fmtRange(e.startsOn, e.endsOn)} · {(KINDS[e.kind] || KINDS.school).label}</span>
+                </a>
+                {admin && <button className="link" onClick={() => onInvite(e)}>invite</button>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </Sheet>
+  );
+}
+
 /* ------------------------------------------------------------- top bar */
 
 function TopBar({ profile, admin, onName, onProfile, route }) {
@@ -496,12 +590,12 @@ function TopBar({ profile, admin, onName, onProfile, route }) {
           <small>{YEAR.label} · {HOUSE.name} House</small>
         </a>
         <nav className="nav">
-          <a href="#/" className={route === 'home' ? 'on' : ''}>Timeline</a>
+          <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
           <a href="#/top" className={route === 'top' ? 'on' : ''}>Favorites</a>
+          {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin</a>}
           {profile
             ? <button className="nav-me" onClick={onProfile} aria-label="You"><span className="avatar sm">{initials(profile.display_name)}</span></button>
             : <button className="nav-btn" onClick={onName}>Name</button>}
-          {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin</a>}
         </nav>
       </div>
     </header>
@@ -510,11 +604,12 @@ function TopBar({ profile, admin, onName, onProfile, route }) {
 
 /* ---------------------------------------------------------------- home */
 
-function EventCard({ e, covers, today }) {
+function EventCard({ e, covers, today, admin, onInvite }) {
   const status = eventStatus(e, today);
   const kind = KINDS[e.kind] || KINDS.school;
   const thumbs = covers.get(e.id) || [];
   return (
+    <div className={`ev-wrap${admin ? ' has-invite' : ''}`}>
     <a href={`#/e/${e.slug}`} className={`ev ${status}${e.featured ? ' featured' : ''}${e.kind === 'everyday' ? ' everyday' : ''}`}>
       <div className={`ev-cover n${Math.min(thumbs.length, 4)}`}>
         {thumbs.length ? thumbs.slice(0, 4).map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />)
@@ -530,22 +625,37 @@ function EventCard({ e, covers, today }) {
         </p>
       </div>
     </a>
+    {admin && (
+      <button className="ev-invite" onClick={(ev) => { ev.preventDefault(); onInvite(e); }}>
+        {I.share} Invite to upload
+      </button>
+    )}
+    </div>
   );
 }
 
-function Home({ events, requests, recent, covers, totals, onAdd, today }) {
+function Home({ events, requests, recent, covers, totals, onAdd, today, admin, onInvite }) {
   useDocTitle('');
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   const openAsks = requests.filter((r) => r.open && (!r.dueOn || r.dueOn >= today)).map((r) => ({ ...r, event: byId.get(r.eventId) })).filter((r) => r.event);
+  // Only what has happened, plus anything running now. The rest is a fold:
+  // a wall of empty cards for March made the vault look abandoned rather
+  // than young.
+  const dated = useMemo(() => events.filter((x) => x.kind !== 'everyday' && !x.hidden), [events]);
+  const upcoming = useMemo(
+    () => dated.filter((e) => eventStatus(e, today) === 'upcoming'),
+    [dated, today],
+  );
   const months = useMemo(() => {
     const m = new Map();
-    for (const e of events.filter((x) => x.kind !== 'everyday' && !x.hidden)) {
+    for (const e of dated.filter((e) => eventStatus(e, today) !== 'upcoming')) {
       const k = monthKey(e.startsOn);
       if (!m.has(k)) m.set(k, []);
       m.get(k).push(e);
     }
     return [...m.entries()];
-  }, [events]);
+  }, [dated, today]);
+  const [soon, setSoon] = useState(false);
   const everyday = events.find((e) => e.kind === 'everyday');
   const firstOpen = openAsks[0]?.event || events.filter((e) => e.open && eventStatus(e, today) !== 'upcoming').sort((a, b) => (a.startsOn < b.startsOn ? 1 : -1))[0] || everyday;
 
@@ -629,15 +739,32 @@ function Home({ events, requests, recent, covers, totals, onAdd, today }) {
           </div>
           {everyday && (
             <div className="ev-month">
-              <div className="ev-list one"><EventCard e={everyday} covers={covers} today={today} /></div>
+              <div className="ev-list one"><EventCard e={everyday} covers={covers} today={today} admin={admin} onInvite={onInvite} /></div>
             </div>
           )}
           {months.map(([k, list]) => (
             <div key={k} className="ev-month">
               <h2 className="month">{monthLabel(k)}</h2>
-              <div className="ev-list">{list.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} />)}</div>
+              <div className="ev-list">
+                {list.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} />)}
+              </div>
             </div>
           ))}
+          {upcoming.length > 0 && (
+            <button className="soon-card" onClick={() => setSoon(true)}>
+              <span className="eyebrow">Coming soon</span>
+              <b>{plural(upcoming.length, 'more event')} this year</b>
+              <span className="soon-names">
+                {upcoming.slice(0, 3).map((e) => e.title).join(', ')}
+                {upcoming.length > 3 ? `, and ${upcoming.length - 3} more` : ''}
+              </span>
+              <i>See what is ahead</i>
+            </button>
+          )}
+          {soon && (
+            <ComingSoonSheet events={upcoming} admin={admin} onClose={() => setSoon(false)}
+              onInvite={(e) => { setSoon(false); onInvite(e); }} />
+          )}
         </div>
       </section>
     </>
@@ -646,7 +773,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today }) {
 
 /* --------------------------------------------------------------- event */
 
-function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, refreshEvents, initialPhotoId, today, showToast }) {
+function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
@@ -718,6 +845,9 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, refr
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a
                 time stays open to everyone, in the lightbox. */}
+            {admin && (
+              <button className="btn ghost" onClick={() => onInvite(event)}>{I.share} Invite to upload</button>
+            )}
             {admin && visible.length > 0 && (
               <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
             )}
@@ -828,7 +958,7 @@ function MePage({ owner, profile, events, onProfile, showToast }) {
 
 const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '', endsOn: '', open: true, featured: false, hidden: false };
 
-function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, storage }) {
+function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
   useDocTitle('Admin');
   const [editing, setEditing] = useState(null);       // event form
   const [ask, setAsk] = useState(null);               // request form
@@ -937,6 +1067,7 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
                 <td>{[!e.open && 'closed', e.featured && 'featured', e.hidden && 'hidden'].filter(Boolean).join(' · ') || '—'}</td>
                 <td className="acts">
                   <button className="link" onClick={() => setEditing({ id: e.id, form: { title: e.title, slug: e.slug, blurb: e.blurb, kind: e.kind, startsOn: e.startsOn, endsOn: e.endsOn || '', open: e.open, featured: e.featured, hidden: e.hidden } })}>edit</button>
+                  <button className="link" onClick={() => onInvite(e)}>invite</button>
                 </td>
               </tr>
             ))}
@@ -1008,6 +1139,7 @@ export default function App() {
   const [nameAsk, setNameAsk] = useState(null);     // { reason, then } | null
   const [profileOpen, setProfileOpen] = useState(false);
   const [upload, setUpload] = useState(null);       // event | null
+  const [invite, setInvite] = useState(null);      // event | null
   const [toast, showToast] = useToast();
 
   useEffect(() => {
@@ -1069,15 +1201,16 @@ export default function App() {
         onProfile={() => go('/me')} />
 
       {route.name === 'home' && (
-        <Home events={events} requests={requests} recent={recent} covers={allCovers} totals={totals} onAdd={onAdd} today={today} />
+        <Home events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
+          onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
       {route.name === 'event' && (events.length ? (
         <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin} pass={pass} onAdd={onAdd}
-          onNeedName={needName} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
+          onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
-      {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} />}
+      {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
       <footer className="foot">
         <div className="shell">
@@ -1097,6 +1230,7 @@ export default function App() {
           onClose={() => setUpload(null)}
           onDone={() => { refresh(); showToast('Added to the vault.'); }} />
       )}
+      {invite && <InviteSheet event={invite} onClose={() => setInvite(null)} />}
       <Toast msg={toast} />
     </div>
   );
