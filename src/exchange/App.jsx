@@ -2684,6 +2684,45 @@ function HolderDoor() {
 }
 
 // A back-office page header with a way back to the dashboard.
+// A card that folds, and remembers whether you left it open.
+//
+// The Storage Room is read on a phone as often as a laptop, and every page
+// used to be everything at once: the home screen alone ran nav cards, overdue
+// handoffs, pickups, the full by-house report and the text log down one
+// scroll. Nothing was too wide — it was just endless. So anything that's
+// reference rather than today's work folds shut behind a headline carrying
+// the one number worth glancing at, and a shut fold still tells you something.
+function Fold({ id, title, note, warn = false, open = false, force = null, children }) {
+  const key = `ue.fold.${id}`;
+  const [on, setOn] = useState(() => {
+    if (force !== null) return force;
+    try {
+      const v = sessionStorage.getItem(key);
+      if (v !== null) return v === '1';
+    } catch { /* private mode: fall through to the default */ }
+    return open;
+  });
+  // A search that matches inside a shut fold has to open it, or the result is
+  // invisible and the search looks broken.
+  useEffect(() => { if (force !== null) setOn(force); }, [force]);
+
+  const toggle = (e) => {
+    const v = e.currentTarget.open;
+    setOn(v);
+    try { sessionStorage.setItem(key, v ? '1' : '0'); } catch { /* nothing to do */ }
+  };
+
+  return (
+    <details className={`card fold ${warn ? 'warn-card' : ''}`} open={on} onToggle={toggle}>
+      <summary>
+        <span className="fold-title">{title}</span>
+        {note && <span className="fold-note">{note}</span>}
+      </summary>
+      <div className="fold-body">{children}</div>
+    </details>
+  );
+}
+
 function AdminPage({ title, children, msg }) {
   return (
     <section className="shell section">
@@ -2798,8 +2837,13 @@ function AdminRequests({ pass, act, msg, bins, reqs }) {
         {shown.map((r) => {
           const bin = binOf(r.bin_id);
           const due = ['scheduled','handed_off'].includes(r.status) ? dueInfo(r.due_at) : null;
+          const live = ["open","assigned","scheduled","handed_off"].includes(r.status);
           return (
-            <li key={r.id} className={`req ${due?.overdue ? 'overdue' : ''}`}>
+            <li
+              key={r.id}
+              className={`req ${due?.overdue ? 'overdue' : ''} ${live ? 'tappable' : ''}`}
+              onClick={live ? () => setEditing(r) : undefined}
+            >
               <div className="req-main">
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 <span>
@@ -2815,9 +2859,7 @@ function AdminRequests({ pass, act, msg, bins, reqs }) {
               <div className="req-side">
                 <span className={`chip chip-${r.status}`}>{STATUS_LABEL[r.status]}</span>
                 {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
-                {['open','assigned','scheduled','handed_off'].includes(r.status) && (
-                  <button className="btn small" onClick={() => setEditing(r)}>Edit</button>
-                )}
+                {live && <button className="btn small">Edit</button>}
               </div>
             </li>
           );
@@ -2935,12 +2977,18 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
         </div>
       )}
 
-      {groups.map(({ house, people }) => (
-        <div className="house-group" key={house.id || 'none'}>
-          <div className="house-head">
-            <HouseTag id={house.id} />
-            <span>{people.length} bin holder{people.length > 1 ? 's' : ''}</span>
-          </div>
+      {groups.map(({ house, people }) => {
+        const tubs = people.reduce((n, h) => n + binsOf(h.id).filter((b) => !b.retired).length, 0);
+        const gap = people.some((h) => h.active !== false && !(h.phone || '').trim());
+        return (
+        <Fold
+          key={house.id || 'none'}
+          id={`bins.${house.id || 'none'}`}
+          title={house.name}
+          note={`${people.length} holder${people.length > 1 ? 's' : ''} · ${tubs} bin${tubs === 1 ? '' : 's'}${gap ? ' · no phone' : ''}`}
+          warn={gap}
+          open={gap}
+        >
 
       {people.map((h) => {
         const mine = binsOf(h.id);
@@ -2996,8 +3044,9 @@ function AdminBins({ pass, act, msg, bins, holders, setPrintBins }) {
           </div>
         );
       })}
-        </div>
-      ))}
+        </Fold>
+        );
+      })}
 
       {orphans.length > 0 && (
         <div className="card">
@@ -3323,9 +3372,13 @@ function AdminOffers({ bins, offers, refresh }) {
   const live = (offers || []).filter((o) => o.status === 'open' || o.status === 'scheduled');
   if (!live.length) return null;
   const binName = (id) => bins.find((b) => b.id === id)?.name || 'unassigned';
+  const needing = live.filter((o) => o.status === 'open').length;
   return (
-    <div className="card">
-      <h3>Donation pickups in flight</h3>
+    <Fold
+      id="offers" title="Donation pickups"
+      note={needing ? `${needing} needs a call` : `${live.length} scheduled`}
+      open={needing > 0}
+    >
       <ul className="req-list">
         {live.map((o) => (
           <li key={o.id} className="req">
@@ -3342,7 +3395,7 @@ function AdminOffers({ bins, offers, refresh }) {
           </li>
         ))}
       </ul>
-    </div>
+    </Fold>
   );
 }
 
@@ -3436,17 +3489,17 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
             if (!types.length && !shorts.length) return null;
 
             return (
-              <div className="card" key={h.house || 'any'}>
-                <div className="stock-head">
-                  <HouseTag id={h.house} />
-                  <span className="fine">
-                    ~{h.onHand} on hand{h.promised ? ` · ${h.promised} spoken for` : ''}
-                  </span>
-                </div>
-
+              <Fold
+                key={h.house || 'any'}
+                id={`stock.${h.house || 'any'}`}
+                title={houseInfo(h.house).name}
+                note={`~${h.onHand} on hand${h.promised ? ` · ${h.promised} spoken for` : ''}${shorts.length ? ` · ${shorts.length} nobody has` : ''}`}
+                open={shown.length === 1}
+                force={q.trim() ? true : null}
+              >
                 {types.map((t) => (
                   <div className="stock-type" key={t.itemType}>
-                    <h4>{typeLabel(t.itemType)}</h4>
+                    <h4>{typeLabel(t.itemType)} <em>{t.sizes.reduce((n, x) => n + x.qty, 0)}</em></h4>
                     <ul className="stock-rows">
                       {t.sizes.map((s) => (
                         <li key={s.size}>
@@ -3486,7 +3539,7 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
                     </ul>
                   </div>
                 )}
-              </div>
+              </Fold>
             );
           })}
 
@@ -3507,11 +3560,12 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
             }))
             .filter((b) => b.lines.length)
             .map((b) => (
-              <div className="card" key={b.binId}>
-                <div className="stock-head">
-                  <b>{b.code} · {b.name}</b>
-                  <span className="fine">{b.holder} · ~{b.qty} items</span>
-                </div>
+              <Fold
+                key={b.binId} id={`stock.bin.${b.code}`}
+                title={`${b.code} · ${b.name}`}
+                note={`${b.holder ? `${b.holder.split(' ')[0]} · ` : ''}~${b.qty} items`}
+                force={q.trim() ? true : null}
+              >
                 <ul className="stock-rows">
                   {b.lines
                     .sort((x, y) => x.itemType.localeCompare(y.itemType) || x.size.localeCompare(y.size))
@@ -3532,7 +3586,7 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
                     Print its label
                   </button>
                 </p>
-              </div>
+              </Fold>
             ))}
           {!perBin.length && <p className="empty">Nothing counted in yet.</p>}
         </>
@@ -3568,8 +3622,10 @@ function AdminReports({ bins, inv, reqs }) {
   const avgDays = days.length ? (days.reduce((a, b) => a + b, 0) / days.length).toFixed(1) : null;
 
   return (
-    <div className="card">
-      <h3>Reports</h3>
+    <Fold
+      id="reports" title="Reports"
+      note={`${onHand} on hand · ${fulfilled.length} rehomed`}
+    >
       <div className="report-stats">
         <div><b>{onHand}</b><span>items on hand</span></div>
         <div><b>{fulfilled.length}</b><span>uniforms rehomed</span></div>
@@ -3577,25 +3633,27 @@ function AdminReports({ bins, inv, reqs }) {
         {avgDays && <div><b>{avgDays}d</b><span>avg request to in hand</span></div>}
       </div>
       {rows.length > 0 && (
-        <table className="report-table">
-          <thead>
-            <tr><th>Items by house</th><th>On hand</th><th>Requested</th><th>Rehomed</th></tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.house || 'any'}>
-                <td><HouseTag id={r.house} /></td>
-                <td>~{r.onHand}</td><td>{r.requested}</td><td>{r.rehomed}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="table-wrap">
+          <table className="report-table">
+            <thead>
+              <tr><th>Items by house</th><th>On hand</th><th>Requested</th><th>Rehomed</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.house || 'any'}>
+                  <td><HouseTag id={r.house} /></td>
+                  <td>~{r.onHand}</td><td>{r.requested}</td><td>{r.rehomed}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <p className="fine">
         <a href="#/admin/inventory">See everything on hand</a> — by house, by size, and
         which bin it's in.
       </p>
-    </div>
+    </Fold>
   );
 }
 

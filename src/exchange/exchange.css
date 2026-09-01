@@ -434,17 +434,21 @@ a{color:inherit}
 }
 .count-rows{list-style:none;margin:0;padding:0}
 .count-rows li{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  padding:7px 10px 7px 14px;margin:0 0 7px;
+  padding:4px 8px 4px 14px;margin:0 0 6px;
 }
 .count-rows .sz{font-size:14.5px;font-weight:700;min-width:0}
-.count-rows .count-qty{flex:none}
+.count-rows .count-qty{flex:none;gap:6px}
+/* Smaller than the standalone stepper: a size list is a dozen of these, and
+   the number box is the thing you actually aim at. */
+.count-rows .step{width:38px;height:38px;font-size:19px}
 
 /* An empty box means nothing here; a filled one should catch the eye on the
    way back down the list. */
+.count-qty .count-box,
 .count-box{
-  width:64px;text-align:center;border:1.5px solid var(--line);border-radius:10px;
+  width:62px;text-align:center;border:1.5px solid var(--line);border-radius:10px;
   padding:10px 4px;background:var(--paper);font-weight:800;font-size:17px;color:var(--ink);
   -moz-appearance:textfield;
 }
@@ -489,6 +493,36 @@ a{color:inherit}
 .count-save .save-state{margin:6px 0 0;text-align:center}
 
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ---- folded admin cards ---- */
+
+/* A fold inside a page of folds needs its own count where the card head used
+   to be, so a shut row still answers "how many, and does it need me?". */
+.fold-title{display:flex;align-items:center;gap:8px;min-width:0}
+.fold>summary .fold-note{
+  margin-left:auto;text-align:right;flex:none;font-weight:700;
+}
+.fold.warn-card>summary .fold-note{color:var(--gold)}
+.fold + .fold{margin-top:-4px}
+
+/* Inside "what's on hand", the item heading carries its own total so a house
+   fold can be skimmed without reading every size. */
+.stock-type h4 em{
+  font-style:normal;letter-spacing:0;color:var(--ink);font-size:13px;
+  margin-left:6px;text-transform:none;
+}
+
+/* A whole request row opens its editor. Hunting a 60px "Edit" button with a
+   thumb is the kind of thing that makes a back office feel like work. */
+.req.tappable{cursor:pointer}
+.req.tappable:hover{border-color:var(--ink-soft)}
+
+/* Four nav cards, two up, on the narrowest phone. */
+@media (max-width:400px){
+  .admin-nav b{font-size:14px}
+  .admin-nav span{font-size:11px;line-height:1.3}
+  .admin-nav a{padding:13px 14px}
+}
 
 /* which bin you're counting, and the two things you can do to it */
 .binbar{margin:0 0 18px}
