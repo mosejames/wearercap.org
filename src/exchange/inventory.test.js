@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { byBin, totals, pickBin, drift } from './inventory.js';
+import { byBin, totals, pickBin, drift, sheetLines, sheetExtras, sheetDirty } from './inventory.js';
 
 const rows = [
   { bin_id: 'a', item_type: 'polo', size: 'YM', house: 'isibindi', qty: 5 },
@@ -128,5 +128,93 @@ describe('a holder with more than one bin', () => {
 
   it('still goes elsewhere when that person genuinely does not have it', () => {
     expect(pickBin(rows, [], 'tie', 'OS', 'amistad', 1, ['shek-polos'])).toBe('kya-ties');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The count sheet: a grid of mostly-zeros in, only real changes out.
+// ---------------------------------------------------------------------------
+const binRows = [
+  { bin_id: 'a', item_type: 'polo', size: 'M', house: 'amistad', qty: 6 },
+  { bin_id: 'a', item_type: 'polo', size: 'L', house: 'amistad', qty: 2 },
+  { bin_id: 'a', item_type: 'polo', size: '12H', house: 'amistad', qty: 3 }, // retired size
+  { bin_id: 'a', item_type: 'vest', size: 'M', house: 'isibindi', qty: 1 },  // another house
+  { bin_id: 'b', item_type: 'polo', size: 'M', house: 'amistad', qty: 99 },  // another bin
+];
+
+const cell = (itemType, size, qty, house = 'amistad') => ({ itemType, size, qty, house });
+
+describe('sheetLines', () => {
+  it('drops the zeros that were already zero', () => {
+    const cells = [cell('polo', 'S', 0), cell('polo', 'M', 6), cell('polo', 'XL', 0)];
+    expect(sheetLines(cells, binRows, 'a')).toEqual([
+      { bin_id: 'a', item_type: 'polo', size: 'M', house: 'amistad', qty: 6 },
+    ]);
+  });
+
+  it('keeps a size that had stock and now reads zero', () => {
+    const out = sheetLines([cell('polo', 'L', 0)], binRows, 'a');
+    expect(out).toEqual([
+      { bin_id: 'a', item_type: 'polo', size: 'L', house: 'amistad', qty: 0 },
+    ]);
+  });
+
+  it('leaves out anything the grid never showed', () => {
+    const out = sheetLines([cell('polo', 'M', 6)], binRows, 'a');
+    expect(out.find((l) => l.size === 'L')).toBeUndefined();
+    expect(out.find((l) => l.size === '12H')).toBeUndefined();
+  });
+
+  it('never touches another bin', () => {
+    expect(sheetLines([cell('polo', 'M', 1)], binRows, 'a')[0].bin_id).toBe('a');
+  });
+
+  it('takes the first row when a size appears twice', () => {
+    const out = sheetLines([cell('polo', 'M', 4), cell('polo', 'M', 9)], binRows, 'a');
+    expect(out).toHaveLength(1);
+    expect(out[0].qty).toBe(4);
+  });
+
+  it('cleans up what a number input hands back', () => {
+    const cells = [cell('polo', 'S', ''), cell('polo', 'M', '7'), cell('polo', 'L', -3)];
+    expect(sheetLines(cells, binRows, 'a')).toEqual([
+      { bin_id: 'a', item_type: 'polo', size: 'M', house: 'amistad', qty: 7 },
+      { bin_id: 'a', item_type: 'polo', size: 'L', house: 'amistad', qty: 0 },
+    ]);
+  });
+
+  it('treats a different house as a different pile', () => {
+    const out = sheetLines([cell('vest', 'M', 0, 'amistad')], binRows, 'a');
+    expect(out).toEqual([]); // the isibindi vest is untouched, not zeroed
+  });
+});
+
+describe('sheetExtras', () => {
+  const covered = ['polo|S|amistad', 'polo|M|amistad', 'polo|L|amistad', 'polo|XL|amistad'];
+
+  it('surfaces a retired size and another house’s item', () => {
+    expect(sheetExtras(binRows, 'a', covered)).toEqual([
+      { itemType: 'polo', size: '12H', house: 'amistad', qty: 3, extra: true },
+      { itemType: 'vest', size: 'M', house: 'isibindi', qty: 1, extra: true },
+    ]);
+  });
+
+  it('stays quiet when the grid covers everything', () => {
+    expect(sheetExtras(binRows, 'a', [...covered, 'polo|12H|amistad', 'vest|M|isibindi'])).toEqual([]);
+  });
+});
+
+describe('sheetDirty', () => {
+  it('is false for a sheet nobody typed in', () => {
+    const cells = [cell('polo', 'M', 6), cell('polo', 'L', 2), cell('polo', 'S', 0)];
+    expect(sheetDirty(cells, binRows, 'a')).toBe(false);
+  });
+
+  it('is true the moment a number changes', () => {
+    expect(sheetDirty([cell('polo', 'M', 7)], binRows, 'a')).toBe(true);
+  });
+
+  it('is true when a stocked size is emptied', () => {
+    expect(sheetDirty([cell('polo', 'L', 0)], binRows, 'a')).toBe(true);
   });
 });

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
   SIZE_SET_LABEL, prettyPhone, phoneDigits, sizeChip,
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
-  typeMaxQty, REQUEST_MAX_ITEMS, onlySize,
+  typeMaxQty, REQUEST_MAX_ITEMS, onlySize, sizeSetFor,
   typeLabel, binUrl, holderUrl, CONTACT, TEXT_FROM } from './config.js';
 import * as db from './data.js';
-import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
+import { byBin, totals, pickBin, drift, stockByHouse,
+  sheetLines, sheetExtras, sheetDirty } from './inventory.js';
 import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
 import { socialProof, suggestedPost } from './social.js';
 import { qrSvg } from './qr.js';
@@ -2039,52 +2040,114 @@ function BinBar({ token, bins, binId, setBinId, reload }) {
 
 // What the grid holds right now, in a form two versions can be compared by.
 // The row keys are throwaway, so they're left out.
-const countSig = (rs) =>
-  JSON.stringify(
-    (rs || [])
-      .filter((r) => r.item_type && r.size)
-      .map((r) => [r.item_type, r.size, r.house || '', Number(r.qty) || 0])
-      .sort()
+// ---------------------------------------------------------------------------
+// The count sheet.
+//
+// This used to be one line per item, each line three dropdowns and a number:
+// fine for correcting a count, miserable for seeding a bin. Fifty items across
+// a dozen sizes meant tapping "another line" and working three menus, fifty
+// times, on a phone, in a car.
+//
+// So nothing is chosen any more — it's all laid out in advance and the holder
+// types over it. Pick an item, every size it comes in is already on screen at
+// zero, put numbers where you have clothes. House isn't asked: a house bin's
+// polos are that house's polos. Anything the grid can't draw (a size retired
+// since it was logged, another house's vest that ended up in the tub) is
+// appended underneath so counting a bin can never quietly drop it.
+// ---------------------------------------------------------------------------
+
+const cellKey = (t, s, h) => `${t}|${s}|${h || ''}`;
+
+// The sizes a count sheet lays out for an item: the real ones, without the
+// "Other" catch-all — you can't count a bin into a size that isn't a size.
+// Anything already logged against it comes back through sheetExtras.
+const countGroups = (typeId) =>
+  sizeGroups(typeId).filter((g) => g.group && g.sizes.length);
+
+// Wide enough for the whole grid at once? Below this it's one item at a time.
+function useWide(px = 760) {
+  const [wide, setWide] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(`(min-width:${px}px)`).matches
   );
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mq = window.matchMedia(`(min-width:${px}px)`);
+    const on = (e) => setWide(e.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [px]);
+  return wide;
+}
+
+// One number box. Kept tiny and dumb so a grid of a hundred of them stays
+// cheap; the whole sheet is one flat object of values.
+function CountBox({ value, onChange, label }) {
+  return (
+    <input
+      type="number" inputMode="numeric" min="0" max="999"
+      className={`count-box ${Number(value) > 0 ? 'has' : ''}`}
+      value={value} aria-label={label} placeholder="0"
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
 
 function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   const [binId, setBinId] = useState(bins[0]?.id || '');
-  const [rows, setRows] = useState([]);
+  const [cells, setCells] = useState({});
+  const [pick, setPick] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
-  // The last state we know is on the server, and what to say once it lands.
-  const [clean, setClean] = useState('');
   const [saved, setSaved] = useState(null);
+  const wide = useWide();
 
-  const blank = () => ({
-    key: Math.random().toString(36).slice(2),
-    item_type: visibleItemTypes()[0]?.id || 'polo',
-    size: firstSize(visibleItemTypes()[0]?.id),
-    house: typeHoused(visibleItemTypes()[0]?.id) ? (holder.house || '') : '',
-    qty: 1,
-    existing: false,
-  });
+  const types = visibleItemTypes();
+  // A housed item in a house bin is that house's. Neutral kit is nobody's.
+  const houseOf = (typeId) => (typeHoused(typeId) ? (holder.house || '') : '');
 
-  // Reload the grid whenever the bin (or the underlying counts) change.
+  // Every cell the grid can draw, plus whatever's in the bin that it can't.
+  const covered = useMemo(() => {
+    const out = [];
+    for (const t of types) {
+      for (const g of countGroups(t.id)) {
+        for (const sz of g.sizes) out.push(cellKey(t.id, sz.v, houseOf(t.id)));
+      }
+    }
+    return out;
+  }, [types.map((t) => t.id).join(','), holder.house]);
+
+  const extras = useMemo(
+    () => sheetExtras(inventory, binId, covered),
+    [inventory, binId, covered]
+  );
+
+  // Load the bin into the grid. Zero shows as an empty box — a hundred typed
+  // zeros is noise, an empty box reads as "nothing here".
   useEffect(() => {
-    const mine = (inventory || [])
-      .filter((i) => i.bin_id === binId && i.qty !== 0)
-      .sort((a, b) => a.item_type.localeCompare(b.item_type) || a.size.localeCompare(b.size))
-      .map((i) => ({
-        key: `${i.item_type}|${i.size}|${i.house || ''}`,
-        item_type: i.item_type, size: i.size, house: i.house || '',
-        qty: Math.max(0, i.qty), existing: true,
-      }));
-    const start = mine.length ? mine : [blank()];
-    setRows(start);
-    setClean(countSig(mine));   // a fresh blank row isn't a change yet
+    const have = byBin(inventory).get(binId) || new Map();
+    const next = {};
+    for (const k of covered) next[k] = have.get(k)?.qty > 0 ? String(have.get(k).qty) : '';
+    for (const x of extras) next[cellKey(x.itemType, x.size, x.house)] = String(x.qty);
+    setCells(next);
     setMsg('');
-  }, [binId, inventory]);
+    setPick((p) => (p && types.some((t) => t.id === p) ? p : (types[0]?.id || '')));
+  }, [binId, inventory, covered]);
 
-  const dirty = countSig(rows) !== clean;
+  const cellList = useMemo(
+    () => Object.entries(cells).map(([k, qty]) => {
+      const [itemType, size, house] = k.split('|');
+      return { itemType, size, house, qty };
+    }),
+    [cells]
+  );
 
-  // Counting a bin is the one screen someone walks away from mid-task, so say
-  // it out loud rather than letting the browser eat it.
+  const dirty = sheetDirty(cellList, inventory, binId);
+  const set = (k, v) => setCells((c) => ({ ...c, [k]: v.replace(/[^0-9]/g, '').slice(0, 3) }));
+  const bump = (k, by) =>
+    setCells((c) => ({ ...c, [k]: String(Math.max(0, (Number(c[k]) || 0) + by)) }));
+
+  // Counting a bin is the one screen someone walks away from mid-task.
   useEffect(() => {
     if (!dirty) return undefined;
     const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
@@ -2092,24 +2155,20 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  const set = (key, patch) =>
-    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  const totalFor = (typeId) => cellList
+    .filter((c) => c.itemType === typeId)
+    .reduce((n, c) => n + (Number(c.qty) || 0), 0);
 
   const save = async () => {
     setBusy(true); setMsg('');
     try {
-      const lines = rows
-        .filter((r) => r.item_type && r.size)
-        .map((r) => ({
-          bin_id: binId, item_type: r.item_type, size: r.size,
-          house: r.house || '', qty: Number(r.qty) || 0,
-        }));
+      const lines = sheetLines(cellList, inventory, binId);
       const changed = await db.setHolderInventory(token, lines, holder.name);
-      setClean(countSig(rows));
+      const stocked = cellList.filter((c) => (Number(c.qty) || 0) > 0);
       setSaved({
         changed,
-        total: lines.reduce((n, l) => n + Math.max(0, l.qty), 0),
-        kinds: lines.filter((l) => l.qty > 0).length,
+        total: stocked.reduce((n, c) => n + Number(c.qty), 0),
+        kinds: stocked.length,
         code: bins.find((b) => b.id === binId)?.code || '',
       });
       reload();
@@ -2132,70 +2191,148 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   }
 
   const bin = bins.find((b) => b.id === binId);
+  const grand = cellList.reduce((n, c) => n + (Number(c.qty) || 0), 0);
+
+  // Laptop: items across, sizes down — one table per size set, because a
+  // girls' polo and a boys' short don't share a scale and never should.
+  const sets = [];
+  for (const t of types) {
+    const setId = sizeSetFor(t.id);
+    const hit = sets.find((x) => x.id === setId);
+    if (hit) hit.types.push(t);
+    else sets.push({ id: setId, types: [t] });
+  }
 
   return (
     <section className="shell section">
       <h2 className="h2">My bins</h2>
       <p className="sub">
-        Type what's actually in the bin — rough is fine, it's a bin. Everything
-        already counted is here; add lines for anything new.
+        Type what's actually in the bin — rough is fine, it's a bin. Every size is
+        already here; put a number where you have clothes and leave the rest blank.
       </p>
 
       <BinBar token={token} bins={bins} binId={binId} setBinId={setBinId} reload={reload} />
 
-      <ul className="count-grid">
-        {rows.map((r) => (
-          <li key={r.key}>
-            <div className="count-what">
-              <ItemPicker
-                value={r.item_type}
-                onChange={(e) => {
-                  const t = e.target.value;
-                  set(r.key, {
-                    item_type: t,
-                    size: firstSize(t),
-                    house: typeHoused(t) ? (r.house || holder.house || '') : '',
-                  });
-                }}
-              />
-              <SizePicker itemType={r.item_type} value={r.size}
-                onChange={(e) => set(r.key, { size: e.target.value })} />
-              {typeHoused(r.item_type) && (
-                <select value={r.house} onChange={(e) => set(r.key, { house: e.target.value })}>
-                  {HOUSE_CHOICES.map((h) => (
-                    <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house'}</option>
+      {wide ? (
+        sets.map((st) => (
+          <div className="count-set" key={st.id}>
+            <h3 className="count-set-h">{SIZE_SET_LABEL[st.id] || 'Items'}</h3>
+            <div className="table-wrap">
+              <table className="count-table">
+                <thead>
+                  <tr>
+                    <th className="sz">Size</th>
+                    {st.types.map((t) => (
+                      <th key={t.id}>
+                        {t.label}
+                        {totalFor(t.id) > 0 && <em>{totalFor(t.id)}</em>}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {countGroups(st.types[0].id).map((g) => (
+                    <Fragment key={g.group}>
+                      <tr className="grp"><th colSpan={st.types.length + 1}>{g.group}</th></tr>
+                      {g.sizes.map((sz) => (
+                        <tr key={sz.v}>
+                          <th className="sz">{sz.label}</th>
+                          {st.types.map((t) => {
+                            const k = cellKey(t.id, sz.v, houseOf(t.id));
+                            return (
+                              <td key={t.id}>
+                                <CountBox value={cells[k] ?? ''} onChange={(v) => set(k, v)}
+                                  label={`${t.label} ${sz.label}`} />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </Fragment>
                   ))}
-                </select>
-              )}
+                </tbody>
+              </table>
             </div>
-            <div className="count-qty">
-              <button className="step" onClick={() => set(r.key, { qty: Math.max(0, (Number(r.qty) || 0) - 1) })}>−</button>
-              <input
-                type="number" inputMode="numeric" min="0" max="99" value={r.qty}
-                onChange={(e) => set(r.key, { qty: e.target.value })}
-              />
-              <button className="step" onClick={() => set(r.key, { qty: Math.min(99, (Number(r.qty) || 0) + 1) })}>+</button>
-              <button className="linkish" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}>
-                remove
+          </div>
+        ))
+      ) : (
+        <>
+          <div className="count-chips">
+            {types.map((t) => (
+              <button key={t.id} className={`count-chip ${pick === t.id ? 'on' : ''}`}
+                onClick={() => setPick(t.id)}>
+                {t.label}
+                {totalFor(t.id) > 0 && <em>{totalFor(t.id)}</em>}
               </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+            ))}
+          </div>
 
-      <button className="btn ghost" onClick={() => setRows((rs) => [...rs, blank()])}>
-        ＋ Another line
-      </button>
+          {countGroups(pick).map((g) => (
+            <div className="count-group" key={g.group}>
+              <h4 className="count-group-h">{g.group}</h4>
+              <ul className="count-rows">
+                {g.sizes.map((sz) => {
+                  const k = cellKey(pick, sz.v, houseOf(pick));
+                  return (
+                    <li key={sz.v}>
+                      <span className="sz">{sz.label}</span>
+                      <div className="count-qty">
+                        <button className="step" onClick={() => bump(k, -1)} aria-label="one fewer">−</button>
+                        <CountBox value={cells[k] ?? ''} onChange={(v) => set(k, v)}
+                          label={sz.label} />
+                        <button className="step" onClick={() => bump(k, 1)} aria-label="one more">+</button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+
+      {extras.length > 0 && (
+        <details className="card fold count-extras">
+          <summary>
+            Odds and ends in this bin
+            <span>{extras.length} line{extras.length === 1 ? '' : 's'} the grid doesn't cover</span>
+          </summary>
+          <p className="fine">
+            An older size, or something from another house that ended up in your tub.
+            Counted the same; zero one out to move it off the sheet.
+          </p>
+          <ul className="count-rows">
+            {extras.map((x) => {
+              const k = cellKey(x.itemType, x.size, x.house);
+              return (
+                <li key={k}>
+                  <span className="sz">
+                    {typeLabel(x.itemType)} · {sizeLabel(x.size)}
+                    {x.house && x.house !== holder.house && <HouseTag id={x.house} />}
+                  </span>
+                  <div className="count-qty">
+                    <button className="step" onClick={() => bump(k, -1)} aria-label="one fewer">−</button>
+                    <CountBox value={cells[k] ?? ''} onChange={(v) => set(k, v)} label={x.size} />
+                    <button className="step" onClick={() => bump(k, 1)} aria-label="one more">+</button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      )}
 
       {msg && <p className="err">{msg}</p>}
-      <button className="btn flame wide" disabled={busy} onClick={save}>
-        {busy ? 'Saving…' : `Save ${bin ? bin.code : ''} counts`}
-      </button>
-      <p className={`fine save-state ${dirty ? 'unsaved' : ''}`}>
-        {dirty
-          ? 'You have changes that aren’t saved yet.'
-          : 'Everything here is saved.'}
-      </p>
+      <div className="count-save">
+        <button className="btn flame wide" disabled={busy || !dirty} onClick={save}>
+          {busy ? 'Saving…' : dirty ? `Save ${bin ? bin.code : ''} counts` : 'Everything here is saved'}
+        </button>
+        <p className={`fine save-state ${dirty ? 'unsaved' : ''}`}>
+          {dirty
+            ? 'You have changes that aren’t saved yet.'
+            : `About ${grand} item${grand === 1 ? '' : 's'} counted in ${bin ? bin.code : 'this bin'}.`}
+        </p>
+      </div>
 
       <p className="fine count-foot">
         Every change is logged, so the history still shows what moved and when.
@@ -2212,7 +2349,7 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
               </p>
               <p>
                 That bin now holds about <b>{saved.total}</b> item
-                {saved.total === 1 ? '' : 's'} across {saved.kinds} line
+                {saved.total === 1 ? '' : 's'} across {saved.kinds} size
                 {saved.kinds === 1 ? '' : 's'}. Families searching for those sizes
                 can find them from this minute on.
               </p>

@@ -155,3 +155,69 @@ export function stockByHouse(rows, bins = [], reqs = []) {
 export function drift(rows) {
   return (rows || []).filter((r) => r.qty < 0);
 }
+
+// ---------------------------------------------------------------------------
+// The count sheet. A holder counting a bin sees every size an item comes in,
+// pre-laid with whatever is counted now, and types over it — no dropdowns.
+// These two turn that grid back into something the server can take.
+// ---------------------------------------------------------------------------
+
+// Everything stocked in this bin that the pre-laid grid does NOT cover: a size
+// that's been retired since it was logged, or a housed item from a house other
+// than the holder's. Without this, counting a bin would quietly drop whatever
+// the sheet couldn't draw. Returns the same shape as a grid cell.
+export function sheetExtras(rows, binId, covered) {
+  const have = new Set(covered || []);
+  return (rows || [])
+    .filter((r) => r.bin_id === binId && r.qty !== 0)
+    .filter((r) => !have.has(key(r.item_type, r.size, r.house)))
+    .map((r) => ({
+      itemType: r.item_type, size: r.size, house: r.house || '',
+      qty: Math.max(0, r.qty), extra: true,
+    }))
+    .sort((a, b) =>
+      a.itemType.localeCompare(b.itemType) ||
+      (a.house || '').localeCompare(b.house || '') ||
+      a.size.localeCompare(b.size));
+}
+
+// What to POST when the sheet is saved. `cells` is the whole grid the holder
+// could touch — every size of every item, mostly zero.
+//
+// A size sitting at zero that was already zero is dropped: the server would
+// compute a no-op delta anyway, and a full sheet is ~130 sizes, so sending
+// them all would turn every save into a wall of nothing. A size that HAD
+// stock and now reads zero is kept, because emptying a bin of one size is a
+// real change and has to log its negative delta.
+//
+// Anything stocked but absent from `cells` is simply not mentioned, which
+// leaves it untouched — that's what makes it safe for the sheet to render one
+// item at a time.
+export function sheetLines(cells, rows, binId) {
+  const have = byBin(rows).get(binId) || new Map();
+  const seen = new Set();
+  const out = [];
+  for (const c of cells || []) {
+    if (!c || !c.itemType || !c.size) continue;
+    const k = key(c.itemType, c.size, c.house);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const qty = Math.max(0, Math.floor(Number(c.qty) || 0));
+    const now = Math.max(0, have.get(k)?.qty || 0);
+    if (qty === 0 && now === 0) continue;
+    out.push({
+      bin_id: binId, item_type: c.itemType, size: c.size,
+      house: c.house || '', qty,
+    });
+  }
+  return out;
+}
+
+// Has anything actually been typed over? Compares the grid to what's counted
+// now, so re-saving an untouched sheet can be refused before it's sent.
+export function sheetDirty(cells, rows, binId) {
+  const have = byBin(rows).get(binId) || new Map();
+  return sheetLines(cells, rows, binId).some(
+    (l) => l.qty !== Math.max(0, have.get(key(l.item_type, l.size, l.house))?.qty || 0)
+  );
+}
