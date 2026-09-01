@@ -1415,8 +1415,8 @@ function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
     },
     {
       done: scheduled,
-      title: 'Say which mornings work',
-      body: 'Handoffs happen at morning drop-off. Tap your easy days and add how a family will spot you — “blue Highlander, I park by the gym.” You can also offer to send things in with your own student.',
+      title: 'Say who’s carrying the bag',
+      body: 'Handoffs go in with your own student — put their name and grade in, and say how you’d rather hear from us, text or email. That’s the whole setup.',
       cta: ['My setup', 'me'],
     },
     {
@@ -2072,9 +2072,14 @@ function useWide(px = 760) {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const mq = window.matchMedia(`(min-width:${px}px)`);
-    const on = (e) => setWide(e.matches);
+    // Both, on purpose: a rotated phone or an emulated viewport doesn't
+    // always fire the media query, and swapping the whole sheet out from
+    // under someone mid-count because the event was missed is worse than a
+    // cheap resize handler.
+    const on = () => setWide(mq.matches);
     mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
+    window.addEventListener('resize', on);
+    return () => { mq.removeEventListener('change', on); window.removeEventListener('resize', on); };
   }, [px]);
   return wide;
 }
