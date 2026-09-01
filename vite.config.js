@@ -13,6 +13,7 @@ export default defineConfig({
         exchange: resolve(__dirname, 'uniform-exchange/index.html'),
         wishiknew: resolve(__dirname, 'wish-i-knew/index.html'),
         wishiknewread: resolve(__dirname, 'wish-i-knew/read/index.html'),
+        amivault: resolve(__dirname, 'ami-vault/index.html'),
       },
     },
   },
