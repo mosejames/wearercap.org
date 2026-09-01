@@ -140,6 +140,7 @@ export async function addRequest(form, binId) {
     p_qty: form.qty || 1,
     p_note: form.note || '',
     p_bin: binId, // null puts it on the waitlist
+    p_share: form.share !== false,
   });
   if (error) throw error;
   return data;

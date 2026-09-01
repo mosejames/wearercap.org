@@ -5,8 +5,7 @@ import {
   houseById, houseInfo, HOUSE_CHOICES, HOUSES,
   setItemTypes, allItemTypes, visibleItemTypes, typeHoused, typesForGender, GENDERS,
   typeMaxQty, REQUEST_MAX_ITEMS, onlySize,
-  typeLabel, binUrl, holderUrl, CONTACT,
-} from './config.js';
+  typeLabel, binUrl, holderUrl, CONTACT, TEXT_FROM } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
 import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
@@ -500,10 +499,14 @@ function Home({ bins, inv, commitments, refresh }) {
 // the three-day clock.
 // ---------------------------------------------------------------------------
 function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
-  const [form, setForm] = useState({ parentName: '', student: '', contact: '', note: '' });
+  const [form, setForm] = useState({ parentName: '', student: '', contact: '', note: '', share: true });
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState(null);
   const [err, setErr] = useState('');
+  // Straight from "sent" into "how do you want it" — one holder at a time,
+  // without leaving the page or waiting on a text that may have been filtered.
+  const [pickQueue, setPickQueue] = useState([]);
+  const [picked, setPicked] = useState([]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target ? e.target.value : e });
 
@@ -552,6 +555,18 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         out.push(await db.addRequest({ ...form, ...line, qty: line.qty || 1 }, binId));
       }
       setResults(out);
+      // One pick per person holding something for them (the database moves the
+      // rest of that person's items along with it).
+      const seen = new Set();
+      const q = [];
+      for (const r of out) {
+        if (!r.bin_id) continue;
+        const who = bins.find((b) => b.id === r.bin_id)?.holder_id || r.bin_id;
+        if (seen.has(who)) continue;
+        seen.add(who);
+        q.push(r);
+      }
+      setPickQueue(q);
     } catch (e) {
       setErr(e.message || "That didn't go through — try again.");
     } finally {
@@ -559,9 +574,30 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
     }
   };
 
+  if (results && pickQueue.length) {
+    const r = pickQueue[0];
+    return (
+      <HandoffSheet
+        fresh
+        req={{ ...r, contact: form.contact, student: form.student, parent_name: form.parentName }}
+        bin={bins.find((b) => b.id === r.bin_id) || null}
+        frontDesk={false}
+        onDone={() => { setPicked([...picked, r.id]); setPickQueue(pickQueue.slice(1)); }}
+        onClose={() => setPickQueue([])}
+      />
+    );
+  }
+
   if (results) {
     const ready = results.filter((r) => r.bin_id);
     const waiting = results.filter((r) => !r.bin_id);
+    const allPicked = ready.length > 0 && picked.length > 0 &&
+      ready.every((r) => picked.includes(r.id) ||
+        picked.some((id) => {
+          const p = results.find((x) => x.id === id);
+          const who = (x) => bins.find((b) => b.id === x.bin_id)?.holder_id || x.bin_id;
+          return p && who(p) === who(r);
+        }));
     const named = (r) => {
       const bin = bins.find((b) => b.id === r.bin_id);
       return `${typeLabel(r.item_type)} · ${sizeLabel(r.size)}${bin ? ` — ${bin.name}` : ''}`;
@@ -579,9 +615,20 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
             <ul className="plainlist">
               {ready.map((r) => <li key={r.id}>{named(r)}</li>)}
             </ul>
-            <p>
-              Next: <a href="#/requests"><b>pick a handoff time</b></a> that works for you —
-              carline or straight from student to student.
+            {allPicked ? (
+              <p>
+                Handoff set. We've asked your bin holder to confirm and will text you when
+                they do — and again the morning it goes in.
+              </p>
+            ) : (
+              <p>
+                Next: <a href="#/requests"><b>set up the handoff</b></a> — student to student,
+                or meet at carline. The link is in your text too.
+              </p>
+            )}
+            <p className="fine">
+              Our texts come from <b>{TEXT_FROM}</b>. If you don't see one in a minute, check
+              your phone's filtered or unknown-senders list — saving the number stops that.
             </p>
             {new Set(
               ready.map((r) => bins.find((b) => b.id === r.bin_id)?.holder_id || r.bin_id)
@@ -649,9 +696,17 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
       <p className="fine">
-        Your confirmation, the link to pick a handoff, and the page that keeps
-        track of it all come by text. It stays between you and your bin holder.
+        Your confirmation and the page that keeps track of it all come by text
+        from <b>{TEXT_FROM}</b> — save the number so it doesn't get filtered.
       </p>
+      <label className="check">
+        <input type="checkbox" checked={form.share}
+          onChange={(e) => setForm({ ...form, share: e.target.checked })} />
+        <span>
+          My bin holder can text or call me about this. <em>Bin holders are RCAP parents
+          who volunteer; a quick text usually beats the app when plans change.</em>
+        </span>
+      </label>
       <label>Anything else? (optional)
         <input value={form.note} onChange={set('note')} placeholder={FIT_HINT} maxLength={200} />
       </label>
@@ -660,7 +715,8 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         {busy ? 'Sending…' : 'Send my request'}
       </button>
       <p className="fine">
-        You'll pick a handoff that fits your week — carline, or student to student. Free, always.
+        Next you'll say how you want it — sent in with the bin holder's student, or a
+        carline meetup. Free, always.
       </p>
     </Sheet>
   );
@@ -922,9 +978,12 @@ function MyRequests({ token, bins, settings }) {
 // Picking a handoff. The holder already said when they're around, so this is
 // just tapping a day — no back-and-forth, no phone tag.
 // ---------------------------------------------------------------------------
-function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
+function HandoffSheet({ req, bin, frontDesk, onDone, onClose, fresh = false }) {
+  // Student to student is the default for everyone: the bag rides in a
+  // backpack and nobody has to find anybody in a carline. Carline stays on
+  // offer for families who'd rather meet.
   const [mode, setMode] = useState(
-    bin?.offers_carline !== false ? 'carline' : (bin?.offers_student !== false ? 'student' : 'carline')
+    bin?.offers_student !== false ? 'student' : (bin?.offers_carline !== false ? 'carline' : 'student')
   );
   const [pick, setPick] = useState(null);
   const [student, setStudent] = useState(req.student || '');
@@ -979,14 +1038,14 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
       </p>
 
       <div className="mode-tabs">
-        {bin?.offers_carline !== false && (
-          <button className={`mode ${mode === 'carline' ? 'on' : ''}`} onClick={() => setMode('carline')}>
-            Carline
-          </button>
-        )}
         {bin?.offers_student !== false && (
           <button className={`mode ${mode === 'student' ? 'on' : ''}`} onClick={() => setMode('student')}>
             Student to student
+          </button>
+        )}
+        {bin?.offers_carline !== false && (
+          <button className={`mode ${mode === 'carline' ? 'on' : ''}`} onClick={() => setMode('carline')}>
+            Meet at carline
           </button>
         )}
         {bin?.holder?.special_arrangements && (
@@ -1031,8 +1090,9 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
       {mode === 'student' && (
         <>
           <p className="fine">
-            {holder} sends it in with {bin?.holder_student ? <b>{bin.holder_student}</b> : 'their student'},
-            who hands it to yours at school. No coordinating carpool lines.
+            The easy way: {holder} sends it in with {bin?.holder_student ? <b>{bin.holder_student}</b> : 'their student'},
+            who hands it to yours at school. No carline, nothing to coordinate — you'll get a
+            text the morning it goes in.
           </p>
           <label>Your student's name and grade *
             <input value={student} onChange={(e) => setStudent(e.target.value)}
@@ -1060,8 +1120,14 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose }) {
 
       {err && <p className="err">{err}</p>}
       <button className="btn flame wide" disabled={busy} onClick={save}>
-        {busy ? 'Setting it up…' : 'Confirm handoff'}
+        {busy ? 'Setting it up…' : mode === 'student' ? 'Send it with their student' : 'Confirm handoff'}
       </button>
+      {fresh && (
+        <p className="fine">
+          Not sure yet? <button className="linkish" onClick={onClose}>Decide later</button> — the
+          link to do this is in your text.
+        </p>
+      )}
     </Sheet>
   );
 }

@@ -593,3 +593,8 @@ a{color:inherit}
   background:var(--paper);border-left:4px solid var(--orange);border-radius:0 12px 12px 0;
   font-size:14px;line-height:1.6;white-space:pre-wrap;
 }
+
+/* A checkbox with a sentence next to it, not a form row. */
+label.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;margin:6px 0 12px}
+label.check input{margin-top:3px;flex:none;width:18px;height:18px;accent-color:var(--flame)}
+label.check em{display:block;font-style:normal;font-size:12.5px;color:var(--ink-soft);margin-top:2px}

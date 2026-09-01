@@ -290,6 +290,11 @@ export const CONTACT = {
   email: 'hello@wearercap.org',
 };
 
+// The number every text comes from. Shown on the form so a family can save it
+// — iPhones with "Filter Unknown Senders" on tuck texts from a new number
+// into a side list with no alert, and two families never saw "pick a time."
+export const TEXT_FROM = '404-566-7741';
+
 // ---------------------------------------------------------------------------
 // Phone numbers. People type "+1 404 555 1212", "(404) 555-1212", "404.555.1212"
 // and "14045551212" and mean the same thing, so every comparison runs on digits
