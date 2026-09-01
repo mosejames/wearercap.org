@@ -11,8 +11,8 @@ export const SITE = {
   titleGrad: 'KEEP MOVING.',
   intro:
     'Gently loved uniforms live in bins held by RCAP parents. Tell us what ' +
-    'your student needs and we\u2019ll find it, then pick a handoff that fits ' +
-    'your week \u2014 at carline, or straight from student to student.',
+    'your student needs and we\u2019ll find it \u2014 then it comes home in a ' +
+    'backpack, student to student, or you meet at carline if you\u2019d rather.',
 };
 
 // Kept for the front-desk mode, which is built but switched off in settings.
