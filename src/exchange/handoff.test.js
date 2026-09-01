@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead } from './handoff.js';
+import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead } from './handoff.js';
 
 // Friday, July 31 2026 as the fixed "today" for every test.
 const FRI = new Date(2026, 6, 31);
@@ -136,5 +136,33 @@ describe('nextSlots — clustering and the cap', () => {
   it('is unchanged for callers that pass no options at all', () => {
     expect(nextSlots(bin, from, 4).map((x) => x.date))
       .toEqual(['2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07']);
+  });
+});
+
+describe('schoolMornings', () => {
+  const holder = { carline_days: [2, 4] };
+  const mon = new Date(2026, 8, 7); // Mon Sep 7 2026
+
+  it('offers every weekday, starting tomorrow, skipping weekends', () => {
+    const m = schoolMornings(holder, mon, 10);
+    expect(m).toHaveLength(10);
+    expect(m[0].date).toBe('2026-09-08');
+    expect(m.every((s) => s.dow >= 1 && s.dow <= 5)).toBe(true);
+    expect(m[3].date).toBe('2026-09-11'); // Fri
+    expect(m[4].date).toBe('2026-09-14'); // Mon — no Sat/Sun between
+  });
+
+  it('marks the standing days without hiding the rest', () => {
+    const m = schoolMornings(holder, mon, 5);
+    expect(m.map((s) => s.standing)).toEqual([true, false, true, false, false]);
+  });
+
+  it('flags mornings already booked', () => {
+    const m = schoolMornings(holder, mon, 3, { booked: ['2026-09-09'] });
+    expect(m.map((s) => s.already)).toEqual([false, true, false]);
+  });
+
+  it('treats no standing days as every weekday', () => {
+    expect(schoolMornings({}, mon, 5).every((s) => s.standing)).toBe(true);
   });
 });

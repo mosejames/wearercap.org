@@ -441,6 +441,13 @@ a{color:inherit}
   border-radius:12px;padding:14px;font-size:14.5px;font-weight:700;text-align:left;
 }
 .slot.on{background:var(--flame);border-color:transparent;color:#fff;box-shadow:var(--shadow)}
+/* A holder moving a handoff sees every school morning; the ones outside their
+   usual days step back so the usual ones still read first. */
+.confirm-line{font-size:13px;color:var(--ink-soft)}
+.confirm-line.yes{color:var(--ink)}
+.slot.off-day{border-style:dashed;color:var(--ink-soft);font-weight:600}
+.slot.off-day.on{border-style:solid;color:#fff}
+.slots.mornings{max-height:46vh;overflow-y:auto;padding-right:2px}
 
 /* ---------------- holder availability ---------------- */
 .avail{display:flex;flex-direction:column;gap:12px}

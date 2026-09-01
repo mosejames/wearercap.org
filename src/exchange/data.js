@@ -306,6 +306,12 @@ export async function handoffSent(id, actor = '') {
   if (error) throw error;
 }
 
+// The holder saying "I'll be there" — stamps the whole bag, texts the family.
+export async function confirmHandoff(token, id) {
+  const { error } = await supabase.rpc('ue_handoff_confirm', { p_token: token, p_id: id });
+  if (error) throw error;
+}
+
 export async function handoffReceived(id) {
   const { error } = await supabase.rpc('ue_handoff_received', { p_id: id });
   if (error) throw error;

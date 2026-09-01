@@ -11,3 +11,4 @@ dist/
 
 # supabase CLI scratch
 supabase/.temp/
+.deploy/

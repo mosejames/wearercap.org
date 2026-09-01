@@ -66,6 +66,30 @@ export function nextSlots(bin, from = new Date(), count = 4, opts = {}) {
   return [...already, ...fresh].slice(0, Math.max(count, already.length));
 }
 
+// Every school morning coming up, for a holder moving a handoff on the fly.
+// A holder's standing days are what families get to pick from; the holder
+// themselves can name any weekday — a one-off Wednesday shouldn't mean
+// rewriting their availability. `standing` marks the days they usually do,
+// `already` the mornings they're already coming in for someone else.
+export function schoolMornings(holder, from = new Date(), days = 15, opts = {}) {
+  const usual = (holder?.carline_days && holder.carline_days.length ? holder.carline_days : [1, 2, 3, 4, 5]);
+  const booked = new Set(opts.booked || []);
+  const out = [];
+  const cur = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  cur.setDate(cur.getDate() + 1);
+  while (out.length < days) {
+    const dow = cur.getDay() === 0 ? 7 : cur.getDay();
+    if (dow <= 5) {
+      out.push({
+        date: iso(cur), slot: 'am', dow,
+        standing: usual.includes(dow), already: booked.has(iso(cur)),
+      });
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
 // "Tue, Aug 4 · afternoon carline"
 export function slotLabel(slot) {
   if (!slot) return '';

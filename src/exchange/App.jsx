@@ -9,7 +9,7 @@ import {
 } from './config.js';
 import * as db from './data.js';
 import { byBin, totals, pickBin, drift, stockByHouse } from './inventory.js';
-import { nextSlots, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
+import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
 import { socialProof, suggestedPost } from './social.js';
 import { qrSvg } from './qr.js';
 
@@ -87,6 +87,16 @@ const STATUS_LABEL = {
   fulfilled: 'Received',
   canceled: 'Canceled',
 };
+
+// What the "it left my hands" button says. "Handed it off" is right for a
+// carline meeting and wrong for a bag zipped into a backpack.
+function sentLabel(r, tense = 'now', student = '') {
+  if (r.handoff_mode === 'student') {
+    const kid = (student || '').trim().split(' ')[0];
+    return tense === 'past' ? 'sent it in' : `Sent it with ${kid || 'my student'}`;
+  }
+  return tense === 'past' ? 'handed off' : 'Handed it off';
+}
 
 // Uniforms are broken up by houses — every item wears its house's color.
 function HouseTag({ id }) {
@@ -835,6 +845,13 @@ function MyRequests({ token, bins, settings }) {
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 {r.student && <span>for {r.student}</span>}
                 {plan && <span className="plan">🤝 {plan}{r.holder_name ? ` · with ${r.holder_name}` : ''}</span>}
+                {r.status === 'scheduled' && (
+                  <span className={`plan confirm-line ${r.holder_confirmed_at ? 'yes' : ''}`}>
+                    {r.holder_confirmed_at
+                      ? `✅ ${r.holder_name?.split(' ')[0] || 'Your bin holder'} confirmed${r.handoff_mode === 'student' ? ' — it’s coming in a backpack' : ' — they’ll be there'}`
+                      : `Waiting on ${r.holder_name?.split(' ')[0] || 'your bin holder'} to confirm — we’ll text you when they do`}
+                  </span>
+                )}
                 {r.status === 'scheduled' && r.handoff_mode !== 'student' && (
                   <HolderCard
                     name={r.holder_name} photo={r.holder_photo}
@@ -856,7 +873,9 @@ function MyRequests({ token, bins, settings }) {
                 )}
               </div>
               <div className="req-side">
-                <span className={`chip chip-${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                <span className={`chip chip-${r.status}`}>
+                  {r.status === 'scheduled' && r.holder_confirmed_at ? 'Confirmed' : STATUS_LABEL[r.status]}
+                </span>
                 {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
 
                 {r.status === 'assigned' && (
@@ -1326,7 +1345,7 @@ function GettingStarted({ holder, counted, scheduled, hasBins, go }) {
     {
       done: false, informational: true,
       title: 'Then just watch for texts',
-      body: 'When a family requests something from your bin we’ll text you what it is, who it’s for, and the morning they picked. Bag it, hand it over, tap “Handed it off.” That’s the job.',
+      body: 'When a family requests something from your bin we’ll text you what it is, who it’s for, and the morning they picked. Tap “I’ll be there” so they know you’ve seen it (or “Change the day” if that morning doesn’t work), bag it, hand it over, and tap the button that says it’s on its way. That’s the job.',
       cta: null,
     },
   ];
@@ -1457,22 +1476,30 @@ function HolderTodo({ token, holder, bins, queue, pickups, inventory, reload }) 
                     <span className="plan">
                       {binCode(r.bin_id)}{' · '}
                       {r.status === 'assigned' ? '⏳ waiting on them to pick a time'
-                        : r.status === 'handed_off' ? `✅ handed off · ${plan} — waiting on them to confirm`
-                        : `🤝 ${plan}`}
+                        : r.status === 'handed_off' ? `✅ ${sentLabel(r, 'past')} · ${plan} — waiting on them to tap Got it`
+                        : r.holder_confirmed_at ? `✅ ${plan} — you confirmed, they know`
+                        : `🤝 ${plan} — they're waiting to hear you've seen this`}
                     </span>
                   </div>
                   <div className="req-side">
                     {due && r.status === 'scheduled' &&
                       <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
+                    {r.status === 'scheduled' && !r.holder_confirmed_at && (
+                      <button className="btn small flame"
+                        onClick={async () => { await db.confirmHandoff(token, r.id); reload(); }}>
+                        {r.handoff_mode === 'student' ? "I'll send it in" : "I'll be there"}
+                      </button>
+                    )}
                     {r.status === 'scheduled' && (
-                      <button className="linkish" onClick={() => setMoving(r)}>
-                        Can't make it
+                      <button className="btn small ghost" onClick={() => setMoving(r)}>
+                        {r.handoff_mode === 'student' ? "Can't do this one" : 'Change the day'}
                       </button>
                     )}
                     {r.status !== 'handed_off' && (
-                      <button className="btn small flame"
+                      <button className={`btn small ${r.holder_confirmed_at || r.status !== 'scheduled' ? 'flame' : 'ghost'}`}
+                        title="Tells the family it's on its way"
                         onClick={async () => { await db.handoffSent(r.id, holder.name); reload(); }}>
-                        Handed it off
+                        {sentLabel(r, 'now', holder.student)}
                       </button>
                     )}
                   </div>
@@ -1587,7 +1614,8 @@ function BinView({ bin, code, bins, inv, refresh }) {
           <h2 className="h2 flame-text">Hand these off 🤝</h2>
           <p className="sub">
             Requests queued to this bin. Once a family picks a time it shows here — bag it up,
-            label it with their name, and tap <b>Handed it off</b> when it leaves your hands.
+            label it with their name, and tap the button when it leaves your hands so they get
+            a text that it's on its way.
           </p>
           <ul className="req-list">
             {queue.map((r) => {
@@ -1602,7 +1630,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
                       {r.status === 'assigned'
                         ? '⏳ waiting on them to pick a time'
                         : r.status === 'handed_off'
-                          ? `handed off · ${plan} — waiting on them to confirm`
+                          ? `${sentLabel(r, 'past')} · ${plan} — waiting on them to tap Got it`
                           : `${plan}`}
                     </span>
                   </div>
@@ -1612,8 +1640,9 @@ function BinView({ bin, code, bins, inv, refresh }) {
                     {r.status !== 'handed_off' && (
                       <button
                         className="btn small flame"
+                        title="Tells the family it's on its way"
                         onClick={async () => { await db.handoffSent(r.id, bin.holder_name); reload(); }}
-                      >Handed it off </button>
+                      >{sentLabel(r)}</button>
                     )}
                   </div>
                 </li>
@@ -2121,21 +2150,31 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   );
 }
 
-// "I can't make it." A doctor's appointment, a trip, a morning that got away
+// "Change the day." A doctor's appointment, a trip, a morning that got away
 // from you — the holder moves it or hands it back, and the family hears about
-// it either way rather than standing in a carline wondering.
+// it either way rather than standing in a carline wondering. Any school
+// morning is fair game here: the holder's standing days are what FAMILIES
+// pick from, but the holder themselves shouldn't have to rewrite their
+// availability to make one Wednesday work.
 function MoveHandoffSheet({ token, req, holder, onDone, onClose }) {
-  const [choice, setChoice] = useState('move');   // 'move' | 'release'
+  const student = req.handoff_mode === 'student';
+  const [choice, setChoice] = useState(student ? 'release' : 'move');   // 'move' | 'release'
   const [pick, setPick] = useState(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  // Their own standing availability, minus the morning they just backed out of.
-  const slots = nextSlots(
-    { offers_carline: holder.offers_carline, carline_days: holder.carline_days, carline_when: holder.carline_when },
-    new Date(), 6
-  ).filter((s) => s.date !== req.handoff_date);
+  // Mornings they're already coming in for someone else, so a move can land
+  // on a trip they're making anyway.
+  const [booked, setBooked] = useState([]);
+  useEffect(() => {
+    let live = true;
+    if (req.bin_id) db.binHandoffDays(req.bin_id).then((d) => live && setBooked(d)).catch(() => {});
+    return () => { live = false; };
+  }, [req.bin_id]);
+
+  const mornings = schoolMornings(holder, new Date(), 15, { booked })
+    .filter((s) => s.date !== req.handoff_date);
 
   const save = async () => {
     if (choice === 'move' && !pick) { setErr('Pick the morning that does work.'); return; }
@@ -2151,42 +2190,46 @@ function MoveHandoffSheet({ token, req, holder, onDone, onClose }) {
   };
 
   return (
-    <Sheet onClose={onClose} title="Can't make it">
+    <Sheet onClose={onClose} title={student ? "Can't do this one" : 'Change the day'}>
       <p className="fine">
         {typeLabel(req.item_type)} · {sizeLabel(req.size)} for {req.parent_name},
         currently {handoffSummary(req).toLowerCase()}. Their item stays held for them
         either way — this is only about the morning.
       </p>
 
-      <div className="mode-tabs">
-        {[['move', 'Move it to another day'], ['release', 'Let them pick again']].map(([k, label]) => (
-          <button key={k} className={`mode ${choice === k ? 'on' : ''}`} onClick={() => setChoice(k)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {!student && (
+        <div className="mode-tabs">
+          {[['move', 'Pick a different morning'], ['release', 'Let them pick again']].map(([k, label]) => (
+            <button key={k} className={`mode ${choice === k ? 'on' : ''}`} onClick={() => setChoice(k)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {choice === 'move' ? (
-        slots.length ? (
-          <div className="slots">
-            {slots.map((s) => (
+        <>
+          <p className="fine">
+            Any school morning works here — your usual days are marked, but a one-off is fine.
+            Moving it counts as confirming: they'll be told you'll be there.
+          </p>
+          <div className="slots mornings">
+            {mornings.map((s) => (
               <button
-                key={s.date + s.slot}
-                className={`slot ${pick && pick.date === s.date ? 'on' : ''}`}
+                key={s.date}
+                className={`slot ${pick && pick.date === s.date ? 'on' : ''} ${s.standing ? '' : 'off-day'}`}
                 onClick={() => setPick(s)}
-              >{slotLabel(s)}</button>
+              >
+                {slotLabel(s)}
+                {s.already ? <em>already coming in</em> : s.standing ? <em>one of your days</em> : null}
+              </button>
             ))}
           </div>
-        ) : (
-          <p className="fine">
-            No other mornings in your availability — hand it back instead, or widen your
-            days under My setup.
-          </p>
-        )
+        </>
       ) : (
         <p className="fine">
-          We'll text them that the morning didn't work and ask them to pick another
-          from your days. Nothing is cancelled.
+          We'll text them that {student ? 'this one' : 'the morning'} didn't work and ask them
+          to pick again from your days. Nothing is cancelled.
         </p>
       )}
 

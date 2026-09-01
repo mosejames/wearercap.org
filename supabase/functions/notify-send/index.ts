@@ -103,6 +103,9 @@ Deno.serve(async (req) => {
     // And a fortnightly poke for a holder sitting on a quiet bin. Guarded
     // server-side, so calling it every sweep is harmless.
     await db.rpc('ue_nudge_holders').catch(() => {});
+    // The evening before a handoff nobody has confirmed, one reminder to the
+    // holder. Only fires 5–9pm Atlanta time and once per bag.
+    await db.rpc('ue_nudge_unconfirmed').catch(() => {});
 
     // Everything still pending and actually due, plus recent failures worth
     // another go. After a day, or three tries, we stop rattling a bad number.
