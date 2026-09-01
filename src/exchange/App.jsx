@@ -227,7 +227,7 @@ export default function App() {
         <AdminView sub={route.sub} bins={bins} holders={holders} inv={inv}
           settings={settings} refresh={refresh} />
       ) : (
-        <Home bins={bins} inv={inv} commitments={commitments} refresh={refresh} />
+        <Home bins={bins} inv={inv} commitments={commitments} refresh={refresh} settings={settings} />
       )}
 
       <footer className="foot">
@@ -289,7 +289,7 @@ function ProofBubbles({ movements, inv, bins }) {
 // ---------------------------------------------------------------------------
 // Home — search everything, request an item.
 // ---------------------------------------------------------------------------
-function Home({ bins, inv, commitments, refresh }) {
+function Home({ bins, inv, commitments, refresh, settings }) {
   // The movement log is already public and carries no names — it's what makes
   // the front page feel like a place things happen rather than a form.
   const [moves, setMoves] = useState([]);
@@ -477,6 +477,7 @@ function Home({ bins, inv, commitments, refresh }) {
           inv={inv}
           assigned={assigned}
           bins={bins}
+          settings={settings}
           onDone={() => { setSheet(false); setOrder([]); refresh(); }}
           onClose={() => setSheet(false)}
         />
@@ -498,7 +499,7 @@ function Home({ bins, inv, commitments, refresh }) {
 // The request sheet — name + student, then the app matches a bin and starts
 // the three-day clock.
 // ---------------------------------------------------------------------------
-function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
+function RequestSheet({ order, inv, assigned, bins, settings, onDone, onClose }) {
   const [form, setForm] = useState({ parentName: '', student: '', contact: '', note: '', share: true });
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState(null);
@@ -581,7 +582,8 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         fresh
         req={{ ...r, contact: form.contact, student: form.student, parent_name: form.parentName }}
         bin={bins.find((b) => b.id === r.bin_id) || null}
-        frontDesk={false}
+        frontDesk={settings?.front_desk_enabled === 'true'}
+        carline={settings?.carline_enabled === 'true'}
         onDone={() => { setPicked([...picked, r.id]); setPickQueue(pickQueue.slice(1)); }}
         onClose={() => setPickQueue([])}
       />
@@ -622,8 +624,8 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
               </p>
             ) : (
               <p>
-                Next: <a href="#/requests"><b>set up the handoff</b></a> — student to student,
-                or meet at carline. The link is in your text too.
+                Next: <a href="#/requests"><b>set up the handoff</b></a> — it comes home in a
+                backpack with the bin holder's student. The link is in your text too.
               </p>
             )}
             <p className="fine">
@@ -699,7 +701,7 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         Your confirmation and the page that keeps track of it all come by text
         from <b>{TEXT_FROM}</b> — save the number so it doesn't get filtered.
       </p>
-      <label className="check">
+      <label className="check sub">
         <input type="checkbox" checked={form.share}
           onChange={(e) => setForm({ ...form, share: e.target.checked })} />
         <span>
@@ -715,8 +717,8 @@ function RequestSheet({ order, inv, assigned, bins, onDone, onClose }) {
         {busy ? 'Sending…' : 'Send my request'}
       </button>
       <p className="fine">
-        Next you'll say how you want it — sent in with the bin holder's student, or a
-        carline meetup. Free, always.
+        Next you'll confirm the handoff — it comes home in a backpack with the bin
+        holder's student. Free, always.
       </p>
     </Sheet>
   );
@@ -966,6 +968,7 @@ function MyRequests({ token, bins, settings }) {
           req={picking}
           bin={binOf(picking.bin_id)}
           frontDesk={settings?.front_desk_enabled === 'true'}
+          carline={settings?.carline_enabled === 'true'}
           onDone={() => { setPicking(null); load(); }}
           onClose={() => setPicking(null)}
         />
@@ -978,12 +981,16 @@ function MyRequests({ token, bins, settings }) {
 // Picking a handoff. The holder already said when they're around, so this is
 // just tapping a day — no back-and-forth, no phone tag.
 // ---------------------------------------------------------------------------
-function HandoffSheet({ req, bin, frontDesk, onDone, onClose, fresh = false }) {
+function HandoffSheet({ req, bin, frontDesk, carline = false, onDone, onClose, fresh = false }) {
+  // Carline is switched off site-wide for now (Storage Room → Settings); the
+  // bin holders' kids carry the bags. A holder's own carline availability
+  // still exists underneath, ready for when that changes.
+  const carlineOn = carline && bin?.offers_carline !== false;
   // Student to student is the default for everyone: the bag rides in a
   // backpack and nobody has to find anybody in a carline. Carline stays on
   // offer for families who'd rather meet.
   const [mode, setMode] = useState(
-    bin?.offers_student !== false ? 'student' : (bin?.offers_carline !== false ? 'carline' : 'student')
+    bin?.offers_student !== false ? 'student' : (carlineOn ? 'carline' : 'student')
   );
   const [pick, setPick] = useState(null);
   const [student, setStudent] = useState(req.student || '');
@@ -1043,7 +1050,7 @@ function HandoffSheet({ req, bin, frontDesk, onDone, onClose, fresh = false }) {
             Student to student
           </button>
         )}
-        {bin?.offers_carline !== false && (
+        {carlineOn && (
           <button className={`mode ${mode === 'carline' ? 'on' : ''}`} onClick={() => setMode('carline')}>
             Meet at carline
           </button>
@@ -1141,6 +1148,8 @@ function HolderHome({ token }) {
   const [data, setData] = useState(undefined);
   const [tab, setTab] = useState('todo');
   const [printBins, setPrintBins] = useState(null);
+  const [settings, setSettings] = useState({});
+  useEffect(() => { db.listSettings().then(setSettings).catch(() => {}); }, []);
 
   const load = () => db.holderHome(token).then(setData).catch(() => setData(null));
   useEffect(() => { load(); }, [token]);
@@ -1237,7 +1246,8 @@ function HolderHome({ token }) {
               Set this once — every family who requests from any of your bins picks
               from it, so nobody has to text back and forth.
             </p>
-            <AvailabilityCard bin={holder} token={token} refresh={load} />
+            <AvailabilityCard bin={holder} token={token} refresh={load}
+              carline={settings?.carline_enabled === 'true'} />
           </section>
           <section className="shell section">
             <h2 className="h2">You &amp; your alerts</h2>
@@ -1810,7 +1820,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
 
 // The holder answers "when are you around?" once. Everything downstream —
 // the dates a requester taps, the texts — comes from this.
-function AvailabilityCard({ bin, token, refresh }) {
+function AvailabilityCard({ bin, token, refresh, carline = true }) {
   const holderId = bin.holder_id;
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({
@@ -1845,9 +1855,15 @@ function AvailabilityCard({ bin, token, refresh }) {
     return (
       <div className="card avail">
         <div className="avail-now">
-          <b>{availabilityLine(bin)}</b>
-          {bin.carline_spot && <span>{bin.carline_spot}</span>}
+          <b>{carline ? availabilityLine(bin) : 'Student to student — your student carries the bag'}</b>
+          {carline && bin.carline_spot && <span>{bin.carline_spot}</span>}
         </div>
+        {!carline && (
+          <p className="fine">
+            Carline meetups are switched off for now, so every handoff goes in with your
+            student. Your carline days are kept for when that changes.
+          </p>
+        )}
         <button className="btn small" onClick={() => setOpen(true)}>Edit my availability</button>
         <p className="fine">This is your schedule — it covers every bin you hold.</p>
       </div>
@@ -1856,13 +1872,15 @@ function AvailabilityCard({ bin, token, refresh }) {
 
   return (
     <div className="card avail">
-      <label className="check">
-        <input type="checkbox" checked={f.offersCarline}
-          onChange={(e) => setF({ ...f, offersCarline: e.target.checked })} />
-        <span>I can hand off at carline</span>
-      </label>
+      {carline && (
+        <label className="check">
+          <input type="checkbox" checked={f.offersCarline}
+            onChange={(e) => setF({ ...f, offersCarline: e.target.checked })} />
+          <span>I can hand off at carline</span>
+        </label>
+      )}
 
-      {f.offersCarline && (
+      {carline && f.offersCarline && (
         <div className="avail-body">
           <p className="fine">
             Which mornings are easy for you? Handoffs happen at <b>morning drop-off</b> —
@@ -2991,8 +3009,8 @@ function AdminSettings({ pass, act, msg, settings, notifications }) {
       <div className="card">
         <h3>Handoff options</h3>
         <p className="fine">
-          RCA is staying hands-off, so the front desk is switched off — carline and
-          student-to-student carry the handoffs. Flip this on if the school ever says yes.
+          RCA is staying hands-off, so the front desk is switched off — student-to-student
+          carries the handoffs. Flip this on if the school ever says yes.
         </p>
         <label className="check">
           <input
@@ -3003,6 +3021,19 @@ function AdminSettings({ pass, act, msg, settings, notifications }) {
           />
           <span>Offer “RCA front desk” as a handoff choice</span>
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={settings?.carline_enabled === 'true'}
+            onChange={(e) =>
+              act(() => db.adminSetting(pass, 'carline_enabled', e.target.checked ? 'true' : 'false'))}
+          />
+          <span>Offer “Meet at carline” as a handoff choice</span>
+        </label>
+        <p className="fine">
+          Off for now: the bin holders' students carry every bag. Holders' carline days are
+          kept underneath, so flipping this on brings them straight back.
+        </p>
       </div>
       <AdminItemTypes pass={pass} act={act} />
       <AdminNotifications notifications={notifications} />

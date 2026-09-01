@@ -106,6 +106,9 @@ Deno.serve(async (req) => {
     // The evening before a handoff nobody has confirmed, one reminder to the
     // holder. Only fires 5–9pm Atlanta time and once per bag.
     await db.rpc('ue_nudge_unconfirmed').catch(() => {});
+    // Families rarely tap "Got it". A bag that left a holder's hands days ago
+    // and hasn't been disputed is done.
+    await db.rpc('ue_autoclose_handoffs').catch(() => {});
 
     // Everything still pending and actually due, plus recent failures worth
     // another go. After a day, or three tries, we stop rattling a bad number.
