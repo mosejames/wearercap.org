@@ -204,18 +204,36 @@ img{display:block;max-width:100%}
 @media(min-width:760px){.fab-wrap{display:none}}
 
 /* ---------------- lightbox ---------------- */
-.lb{position:fixed;inset:0;z-index:50;background:#000;color:#fff;display:flex;flex-direction:column;touch-action:pan-y}
+/* Grid, not flex-wrap: the stage row is minmax(0,1fr), so it is exactly the
+   space left after the top bar, whatever height that bar turns out to be.
+   The old layout guessed 56px and clipped the photo the moment it was wrong. */
+.lb{
+  position:fixed;inset:0;z-index:50;background:#000;color:#fff;
+  display:grid;grid-template-columns:100%;grid-template-rows:auto minmax(0,1fr) auto;
+  touch-action:pan-y;overflow:hidden;
+}
 .lb-top{display:flex;align-items:center;justify-content:space-between;padding:8px 8px;padding-top:calc(8px + env(safe-area-inset-top));flex:none}
 .lb-top .icon-btn:hover{background:rgba(255,255,255,.12)}
 .lb-count{font-size:12px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.6)}
 .lb-top-actions{display:flex;gap:2px}
-.lb-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+.lb-stage{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;padding:6px}
 .lb-stage img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;user-select:none;-webkit-user-drag:none}
 .lb-nav{position:absolute;top:50%;transform:translateY(-50%);border:0;background:rgba(0,0,0,.45);color:#fff;width:44px;height:44px;border-radius:50%;display:none;align-items:center;justify-content:center}
 .lb-nav.prev{left:14px}.lb-nav.next{right:14px}
-@media(min-width:760px){.lb-nav{display:flex}}
-.lb-panel{flex:none;background:#111;border-top:1px solid rgba(255,255,255,.08);padding:12px 14px calc(12px + env(safe-area-inset-bottom));max-height:46vh;display:flex;flex-direction:column;gap:10px}
-@media(min-width:760px){.lb{flex-direction:row;flex-wrap:wrap}.lb-top{width:100%}.lb-stage{flex:1 1 60%}.lb-panel{width:360px;max-height:none;border-top:0;border-left:1px solid rgba(255,255,255,.08);height:calc(100vh - 56px)}}
+@media(min-width:860px){.lb-nav{display:flex}}
+.lb-panel{
+  min-height:0;background:#111;border-top:1px solid rgba(255,255,255,.08);
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));max-height:46vh;
+  display:flex;flex-direction:column;gap:10px;
+}
+/* Side by side only once there is room for both. Below this the panel under
+   the photo beats a 300px column next to a 400px one. */
+@media(min-width:860px){
+  .lb{grid-template-columns:minmax(0,1fr) clamp(300px,24vw,400px);grid-template-rows:auto minmax(0,1fr)}
+  .lb-top{grid-column:1/-1}
+  .lb-panel{max-height:none;border-top:0;border-left:1px solid rgba(255,255,255,.08);padding:16px 18px}
+  .lb-stage{padding:14px}
+}
 .lb-meta{display:flex;align-items:center;gap:10px}
 .lb-meta b{display:block;font-size:14.5px}
 .lb-meta small{display:block;font-size:12px;color:rgba(255,255,255,.55);margin-top:2px}

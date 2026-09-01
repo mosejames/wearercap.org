@@ -21,8 +21,16 @@ export const SITE = {
   titleGrad: 'VAULT.',
   intro:
     'Every family is already taking the pictures. This is where they go so the whole house can see them, keep them, and still have them in ten years. Add yours from your phone in under a minute.',
-  base: '/ami-vault/',
-  origin: 'https://wearercap.org',
+  // Derived at runtime, not hardcoded, so share links are right whether this
+  // is served at wearercap.org/ami-vault/ or at its own domain.
+  get base() {
+    if (typeof window === 'undefined') return '/';
+    const p = window.location.pathname;
+    return p.endsWith('/') ? p : `${p.slice(0, p.lastIndexOf('/'))}/`;
+  },
+  get origin() {
+    return typeof window === 'undefined' ? 'https://wearercap.org' : window.location.origin;
+  },
 };
 
 // Copy on the home page around the open asks.

@@ -51,10 +51,11 @@ export function mode() {
   return R2.account && R2.key && R2.secret && R2.publicBase ? 'r2' : 'supabase';
 }
 
+// In supabase mode the client already knows its own storage base, so a missing
+// SUPABASE_URL here is not fatal — it only matters for R2.
 function publicBase(m) {
-  return m === 'r2'
-    ? R2.publicBase
-    : `${SUPABASE_URL}/storage/v1/object/public/vault-media`;
+  if (m === 'r2') return R2.publicBase;
+  return SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/vault-media` : null;
 }
 
 // Object keys. One folder per photo so the three renditions travel together.
@@ -100,10 +101,6 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!SUPABASE_URL) {
-    return res.status(500).json({ error: 'Supabase env missing on the server' });
-  }
-
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
   const files = Array.isArray(body?.files) ? body.files.slice(0, MAX_FILES) : [];
