@@ -190,6 +190,22 @@ const FREQ = MATCHABLE.reduce((m, c) => {
    committee carrying many tags would otherwise match everything, so the total
    is divided by the square root of its tag count. Breadth stops being an
    advantage; being genuinely about the thing starts being one. */
+/* A rule, not a preference: this matches on what a parent said about
+   themselves, and never on what the board needs staffed.
+
+   The temptation is real. Across every trait combination, Fall Raffle,
+   Teacher Appreciation Week and Marketing and Communications come up least,
+   and those are the biggest lifts of the year. Widening their tags would fix
+   that overnight. Do not. A tag added for recruiting is the page telling a
+   parent a committee suits them because we are short-handed, and the parent
+   who believes it is the volunteer who quietly disappears in November.
+
+   Under-subscribed committees get solved somewhere honest: Explore all is one
+   tap away and lists everything, the open chair seats say so in their own
+   copy, and the board can ask people directly. None of that requires lying
+   here.
+
+   If a tag changes, it changes because it describes the committee better. */
 function score(c, traits) {
   if (!traits.length || c.noMatch) return 0;
   const raw = c.tags.reduce((n, t) => n + (traits.includes(t) && FREQ[t] ? 1 / FREQ[t] : 0), 0);
