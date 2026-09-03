@@ -1412,56 +1412,22 @@ button {
 }
 
 /* ---------------------------------------------------------------------------
-   Serve + Committees: one editorial spread.
+   Serve + Committees, stacked and full width.
 
    No cards, no capsules, no shadows. Hierarchy comes from scale, whitespace and
-   hairlines. The only motion is a colour change and a 2px nudge.
+   hairlines. The only motion is a colour change and a small nudge.
    ------------------------------------------------------------------------ */
-
-.spread {
-  display: grid;
-  grid-template-columns: minmax(0, 57fr) minmax(0, 43fr);
-  gap: 0;
-}
-
-.spread-col h2 {
-  margin: 0;
-  font-size: clamp(32px, 3.3vw, 50px);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-}
-
-.col-intro {
-  margin: 20px 0 0;
-  max-width: 44ch;
-  color: var(--muted);
-  font-size: 16.5px;
-  line-height: 1.55;
-}
-
-.serve-col {
-  padding-right: 56px;
-}
-
-/* The divider between the halves is a border on the column, so it is exactly
-   as tall as the content and needs no absolute positioning. */
-.committee-col {
-  padding-left: 56px;
-  border-left: 1px solid var(--line);
-}
 
 /* Three actions, three columns, hairlines between */
 
 .serve-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 52px;
+  margin-top: 34px;
 }
 
 .serve-action {
-  padding: 0 22px;
+  padding: 0 40px;
   border-left: 1px solid var(--line);
 }
 
@@ -1470,25 +1436,30 @@ button {
   border-left: 0;
 }
 
+.serve-action:last-child {
+  padding-right: 0;
+}
+
 .serve-action > svg {
   color: var(--accent);
 }
 
 .serve-action h3 {
   margin: 18px 0 0;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 800;
   line-height: 1.15;
 }
 
 .serve-action p {
   margin: 12px 0 0;
+  max-width: 34ch;
   color: var(--muted);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 15.5px;
+  line-height: 1.55;
 }
 
-/* One link treatment across the whole spread */
+/* One link treatment across both sections */
 
 .text-link {
   display: inline-flex;
@@ -1513,13 +1484,14 @@ button {
   transform: translate(2px, -2px);
 }
 
-/* Committee explorer */
+/* Committee explorer. At full width the list gets a readable column and the
+   detail gets room to be the largest type in the section. */
 
 .explorer {
   display: grid;
-  grid-template-columns: minmax(0, 47fr) minmax(0, 53fr);
+  grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
   gap: 0;
-  margin-top: 36px;
+  margin-top: 20px;
 }
 
 .committee-list {
@@ -1539,12 +1511,12 @@ button {
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 17px 16px 17px 0;
+  padding: 19px 16px 19px 0;
   border: 0;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 15.5px;
+  font-size: 16.5px;
   font-weight: 800;
   line-height: 1.25;
   text-align: left;
@@ -1567,8 +1539,8 @@ button {
   transform: translateX(2px);
 }
 
-/* Active row: a wash of gold and a rule down its left edge. A box-shadow inset
-   rather than a border so the row does not shift when it becomes active. */
+/* Active row: a wash of gold and a rule down its left edge. An inset shadow
+   rather than a border, so the row does not shift when it activates. */
 .committee-list .is-active button {
   padding-left: 16px;
   background: rgba(247, 168, 28, 0.16);
@@ -1581,31 +1553,39 @@ button {
 }
 
 .committee-detail {
-  padding: 4px 0 0 40px;
+  padding: 30px 0 0 70px;
+  border-left: 1px solid var(--line);
+  margin-left: 56px;
 }
 
 .committee-detail h3 {
   margin: 0;
-  font-size: clamp(23px, 2.1vw, 31px);
+  max-width: 16ch;
+  font-size: clamp(30px, 3.2vw, 46px);
   font-weight: 900;
-  line-height: 1.06;
-  letter-spacing: -0.015em;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
 }
 
 .detail-rule {
   display: block;
-  width: 44px;
+  width: 52px;
   height: 3px;
-  margin: 18px 0;
+  margin: 22px 0;
   background: var(--gold);
 }
 
 .committee-detail > p:last-of-type {
   margin: 0;
-  max-width: 34ch;
+  max-width: 40ch;
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.committee-detail .text-link {
+  margin-top: 24px;
+  font-size: 15.5px;
 }
 
 /* Exists only below the accordion breakpoint */
@@ -1617,7 +1597,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  margin-top: 34px;
+  margin-top: 40px;
   color: var(--accent);
   font-size: 16px;
   font-weight: 800;
@@ -1636,31 +1616,11 @@ button {
   transform: translateX(4px);
 }
 
-@media (max-width: 1040px) {
-  /* Stack the spread. The divider rotates from vertical to horizontal so the
-     halves stay visibly separate. */
-  .spread {
-    grid-template-columns: 1fr;
-  }
-
-  .serve-col {
-    padding-right: 0;
-  }
-
-  .committee-col {
-    margin-top: 56px;
-    padding-top: 52px;
-    padding-left: 0;
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-}
-
-@media (max-width: 720px) {
+@media (max-width: 860px) {
   /* Actions go vertical and the hairlines rotate with them. */
   .serve-actions {
     grid-template-columns: 1fr;
-    margin-top: 40px;
+    margin-top: 28px;
   }
 
   .serve-action {
@@ -1672,6 +1632,10 @@ button {
   .serve-action:first-child {
     padding-top: 0;
     border-top: 0;
+  }
+
+  .serve-action p {
+    max-width: 46ch;
   }
 
   /* Explorer becomes an accordion: the side panel goes, and each row answers
@@ -1694,7 +1658,7 @@ button {
     margin: 0;
     max-width: 46ch;
     color: var(--muted);
-    font-size: 15px;
+    font-size: 15.5px;
     line-height: 1.55;
   }
 

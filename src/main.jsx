@@ -383,95 +383,96 @@ function App() {
         </div>
       </section>
 
-      {/* Serve and Committees share one editorial spread: no cards, no
-          capsules. Structure comes from a thin rule between the columns and
-          thin rules between the three actions. Both ids stay live because the
-          nav points at #serve and #committees separately. */}
-      <section id="serve" className="content-section spread">
-        <div className="spread-col serve-col">
+      {/* Serve — full width, no card. Three actions across, hairlines between. */}
+      <section id="serve" className="content-section">
+        <div className="section-heading">
           <p className="section-label">Serve</p>
           <h2>Step up in the way that fits.</h2>
-          <p className="col-intro">
+          <p>
             Give an hour, give a season, or put a name forward, including your
             own. It all counts, and it all starts here.
           </p>
-
-          <div className="serve-actions">
-            {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
-              <article className="serve-action" key={title}>
-                <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
-                <h3>{title}</h3>
-                <p>{body}</p>
-                <a
-                  className="text-link"
-                  href={href}
-                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                >
-                  {label}
-                  <ArrowUpRight size={15} aria-hidden="true" />
-                </a>
-              </article>
-            ))}
-          </div>
         </div>
 
-        <div className="spread-col committee-col" id="committees">
+        <div className="serve-actions">
+          {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
+            <article className="serve-action" key={title}>
+              <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <a
+                className="text-link"
+                href={href}
+                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              >
+                {label}
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Committees — sits beneath Serve at full width, which the explorer
+          needs: the list gets a readable column and the detail gets room to
+          be the biggest type in the section rather than a cramped sidebar. */}
+      <section id="committees" className="content-section">
+        <div className="section-heading">
           <p className="section-label">Committees</p>
           <h2>The teams that carry RCAP.</h2>
-          <p className="col-intro">
+          <p>
             Sixteen years of traditions run through these committees. Every one
             of them is open to any RCA parent.
           </p>
-
-          <div className="explorer">
-            <ul className="committee-list">
-              {committees.map(({ title, body }, index) => (
-                <li key={title} className={index === activeCommittee ? 'is-active' : undefined}>
-                  <button
-                    type="button"
-                    aria-expanded={index === activeCommittee}
-                    aria-controls={`committee-panel-${index}`}
-                    onMouseEnter={() => setActiveCommittee(index)}
-                    onFocus={() => setActiveCommittee(index)}
-                    onClick={() => setActiveCommittee(index)}
-                  >
-                    <span>{title}</span>
-                    <ChevronRight size={18} aria-hidden="true" />
-                  </button>
-
-                  {/* The stacked answer. Hidden above the accordion breakpoint,
-                      where the detail panel to the right does this job. */}
-                  {index === activeCommittee ? (
-                    <div className="committee-panel" id={`committee-panel-${index}`}>
-                      <p>{body}</p>
-                      <a className="text-link" href="/committee-interest/">
-                        Learn more
-                        <ArrowUpRight size={15} aria-hidden="true" />
-                      </a>
-                    </div>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-
-            <div className="committee-detail" aria-live="polite">
-              <p className="section-label">Featured</p>
-              <h3>{committees[activeCommittee].title}</h3>
-              <span className="detail-rule" aria-hidden="true" />
-              <p>{committees[activeCommittee].body}</p>
-              <a className="text-link" href="/committee-interest/">
-                Learn more
-                <ArrowUpRight size={15} aria-hidden="true" />
-              </a>
-            </div>
-          </div>
-
-          <a className="explorer-cta" href="/committee-interest/">
-            <Users size={22} strokeWidth={1.5} aria-hidden="true" />
-            See all nine committees and raise your hand
-            <ArrowRight size={18} aria-hidden="true" />
-          </a>
         </div>
+
+        <div className="explorer">
+          <ul className="committee-list">
+            {committees.map(({ title }, index) => (
+              <li key={title} className={index === activeCommittee ? 'is-active' : undefined}>
+                <button
+                  type="button"
+                  aria-expanded={index === activeCommittee}
+                  aria-controls={`committee-panel-${index}`}
+                  onMouseEnter={() => setActiveCommittee(index)}
+                  onFocus={() => setActiveCommittee(index)}
+                  onClick={() => setActiveCommittee(index)}
+                >
+                  <span>{title}</span>
+                  <ChevronRight size={18} aria-hidden="true" />
+                </button>
+
+                {/* The stacked answer, for the accordion below 860. */}
+                {index === activeCommittee ? (
+                  <div className="committee-panel" id={`committee-panel-${index}`}>
+                    <p>{committees[index].body}</p>
+                    <a className="text-link" href="/committee-interest/">
+                      Learn more
+                      <ArrowUpRight size={15} aria-hidden="true" />
+                    </a>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+
+          <div className="committee-detail" aria-live="polite">
+            <p className="section-label">Featured</p>
+            <h3>{committees[activeCommittee].title}</h3>
+            <span className="detail-rule" aria-hidden="true" />
+            <p>{committees[activeCommittee].body}</p>
+            <a className="text-link" href="/committee-interest/">
+              Learn more
+              <ArrowUpRight size={15} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+
+        <a className="explorer-cta" href="/committee-interest/">
+          <Users size={22} strokeWidth={1.5} aria-hidden="true" />
+          See all nine committees and raise your hand
+          <ArrowRight size={18} aria-hidden="true" />
+        </a>
       </section>
 
       {/* Tools — everything RCAP has built for families, rendered from the
