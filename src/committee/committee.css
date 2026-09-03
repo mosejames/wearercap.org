@@ -244,21 +244,26 @@ a{color:inherit}
 
 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));align-items:start}
 
+/* A thin outline and nothing else. The accent bar across the top was
+   decoration pretending to be structure: nine coloured stripes stacked down a
+   phone read as noise, and the card already says which committee it is in
+   type. The colour that survives is the one doing a job, on the button you
+   press. Selection is carried by weight, not by hue. */
 .cc{
   background:var(--card);border:1px solid var(--line);border-radius:10px;
-  border-top:5px solid var(--a);box-shadow:var(--shadow);
+  box-shadow:var(--shadow);
   padding:20px;display:flex;flex-direction:column;
   transition:box-shadow .16s ease,border-color .16s ease;
 }
-.cc:hover{box-shadow:var(--lift)}
-.cc.picked{border-color:var(--a);background:var(--tint)}
-.cc[data-a="orange"]{--a:var(--orange);--tint:#fff6f0}
-.cc[data-a="magenta"]{--a:var(--magenta);--tint:#fff0f7}
-.cc[data-a="red"]{--a:var(--red);--tint:#fff1f2}
-.cc[data-a="green"]{--a:var(--green);--tint:#eefaf2}
-.cc[data-a="blue"]{--a:var(--blue);--tint:#eff3fd}
-.cc[data-a="gold"]{--a:var(--gold);--tint:#fff8e9}
-.cc[data-a="ink"]{--a:var(--graphite);--tint:#f5f3f1}
+.cc:hover{box-shadow:var(--lift);border-color:#d8d2ca}
+.cc.picked{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.cc[data-a="orange"]{--a:var(--orange)}
+.cc[data-a="magenta"]{--a:var(--magenta)}
+.cc[data-a="red"]{--a:var(--red)}
+.cc[data-a="green"]{--a:var(--green)}
+.cc[data-a="blue"]{--a:var(--blue)}
+.cc[data-a="gold"]{--a:var(--gold)}
+.cc[data-a="ink"]{--a:var(--graphite)}
 
 .cc-name{margin:0;font-size:21px;font-weight:900;letter-spacing:-.028em;line-height:1.1}
 .cc-blurb{margin:9px 0 0;font-size:15px;line-height:1.5;color:var(--ink-soft);text-wrap:pretty}
@@ -321,7 +326,7 @@ a{color:inherit}
 }
 .lb-in{
   position:relative;width:100%;max-width:460px;max-height:86svh;overflow-y:auto;
-  background:var(--card);border-radius:12px;border-top:6px solid var(--a);
+  background:var(--card);border-radius:12px;border:1px solid var(--line);
   padding:26px 24px 24px;box-shadow:0 24px 60px rgba(14,12,11,.4);
   animation:lbrise .24s cubic-bezier(.2,.7,.3,1) both;
 }
