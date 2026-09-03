@@ -3,12 +3,15 @@ import { createRoot } from 'react-dom/client';
 import {
   ArrowUpRight,
   CalendarDays,
+  Camera,
   Car,
   Clock,
   HeartHandshake,
+  Lightbulb,
   Mail,
   Megaphone,
   PlayCircle,
+  Shirt,
   Users,
   X,
 } from 'lucide-react';
@@ -100,6 +103,61 @@ const doors = [
   },
 ];
 
+// Tools — the apps RCAP has actually built and shipped. Each one lives under
+// wearercap.org as its own page. Add a row here when a new one goes live; the
+// section renders straight from this list.
+const tools = [
+  {
+    variant: 'exchange',
+    icon: Shirt,
+    title: 'Uniform Exchange',
+    body:
+      'Ask for the sizes you need, or hold a bin for your house. Handoffs ' +
+      'happen at carline, no phone numbers traded.',
+    href: '/uniform-exchange/',
+    badge: 'Live',
+  },
+  {
+    variant: 'carpool',
+    icon: Car,
+    title: 'Carpool',
+    body:
+      'Find RCA families near you and share the driving. Opt-in only, and ' +
+      'your address stays private.',
+    href: '/carpool/',
+    badge: 'Live',
+  },
+  {
+    variant: 'committee',
+    icon: Users,
+    title: 'Find Your Place',
+    body:
+      'Answer a few questions and see which committees fit. Raise your hand ' +
+      'to chair one, or just join a team.',
+    href: '/committee-interest/',
+    badge: 'New',
+  },
+  {
+    variant: 'wik',
+    icon: Lightbulb,
+    title: 'One Thing I Wish I Knew',
+    body:
+      'Veteran RCA parents leave one piece of advice for the families coming ' +
+      'up behind them.',
+    href: '/wish-i-knew/',
+    secondary: { label: 'Read what parents said', href: '/wish-i-knew/read/' },
+  },
+  {
+    variant: 'recap',
+    icon: Camera,
+    title: 'The RCAP Recap',
+    body:
+      'Describe EXP in one word, then add the photo or video that goes with ' +
+      'it. It posts straight to the board.',
+    href: '/rcap-recap/',
+  },
+];
+
 const serveActions = [
   {
     icon: HeartHandshake,
@@ -119,12 +177,12 @@ const serveActions = [
   },
   {
     icon: Megaphone,
-    title: 'Nominate — coming soon',
+    title: 'Find your place',
     body:
-      'Advisory Board grade seats and committee interest open here soon. ' +
-      'Until then, email RCAP to put a name forward.',
-    href: contactHref,
-    label: 'Email RCAP',
+      'Tell us what you are into and see which committees fit. Chair one, ' +
+      'or just join a team.',
+    href: '/committee-interest/',
+    label: 'Open the form',
     external: false,
   },
 ];
@@ -345,6 +403,47 @@ function App() {
         </div>
       </section>
 
+      {/* Tools — everything RCAP has built for families, rendered from the
+          `tools` list above. Each card is a whole-card link; Wish I Knew
+          carries a second link to its reader on top of that. */}
+      <section id="tools" className="content-section tools-section">
+        <div className="section-heading">
+          <p className="section-label">Tools</p>
+          <h2>Built for RCA families, free to use.</h2>
+          <p>
+            All of these live right here on wearercap.org. Nothing to download,
+            no account to make.
+          </p>
+        </div>
+        <div className="tool-grid" aria-label="RCAP tools">
+          {tools.map(({ variant, icon: Icon, title, body, href, badge, secondary }) => (
+            <article className={`tool-card ${variant}`} key={title}>
+              <div className="tool-top">
+                <Icon size={26} aria-hidden="true" />
+                {badge ? <span className="door-badge">{badge}</span> : null}
+              </div>
+              <h3>
+                <a href={href}>{title}</a>
+              </h3>
+              <p>{body}</p>
+              {secondary ? (
+                <a className="tool-secondary" href={secondary.href}>
+                  {secondary.label}
+                </a>
+              ) : null}
+              <span className="tool-go" aria-hidden="true">
+                <ArrowUpRight size={18} />
+              </span>
+            </article>
+          ))}
+        </div>
+        <nav className="tool-reads" aria-label="RCAP letters">
+          <span>Also here:</span>
+          <a href="/what-to-expect/">What to Expect at EXP</a>
+          <a href="/invite/">Six More Chances to Show Up</a>
+        </nav>
+      </section>
+
       {/* Committees — the recruitment surface. Chairs/open seats added after
           the board confirms them; descriptions stay evergreen. */}
       <section id="committees" className="content-section committees-section">
@@ -412,12 +511,17 @@ function App() {
           <a href={contactHref}>{contactEmail}</a>.
         </p>
         <nav className="footer-map" aria-label="Site sections">
-          <a href="/carpool/">Carpool</a>
-          <a href="#serve">Serve</a>
           <a href="#events">Events</a>
+          <a href="#serve">Serve</a>
+          <a href="#tools">Tools</a>
           <a href="#committees">Committees</a>
-          <a href="/what-to-expect/">What to Expect at EXP</a>
+          <a href="/uniform-exchange/">Uniform Exchange</a>
+          <a href="/carpool/">Carpool</a>
+          <a href="/committee-interest/">Find Your Place</a>
           <a href="/wish-i-knew/">One Thing I Wish I Knew</a>
+          <a href="/rcap-recap/">The RCAP Recap</a>
+          <a href="/what-to-expect/">What to Expect at EXP</a>
+          <a href="/invite/">Six More Chances to Show Up</a>
         </nav>
       </section>
 

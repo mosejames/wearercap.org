@@ -1415,3 +1415,169 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* Tools — the apps built under wearercap.org. Card look is lifted from
+   .door-card on purpose so the two grids read as one system. The whole card is
+   the link via a stretched ::after; the one secondary link (Wish I Knew's
+   reader) sits above it on z-index. */
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tool-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  /* extra bottom padding reserves the corner the .tool-go arrow sits in */
+  padding: 22px 22px 46px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--blue);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 46px rgba(8, 13, 18, 0.18);
+}
+
+.tool-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tool-card > .tool-top svg {
+  color: var(--blue);
+}
+
+.tool-card h3 {
+  margin: 6px 0 0;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.tool-card h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.tool-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.tool-go {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.tool-card:hover .tool-go {
+  transform: translate(2px, -2px);
+}
+
+.tool-secondary {
+  position: relative;
+  z-index: 1;
+  justify-self: start;
+  margin-top: 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--blue);
+  border-bottom: 1px solid rgba(23, 74, 139, 0.32);
+}
+
+.tool-secondary:hover {
+  border-bottom-color: var(--blue);
+}
+
+.tool-card.exchange {
+  border-top-color: var(--red);
+}
+
+.tool-card.exchange > .tool-top svg {
+  color: var(--red);
+}
+
+.tool-card.carpool {
+  border-top-color: var(--green);
+}
+
+.tool-card.carpool > .tool-top svg {
+  color: var(--green);
+}
+
+.tool-card.committee {
+  border-top-color: var(--gold);
+}
+
+.tool-card.committee > .tool-top svg {
+  color: var(--gold);
+}
+
+.tool-card.wik {
+  border-top-color: var(--green);
+}
+
+.tool-card.wik > .tool-top svg {
+  color: var(--green);
+}
+
+.tool-card.recap {
+  border-top-color: var(--gold);
+}
+
+.tool-card.recap > .tool-top svg {
+  color: var(--gold);
+}
+
+.tool-reads {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 14.5px;
+}
+
+.tool-reads span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tool-reads a {
+  color: var(--blue);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(23, 74, 139, 0.32);
+}
+
+.tool-reads a:hover {
+  border-bottom-color: var(--blue);
+}
+
+@media (max-width: 860px) {
+  .tool-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+}
