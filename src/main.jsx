@@ -57,12 +57,15 @@ const navLinks = [
 
 // Happening now — the next few real dates families can plan around.
 // Keep this list SHORT (2-4 items) and CURRENT: delete dates once they pass.
+// Split into month / day / weekday so each date can be set like a calendar
+// tile: banner across the top, day number large underneath. `day` may be a
+// range ("24 & 25"), which the card detects and sizes down for.
 const upcomingEvents = [
-  { weekday: 'Thu', date: 'Sept 10, 2026', label: 'Parent Orientation Day, 8am to 3pm' },
-  { weekday: 'Tue', date: 'Sept 15, 2026', label: 'Bingo Night, games at 5:30pm' },
-  { weekday: 'Thu', date: 'Sept 17, 2026', label: 'Open House' },
-  { weekday: 'Thu + Fri', date: 'Sept 24 & 25', label: 'RCA EXP, parent volunteers needed' },
-  { weekday: 'Tue', date: 'Sept 29, 2026', label: 'Picture Day' },
+  { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day, 8am to 3pm' },
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, games at 5:30pm' },
+  { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
+  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
 ];
 
 // The single most time-sensitive ask. One item, not a list — if everything
@@ -332,11 +335,19 @@ function App() {
           <h2>The next dates to plan around.</h2>
         </div>
         <div className="event-grid" aria-label="Upcoming RCAP dates">
-          {upcomingEvents.map(({ weekday, date, label }) => (
-            <article className="event-card" key={`${date}-${label}`}>
-              <span className="event-weekday">{weekday}</span>
-              <strong>{date}</strong>
-              <span>{label}</span>
+          {upcomingEvents.map(({ month, year, weekday, day, label }) => (
+            <article
+              className={`event-card${day.length > 2 ? ' is-range' : ''}`}
+              key={`${month}-${day}-${label}`}
+            >
+              <header className="event-banner">
+                <span>
+                  {month} {year}
+                </span>
+                <span>{weekday}</span>
+              </header>
+              <p className="event-day">{day}</p>
+              <p className="event-what">{label}</p>
             </article>
           ))}
         </div>
