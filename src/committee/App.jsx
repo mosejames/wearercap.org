@@ -80,16 +80,28 @@ export default function App() {
 
   if (step === 'welcome') return (
     <Screen night onNight>
-      <p className="said anim">There is more than one way to show up at RCA.</p>
-      <h1 className="hero-title anim" style={{ animationDelay: '.05s' }}>
+      <p className="eyebrow anim">RCAP Committee Interest</p>
+      <p className="said anim" style={{ animationDelay: '.04s' }}>
+        Your time. Your talents. Your way to contribute.
+      </p>
+      <h1 className="hero-title anim" style={{ animationDelay: '.08s' }}>
         Find your<br /><span className="flame">place</span>
       </h1>
-      <p className="sub anim" style={{ animationDelay: '.12s' }}>
-        Ten committees, and you do not need to understand all of them to start.
-        Tell us a little about you and we will point you at the ones that fit.
+      <p className="sub anim" style={{ animationDelay: '.14s' }}>
+        RCAP is powered by parents like you. Our committees are one of the ways parents help
+        make the magic happen at RCA, bringing their time, talents, ideas, and energy to the
+        experiences we create for our school community.
       </p>
-      <div className="row anim" style={{ animationDelay: '.18s' }}>
-        <button className="btn solid" onClick={() => go('name')}>Let's go</button>
+      <p className="sub anim" style={{ animationDelay: '.17s' }}>
+        And joining a committee isn't the only way to get involved. There will be plenty of
+        opportunities to volunteer throughout the year.
+      </p>
+      <p className="sub anim" style={{ animationDelay: '.2s' }}>
+        But if you're ready to lean in a little more, we'd love to help you find the committee
+        that feels right for you.
+      </p>
+      <div className="row anim" style={{ animationDelay: '.24s' }}>
+        <button className="btn solid" onClick={() => go('name')}>Let's find your place</button>
         <span className="hintline">Takes about three minutes</span>
       </div>
     </Screen>
@@ -232,7 +244,8 @@ export default function App() {
         })}
       </ul>
       <p className="sub anim" style={{ animationDelay: '.12s', marginTop: 26 }}>
-        Want to do more than participate? Some of these need a parent willing to take the lead.
+        If you're ready to lean in a little more, some of these need a parent willing to take
+        the lead.
       </p>
       <div className="row anim" style={{ animationDelay: '.16s' }}>
         <button className="btn solid" onClick={() => {
@@ -405,7 +418,11 @@ export default function App() {
         You are down for {listify(picks.map((id) => byId(id).name))}.
         {leadFor.length ? ' We have your chair application too, and the board will be back to you either way.' : ''}
       </p>
-      <p className="said anim" style={{ animationDelay: '.16s', marginTop: 26 }}>
+      <p className="sub anim" style={{ animationDelay: '.14s' }}>
+        Committees are not the only way to help. We will share other volunteer opportunities
+        through the year, and you are welcome at every one of them.
+      </p>
+      <p className="said anim" style={{ animationDelay: '.18s', marginTop: 26 }}>
         If you signed up, you will hear from us. That is the whole promise.
       </p>
       <p className="foot anim" style={{ animationDelay: '.2s' }}>

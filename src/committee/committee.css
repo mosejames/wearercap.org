@@ -466,3 +466,6 @@ a{color:inherit}
   .ad-r-body dl{grid-template-columns:1fr;gap:2px}
   .ad-r-body dt{margin-top:8px}
 }
+
+/* The eyebrow on the night hero. Ink-soft is right on paper and invisible here. */
+.screen.night .eyebrow{color:rgba(255,255,255,.45)}
