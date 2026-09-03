@@ -69,13 +69,13 @@ button {
   background: #0d0a08;
 }
 
-.hero-poster {
+.hero-media {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
 }
 
-.hero-poster img {
+.hero-img {
   width: 100%;
   height: 100%;
   /* The photo is 2400x1050, far wider than the hero box. Hold the two subjects
@@ -86,11 +86,10 @@ button {
 }
 
 /* Two scrims doing different jobs: one darkens left-to-right so the headline
-   has a floor to sit on, one lifts the bottom so the torn edge reads. */
+   has a floor to sit on, one lifts the bottom so the angled edge reads. */
 .hero-scrim {
   position: absolute;
   inset: 0;
-  z-index: -1;
   background:
     linear-gradient(97deg, rgba(13, 10, 8, 0.94) 0%, rgba(13, 10, 8, 0.86) 30%, rgba(13, 10, 8, 0.36) 58%, rgba(13, 10, 8, 0.12) 100%),
     linear-gradient(180deg, rgba(13, 10, 8, 0.55) 0%, rgba(13, 10, 8, 0) 26%, rgba(13, 10, 8, 0) 62%, rgba(13, 10, 8, 0.5) 100%);
@@ -248,13 +247,14 @@ button {
   color: var(--gold);
 }
 
-/* The "We Are RCAP" lockup, bottom right, sitting behind the torn edge. */
+/* The "We Are RCAP" lockup, bottom right of the photo. In the overlay layout
+   .hero-media fills the section, so this lands in the hero's corner; in the
+   split layout it lands in the corner of the photo band. */
 
 .hero-lockup {
   position: absolute;
   right: 4%;
   bottom: 58px;
-  z-index: 0;
   text-align: right;
   line-height: 0.82;
   pointer-events: none;
@@ -1551,9 +1551,16 @@ button {
 }
 
 @media (max-width: 560px) {
-  .hero-poster img {
-    /* Tighter on the two of them once there is no room for anything else. */
-    object-position: 68% center;
+  /* Below this width the band is taller than the source aspect, so cover starts
+     cropping horizontally and squeezes the pair. A shorter band scales the
+     image down less, which widens the visible slice: at 360px a 240 band showed
+     x 24-89% and clipped a shoulder, a 190 band shows x 12-95%. */
+  .hero-media {
+    height: clamp(180px, 52vw, 240px);
+  }
+
+  .hero-img {
+    object-position: 70% center;
   }
 
   .hero-content > *,
@@ -1561,13 +1568,91 @@ button {
     max-width: none;
   }
 
-  /* On a phone the watermark lands behind the buttons and reads as noise
-     rather than as a mark. It is decorative, so it goes. */
+  /* The lockup was hidden here because it used to land behind the buttons.
+     In the split layout it sits in the photo band's own corner, so it comes
+     back, just smaller. */
   .hero-lockup {
-    display: none;
+    right: 18px;
+    bottom: 12px;
+  }
+
+  .lockup-script {
+    font-size: 24px;
+  }
+
+  .lockup-mark {
+    font-size: 30px;
   }
 
   .hero-actions {
     margin-top: 26px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Split hero, below 1100px.
+
+   The overlay only works while there is photo to spare on the right. Measured
+   against the real image, white body copy drops under 4.5:1 from about 1000px
+   down, because the copy column keeps its width while the viewport shrinks
+   around it and runs past where the scrim has faded out. Below 1100 the photo
+   becomes a band and the copy sits under it on solid ink, which is legible by
+   construction and stays correct if the photograph is ever swapped.
+   ------------------------------------------------------------------------ */
+
+@media (max-width: 1100px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .nav {
+    order: 1;
+    padding: 22px 0 20px;
+  }
+
+  .hero-media {
+    order: 2;
+    position: relative;
+    inset: auto;
+    height: clamp(240px, 34vw, 360px);
+  }
+
+  .hero-img {
+    /* 28% down keeps both faces clear of the crop when the band is wider than
+       the source aspect. */
+    object-position: 64% 28%;
+  }
+
+  .hero-scrim {
+    background:
+      linear-gradient(180deg, rgba(13, 10, 8, 0.34) 0%, rgba(13, 10, 8, 0) 30%, rgba(13, 10, 8, 0) 58%, rgba(13, 10, 8, 0.72) 100%);
+  }
+
+  .hero-lockup {
+    bottom: 18px;
+  }
+
+  .lockup-script {
+    font-size: clamp(28px, 4.4vw, 44px);
+  }
+
+  .lockup-mark {
+    font-size: clamp(32px, 5.2vw, 54px);
+  }
+
+  .hero-content {
+    order: 3;
+    align-self: auto;
+    padding: 40px 0 128px;
+  }
+
+  .hero h1 {
+    font-size: clamp(38px, 5.6vw, 60px);
+  }
+
+  .hero-copy {
+    max-width: 620px;
   }
 }

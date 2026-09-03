@@ -253,10 +253,18 @@ function App() {
   return (
     <main className="site-shell">
       <section className="hero" aria-label="We Are RCAP">
-        <div className="hero-poster" aria-hidden="true">
-          <img src={heroImage} alt="" />
+        {/* Photo, scrim and lockup travel together. Above 1100px this block is
+            absolutely positioned behind the copy; below it, it becomes a band
+            in the flow with the copy stacked underneath on solid ink. Same
+            markup, two layouts. */}
+        <div className="hero-media" aria-hidden="true">
+          <img className="hero-img" src={heroImage} alt="" />
+          <div className="hero-scrim" />
+          <div className="hero-lockup">
+            <span className="lockup-script">We Are</span>
+            <span className="lockup-mark">RCAP</span>
+          </div>
         </div>
-        <div className="hero-scrim" />
 
         <header className="nav">
           <a className="brand" href="/">
@@ -299,11 +307,6 @@ function App() {
               Watch the video
             </button>
           </div>
-        </div>
-
-        <div className="hero-lockup" aria-hidden="true">
-          <span className="lockup-script">We Are</span>
-          <span className="lockup-mark">RCAP</span>
         </div>
 
         {/* Angled edge into the paper below: two parallel cuts descending to
