@@ -375,29 +375,6 @@ function App() {
             </span>
           </button>
         </div>
-
-        <div className="photo-mosaic" aria-label="RCAP parents and students">
-          <img
-            className="photo-large"
-            src="/images/rcap-community-smiles.jpg"
-            alt="RCAP parents smiling together"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-hero-students.jpg"
-            alt="Ron Clark Academy students standing together"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-hero-volunteer.jpg"
-            alt="RCAP volunteer welcoming families"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-volunteer-hours.jpg"
-            alt="RCAP volunteers reviewing materials together"
-          />
-        </div>
       </section>
 
       {/* Serve — one place for stepping up: hands, hours, and names. */}

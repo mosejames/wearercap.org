@@ -457,30 +457,12 @@ button {
   margin-top: 24px;
 }
 
-.photo-mosaic {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: 150px;
-  gap: 12px;
-}
-
-.photo-mosaic img,
 .photo-video {
   width: 100%;
   height: 100%;
   display: block;
   border-radius: 8px;
   object-fit: cover;
-}
-
-.photo-large {
-  grid-column: span 4;
-  grid-row: span 3;
-}
-
-.photo-small,
-.photo-video {
-  grid-column: span 2;
 }
 
 .photo-video {
@@ -954,26 +936,6 @@ button {
   .community-feature {
     gap: 26px;
     padding: 54px 0 18px;
-  }
-
-  .photo-mosaic {
-    order: -1;
-  }
-
-  .photo-mosaic {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 150px;
-    gap: 10px;
-  }
-
-  .photo-large {
-    grid-column: 1 / -1;
-    grid-row: span 2;
-  }
-
-  .photo-small,
-  .photo-video {
-    grid-column: span 1;
   }
 
   .video-callout {
@@ -1525,12 +1487,6 @@ button {
   font-size: 15px;
   font-weight: 800;
   color: var(--accent);
-}
-
-/* Story — the video, moved down out of the hero. */
-
-.story-section .photo-mosaic {
-  margin-top: 8px;
 }
 
 @media (max-width: 1040px) {
