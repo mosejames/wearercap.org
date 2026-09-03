@@ -34,7 +34,7 @@ export const COMMITTEES = [
     id: 'raffle',
     name: 'Fall Raffle',
     accent: 'orange',
-    tags: ['maker', 'organizer', 'giveback'],
+    tags: ['maker', 'organizer'],
     blurb: 'The fundraiser that pays for everything we do for the teachers.',
     what: 'Tickets sell through October, and the drawing is mid November.',
     does: [
@@ -47,7 +47,7 @@ export const COMMITTEES = [
     id: 'trunk',
     name: 'Trunk or Treat',
     accent: 'gold',
-    tags: ['people', 'creative', 'maker'],
+    tags: ['maker', 'creative', 'people', 'organizer'],
     blurb: 'Halloween in the parking lot. Each house decorates a section and the kids work the cars.',
     what: 'Late October, and the chair seat is open.',
     does: [
@@ -60,7 +60,7 @@ export const COMMITTEES = [
     id: 'taw',
     name: 'Teacher Appreciation Week',
     accent: 'magenta',
-    tags: ['creative', 'organizer', 'giveback'],
+    tags: ['creative', 'organizer'],
     blurb: 'One week in May that tells this staff what they are worth to us.',
     what: 'A chair and co-chair own the week, and each class takes a day inside one theme.',
     does: [
@@ -73,7 +73,7 @@ export const COMMITTEES = [
     id: 'fourdays',
     name: '4 Days of Christmas',
     accent: 'red',
-    tags: ['creative', 'people', 'giveback'],
+    tags: ['creative', 'people'],
     blurb: 'Your class picks a day in December and spoils the staff rotten.',
     what: 'One day in December, run by your class.',
     does: [
@@ -86,7 +86,7 @@ export const COMMITTEES = [
     id: 'decor',
     name: 'Holiday Decor',
     accent: 'green',
-    tags: ['creative', 'backstage', 'maker'],
+    tags: ['maker', 'creative', 'backstage'],
     blurb: 'Two weekends that turn the whole building into something kids remember.',
     what: 'One weekend up in November, a short one down after Christmas.',
     does: [
@@ -99,7 +99,7 @@ export const COMMITTEES = [
     id: 'concessions',
     name: 'Concessions',
     accent: 'blue',
-    tags: ['people', 'backstage'],
+    tags: ['backstage', 'people', 'organizer'],
     blurb: 'Basketball season, the stand, and a shift you can actually commit to.',
     what: 'Home games only, roughly November through February.',
     does: [
@@ -112,7 +112,7 @@ export const COMMITTEES = [
     id: 'uniform',
     name: 'Uniform Swap',
     accent: 'gold',
-    tags: ['organizer', 'backstage', 'giveback'],
+    tags: ['backstage', 'organizer'],
     blurb: 'Outgrown pieces from one family, straight to the family that needs them.',
     what: 'Steady all year, busiest in August and January.',
     does: [
@@ -138,7 +138,7 @@ export const COMMITTEES = [
     id: 'service',
     name: 'Community Service',
     accent: 'green',
-    tags: ['giveback', 'maker'],
+    tags: ['maker', 'organizer', 'people', 'giveback'],
     blurb: 'The one that has not been built yet. Come help decide what it is.',
     what: 'Board-led and school-wide, with the first push around December.',
     does: [
@@ -151,7 +151,7 @@ export const COMMITTEES = [
     id: 'men',
     name: 'Men of RCAP',
     accent: 'ink',
-    tags: ['people', 'maker', 'backstage'],
+    tags: ['maker', 'backstage', 'people'],
     blurb: 'Dads, granddads, uncles, stepdads, big brothers. Any man in an RCA family.',
     what: 'Year round, heaviest around events. This group picks its own leadership.',
     does: [
@@ -160,13 +160,19 @@ export const COMMITTEES = [
       'Be a visible presence in the building',
     ],
     noChair: true,
+    // Self-governing and open to any man in an RCA family, so it does not
+    // compete for recommendation slots against committees that need
+    // recruiting. Still listed under Explore all.
+    noMatch: true,
   },
 ];
 
 export const byId = (id) => COMMITTEES.find((c) => c.id === id);
 
-/* How many committees carry each trait. */
-const FREQ = COMMITTEES.reduce((m, c) => {
+const MATCHABLE = COMMITTEES.filter((c) => !c.noMatch);
+
+/* How many matchable committees carry each trait. */
+const FREQ = MATCHABLE.reduce((m, c) => {
   c.tags.forEach((t) => { m[t] = (m[t] || 0) + 1; });
   return m;
 }, {});
@@ -185,8 +191,8 @@ const FREQ = COMMITTEES.reduce((m, c) => {
    is divided by the square root of its tag count. Breadth stops being an
    advantage; being genuinely about the thing starts being one. */
 function score(c, traits) {
-  if (!traits.length) return 0;
-  const raw = c.tags.reduce((n, t) => n + (traits.includes(t) ? 1 / FREQ[t] : 0), 0);
+  if (!traits.length || c.noMatch) return 0;
+  const raw = c.tags.reduce((n, t) => n + (traits.includes(t) && FREQ[t] ? 1 / FREQ[t] : 0), 0);
   return raw / Math.sqrt(c.tags.length);
 }
 
