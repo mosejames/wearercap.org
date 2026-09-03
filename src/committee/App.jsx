@@ -525,15 +525,22 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
             className="lb-in" data-a={detail.accent} role="dialog" aria-modal="true"
             aria-label={detail.name} onClick={(e) => e.stopPropagation()}
           >
-            <button className="lb-x" onClick={() => setOpen(null)} aria-label="Close">&times;</button>
             <h3 className="lb-name">{detail.name}</h3>
             <p className="lb-what">{detail.what}</p>
             <h4 className="lb-h">What you'll do</h4>
             <ul className="lb-list">{detail.does.map((d) => <li key={d}>{d}</li>)}</ul>
-            <button
-              className={'add lb-add' + (picks.includes(detail.id) ? ' on' : '')}
-              onClick={() => toggle(detail.id)}
-            >{picks.includes(detail.id) ? 'Added' : 'Add to my list'}</button>
+            {/* Acting on the list closes the box: reading Details is a detour, and
+                once you have decided you want to be back in the grid, not
+                dismissing a panel you are finished with. Because the button now
+                closes, an "Added" badge that quietly removed on tap would be a
+                trap, so the label says what the tap will actually do. */}
+            <div className="lb-actions">
+              <button
+                className={'add lb-add' + (picks.includes(detail.id) ? ' on' : '')}
+                onClick={() => { toggle(detail.id); setOpen(null); }}
+              >{picks.includes(detail.id) ? 'Remove from my list' : 'Add to my list'}</button>
+              <button className="lb-x" onClick={() => setOpen(null)} aria-label="Close">&times;</button>
+            </div>
           </div>
         </div>
       )}

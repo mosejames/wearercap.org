@@ -329,14 +329,17 @@ a{color:inherit}
 .lb-in[data-a="red"]{--a:var(--red)} .lb-in[data-a="green"]{--a:var(--green)}
 .lb-in[data-a="blue"]{--a:var(--blue)} .lb-in[data-a="gold"]{--a:var(--gold)}
 .lb-in[data-a="ink"]{--a:var(--graphite)}
+/* The close control sits beside the primary action rather than in the corner:
+   both ways out of the box are then in the same place, under a thumb, instead
+   of one being at the bottom and one at the top of a panel you have scrolled. */
+.lb-actions{display:flex;gap:9px;margin-top:22px}
 .lb-x{
-  position:absolute;top:14px;right:14px;
-  width:34px;height:34px;border:0;border-radius:50%;
-  background:var(--line-soft);color:var(--ink-soft);
-  font-size:21px;line-height:1;display:flex;align-items:center;justify-content:center;
+  flex:none;width:52px;border:1.5px solid var(--line);border-radius:6px;
+  background:transparent;color:var(--ink-soft);
+  font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;
 }
-.lb-x:hover{background:var(--line);color:var(--ink)}
-.lb-name{margin:0 40px 0 0;font-size:24px;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.lb-x:hover{border-color:var(--ink-soft);color:var(--ink)}
+.lb-name{margin:0;font-size:24px;font-weight:900;letter-spacing:-.03em;line-height:1.1}
 .lb-what{margin:12px 0 0;font-size:16px;line-height:1.5;color:var(--ink-soft)}
 .lb-h{
   font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
@@ -345,7 +348,7 @@ a{color:inherit}
 }
 .lb-list{margin:0;padding-left:18px}
 .lb-list li{font-size:16px;line-height:1.45;color:var(--ink);margin-bottom:7px}
-.lb-add{width:100%;margin-top:22px;padding:13px}
+.lb-add{flex:1;margin:0;padding:13px}
 @media(max-width:520px){
   .lb{padding:14px;align-items:flex-end}
   .lb-in{max-width:none;max-height:88svh}
