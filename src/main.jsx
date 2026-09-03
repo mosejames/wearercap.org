@@ -340,20 +340,6 @@ function App() {
             </article>
           ))}
         </div>
-
-        {openCall ? (
-          <a className="open-call" href={openCall.href}>
-            <span className="open-call-label">{openCall.label}</span>
-            <div className="open-call-text">
-              <h3>{openCall.title}</h3>
-              <p>{openCall.body}</p>
-            </div>
-            <em>
-              {openCall.linkLabel}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </em>
-          </a>
-        ) : null}
       </section>
 
       {/* Story — where the hero's video went. A first-time parent gets the
@@ -385,6 +371,20 @@ function App() {
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
       <section id="serve" className="content-section">
+        {openCall ? (
+          <a className="open-call" href={openCall.href}>
+            <span className="open-call-label">{openCall.label}</span>
+            <div className="open-call-text">
+              <h3>{openCall.title}</h3>
+              <p>{openCall.body}</p>
+            </div>
+            <em>
+              {openCall.linkLabel}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </em>
+          </a>
+        ) : null}
+
         <div className="section-heading">
           <p className="section-label">Serve</p>
           <h2>Step up in the way that fits.</h2>
