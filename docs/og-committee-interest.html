@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OG — RCAP Committee Interest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=Newsreader:ital,opsz,wght@1,18,400&display=swap" rel="stylesheet" />
+<style>
+  /* Same frame as og-wish-i-knew.html so the two share a shelf: night field,
+     the mark top left, meta top right, headline low, mono strip on a rule.
+     The one addition is the eyebrow above the headline, because this page's
+     whole lesson was that the campaign line alone never said what it is. */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{
+    background:#0E0C0B;color:#fff;
+    font-family:'Archivo',system-ui,sans-serif;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:56px 64px;
+    position:relative;
+  }
+  .flame{
+    background:linear-gradient(96deg,#e8a516 0%,#f26a1b 34%,#d8202d 68%,#e0218a 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  /* The flame as a bar down the right edge: the site's one strongest asset,
+     used once, holding the composition together without competing with type. */
+  .edge{
+    position:absolute;top:0;right:0;width:14px;height:100%;
+    background:linear-gradient(180deg,#e8a516 0%,#f26a1b 34%,#d8202d 68%,#e0218a 100%);
+  }
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .mark{font-size:30px;font-weight:900;letter-spacing:-.025em;line-height:1}
+  .mark small{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;
+    letter-spacing:.22em;color:rgba(255,255,255,.5);margin-top:8px;
+  }
+  .topmeta{
+    text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;
+    letter-spacing:.2em;color:rgba(255,255,255,.5);line-height:2;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);
+    margin-bottom:18px;
+  }
+  .kicker{
+    font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:27px;
+    color:rgba(255,255,255,.82);margin-bottom:16px;
+  }
+  h1{
+    font-size:112px;line-height:.84;letter-spacing:-.048em;
+    font-weight:900;text-transform:uppercase;
+  }
+  .strip{
+    display:flex;gap:16px;align-items:center;
+    font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62);
+    border-top:1px solid rgba(255,255,255,.16);padding-top:22px;
+  }
+  .strip b{color:rgba(255,255,255,.3);font-weight:500}
+</style>
+</head>
+<body>
+  <div class="edge"></div>
+
+  <div class="top">
+    <div class="mark">We Are <span class="flame">RCAP</span><small>RON CLARK ACADEMY PARENTS</small></div>
+    <div class="topmeta">COMMITTEE INTEREST<br />WEARERCAP.ORG</div>
+  </div>
+
+  <div>
+    <p class="eyebrow">RCAP Committee Interest</p>
+    <p class="kicker">Your time. Your talents. Your way to contribute.</p>
+    <h1>Find your<br /><span class="flame">place.</span></h1>
+  </div>
+
+  <div class="strip">
+    <span>POWERED BY PARENTS LIKE YOU</span><b>&middot;</b>
+    <span>COMMITTEE SIGN-UPS ARE OPEN</span>
+  </div>
+</body>
+</html>
