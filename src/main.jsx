@@ -1,15 +1,15 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
+  ArrowRight,
   ArrowUpRight,
   Camera,
   Car,
+  ChevronRight,
   Clock,
-  HeartHandshake,
   Instagram,
   Lightbulb,
-  Mail,
-  Megaphone,
+  MapPin,
   PlayCircle,
   Shirt,
   Users,
@@ -137,7 +137,7 @@ const tools = [
 
 const serveActions = [
   {
-    icon: HeartHandshake,
+    icon: Users,
     title: 'Volunteer sign-up',
     body: 'See current needs and claim a spot when help is needed.',
     href: volunteerHref,
@@ -153,7 +153,7 @@ const serveActions = [
     external: true,
   },
   {
-    icon: Megaphone,
+    icon: MapPin,
     title: 'Find your place',
     body:
       'Tell us what you are into and see which committees fit. Chair one, ' +
@@ -173,7 +173,7 @@ const committees = [
   },
   {
     title: 'Men of RCAP',
-    body: 'Event muscle since 2011 — setup, teardown, and showing up. Open to any man in an RCA family.',
+    body: 'Event muscle since 2011. Setup, teardown, and showing up. Open to any man in an RCA family.',
   },
   {
     title: 'Fall Raffle',
@@ -185,7 +185,7 @@ const committees = [
   },
   {
     title: 'Uniform Swap',
-    body: 'Free uniform exchanges since 2010 — the longest-running family service RCAP offers.',
+    body: 'Free uniform exchanges since 2010, the longest-running family service RCAP offers.',
   },
   {
     title: 'Concessions',
@@ -247,6 +247,9 @@ function VideoModal({ open, onClose }) {
 
 function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
+  // One committee is always active: the detail panel is never empty on desktop,
+  // and the mobile accordion always has exactly one section open.
+  const [activeCommittee, setActiveCommittee] = React.useState(0);
   const openVideo = React.useCallback(() => setIsVideoOpen(true), []);
   const closeVideo = React.useCallback(() => setIsVideoOpen(false), []);
 
@@ -380,62 +383,95 @@ function App() {
         </div>
       </section>
 
-      {/* Serve — one place for stepping up: hands, hours, and names. */}
-      <section id="serve" className="content-section volunteer-section">
-        <div className="section-heading">
+      {/* Serve and Committees share one editorial spread: no cards, no
+          capsules. Structure comes from a thin rule between the columns and
+          thin rules between the three actions. Both ids stay live because the
+          nav points at #serve and #committees separately. */}
+      <section id="serve" className="content-section spread">
+        <div className="spread-col serve-col">
           <p className="section-label">Serve</p>
           <h2>Step up in the way that fits.</h2>
-          <p>
+          <p className="col-intro">
             Give an hour, give a season, or put a name forward, including your
             own. It all counts, and it all starts here.
           </p>
-        </div>
-        <div className="action-list">
-          {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
-            <a
-              className="action-link"
-              key={title}
-              href={href}
-              {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            >
-              <Icon size={24} aria-hidden="true" />
-              <span>
-                <strong>{title}</strong>
-                <span>{body}</span>
-              </span>
-              <em>
-                {label}
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </em>
-            </a>
-          ))}
-        </div>
-      </section>
 
-      {/* Committees — follows Serve because "what are the teams?" is the next
-          question a parent asks. Descriptions stay evergreen; the sign-up
-          carries the year-specific detail. */}
-      <section id="committees" className="content-section committees-section">
-        <div className="section-heading">
+          <div className="serve-actions">
+            {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
+              <article className="serve-action" key={title}>
+                <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
+                <h3>{title}</h3>
+                <p>{body}</p>
+                <a
+                  className="text-link"
+                  href={href}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                >
+                  {label}
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="spread-col committee-col" id="committees">
           <p className="section-label">Committees</p>
           <h2>The teams that carry RCAP.</h2>
-          <p>
+          <p className="col-intro">
             Sixteen years of traditions run through these committees. Every one
             of them is open to any RCA parent.
           </p>
+
+          <div className="explorer">
+            <ul className="committee-list">
+              {committees.map(({ title, body }, index) => (
+                <li key={title} className={index === activeCommittee ? 'is-active' : undefined}>
+                  <button
+                    type="button"
+                    aria-expanded={index === activeCommittee}
+                    aria-controls={`committee-panel-${index}`}
+                    onMouseEnter={() => setActiveCommittee(index)}
+                    onFocus={() => setActiveCommittee(index)}
+                    onClick={() => setActiveCommittee(index)}
+                  >
+                    <span>{title}</span>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+
+                  {/* The stacked answer. Hidden above the accordion breakpoint,
+                      where the detail panel to the right does this job. */}
+                  {index === activeCommittee ? (
+                    <div className="committee-panel" id={`committee-panel-${index}`}>
+                      <p>{body}</p>
+                      <a className="text-link" href="/committee-interest/">
+                        Learn more
+                        <ArrowUpRight size={15} aria-hidden="true" />
+                      </a>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+
+            <div className="committee-detail" aria-live="polite">
+              <p className="section-label">Featured</p>
+              <h3>{committees[activeCommittee].title}</h3>
+              <span className="detail-rule" aria-hidden="true" />
+              <p>{committees[activeCommittee].body}</p>
+              <a className="text-link" href="/committee-interest/">
+                Learn more
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+
+          <a className="explorer-cta" href="/committee-interest/">
+            <Users size={22} strokeWidth={1.5} aria-hidden="true" />
+            See all nine committees and raise your hand
+            <ArrowRight size={18} aria-hidden="true" />
+          </a>
         </div>
-        <div className="committee-grid" aria-label="RCAP standing committees">
-          {committees.map(({ title, body }) => (
-            <article className="committee-card" key={title}>
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-        <a className="section-cta" href="/committee-interest/">
-          See all nine committees and raise your hand
-          <ArrowUpRight size={18} aria-hidden="true" />
-        </a>
       </section>
 
       {/* Tools — everything RCAP has built for families, rendered from the
