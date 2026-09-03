@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RCAP — It's That Time Again: Six More Chances to Show Up</title>
+<title>RCAP — Ten Days to Show Up: The 2026-27 EXP Schedule</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@1,18,400;1,18,500&display=swap" rel="stylesheet" />
@@ -76,6 +76,21 @@
   .dcard:nth-child(4) .dow{color:var(--magenta);}
   .dcard:nth-child(5) .dow{color:var(--red);}
   .dcard:nth-child(6) .dow{color:var(--orange);}
+  /* Sessions grid — two up, because each card carries a two-day range and a
+     3-col grid left an orphan on the last row with ten sessions. */
+  .dates-grid.sessions{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .dates-grid.sessions .dcard{padding:16px 12px;cursor:default;}
+  .dates-grid.sessions .dcard:hover{transform:none;box-shadow:none;}
+  .dates-grid.sessions .day{font-size:32px;}
+  .dcard:nth-child(7) .dow{color:var(--blue);}
+  .dcard:nth-child(8) .dow{color:var(--green);}
+  .dcard:nth-child(9) .dow{color:var(--gold);}
+  .dcard:nth-child(10) .dow{color:var(--magenta);}
+  /* Other conference weeks — a plain list, deliberately quieter than EXP */
+  .weeks{list-style:none;margin:16px 0 0;padding:0;border-top:1px solid var(--line);}
+  .weeks li{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;}
+  .weeks li b{font-weight:700;}
+  .weeks li span{color:var(--ink-soft);white-space:nowrap;}
   /* Verbs */
   .verbs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;}
   .verbs span{font-size:13px;font-weight:600;letter-spacing:.01em;background:var(--paper-2);color:#3a322b;padding:7px 13px;border-radius:999px;border:1px solid var(--line);}
@@ -147,7 +162,7 @@
       <div class="brand-sub">Ron Clark Academy Parents</div>
     </div>
     <div class="issue">
-      Six More<br/>Opportunities · July 2026
+      The EXP Year<br/>2026-2027
     </div>
   </div>
 
@@ -170,8 +185,9 @@
   <!-- LETTER -->
   <section data-screen-label="Letter">
     <p class="greet">Dear Ron Clark Academy Families,</p>
-    <p class="lede">Six more opportunities to serve this summer. And a whole lot of educators headed our way.</p>
-    <p>You saw what we did together at the first summer EXP — the welcome, the energy, the teamwork. Now it's time to do it again. We need parents at every post: greeting, directing traffic, registration, guiding groups, serving meals, flipping rooms.</p>
+    <p class="lede">Ten EXP sessions this school year. Educators fly in from around the world, and parents are the first people they meet.</p>
+    <p>EXP is where teachers come to see what happens inside this building. They arrive early, they fill the halls, and they leave changed. Our job is the welcome: greeting, directing traffic, registration, guiding groups, serving meals, flipping rooms. None of it takes a title. All of it takes hands.</p>
+    <p class="muted">Every EXP runs a Thursday and a Friday. Take one day or take both. First-timer or veteran, there is a spot with your name on it.</p>
 
     <div class="verbs">
       <span><b>greeting</b> guests</span>
@@ -183,27 +199,51 @@
     </div>
   </section>
 
-  <!-- DATES -->
+  <!-- DATES — the year's EXP sessions, straight off the RCA 2026-2027 calendar.
+       Static cards, not links: shifts for March do not open in September. The
+       one sign-up button below is the live door. -->
   <section style="background:var(--paper-2);padding-top:34px;" data-screen-label="Dates">
-    <p class="kicker" style="color:var(--ink);">Six more opportunities</p>
-    <h2>Pick a day. <span class="hl">Or two.</span></h2>
-    <p class="muted">First-timer or veteran — there's a spot with your name on it. Tap any day to grab it.</p>
-    <div class="dates-grid">
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Saturday</span><span class="day" style="display:block;">18</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Sunday</span><span class="day" style="display:block;">19</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Tuesday</span><span class="day" style="display:block;">21</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Wednesday</span><span class="day" style="display:block;">22</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Friday</span><span class="day" style="display:block;">24</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
-      <a class="dcard" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener"><span class="dow">Saturday</span><span class="day" style="display:block;">25</span><span class="mon">July</span><span class="go" style="display:block;">Sign up →</span></a>
+    <p class="kicker" style="color:var(--ink);">The whole year</p>
+    <h2>Ten EXP sessions. <span class="hl">Pick yours.</span></h2>
+    <p class="muted">Mark them now. Shifts open closer to each one, and the sign-up below always points at the next round.</p>
+    <div class="dates-grid sessions">
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">24 – 25</span><span class="mon">September</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">5 – 6</span><span class="mon">November</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">19 – 20</span><span class="mon">November</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">10 – 11</span><span class="mon">December</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">21 – 22</span><span class="mon">January</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">18 – 19</span><span class="mon">February</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">4 – 5</span><span class="mon">March</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">11 – 12</span><span class="mon">March</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">15 – 16</span><span class="mon">April</span></div>
+      <div class="dcard"><span class="dow">Thu · Fri</span><span class="day" style="display:block;">13 – 14</span><span class="mon">May</span></div>
     </div>
   </section>
+
+  <!-- OTHER CONFERENCE WEEKS -->
+  <section data-screen-label="Other weeks">
+    <p class="kicker">Beyond EXP</p>
+    <h2>Other weeks the building fills up.</h2>
+    <p class="muted">Educators are on campus for these too, and hands help just as much. Same posts, same welcome.</p>
+    <ul class="weeks">
+        <li><b>New Teacher Conference</b> <span>Sept 17 – 18</span></li>
+        <li><b>Admin Conference</b> <span>Oct 1 – 2</span></li>
+        <li><b>House Mania</b> <span>Oct 8 – 9</span></li>
+        <li><b>Signature Series</b> <span>Nov 12 – 13</span></li>
+        <li><b>House Mania</b> <span>Jan 28 – 29</span></li>
+        <li><b>Admin Conference</b> <span>Feb 25 – 26</span></li>
+        <li><b>House Mania</b> <span>Apr 22 – 23</span></li>
+        <li><b>House Mania</b> <span>May 20 – 21</span></li>
+    </ul>
+  </section>
+
 
   <!-- WHAT TO EXPECT: ties this invite to the recap newsletter -->
   <section style="padding-bottom:0;" data-screen-label="What to expect">
     <div class="cta" style="margin-bottom:0;">
       <p class="ct-k">New to serving at EXP?</p>
       <h3>And here's what to expect</h3>
-      <p>See what a day on the team looks like — the energy, the posts, the people — in our recap from earlier this summer.</p>
+      <p>See what a day on the team looks like, the energy, the posts, the people, in our recap from the summer.</p>
       <a class="btn btn-dark" href="/what-to-expect/">What to expect <span class="arr">→</span></a>
     </div>
   </section>
@@ -213,7 +253,7 @@
     <div class="cta feature">
       <p class="ct-k">Step one</p>
       <h3>Reserve your spot</h3>
-      <p>Grab your shift on SignUpGenius before the slots fill up — some days went fast last time.</p>
+      <p>Shifts go on SignUpGenius. Grab yours before the slots fill, and check back before each EXP for the next round.</p>
       <a class="btn btn-primary" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/" target="_blank" rel="noopener">Reserve my spot <span class="arr">→</span></a>
     </div>
   </section>
@@ -222,8 +262,8 @@
   <section style="background:var(--paper-2);" data-screen-label="Students">
     <p class="kicker" style="color:var(--ink);">And the real stars</p>
     <h2>Your kids will be there — <span class="hl">shining.</span></h2>
-    <p>These are mandatory school days for students, and honestly? They're the best part. Our kids are the reason educators travel from around the world to see this place.</p>
-    <p class="muted" style="font-size:15px;"><strong>The quick rundown:</strong> regular polo uniforms (per Mrs. Bearden — <em>regular!</em>), no bookbags needed, and arrive by 8:00 AM. Dismissal is 4:00 PM on Tuesday &amp; Friday and 3:30 PM all other days. No afterschool sessions.</p>
+    <p>EXP days are regular school days for students, and honestly? They are the best part. Our kids are the reason educators travel from around the world to see this place.</p>
+    <p class="muted" style="font-size:15px;"><strong>The quick rundown:</strong> regular polo uniforms, freshly washed and ironed. Watch In the Loop the week of each EXP for arrival, dismissal, and any afterschool changes.</p>
     <figure class="mt">
       <div class="photo ratio-wide"><img src="/invite/img/students-group.jpg" alt="Six Ron Clark Academy students in red and blue polos, arms around each other, smiling" /></div>
       <figcaption class="caption">Freshly washed and ironed polos. Khakis. And smiles for days.</figcaption>
@@ -252,9 +292,9 @@
   <!-- SECONDARY CTAs -->
   <section data-screen-label="More actions">
     <div class="cta">
-      <p class="ct-k">Relive it</p>
+      <p class="ct-k">From the summer</p>
       <h3>View the photo gallery</h3>
-      <p>See every moment from the first summer EXP — and add your own shots.</p>
+      <p>Every moment from summer EXP, and room for your own shots.</p>
       <a class="btn btn-dark" href="https://photos.app.goo.gl/95HnN6KXtEdoDkWJ6" target="_blank" rel="noopener">View &amp; add photos <span class="arr">→</span></a>
     </div>
     <div class="cta">

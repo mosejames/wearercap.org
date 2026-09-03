@@ -642,7 +642,9 @@ button {
 
 .event-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  /* auto-fit, not a fixed 6, so the row stays even whether there are three
+     dates on it or six. The list rotates all year; the grid should not care. */
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 10px;
 }
 
@@ -846,8 +848,7 @@ button {
 }
 
 @media (max-width: 1040px) {
-  .quick-links,
-  .event-grid {
+  .quick-links {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1019,7 +1020,7 @@ button {
   }
 
   .event-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .event-card {
@@ -1041,6 +1042,10 @@ button {
 }
 
 @media (max-width: 520px) {
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+
   .hero-actions {
     display: grid;
     grid-template-columns: 1fr;

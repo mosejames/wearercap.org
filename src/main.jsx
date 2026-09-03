@@ -50,6 +50,7 @@ const upcomingEvents = [
   { weekday: 'Thu', date: 'Sept 10, 2026', label: 'Parent Orientation Day, 8am to 3pm' },
   { weekday: 'Tue', date: 'Sept 15, 2026', label: 'Bingo Night, games at 5:30pm' },
   { weekday: 'Thu', date: 'Sept 17, 2026', label: 'Open House' },
+  { weekday: 'Thu + Fri', date: 'Sept 24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { weekday: 'Tue', date: 'Sept 29, 2026', label: 'Picture Day' },
 ];
 
@@ -460,7 +461,7 @@ function App() {
         <nav className="tool-reads" aria-label="RCAP letters">
           <span>Also here:</span>
           <a href="/what-to-expect/">What to Expect at EXP</a>
-          <a href="/invite/">Six More Chances to Show Up</a>
+          <a href="/invite/">Serve at EXP</a>
         </nav>
       </section>
 
@@ -496,7 +497,7 @@ function App() {
           <a href="/wish-i-knew/">One Thing I Wish I Knew</a>
           <a href="/rcap-recap/">The RCAP Recap</a>
           <a href="/what-to-expect/">What to Expect at EXP</a>
-          <a href="/invite/">Six More Chances to Show Up</a>
+          <a href="/invite/">Serve at EXP</a>
         </nav>
       </section>
 
