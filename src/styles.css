@@ -23,6 +23,12 @@
   --red: #d8202d;
   --green: #1f9d57;
   --shadow: 0 18px 38px rgba(8, 13, 18, 0.12);
+  /* Gold at 16% over paper. Keeps the accent link at 4.7:1 and muted body at
+     6.6:1, which 20% gold does not. */
+  --band: #fae8c9;
+  /* Vertical drop of the diagonal across the full viewport width. Matches the
+     hero's cut, which falls about 2.3% of its width. */
+  --slant: clamp(18px, 2.3vw, 38px);
 }
 
 * {
@@ -1668,4 +1674,60 @@ button {
   .committee-panel .text-link {
     margin-top: 14px;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Who We Are band.
+
+   A full-bleed gold stripe cut on the same diagonal as the hero's edge, so the
+   page has one repeating angle rather than two unrelated ones. Top and bottom
+   cuts are parallel, which makes the section read as a slanted stripe laid over
+   the cream rather than a box that happens to have angled corners.
+
+   Both edges are drawn with clip-path on pseudo-elements pinned to 100vw. Body
+   already carries overflow-x: hidden, so the bleed cannot open a scrollbar.
+   ------------------------------------------------------------------------ */
+
+.story-section {
+  position: relative;
+  isolation: isolate;
+  /* The slant eats into the corners, so pad by it on top of the usual rhythm. */
+  padding: calc(60px + var(--slant)) 0 calc(64px + var(--slant));
+  border-top: 0;
+}
+
+.story-section::before,
+.story-section::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+}
+
+/* The gold rule. Sits 6px proud of the band along the top cut only, because
+   both shapes share a bottom edge. */
+.story-section::before {
+  background: var(--gold);
+  clip-path: polygon(0 0, 100% var(--slant), 100% 100%, 0 calc(100% - var(--slant)));
+}
+
+.story-section::after {
+  background: var(--band);
+  clip-path: polygon(0 6px, 100% calc(var(--slant) + 6px), 100% 100%, 0 calc(100% - var(--slant)));
+}
+
+/* The band supplies its own bottom air. */
+.story-section .video-callout {
+  padding-bottom: 0;
+}
+
+/* The section after the band would otherwise draw a straight hairline directly
+   under a diagonal edge. */
+.story-section + .content-section {
+  border-top: 0;
+  padding-top: calc(56px + var(--slant));
 }
