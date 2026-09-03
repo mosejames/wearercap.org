@@ -33,6 +33,9 @@
   --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
   --shadow:0 1px 2px rgba(14,12,11,.05);
   --lift:0 16px 40px rgba(14,12,11,.16);
+  /* Height of the fixed top bar. The basket sticks directly below it, so this
+     is the single number both depend on. */
+  --bar:54px;
 }
 
 *{box-sizing:border-box}
@@ -67,12 +70,18 @@ a{color:inherit}
   transition:width .5s cubic-bezier(.4,0,.2,1);
 }
 
+/* The bar is opaque. It was transparent, which is fine over a screen that does
+   not move but wrong over a scrolling grid: the sticky basket parked underneath
+   it and the two sets of text landed on top of each other. It now covers what
+   passes beneath, and the basket starts where it ends. */
 .topbar{
   position:fixed;top:0;left:0;right:0;z-index:50;
+  height:var(--bar);
   display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:16px 22px;pointer-events:none;
+  padding:0 22px;
+  background:var(--surface);border-bottom:1px solid var(--line);
 }
-.topbar > *{pointer-events:auto}
+.topbar.on-night{background:var(--night);border-bottom-color:rgba(255,255,255,.1)}
 .brand{font-size:15px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .brand span{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
 .on-night .brand{color:#fff}
@@ -92,10 +101,10 @@ a{color:inherit}
    anything larger becomes a tax by the fourth screen. */
 .screen{
   min-height:100svh;display:flex;flex-direction:column;justify-content:center;
-  padding:88px 22px 40px;
+  padding:calc(var(--bar) + 34px) 22px 40px;
 }
 .screen.night{background:var(--night);color:#fff}
-.screen.wide{justify-content:flex-start;padding-top:96px}
+.screen.wide{justify-content:flex-start;padding-top:calc(var(--bar) + 30px)}
 .inner{width:100%;max-width:640px;margin:0 auto}
 .inner.big{max-width:1120px}
 
@@ -286,7 +295,7 @@ a{color:inherit}
    Sits above the grid on a phone rather than floating over it, because a
    floating bar on a small screen eats the thing it is counting. */
 .basket{
-  position:sticky;top:0;z-index:40;
+  position:sticky;top:calc(var(--bar) + 8px);z-index:40;
   background:var(--night);color:#fff;border-radius:8px;
   padding:12px 14px;margin-bottom:18px;box-shadow:var(--lift);
 }
