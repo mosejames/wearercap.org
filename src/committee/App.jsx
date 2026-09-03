@@ -71,7 +71,7 @@ export default function App() {
         Find your<br /><span className="flame">place</span>
       </h1>
       <p className="sub anim" style={{ animationDelay: '.12s' }}>
-        Nine committees, and you do not need to understand all of them to start.
+        Ten committees, and you do not need to understand all of them to start.
         Tell us a little about you and we will point you at the ones that fit.
       </p>
       <div className="row anim" style={{ animationDelay: '.18s' }}>
@@ -449,7 +449,7 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
       {matches.length > 0 && (
         <div className="seg anim" style={{ animationDelay: '.06s' }}>
           <button className={tab === 'fit' ? 'on' : ''} onClick={() => setTab('fit')}>Your fits</button>
-          <button className={tab === 'all' ? 'on' : ''} onClick={() => setTab('all')}>Explore all nine</button>
+          <button className={tab === 'all' ? 'on' : ''} onClick={() => setTab('all')}>Explore all ten</button>
         </div>
       )}
 
@@ -495,7 +495,7 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
 
       {tab === 'fit' && (
         <div className="row">
-          <button className="btn ghost" onClick={() => setTab('all')}>Explore all nine</button>
+          <button className="btn ghost" onClick={() => setTab('all')}>Explore all ten</button>
         </div>
       )}
     </Screen>
