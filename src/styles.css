@@ -277,8 +277,8 @@ button {
   color: rgba(247, 168, 28, 0.86);
 }
 
-/* Torn brush edge into the paper below. Sits on top of everything in the hero
-   and bleeds one pixel past the bottom so no hairline shows at any zoom. */
+/* Angled edge into the paper below. Sits on top of everything in the hero and
+   bleeds one pixel past the bottom so no hairline shows at any zoom. */
 
 .hero-edge {
   position: absolute;
@@ -293,10 +293,16 @@ button {
 .hero-edge svg {
   display: block;
   width: 100%;
-  height: clamp(56px, 7vw, 104px);
+  height: clamp(46px, 5.4vw, 86px);
 }
 
-.hero-edge path {
+/* A step between the photo and the paper, so the cut reads as two planes
+   rather than one hard line. */
+.edge-step {
+  fill: #2b2724;
+}
+
+.edge-paper {
   fill: var(--paper);
 }
 

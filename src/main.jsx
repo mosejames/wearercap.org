@@ -306,14 +306,13 @@ function App() {
           <span className="lockup-mark">RCAP</span>
         </div>
 
-        {/* Torn brush edge into the paper below. preserveAspectRatio none lets
-            it stretch to any width without leaving a gap at the corners. */}
+        {/* Angled edge into the paper below: two parallel cuts descending to
+            the right, with a charcoal step between them. preserveAspectRatio
+            none lets both lines stretch to any width and stay straight. */}
         <div className="hero-edge" aria-hidden="true">
-          <svg viewBox="0 0 1440 110" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,104 C34,84 62,96 96,90 C132,84 148,62 186,66 C224,70 236,92 274,88 C316,84 322,58 364,60 C404,62 412,86 452,84 C494,82 500,54 544,58 C584,62 590,88 632,86 C676,84 682,56 726,60 C766,64 772,90 814,88 C858,86 862,58 906,62 C946,66 954,88 996,86 C1038,84 1044,60 1088,64 C1128,68 1136,90 1178,86 C1220,82 1226,60 1268,64 C1306,68 1316,88 1356,84 C1392,80 1410,92 1440,98 L1440,110 L0,110 Z" />
-            <path d="M242,92 C246,104 244,112 240,118 C236,112 236,100 242,92 Z" opacity="0.9" />
-            <path d="M690,90 C695,104 693,114 688,120 C683,113 683,99 690,90 Z" opacity="0.9" />
-            <path d="M1122,94 C1126,105 1124,113 1120,119 C1116,112 1116,101 1122,94 Z" opacity="0.9" />
+          <svg viewBox="0 0 1440 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path className="edge-step" d="M0,12 L1440,50 L1440,90 L0,90 Z" />
+            <path className="edge-paper" d="M0,44 L1440,82 L1440,90 L0,90 Z" />
           </svg>
         </div>
       </section>
