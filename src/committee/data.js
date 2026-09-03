@@ -1,13 +1,17 @@
-/* The nine committees, plus what each one is for and who tends to like it.
+/* The nine committees.
 
    `tags` drives the recommendation step. A parent picks how they like to show
    up, and committees carrying those tags float to the top. Nothing is hidden by
    it — "Explore all" is always one tap away — so a wrong guess costs a parent
    scrolling, never an option.
 
-   `accent` is the card's colour block. It is doing structural work, not
-   decoration: it is how you tell one committee from another at a glance in the
-   grid, so no two neighbours in the default order share one. */
+   `accent` is the card's colour block. Structural, not decorative: it is how
+   you tell one committee from another at a glance in the grid.
+
+   Copy discipline: `what` is two sentences, `does` is three bullets, `who` is
+   one line. Details is a nudge toward a decision, not a briefing. Anything
+   needing more room than this belongs in the chair's hands after they are
+   picked, not on a card a parent is skimming in a gym. */
 
 export const TRAITS = [
   { id: 'maker',     label: 'I like making things happen' },
@@ -30,15 +34,14 @@ export const COMMITTEES = [
     tags: ['maker', 'organizer', 'giveback'],
     blurb: 'The fundraiser that pays for everything we do for the teachers.',
     when: 'September to mid November',
-    commitment: 'Heavy for about six weeks, then done',
-    what: "RCAP's biggest fundraiser of the year, and the money it brings in is what funds Teacher Appreciation Week in the spring. It began as the Fall Festival in the warehouse days, moved online in 2020, and then outgrew the thing it replaced.",
+    commitment: 'Heavy for six weeks, then done',
+    what: 'Our biggest fundraiser, and the money is what pays for Teacher Appreciation Week in the spring. Five weeks of selling, then the drawing in November.',
     does: [
-      'Set the ticket price and build the prize list in September',
-      'Ask local businesses and families for prize donations',
-      'Keep sales tracked by class and house',
-      'Run the drawing in mid November',
+      'Set the ticket price and build the prize list',
+      'Chase prize donations from local businesses',
+      'Run the drawing',
     ],
-    who: 'People who like a goal, a deadline, and a number to beat.',
+    who: 'For people who like a goal and a number to beat.',
   },
   {
     id: 'taw',
@@ -48,15 +51,13 @@ export const COMMITTEES = [
     blurb: 'One week in May that tells this staff what they are worth to us.',
     when: 'Planning in March, the week itself in May',
     commitment: 'Quiet until spring, then all-in for a week',
-    what: 'The oldest thing RCAP does. There has been a Teacher Appreciation Week every spring since at least 2011, from the Soul Train Extravaganza to The Most Magical School on Earth to last year\u2019s World Tour. It is the reason the raffle exists.',
+    what: 'The oldest thing RCAP does, every spring since 2011. New this year: a chair and co-chair own the week and its budget, and each class takes a day inside one theme.',
     does: [
-      'Poll the teachers first, before anything gets planned',
-      'Set one theme for the whole week',
-      'Give each class its day and the guidelines to run it',
-      'Keep five class days feeling like one week',
+      'Poll the teachers before anything gets planned',
+      'Set the theme and hold the budget',
+      'Give each class its day and its guidelines',
     ],
-    who: 'People with taste and follow-through, who want the payoff to be visible.',
-    note: 'New this year: a chair and co-chair own the week and its budget, and each class takes a day inside the shared theme. Same model as 4 Days of Christmas.',
+    who: 'For people with taste and follow-through.',
   },
   {
     id: 'fourdays',
@@ -66,13 +67,13 @@ export const COMMITTEES = [
     blurb: 'Your class picks a day in December and spoils the staff rotten.',
     when: 'Sign up in November, the week is in December',
     commitment: 'One day. Genuinely.',
-    what: "During RCA's holiday week, each class takes one day and showers the teachers and staff. Usually two chairmen per class. It is separate from Holiday Decor: that team puts the school up, this team runs the days.",
+    what: "During RCA's holiday week each class takes one day and showers the staff. Not the same as Holiday Decor: that team puts the school up, this one runs the days.",
     does: [
       'Rally the parents in your class',
       'Decide what your day looks like',
-      'Collect what you need and set it up that morning',
+      'Set it up that morning',
     ],
-    who: 'Anyone who has never done anything with RCAP before. This is the door.',
+    who: 'The easiest way in if you have never done this before.',
   },
   {
     id: 'decor',
@@ -82,14 +83,13 @@ export const COMMITTEES = [
     blurb: 'Two weekends that turn the whole building into something kids remember.',
     when: 'Setup weekend in November, teardown after Christmas',
     commitment: 'Two weekends, hands-on',
-    what: 'Parents transform the entire school for the holidays. The tradition traces back to the first RCA tree lighting in 2011 and has grown into a full building takeover every November.',
+    what: 'Parents turn the whole school over for the holidays, a tradition since the first tree lighting in 2011. One weekend up in November, a short one down after Christmas.',
     does: [
       'Plan what goes where and what needs replacing',
       'Source trees, lights, and decor',
-      'Work the setup weekend in November',
-      'Come back for breakdown the week after Christmas',
+      'Work the setup weekend',
     ],
-    who: 'People who would rather build the thing than run the meeting about it.',
+    who: 'For people who would rather build the thing than run the meeting about it.',
   },
   {
     id: 'concessions',
@@ -99,13 +99,13 @@ export const COMMITTEES = [
     blurb: 'Basketball season, the stand, and a shift you can actually commit to.',
     when: 'Basketball season, roughly November to February',
     commitment: 'A shift at a time',
-    what: 'Concessions runs the stand at home basketball games. That is the whole scope. It is not year-round and it is not open-ended, which is exactly why it is a good first committee.',
+    what: 'The stand at home basketball games. That is the whole scope, which is exactly why it makes a good first committee.',
     does: [
       'Stock the stand and set prices',
       'Build the shift schedule for home games',
       'Work games and handle the cash box',
     ],
-    who: 'People who want a clear start and end, and to meet half the school doing it.',
+    who: 'For people who want a clear start and end.',
   },
   {
     id: 'uniform',
@@ -115,14 +115,14 @@ export const COMMITTEES = [
     blurb: 'Outgrown pieces from one family, straight to the family that needs them.',
     when: 'All year, busiest in August and January',
     commitment: 'Steady and low, with two busy stretches',
-    what: 'The longest-running family service RCAP offers, going back to the very first year in our records. Families donate what their kids outgrow, and families who need pieces get them free, no questions asked. It runs through wearercap.org/uniform-exchange with a bin holder in each house.',
+    what: 'Families donate what their kids outgrow, and families who need pieces get them free, no questions asked. It runs on wearercap.org/uniform-exchange with a bin holder in each house.',
     does: [
-      'Take in donations and keep them sorted by size and piece',
+      'Sort donations by size and piece',
       'Match requests to what is on hand',
-      'Coordinate handoffs at carline or through the students',
+      'Coordinate handoffs at carline',
     ],
-    who: 'Quiet operators. Nobody sees this work and every family feels it.',
-    note: 'Being rebuilt this year. The parent who ran it is stepping back, so whoever takes this gets to set it up right instead of inheriting someone else\u2019s system.',
+    who: 'For quiet operators. Nobody sees this work and every family feels it.',
+    note: 'Being rebuilt this year, so whoever takes it gets to set it up their way.',
   },
   {
     id: 'marcom',
@@ -132,14 +132,14 @@ export const COMMITTEES = [
     blurb: 'So the parent who is at work at 9am still gets to see House Cheers.',
     when: 'All year, around events and Friday mornings',
     commitment: 'A few hours a week, camera in hand',
-    what: 'New this year. One chair building a small team of three or four, with someone on content, someone on photography, and someone on video. The team runs the RCAP Instagram and goes live from House Cheers on Friday mornings, which is the single thing working parents ask for most.',
+    what: 'New this year. One chair and a team of three or four on content, photo, and video, running the RCAP Instagram and going live from House Cheers on Fridays.',
     does: [
-      'Show up with a camera at events',
+      'Shoot at events',
       'Edit and post, and keep a consistent voice',
-      'Go live from House Cheers on Fridays',
+      'Go live Friday mornings',
     ],
-    who: 'People who already shoot, edit, or write, and want it to be for something.',
-    note: 'The board approves content before it posts and account access stays limited to two people. That is about protecting the account, not second-guessing your eye.',
+    who: 'For people who already shoot or write and want it to be for something.',
+    note: 'The board approves content before it posts and account access stays limited to two people.',
   },
   {
     id: 'service',
@@ -149,13 +149,13 @@ export const COMMITTEES = [
     blurb: 'The one that has not been built yet. Come help decide what it is.',
     when: 'Shaped by the group, first push around December',
     commitment: 'Up to the people who show up',
-    what: 'New this year, board-led and school-wide, and we intend to give it the same energy the raffle gets. The first idea on the table is supporting Isibindi\u2019s community Christmas gift drive, possibly as a house competition with house points. A parents\u2019 unity walk has also been floated.',
+    what: "New this year, board-led and school-wide. The first idea is supporting Isibindi's Christmas gift drive, maybe as a house competition, but nothing is locked.",
     does: [
-      'Brainstorm what our service effort should actually be',
-      'Pick the first one and build it',
-      'Bring the whole school into it, not just the parents who already show up',
+      'Decide what our service effort actually is',
+      'Build the first one',
+      'Bring the whole school into it',
     ],
-    who: 'People with an idea they have been waiting for somewhere to put.',
+    who: 'For people with an idea they have been waiting to put somewhere.',
   },
   {
     id: 'men',
@@ -165,15 +165,15 @@ export const COMMITTEES = [
     blurb: 'Dads, granddads, uncles, stepdads, big brothers. Any man in an RCA family.',
     when: 'All year, heaviest around events',
     commitment: 'Come when you can',
-    what: 'Started as RCA Dads in June 2011 and has been going ever since. Car washes, parking crews, event setup and teardown, holiday decor muscle, the Thursday afternoon bike club. In one recent year the group logged more than 2,600 volunteer hours.',
+    what: 'RCA Dads since 2011. Car washes, parking crews, setup and teardown, decor muscle, the Thursday bike club. More than 2,600 volunteer hours in one recent year.',
     does: [
       'Show up where hands are needed',
       'Parking, setup, teardown, hauling',
-      'Be a visible presence in the building for these kids',
+      'Be a visible presence in the building',
     ],
-    who: 'Any man in an RCA family. That is the whole bar.',
+    who: 'For any man in an RCA family. That is the whole bar.',
     noChair: true,
-    note: 'This group runs itself and picks its own leadership, so there is no chair application. Add it to your list and they will reach out directly.',
+    note: 'Runs itself and picks its own leadership, so there is no chair application.',
   },
 ];
 

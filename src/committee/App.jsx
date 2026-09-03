@@ -480,14 +480,11 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
               </div>
               {isOpen && (
                 <div className="cc-more">
-                  <h4>What it is</h4>
                   <p>{c.what}</p>
-                  <h4>What you would do</h4>
+                  <p className="cc-commit">{c.commitment}</p>
+                  <h4>What you'd do</h4>
                   <ul>{c.does.map((d) => <li key={d}>{d}</li>)}</ul>
-                  <h4>Commitment</h4>
-                  <p>{c.commitment}</p>
-                  <h4>Who tends to like it</h4>
-                  <p>{c.who}</p>
+                  <p className="cc-who">{c.who}</p>
                   {c.note && <div className="cc-note">{c.note}</div>}
                 </div>
               )}

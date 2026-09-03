@@ -360,3 +360,16 @@ a{color:inherit}
   color:rgba(255,255,255,.35);
 }
 .foot a{color:rgba(255,255,255,.6)}
+
+/* Details, tightened. Four labelled sections was more furniture than content
+   for a card someone is skimming, so commitment and the who-it-suits line lost
+   their headers and became a mono strip and one italic line. Same information,
+   about a third fewer words, and the eye now lands on the bullets. */
+.cc-commit{
+  margin:11px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--a);
+}
+.cc-who{
+  margin:14px 0 0;font-family:'Newsreader',Georgia,serif;font-style:italic;
+  font-size:15.5px;line-height:1.4;color:var(--ink-soft);
+}
