@@ -1182,48 +1182,9 @@ button {
    Doors — the four top-level destinations, pulled up over the hero base.
    Same card language as quick-link, scaled to four and given a color edge. */
 
-.doors {
-  width: min(1180px, calc(100% - 40px));
-  margin: -64px auto 0;
-  position: relative;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
+/* Badge — the small "Live"/"New" pill on a tool card. */
 
-.door-card {
-  position: relative;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  /* extra bottom padding reserves the corner the .door-go arrow sits in, so
-     a two-line description never runs underneath it */
-  padding: 22px 22px 46px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-top: 4px solid var(--blue);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.door-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 46px rgba(8, 13, 18, 0.18);
-}
-
-.door-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.door-card > .door-top svg {
-  color: var(--blue);
-}
-
-.door-badge {
+.tool-badge {
   padding: 4px 8px;
   border-radius: 6px;
   background: rgba(36, 107, 85, 0.14);
@@ -1232,55 +1193,6 @@ button {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.door-card h3 {
-  margin: 6px 0 0;
-  font-size: 19px;
-  line-height: 1.1;
-}
-
-.door-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14.5px;
-  line-height: 1.45;
-}
-
-.door-go {
-  position: absolute;
-  right: 18px;
-  bottom: 16px;
-  color: var(--muted);
-  transition: transform 0.18s ease;
-}
-
-.door-card:hover .door-go {
-  transform: translate(2px, -2px);
-}
-
-.door-card.carpool {
-  border-top-color: var(--green);
-}
-
-.door-card.carpool > .door-top svg {
-  color: var(--green);
-}
-
-.door-card.serve {
-  border-top-color: var(--red);
-}
-
-.door-card.serve > .door-top svg {
-  color: var(--red);
-}
-
-.door-card.committees {
-  border-top-color: var(--gold);
-}
-
-.door-card.committees > .door-top svg {
-  color: var(--gold);
 }
 
 /* Open call — the single most time-sensitive ask, under Happening Now. */
@@ -1392,13 +1304,6 @@ button {
 }
 
 @media (max-width: 860px) {
-  .doors {
-    width: calc(100% - 28px);
-    grid-template-columns: 1fr 1fr;
-    margin-top: -40px;
-    gap: 10px;
-  }
-
   .committee-grid {
     grid-template-columns: 1fr;
   }
@@ -1410,14 +1315,10 @@ button {
   }
 }
 
-@media (max-width: 520px) {
-  .doors {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 /* Tools — the apps built under wearercap.org. Card look is lifted from
-   .door-card on purpose so the two grids read as one system. The whole card is
+   the card pattern this page has always used. The whole card is
    the link via a stretched ::after; the one secondary link (Wish I Knew's
    reader) sits above it on z-index. */
 
@@ -1580,4 +1481,45 @@ button {
   .tool-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Section CTA — the one link that carries a section on to its own page.
+   Committees uses it to hand off to Find Your Place. */
+
+.section-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 13px 20px;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.section-cta:hover {
+  transform: translateY(-2px);
+  background: var(--blue);
+}
+
+/* Footer social — renders only when a URL is actually set (see `socials` in
+   main.jsx), so an unconfirmed account never ships as a live link. */
+
+.footer-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 22px;
+}
+
+.footer-socials a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--blue);
 }
