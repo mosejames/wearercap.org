@@ -371,6 +371,16 @@ function App() {
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
       <section id="serve" className="content-section">
+
+        <div className="section-heading">
+          <p className="section-label">Serve</p>
+          <h2>Step up in the way that fits.</h2>
+          <p>
+            Give an hour, give a season, or put a name forward, including your
+            own. It all counts, and it all starts here.
+          </p>
+        </div>
+
         {openCall ? (
           <a className="open-call" href={openCall.href}>
             <span className="open-call-label">{openCall.label}</span>
@@ -384,15 +394,6 @@ function App() {
             </em>
           </a>
         ) : null}
-
-        <div className="section-heading">
-          <p className="section-label">Serve</p>
-          <h2>Step up in the way that fits.</h2>
-          <p>
-            Give an hour, give a season, or put a name forward, including your
-            own. It all counts, and it all starts here.
-          </p>
-        </div>
 
         <div className="serve-actions">
           {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (

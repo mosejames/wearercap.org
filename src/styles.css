@@ -975,9 +975,10 @@ button {
   display: flex;
   align-items: center;
   gap: 18px;
-  /* Leads into Serve now rather than trailing the dates, so the spacing runs
-     the other way: flush to the top of the section, air beneath it. */
-  margin: 0 0 52px;
+  /* Sits between the Serve heading and the three actions. The heading already
+     carries 24px below and the actions 34px above, so this only tops those up
+     to something even on both sides. */
+  margin: 14px 0 8px;
   padding: 22px;
   background: var(--ink);
   color: var(--white);
