@@ -25,6 +25,7 @@ export default function App() {
   const [leadWhy, setLeadWhy] = useState({});
   const [leadRole, setLeadRole] = useState({});
   const [leadFor, setLeadFor] = useState([]);
+  const [leadPrior, setLeadPrior] = useState({});
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -57,6 +58,7 @@ export default function App() {
       committee: id,
       role: leadRole[id] || 'Either is fine',
       why: leadWhy[id] || '',
+      chaired_before: !!leadPrior[id],
     })),
   });
 
@@ -225,7 +227,7 @@ export default function App() {
           setWantsLead(true);
           saveQuiet(token, { wants_to_lead: true });
           go('leadPick');
-        }}>I'd consider leading</button>
+        }}>I'm interested in leading</button>
         <button className="btn ghost" onClick={() => {
           setWantsLead(false);
           setLeadFor([]);
@@ -268,7 +270,7 @@ export default function App() {
                       <button
                         className={'pill' + (on ? ' on' : '')}
                         onClick={() => setLeadFor(on ? leadFor.filter((x) => x !== c.id) : [...leadFor, c.id])}
-                      >{on ? 'Yes' : 'Consider me'}</button>
+                      >{on ? 'Yes' : 'Lead this one'}</button>
                     </div>
                     {on && (
                       <>
@@ -288,6 +290,17 @@ export default function App() {
                           value={leadWhy[c.id] || ''}
                           onChange={(e) => setLeadWhy({ ...leadWhy, [c.id]: e.target.value })}
                         />
+                        {/* Sits with the why because it is the same question in
+                            two parts: what you'd bring, and whether you have
+                            done it. One tap, and the copy above already says
+                            plainly that it is experience, not a claim. */}
+                        <div className="pills" style={{ marginTop: 12 }}>
+                          <button
+                            className={'pill' + (leadPrior[c.id] ? ' on' : '')}
+                            aria-pressed={!!leadPrior[c.id]}
+                            onClick={() => setLeadPrior({ ...leadPrior, [c.id]: !leadPrior[c.id] })}
+                          >I've chaired before</button>
+                        </div>
                       </>
                     )}
                   </div>
@@ -299,6 +312,7 @@ export default function App() {
                 saveQuiet(token, {
                   chair_picks: leadFor.map((id) => ({
                     committee: id, role: leadRole[id] || 'Either is fine', why: leadWhy[id] || '',
+                    chaired_before: !!leadPrior[id],
                   })),
                 });
                 go('phone');
