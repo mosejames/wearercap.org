@@ -80,7 +80,7 @@ export default function App() {
 
   if (step === 'welcome') return (
     <Screen night onNight>
-      <p className="eyebrow anim">RCAP Committee Interest</p>
+      <p className="eyebrow lead anim">RCAP Committee Interest</p>
       <p className="said anim" style={{ animationDelay: '.04s' }}>
         Your time. Your talents. Your way to contribute.
       </p>

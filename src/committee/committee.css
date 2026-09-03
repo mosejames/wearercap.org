@@ -60,6 +60,20 @@ a{color:inherit}
   color:var(--ink-soft);margin:0 0 18px;
 }
 
+/* The hero's label, which is the line that actually says what this page is,
+   so it cannot be the faintest thing on the screen. Bigger, brighter, wider
+   tracking, and a short flame rule above it to give it a footing. Only the
+   hero gets this: the eyebrows on later screens are section labels and are
+   supposed to stay under their headings. */
+.eyebrow.lead{
+  display:flex;flex-direction:column;gap:15px;align-items:flex-start;
+  font-size:13.5px;font-weight:600;letter-spacing:.24em;
+  color:rgba(255,255,255,.92);margin:0 0 24px;
+}
+.eyebrow.lead::before{
+  content:'';width:52px;height:4px;border-radius:2px;background:var(--flame);
+}
+
 /* ------------------------------------------------------------------ chrome
    A hairline of progress and nothing else. The brief is explicit that a parent
    should not be told how much work is left, so there is no counter and no
