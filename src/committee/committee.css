@@ -1,0 +1,362 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=Newsreader:ital,opsz,wght@1,18,400&display=swap');
+
+/* ---------------------------------------------------------------------------
+   Find Your Place — committee interest
+
+   Same family as One Thing I Wish I Knew: Archivo for everything structural,
+   IBM Plex Mono for metadata, Newsreader italic for the one editorial line.
+   Palette, radii and shadow are lifted from src/wik/wik.css deliberately, so a
+   parent moving between the two pages does not feel handed off to a different
+   organisation.
+
+   The one real departure: this page is a sequence, not a board. It runs one
+   decision per viewport, so the surface is quieter than the Wish I Knew board
+   and the colour lives almost entirely in the committee cards, where it is
+   doing the work of telling nine things apart.
+--------------------------------------------------------------------------- */
+
+:root{
+  --ink:#14110F;
+  --ink-soft:#5a5350;
+  --surface:#fbfbfa;
+  --card:#ffffff;
+  --line:#e6e2dd;
+  --line-soft:#f0edea;
+  --night:#0E0C0B;
+  --blue:#1F55C0;
+  --green:#1F9D57;
+  --red:#D8202D;
+  --gold:#e8a516;
+  --orange:#f26a1b;
+  --magenta:#e0218a;
+  --graphite:#4A4441;
+  --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
+  --shadow:0 1px 2px rgba(14,12,11,.05);
+  --lift:0 16px 40px rgba(14,12,11,.16);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--surface);color:var(--ink);
+  font-family:'Archivo',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+a{color:inherit}
+::selection{background:rgba(242,106,27,.26)}
+
+.mono{
+  font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 18px;
+}
+
+/* ------------------------------------------------------------------ chrome
+   A hairline of progress and nothing else. The brief is explicit that a parent
+   should not be told how much work is left, so there is no counter and no
+   percentage — just a bar that has visibly moved since the last screen. */
+.progress{position:fixed;top:0;left:0;right:0;height:3px;background:transparent;z-index:60}
+.progress i{
+  display:block;height:100%;width:0;background:var(--flame);
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 22px;pointer-events:none;
+}
+.topbar > *{pointer-events:auto}
+.brand{font-size:15px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.brand span{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+.on-night .brand{color:#fff}
+
+.backlink{
+  background:none;border:0;padding:6px 2px;color:var(--ink-soft);
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+}
+.backlink:hover{color:var(--ink)}
+.on-night .backlink{color:rgba(255,255,255,.6)}
+.on-night .backlink:hover{color:#fff}
+
+/* ------------------------------------------------------------------ screens
+   One decision per viewport. Screens cross-fade and rise a few pixels; the
+   movement is small on purpose, because it happens on every single step and
+   anything larger becomes a tax by the fourth screen. */
+.screen{
+  min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:88px 22px 40px;
+}
+.screen.night{background:var(--night);color:#fff}
+.screen.wide{justify-content:flex-start;padding-top:96px}
+.inner{width:100%;max-width:640px;margin:0 auto}
+.inner.big{max-width:1120px}
+
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.anim{animation:rise .42s cubic-bezier(.2,.7,.3,1) both}
+@media (prefers-reduced-motion:reduce){
+  .anim{animation:none}
+  .progress i{transition:none}
+}
+
+.q{
+  font-size:clamp(30px,6.2vw,52px);line-height:1.02;letter-spacing:-.035em;
+  font-weight:900;margin:0;text-wrap:balance;
+}
+.q .flame{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{
+  font-size:clamp(15px,1.7vw,17.5px);line-height:1.6;color:var(--ink-soft);
+  margin:16px 0 0;max-width:48ch;text-wrap:pretty;
+}
+.night .sub{color:rgba(255,255,255,.68)}
+.said{
+  font-family:'Newsreader',Georgia,serif;font-style:italic;
+  font-size:clamp(18px,2.4vw,23px);line-height:1.45;
+  color:rgba(255,255,255,.82);margin:0 0 16px;
+}
+
+/* -------------------------------------------------------------------- hero */
+.hero-title{
+  font-size:clamp(46px,13vw,104px);line-height:.85;letter-spacing:-.05em;
+  font-weight:900;text-transform:uppercase;margin:0;
+}
+.hero-title .flame{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* -------------------------------------------------------------------- input
+   Oversized and underlined rather than boxed. A single field in the middle of
+   an empty screen does not need a border to be found, and the big baseline
+   makes typing feel like the point of the screen instead of a chore on it. */
+.bigfield{
+  display:block;width:100%;margin:34px 0 0;
+  background:transparent;border:0;border-bottom:2px solid var(--line);
+  padding:10px 2px;color:var(--ink);
+  font-size:clamp(22px,4.4vw,34px);font-weight:700;letter-spacing:-.02em;
+}
+.bigfield::placeholder{color:#c9c2bb;font-weight:600}
+.bigfield:focus{outline:0;border-bottom-color:var(--orange)}
+.night .bigfield{color:#fff;border-bottom-color:rgba(255,255,255,.25)}
+.night .bigfield::placeholder{color:rgba(255,255,255,.32)}
+.night .bigfield:focus{border-bottom-color:var(--gold)}
+
+.field{
+  display:block;width:100%;
+  background:#fff;border:1.5px solid var(--line);border-radius:6px;
+  padding:12px 13px;color:var(--ink);
+}
+.field:focus{outline:0;border-color:var(--orange)}
+.ta{resize:vertical;line-height:1.5;min-height:96px}
+.lab{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 7px;
+}
+
+/* ------------------------------------------------------------------ buttons */
+.btn{
+  border:0;border-radius:6px;padding:14px 24px;
+  font-weight:800;font-size:15px;letter-spacing:-.01em;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  transition:transform .12s ease,opacity .12s ease,background .12s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.flame{background:var(--flame);color:#fff}
+.btn.solid{background:var(--ink);color:#fff}
+.night .btn.solid{background:#fff;color:var(--ink)}
+.btn.ghost{background:transparent;color:inherit;border:1.5px solid var(--line)}
+.night .btn.ghost{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.9)}
+.btn.wide{width:100%}
+.btn.small{padding:9px 15px;font-size:13.5px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:30px}
+.hintline{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+.night .hintline{color:rgba(255,255,255,.45)}
+@media(max-width:520px){
+  .row .btn{width:100%}
+  .row .hintline{display:none}
+}
+
+.err{color:var(--red);font-size:14.5px;font-weight:700;margin:14px 0 0}
+.night .err{color:#ff8f97}
+
+/* --------------------------------------------------------------- tiles
+   The personality step. Big typographic plates, not checkboxes — picking one
+   should feel like saying something about yourself, not ticking a box. */
+.tiles{display:grid;gap:10px;margin-top:32px}
+@media(min-width:760px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{
+  text-align:left;background:var(--card);border:1.5px solid var(--line);
+  border-radius:10px;padding:20px 20px;color:var(--ink);
+  font-size:clamp(16px,2.2vw,19px);font-weight:800;letter-spacing:-.02em;
+  line-height:1.2;position:relative;
+  transition:border-color .14s ease,background .14s ease,transform .14s ease;
+}
+.tile:hover{border-color:var(--ink-soft);transform:translateY(-1px)}
+.tile.on{background:var(--night);border-color:var(--night);color:#fff}
+.tile.on::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:4px;
+  border-radius:0 0 8px 8px;background:var(--flame);
+}
+
+/* --------------------------------------------------------------- students */
+.kid{
+  border:1.5px solid var(--line);border-radius:10px;background:var(--card);
+  padding:16px;margin-top:12px;
+}
+.kid-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.kid-n{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.drop{background:none;border:0;color:var(--ink-soft);font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:2px}
+.drop:hover{color:var(--red)}
+.two{display:grid;grid-template-columns:1fr 150px;gap:10px}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{
+  background:#fff;border:1.5px solid var(--line);border-radius:999px;
+  padding:9px 16px;font-size:14px;font-weight:700;color:var(--ink-soft);
+  transition:border-color .12s ease,color .12s ease,background .12s ease;
+}
+.pill:hover{border-color:var(--ink-soft)}
+.pill.on{background:var(--night);border-color:var(--night);color:#fff}
+.addmore{
+  background:none;border:0;color:var(--orange);font-size:14.5px;font-weight:800;
+  padding:14px 0 0;text-decoration:underline;text-underline-offset:4px;
+}
+
+/* ---------------------------------------------------------------- discovery */
+.disc-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:6px}
+.seg{display:flex;gap:0;margin:22px 0 26px;border-bottom:1px solid var(--line)}
+.seg button{
+  background:none;border:0;padding:11px 0;margin-right:26px;
+  font-size:15px;font-weight:800;color:var(--ink-soft);
+  border-bottom:3px solid transparent;margin-bottom:-1px;
+}
+.seg button.on{color:var(--ink);border-bottom-color:var(--orange)}
+
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));align-items:start}
+
+.cc{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  border-top:5px solid var(--a);box-shadow:var(--shadow);
+  padding:20px;display:flex;flex-direction:column;
+  transition:box-shadow .16s ease,border-color .16s ease;
+}
+.cc:hover{box-shadow:var(--lift)}
+.cc.picked{border-color:var(--a);background:var(--tint)}
+.cc[data-a="orange"]{--a:var(--orange);--tint:#fff6f0}
+.cc[data-a="magenta"]{--a:var(--magenta);--tint:#fff0f7}
+.cc[data-a="red"]{--a:var(--red);--tint:#fff1f2}
+.cc[data-a="green"]{--a:var(--green);--tint:#eefaf2}
+.cc[data-a="blue"]{--a:var(--blue);--tint:#eff3fd}
+.cc[data-a="gold"]{--a:var(--gold);--tint:#fff8e9}
+.cc[data-a="ink"]{--a:var(--graphite);--tint:#f5f3f1}
+
+.cc-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--a);margin:0 0 9px;
+}
+.cc-name{margin:0;font-size:21px;font-weight:900;letter-spacing:-.028em;line-height:1.1}
+.cc-blurb{margin:9px 0 0;font-size:15px;line-height:1.5;color:var(--ink-soft);text-wrap:pretty}
+.cc-when{
+  margin:13px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+}
+.cc-acts{display:flex;gap:8px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft)}
+.add{
+  flex:1;border:1.5px solid var(--a);background:transparent;color:var(--a);
+  border-radius:6px;padding:11px 10px;font-size:14px;font-weight:800;
+  transition:background .12s ease,color .12s ease;
+}
+.add:hover{background:var(--a);color:#fff}
+.add.on{background:var(--a);color:#fff}
+.det{
+  border:1.5px solid var(--line);background:transparent;color:var(--ink-soft);
+  border-radius:6px;padding:11px 15px;font-size:14px;font-weight:800;
+}
+.det:hover{border-color:var(--ink-soft);color:var(--ink)}
+
+.cc-more{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.cc-more h4{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:16px 0 7px;
+}
+.cc-more h4:first-child{margin-top:0}
+.cc-more p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink)}
+.cc-more ul{margin:0;padding-left:17px}
+.cc-more li{font-size:14.5px;line-height:1.5;color:var(--ink);margin-bottom:4px}
+.cc-note{background:var(--line-soft);border-radius:6px;padding:12px 13px;font-size:14px;line-height:1.5;margin-top:14px;color:var(--ink)}
+
+/* ------------------------------------------------------------------- basket
+   Sits above the grid on a phone rather than floating over it, because a
+   floating bar on a small screen eats the thing it is counting. */
+.basket{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--night);color:#fff;border-radius:8px;
+  padding:13px 16px;margin-bottom:18px;box-shadow:var(--lift);
+}
+.basket-l{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.basket-l b{color:var(--gold);font-weight:600}
+.basket .btn{padding:10px 18px;font-size:14px}
+
+/* ------------------------------------------------------------------- review */
+.receipt{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  border-top:5px solid var(--orange);box-shadow:var(--lift);
+  padding:24px 22px;margin-top:28px;
+}
+.receipt h3{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+  margin:22px 0 10px;
+}
+.receipt h3:first-child{margin-top:0}
+.who{font-size:24px;font-weight:900;letter-spacing:-.03em;margin:0}
+.who small{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);letter-spacing:0;margin-top:4px}
+.rlist{list-style:none;margin:0;padding:0}
+.rlist li{
+  display:flex;align-items:center;gap:11px;padding:10px 0;
+  border-bottom:1px solid var(--line-soft);font-size:16px;font-weight:700;
+}
+.rlist li:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:2px;flex:none;background:var(--d)}
+.dot[data-a="orange"]{--d:var(--orange)} .dot[data-a="magenta"]{--d:var(--magenta)}
+.dot[data-a="red"]{--d:var(--red)} .dot[data-a="green"]{--d:var(--green)}
+.dot[data-a="blue"]{--d:var(--blue)} .dot[data-a="gold"]{--d:var(--gold)}
+.dot[data-a="ink"]{--d:var(--graphite)}
+.lead-tag{
+  margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+  font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--night);color:#fff;border-radius:3px;padding:4px 8px;
+}
+.editbtn{
+  background:none;border:0;color:var(--orange);font-size:13.5px;font-weight:800;
+  text-decoration:underline;text-underline-offset:3px;padding:0;margin-top:18px;
+}
+
+/* --------------------------------------------------------------- leadership */
+.leadblock{
+  border:1.5px solid var(--line);border-radius:10px;background:var(--card);
+  padding:18px;margin-top:14px;
+}
+.leadblock > .cc-name{font-size:18px}
+
+/* --------------------------------------------------------------------- done */
+.done-mark{
+  width:54px;height:6px;border-radius:3px;background:var(--flame);margin:0 0 26px;
+}
+.foot{
+  margin-top:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+}
+.foot a{color:rgba(255,255,255,.6)}
