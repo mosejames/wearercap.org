@@ -31,3 +31,22 @@ is not a JWT. The guards are:
 
 Failures are written to `confirm_error` rather than swallowed, so the back
 office can see a parent who thinks they were confirmed and was not.
+
+## Previewing the copy
+
+`{"token":"...","preview":true}` renders the email as HTML and returns it
+without sending anything or touching the row. Use it to read the copy over
+before a parent ever gets it, and to check the chair-application variant, which
+only appears when `chair_picks` is non-empty.
+
+## Dated content
+
+`NEXT_MEETING` carries an `until` date and the line drops itself once that date
+has passed. A stale meeting date in a welcome email is worse than no line at
+all, so anything dated added here should follow the same pattern.
+
+## Committee copy is duplicated
+
+The name and one-line description of each committee are repeated here from
+`src/committee/data.js`, because that file ships to the browser and this runs in
+Deno. Change one, change the other.
