@@ -35,7 +35,18 @@ const socials = [
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
-const heroPoster = '/images/rcap-video-hero.jpg';
+const heroImage = '/images/rcap-hero-welcome.jpg';
+const videoPoster = '/images/rcap-video-hero.jpg';
+
+// Nav — labels from the design board. Change a href here and the footer map
+// keeps its own list, so the two are edited separately on purpose.
+const navLinks = [
+  { label: 'About', href: '#story' },
+  { label: 'Events', href: '#events' },
+  { label: 'Committees', href: '#committees' },
+  { label: 'Volunteer', href: '#serve' },
+  { label: 'Resources', href: '#tools' },
+];
 
 /* ------------------------------------------------------------------------
  * EDIT ZONE — the content below changes during the year.
@@ -243,93 +254,67 @@ function App() {
     <main className="site-shell">
       <section className="hero" aria-label="We Are RCAP">
         <div className="hero-poster" aria-hidden="true">
-          <img src={heroPoster} alt="" />
+          <img src={heroImage} alt="" />
         </div>
         <div className="hero-scrim" />
 
         <header className="nav">
           <a className="brand" href="/">
             <span className="brand-mark">RCAP</span>
-            <span>We Are RCAP</span>
+            <span className="brand-sub">Ron Clark Academy Parents</span>
           </a>
-          <a className="nav-link" href={contactHref}>
-            <Mail size={18} aria-hidden="true" />
-            Contact
-          </a>
+          <nav className="nav-links" aria-label="Main">
+            {navLinks.map(({ label, href }) => (
+              <a key={label} href={href}>
+                {label}
+              </a>
+            ))}
+            <a className="nav-cta" href="/committee-interest/">
+              Get Involved
+            </a>
+          </nav>
         </header>
 
-        <button className="hero-play-button" type="button" onClick={openVideo}>
-          <span className="play-disc">
-            <PlayCircle size={56} aria-hidden="true" />
-          </span>
-          <span>Watch the RCAP video</span>
-        </button>
-
         <div className="hero-content">
-          <p className="kicker">Ron Clark Academy Parents</p>
-          <h1 aria-label="We Are RCAP">
-            <span>We Are</span>
-            {' '}
-            <span>RCAP</span>
-          </h1>
+          <p className="kicker">Welcome to RCAP</p>
+          <h1>If your child is at RCA, you are already RCAP.</h1>
           <p className="hero-copy">
-            The parent community of Ron Clark Academy, showing up for our kids,
-            our school, and one another.
-          </p>
-          <div className="hero-actions">
-            <button className="button primary" type="button" onClick={openVideo}>
-              <PlayCircle size={18} aria-hidden="true" />
-              Watch the RCAP video
-            </button>
-            <a className="button secondary" href="#welcome">
-              Start here
-              <ArrowUpRight size={18} aria-hidden="true" />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Welcome — the first thing after the video, on purpose. Someone landing
-          here for the first time should learn one thing before anything else:
-          they are already in. Everything below is the how. */}
-      <section id="welcome" className="community-feature">
-        <div className="community-copy">
-          <p className="section-label">Welcome</p>
-          <h2>If your child is at RCA, you are already RCAP.</h2>
-          <p>
             No sign-up sheet. No dues. Every Ron Clark Academy parent is a
             member the day their child walks through the door. That is the
             whole idea.
           </p>
-          <p>
+          <p className="hero-copy">
             Sixteen years of families built this. Parents who welcomed,
             decorated, fed, funded, drove, and stayed late. First year or
             fifth, an hour or a whole season, there is a place here with your
             name on it.
           </p>
+          <div className="hero-actions">
+            <a className="button primary" href="/committee-interest/">
+              Get involved
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+            <button className="button ghost" type="button" onClick={openVideo}>
+              <PlayCircle size={18} aria-hidden="true" />
+              Watch the video
+            </button>
+          </div>
         </div>
 
-        <div className="photo-mosaic" aria-label="RCAP parents and students">
-          <img
-            className="photo-large"
-            src="/images/rcap-community-smiles.jpg"
-            alt="RCAP parents smiling together"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-hero-students.jpg"
-            alt="Ron Clark Academy students standing together"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-hero-volunteer.jpg"
-            alt="RCAP volunteer welcoming families"
-          />
-          <img
-            className="photo-small"
-            src="/images/rcap-volunteer-hours.jpg"
-            alt="RCAP volunteers reviewing materials together"
-          />
+        <div className="hero-lockup" aria-hidden="true">
+          <span className="lockup-script">We Are</span>
+          <span className="lockup-mark">RCAP</span>
+        </div>
+
+        {/* Torn brush edge into the paper below. preserveAspectRatio none lets
+            it stretch to any width without leaving a gap at the corners. */}
+        <div className="hero-edge" aria-hidden="true">
+          <svg viewBox="0 0 1440 110" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,104 C34,84 62,96 96,90 C132,84 148,62 186,66 C224,70 236,92 274,88 C316,84 322,58 364,60 C404,62 412,86 452,84 C494,82 500,54 544,58 C584,62 590,88 632,86 C676,84 682,56 726,60 C766,64 772,90 814,88 C858,86 862,58 906,62 C946,66 954,88 996,86 C1038,84 1044,60 1088,64 C1128,68 1136,90 1178,86 C1220,82 1226,60 1268,64 C1306,68 1316,88 1356,84 C1392,80 1410,92 1440,98 L1440,110 L0,110 Z" />
+            <path d="M242,92 C246,104 244,112 240,118 C236,112 236,100 242,92 Z" opacity="0.9" />
+            <path d="M690,90 C695,104 693,114 688,120 C683,113 683,99 690,90 Z" opacity="0.9" />
+            <path d="M1122,94 C1126,105 1124,113 1120,119 C1116,112 1116,101 1122,94 Z" opacity="0.9" />
+          </svg>
         </div>
       </section>
 
@@ -364,6 +349,56 @@ function App() {
             </em>
           </a>
         ) : null}
+      </section>
+
+      {/* Story — where the hero's video went. A first-time parent gets the
+          welcome and the next dates before the ninety-second version. */}
+      <section id="story" className="content-section story-section">
+        <div className="video-callout">
+          <div className="video-copy">
+            <p className="section-label">Who We Are</p>
+            <h2>Ninety seconds on what this looks like.</h2>
+            <p>
+              Sixteen years of parents welcoming, building, decorating,
+              feeding, funding, and cheering. Every RCA parent is a member.
+              That includes you.
+            </p>
+          </div>
+
+          <button className="video-card" type="button" onClick={openVideo}>
+            <img src={videoPoster} alt="" />
+            <span className="video-play">
+              <PlayCircle size={54} aria-hidden="true" />
+            </span>
+            <span className="video-card-text">
+              <strong>Watch the RCAP video</strong>
+              <span>A minute and a half with the families behind it</span>
+            </span>
+          </button>
+        </div>
+
+        <div className="photo-mosaic" aria-label="RCAP parents and students">
+          <img
+            className="photo-large"
+            src="/images/rcap-community-smiles.jpg"
+            alt="RCAP parents smiling together"
+          />
+          <img
+            className="photo-small"
+            src="/images/rcap-hero-students.jpg"
+            alt="Ron Clark Academy students standing together"
+          />
+          <img
+            className="photo-small"
+            src="/images/rcap-hero-volunteer.jpg"
+            alt="RCAP volunteer welcoming families"
+          />
+          <img
+            className="photo-small"
+            src="/images/rcap-volunteer-hours.jpg"
+            alt="RCAP volunteers reviewing materials together"
+          />
+        </div>
       </section>
 
       {/* Serve — one place for stepping up: hands, hours, and names. */}
@@ -486,7 +521,7 @@ function App() {
           </nav>
         ) : null}
         <nav className="footer-map" aria-label="Site sections">
-          <a href="#welcome">Who We Are</a>
+          <a href="#story">Who We Are</a>
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
           <a href="#committees">Committees</a>
