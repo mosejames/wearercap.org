@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { COMMITTEES, TRAITS, HOUSES, CLASS_YEARS, byId, rank, topMatches } from './data.js';
-import { getToken, clearToken, saveQuiet, submit } from './api.js';
+import { getToken, clearToken, saveQuiet, submit, sendConfirmation } from './api.js';
+import Admin from './Admin.jsx';
 
 /* The flow, in order. `leadAsk` and `leadPick` are conditional: a parent who
    picked nothing never sees the first, and a parent who only wants to help
@@ -11,6 +12,15 @@ import { getToken, clearToken, saveQuiet, submit } from './api.js';
 const firstName = (n) => (n || '').trim().split(/\s+/)[0] || '';
 
 export default function App() {
+  /* #admin opens the back office, matching the Recap. No new Vite entry and no
+     rewrite, and nothing about it is discoverable from the parent flow. */
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const f = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', f);
+    return () => window.removeEventListener('hashchange', f);
+  }, []);
+
   const [step, setStep] = useState('welcome');
   const [stack, setStack] = useState([]);
   const [token] = useState(getToken);
@@ -63,6 +73,8 @@ export default function App() {
   });
 
   const house = students.find((s) => s.house)?.house || '';
+
+  if (hash === '#admin') return <Admin />;
 
   /* ------------------------------------------------------------- screens */
 
@@ -371,6 +383,9 @@ export default function App() {
           setErr(''); setSending(true);
           try {
             await submit(token, payload());
+            // Only after the row is safely written. Not awaited, so a slow
+            // mail API cannot hold up the screen the parent is waiting on.
+            sendConfirmation(token);
             clearToken();
             go('done');
           } catch (e) {

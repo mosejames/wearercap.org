@@ -52,3 +52,23 @@ export function saveQuiet(token, patch) {
 export async function submit(token, patch) {
   await call(token, { ...patch, status: 'complete' });
 }
+
+/* Fire the confirmation email. The function reads the address off the row
+   itself using this token, so nothing here can redirect mail somewhere else,
+   and it refuses to send twice. Deliberately not awaited by the caller: a slow
+   mail API must never hold up the done screen, and if it fails the row carries
+   confirm_error so the back office can see it. */
+export function sendConfirmation(token) {
+  supabase.functions
+    .invoke('committee-confirm', { body: { token } })
+    .catch((e) => console.warn('confirmation email failed', e));
+}
+
+/* Back office read. The passcode is checked inside the database, so the anon
+   key alone opens nothing, and the function strips each row's token before it
+   leaves Postgres. */
+export async function adminList(pass) {
+  const { data, error } = await supabase.rpc('committee_interest_admin', { p_pass: pass });
+  if (error) throw error;
+  return data || [];
+}

@@ -406,3 +406,63 @@ a{color:inherit}
   color:rgba(255,255,255,.35);
 }
 .foot a{color:rgba(255,255,255,.6)}
+
+/* ---------------------------------------------------------------- back office
+   Denser than the parent flow on purpose. This is a working surface for four
+   people, not an experience: the job is to scan a lot of rows, spot the chair
+   applications, and get the CSV out. */
+.ad-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+.ad-actions{display:flex;gap:9px}
+
+.ad-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.ad-stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.ad-stat b{display:block;font-size:30px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.ad-stat span{
+  display:block;margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
+}
+
+.ad-tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px;margin-bottom:26px}
+.ad-t{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:6px;padding:11px 13px}
+.ad-t b{font-size:21px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.ad-t span{display:block;font-size:13px;font-weight:700;margin-top:3px;line-height:1.2}
+.ad-t i{
+  display:block;margin-top:4px;font-style:normal;font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--a);font-weight:600;
+}
+.ad-t[data-a="orange"]{--a:var(--orange)} .ad-t[data-a="magenta"]{--a:var(--magenta)}
+.ad-t[data-a="red"]{--a:var(--red)} .ad-t[data-a="green"]{--a:var(--green)}
+.ad-t[data-a="blue"]{--a:var(--blue)} .ad-t[data-a="gold"]{--a:var(--gold)}
+.ad-t[data-a="ink"]{--a:var(--graphite)}
+
+.ad-rows{border-top:1px solid var(--line)}
+.ad-row{border-bottom:1px solid var(--line)}
+.ad-row.part{background:#fdfbf7}
+.ad-r-top{
+  width:100%;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px;
+  background:none;border:0;padding:14px 2px;text-align:left;color:inherit;
+}
+.ad-r-top:hover{background:var(--line-soft)}
+.ad-r-name{font-size:16.5px;font-weight:800;letter-spacing:-.015em}
+.ad-r-name em{
+  font-style:normal;margin-left:9px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+  font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;
+  background:var(--graphite);border-radius:3px;padding:3px 7px;vertical-align:middle;
+}
+.ad-r-meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--ink-soft)}
+.ad-r-body{padding:4px 2px 20px}
+.ad-r-body dl{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin:0 0 14px}
+.ad-r-body dt{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);padding-top:2px;
+}
+.ad-r-body dd{margin:0;font-size:15px;line-height:1.45}
+.ad-fail{color:var(--red);font-weight:700}
+.ad-chair{background:var(--line-soft);border-radius:6px;padding:12px 14px;margin-top:9px}
+.ad-chair b{font-size:14px}
+.ad-chair p{margin:6px 0 0;font-size:14.5px;line-height:1.5;color:var(--ink)}
+.ad-foot{margin-top:26px;font-size:13px;color:var(--ink-soft);max-width:62ch}
+@media(max-width:560px){
+  .ad-r-body dl{grid-template-columns:1fr;gap:2px}
+  .ad-r-body dt{margin-top:8px}
+}
