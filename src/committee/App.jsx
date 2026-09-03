@@ -22,8 +22,10 @@ export default function App() {
   }, []);
 
   const [step, setStep] = useState('welcome');
-  const [stack, setStack] = useState([]);
   const [token] = useState(getToken);
+  /* The trail of screens, in a ref rather than state: it is read inside a
+     popstate handler and never needs to trigger a render by itself. */
+  const stack = useRef([]);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,19 +43,31 @@ export default function App() {
 
   const fn = firstName(name);
 
+  /* Every move forward pushes a history entry, so the browser back button and
+     the iOS swipe both work and the in-app Back is no longer the only way out.
+     Back never changes state directly; it asks the browser to go back and the
+     popstate handler below does the work, so all three routes stay in step. */
   const go = (next) => {
     setErr('');
-    setStack((s) => [...s, step]);
+    stack.current = [...stack.current, step];
     setStep(next);
+    window.history.pushState({ step: next }, '');
   };
-  const back = () => {
+
+  const pop = () => {
+    const s = stack.current;
+    if (!s.length) return;
+    stack.current = s.slice(0, -1);
     setErr('');
-    setStack((s) => {
-      if (!s.length) return s;
-      setStep(s[s.length - 1]);
-      return s.slice(0, -1);
-    });
+    setStep(s[s.length - 1]);
   };
+
+  const back = () => window.history.back();
+
+  useEffect(() => {
+    window.addEventListener('popstate', pop);
+    return () => window.removeEventListener('popstate', pop);
+  });
 
   const ORDER = ['welcome', 'name', 'email', 'students', 'traits', 'discover', 'leadAsk', 'leadPick', 'phone', 'review', 'done'];
   const pct = Math.round(((ORDER.indexOf(step) + 1) / ORDER.length) * 100);
@@ -160,10 +174,10 @@ export default function App() {
                 onChange={(e) => setStudents(students.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
               />
               <select
-                className="field" value={s.year}
+                className="field" value={s.year} aria-label="Class year"
                 onChange={(e) => setStudents(students.map((x, j) => (j === i ? { ...x, year: e.target.value } : x)))}
               >
-                <option value="">Class of</option>
+                <option value="">Class of (required)</option>
                 {CLASS_YEARS.map((y) => <option key={y}>{y}</option>)}
               </select>
             </div>
@@ -191,6 +205,9 @@ export default function App() {
       <div className="row anim" style={{ animationDelay: '.14s' }}>
         <button className="btn solid" onClick={() => {
           if (!students.some((s) => s.name.trim())) return setErr('Add at least one student.');
+          if (students.some((s) => s.name.trim() && !s.year)) {
+            return setErr('Add a class year for each student. It is how we connect you to your grade.');
+          }
           saveQuiet(token, { name, email, students: students.filter((s) => s.name.trim()) });
           go('traits');
         }}>Continue</button>
@@ -388,7 +405,7 @@ export default function App() {
             );
           })}
         </ul>
-        <button className="editbtn" onClick={() => setStep('discover')}>Change my list</button>
+        <button className="editbtn" onClick={() => go('discover')}>Change my list</button>
       </div>
       {err && <p className="err">{err}</p>}
       <div className="row anim" style={{ animationDelay: '.14s' }}>
@@ -440,7 +457,11 @@ function Screen({ children, night, onNight, pct, onBack, wide, big }) {
       {pct != null && <div className="progress"><i style={{ width: pct + '%' }} /></div>}
       <div className={'topbar' + (onNight ? ' on-night' : '')}>
         <span className="brand">We Are <span>RCAP</span></span>
-        {onBack && <button className="backlink" onClick={onBack}>Back</button>}
+        {onBack && (
+          <button className="backlink" onClick={onBack}>
+            <span aria-hidden="true">&#8249;</span> Back
+          </button>
+        )}
       </div>
       <section className={'screen' + (night ? ' night' : '') + (wide ? ' wide' : '')}>
         <div className={'inner' + (big ? ' big' : '')}>{children}</div>

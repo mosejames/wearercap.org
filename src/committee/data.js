@@ -165,20 +165,47 @@ export const COMMITTEES = [
 
 export const byId = (id) => COMMITTEES.find((c) => c.id === id);
 
-/* Score by how many of the parent's traits a committee carries. Ties keep the
-   original order, which is roughly "biggest and most familiar first". */
+/* How many committees carry each trait. */
+const FREQ = COMMITTEES.reduce((m, c) => {
+  c.tags.forEach((t) => { m[t] = (m[t] || 0) + 1; });
+  return m;
+}, {});
+
+/* Scoring.
+
+   Counting matched tags and breaking ties by list order was wrong, and wrong in
+   a way that looked plausible: every tie went to whichever committee sat higher
+   in the catalog, which is roughly "biggest and most familiar first". So Fall
+   Raffle and Teacher Appreciation Week won nearly every tie, and picking only
+   "I want to give back" did not surface Community Service at all.
+
+   Two corrections. A trait carried by three committees says more about a parent
+   than one carried by eight, so each match is worth 1/frequency. And a
+   committee carrying many tags would otherwise match everything, so the total
+   is divided by the square root of its tag count. Breadth stops being an
+   advantage; being genuinely about the thing starts being one. */
+function score(c, traits) {
+  if (!traits.length) return 0;
+  const raw = c.tags.reduce((n, t) => n + (traits.includes(t) ? 1 / FREQ[t] : 0), 0);
+  return raw / Math.sqrt(c.tags.length);
+}
+
 export function rank(traits) {
   if (!traits.length) return COMMITTEES;
-  return COMMITTEES.map((c, i) => ({
-    c,
-    i,
-    score: c.tags.filter((t) => traits.includes(t)).length,
-  }))
-    .sort((a, b) => b.score - a.score || a.i - b.i)
+  return COMMITTEES
+    .map((c, i) => ({ c, i, s: score(c, traits) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((x) => x.c);
 }
 
+/* Five rather than four. With ten committees a fifth costs one card of
+   scrolling and stops a near-miss from being invisible. */
 export function topMatches(traits) {
   if (!traits.length) return [];
-  return rank(traits).filter((c) => c.tags.some((t) => traits.includes(t))).slice(0, 4);
+  return COMMITTEES
+    .map((c, i) => ({ c, i, s: score(c, traits) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, 5)
+    .map((x) => x.c);
 }
