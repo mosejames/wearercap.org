@@ -260,16 +260,8 @@ a{color:inherit}
 .cc[data-a="gold"]{--a:var(--gold);--tint:#fff8e9}
 .cc[data-a="ink"]{--a:var(--graphite);--tint:#f5f3f1}
 
-.cc-tag{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
-  letter-spacing:.13em;text-transform:uppercase;color:var(--a);margin:0 0 9px;
-}
 .cc-name{margin:0;font-size:21px;font-weight:900;letter-spacing:-.028em;line-height:1.1}
 .cc-blurb{margin:9px 0 0;font-size:15px;line-height:1.5;color:var(--ink-soft);text-wrap:pretty}
-.cc-when{
-  margin:13px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
-  font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
-}
 .cc-acts{display:flex;gap:8px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line-soft)}
 .add{
   flex:1;border:1.5px solid var(--a);background:transparent;color:var(--a);
@@ -284,29 +276,80 @@ a{color:inherit}
 }
 .det:hover{border-color:var(--ink-soft);color:var(--ink)}
 
-.cc-more{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)}
-.cc-more h4{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:16px 0 7px;
-}
-.cc-more h4:first-child{margin-top:0}
-.cc-more p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink)}
-.cc-more ul{margin:0;padding-left:17px}
-.cc-more li{font-size:14.5px;line-height:1.5;color:var(--ink);margin-bottom:4px}
-.cc-note{background:var(--line-soft);border-radius:6px;padding:12px 13px;font-size:14px;line-height:1.5;margin-top:14px;color:var(--ink)}
 
 /* ------------------------------------------------------------------- basket
    Sits above the grid on a phone rather than floating over it, because a
    floating bar on a small screen eats the thing it is counting. */
 .basket{
   position:sticky;top:0;z-index:40;
-  display:flex;align-items:center;justify-content:space-between;gap:14px;
   background:var(--night);color:#fff;border-radius:8px;
-  padding:13px 16px;margin-bottom:18px;box-shadow:var(--lift);
+  padding:12px 14px;margin-bottom:18px;box-shadow:var(--lift);
 }
+.basket-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .basket-l{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
-.basket-l b{color:var(--gold);font-weight:600}
 .basket .btn{padding:10px 18px;font-size:14px}
+.bempty{margin:9px 0 0;font-size:13px;color:rgba(255,255,255,.45)}
+
+/* Each pick is a chip carrying its committee's colour, and tapping it removes
+   it. The colour is what makes the list scannable without reading it. */
+.bpills{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.bpill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.08);color:#fff;
+  border:1px solid var(--a);border-left:4px solid var(--a);
+  border-radius:5px;padding:6px 10px;font-size:13px;font-weight:700;
+  transition:background .12s ease;
+}
+.bpill:hover{background:rgba(255,255,255,.18)}
+.bpill i{font-style:normal;font-size:15px;line-height:1;color:rgba(255,255,255,.5)}
+.bpill:hover i{color:#fff}
+.bpill[data-a="orange"]{--a:var(--orange)} .bpill[data-a="magenta"]{--a:var(--magenta)}
+.bpill[data-a="red"]{--a:var(--red)} .bpill[data-a="green"]{--a:var(--green)}
+.bpill[data-a="blue"]{--a:#5b8def} .bpill[data-a="gold"]{--a:var(--gold)}
+.bpill[data-a="ink"]{--a:#8d8580}
+
+/* -------------------------------------------------------------- lightbox
+   Details used to push the card open, which shoved every other card down the
+   page and lost your place in the grid. As an overlay the grid never moves. */
+@keyframes lbfade{from{opacity:0}to{opacity:1}}
+@keyframes lbrise{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}
+.lb{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:22px;
+  background:rgba(14,12,11,.62);backdrop-filter:blur(3px);
+  animation:lbfade .18s ease both;
+}
+.lb-in{
+  position:relative;width:100%;max-width:460px;max-height:86svh;overflow-y:auto;
+  background:var(--card);border-radius:12px;border-top:6px solid var(--a);
+  padding:26px 24px 24px;box-shadow:0 24px 60px rgba(14,12,11,.4);
+  animation:lbrise .24s cubic-bezier(.2,.7,.3,1) both;
+}
+.lb-in[data-a="orange"]{--a:var(--orange)} .lb-in[data-a="magenta"]{--a:var(--magenta)}
+.lb-in[data-a="red"]{--a:var(--red)} .lb-in[data-a="green"]{--a:var(--green)}
+.lb-in[data-a="blue"]{--a:var(--blue)} .lb-in[data-a="gold"]{--a:var(--gold)}
+.lb-in[data-a="ink"]{--a:var(--graphite)}
+.lb-x{
+  position:absolute;top:14px;right:14px;
+  width:34px;height:34px;border:0;border-radius:50%;
+  background:var(--line-soft);color:var(--ink-soft);
+  font-size:21px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+.lb-x:hover{background:var(--line);color:var(--ink)}
+.lb-name{margin:0 40px 0 0;font-size:24px;font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.lb-what{margin:12px 0 0;font-size:16px;line-height:1.5;color:var(--ink-soft)}
+.lb-h{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+  margin:22px 0 9px;
+}
+.lb-list{margin:0;padding-left:18px}
+.lb-list li{font-size:16px;line-height:1.45;color:var(--ink);margin-bottom:7px}
+.lb-add{width:100%;margin-top:22px;padding:13px}
+@media(max-width:520px){
+  .lb{padding:14px;align-items:flex-end}
+  .lb-in{max-width:none;max-height:88svh}
+}
 
 /* ------------------------------------------------------------------- review */
 .receipt{
@@ -360,16 +403,3 @@ a{color:inherit}
   color:rgba(255,255,255,.35);
 }
 .foot a{color:rgba(255,255,255,.6)}
-
-/* Details, tightened. Four labelled sections was more furniture than content
-   for a card someone is skimming, so commitment and the who-it-suits line lost
-   their headers and became a mono strip and one italic line. Same information,
-   about a third fewer words, and the eye now lands on the bullets. */
-.cc-commit{
-  margin:11px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
-  font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--a);
-}
-.cc-who{
-  margin:14px 0 0;font-family:'Newsreader',Georgia,serif;font-style:italic;
-  font-size:15.5px;line-height:1.4;color:var(--ink-soft);
-}

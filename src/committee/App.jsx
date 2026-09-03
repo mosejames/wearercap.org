@@ -434,6 +434,22 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
   const shown = tab === 'fit' ? matches : rank(traits);
   const toggle = (id) => setPicks(picks.includes(id) ? picks.filter((x) => x !== id) : [...picks, id]);
 
+  /* Escape closes the lightbox and the page behind it stops scrolling while it
+     is up. Both are what people expect of a modal, and neither is free. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(null); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const detail = open ? byId(open) : null;
+
   return (
     <Screen pct={pct} onBack={onBack} wide big>
       <div className="anim">
@@ -453,9 +469,28 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
         </div>
       )}
 
+      {/* The list itself, not a tally of it. Seeing the names accumulate is the
+          reward for browsing, and each pill is its own undo. */}
       <div className="basket anim" style={{ animationDelay: '.08s' }}>
-        <span className="basket-l">{fn ? `${fn}'s list` : 'Your list'} · <b>{picks.length}</b></span>
-        <button className="btn flame" onClick={onNext} disabled={!picks.length}>Done picking</button>
+        <div className="basket-top">
+          <span className="basket-l">{fn ? `${fn}'s list` : 'Your list'}</span>
+          <button className="btn flame" onClick={onNext} disabled={!picks.length}>Done picking</button>
+        </div>
+        {picks.length ? (
+          <div className="bpills">
+            {picks.map((id) => {
+              const c = byId(id);
+              return (
+                <button
+                  className="bpill" data-a={c.accent} key={id}
+                  onClick={() => toggle(id)} aria-label={'Remove ' + c.name}
+                >{c.name}<i aria-hidden="true">&times;</i></button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="bempty">Nothing yet. Tap Add on any card.</p>
+        )}
       </div>
 
       {err && <p className="err" style={{ marginBottom: 14 }}>{err}</p>}
@@ -463,31 +498,16 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
       <div className="grid anim" style={{ animationDelay: '.1s' }}>
         {shown.map((c) => {
           const on = picks.includes(c.id);
-          const isOpen = open === c.id;
           return (
             <article className={'cc' + (on ? ' picked' : '')} data-a={c.accent} key={c.id}>
-              <p className="cc-tag">{c.tags.slice(0, 2).map((t) => TRAITS.find((x) => x.id === t)?.id).join(' · ')}</p>
               <h3 className="cc-name">{c.name}</h3>
               <p className="cc-blurb">{c.blurb}</p>
-              <p className="cc-when">{c.when}</p>
               <div className="cc-acts">
                 <button className={'add' + (on ? ' on' : '')} onClick={() => toggle(c.id)}>
                   {on ? 'Added' : 'Add to my list'}
                 </button>
-                <button className="det" onClick={() => setOpen(isOpen ? null : c.id)}>
-                  {isOpen ? 'Less' : 'Details'}
-                </button>
+                <button className="det" onClick={() => setOpen(c.id)}>Details</button>
               </div>
-              {isOpen && (
-                <div className="cc-more">
-                  <p>{c.what}</p>
-                  <p className="cc-commit">{c.commitment}</p>
-                  <h4>What you'd do</h4>
-                  <ul>{c.does.map((d) => <li key={d}>{d}</li>)}</ul>
-                  <p className="cc-who">{c.who}</p>
-                  {c.note && <div className="cc-note">{c.note}</div>}
-                </div>
-              )}
             </article>
           );
         })}
@@ -496,6 +516,25 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
       {tab === 'fit' && (
         <div className="row">
           <button className="btn ghost" onClick={() => setTab('all')}>Explore all ten</button>
+        </div>
+      )}
+
+      {detail && (
+        <div className="lb" onClick={() => setOpen(null)}>
+          <div
+            className="lb-in" data-a={detail.accent} role="dialog" aria-modal="true"
+            aria-label={detail.name} onClick={(e) => e.stopPropagation()}
+          >
+            <button className="lb-x" onClick={() => setOpen(null)} aria-label="Close">&times;</button>
+            <h3 className="lb-name">{detail.name}</h3>
+            <p className="lb-what">{detail.what}</p>
+            <h4 className="lb-h">What you'll do</h4>
+            <ul className="lb-list">{detail.does.map((d) => <li key={d}>{d}</li>)}</ul>
+            <button
+              className={'add lb-add' + (picks.includes(detail.id) ? ' on' : '')}
+              onClick={() => toggle(detail.id)}
+            >{picks.includes(detail.id) ? 'Added' : 'Add to my list'}</button>
+          </div>
         </div>
       )}
     </Screen>
