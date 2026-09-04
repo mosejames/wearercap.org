@@ -173,7 +173,7 @@ const upcomingEvents = [
 const committeePop = {
   label: 'Open now',
   title: 'Explore committees',
-  body: `${committeeNames.length} teams carry RCAP. See which one fits, then raise your hand.`,
+  body: 'Parent committees are how we support the school. See where you fit, then raise your hand.',
   href: '/committee-interest/',
   linkLabel: 'Find your place',
 };
@@ -191,7 +191,7 @@ const tools = [
     icon: Users,
     title: 'Find Your Place',
     body:
-      'Tell us your committee interests and see which teams fit. Raise your ' +
+      'Tell us your committee interests and see where you fit. Raise your ' +
       'hand to chair one, or just join in.',
     href: '/committee-interest/',
     badge: 'New',
@@ -318,7 +318,7 @@ const serveActions = [
 ];
 
 
-// Committees — the standing teams. Chairs and open seats get confirmed at the
+// Committees — the standing committees. Chairs and open seats get confirmed at the
 // board's first meeting; keep descriptions evergreen so this list stays true.
 
 
