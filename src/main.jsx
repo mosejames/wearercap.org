@@ -36,40 +36,72 @@ const GATE_ENABLED = false;
 const GATE_KEY = 'rcap-entry';
 const GATE_SECONDS = 10;
 
-// Swap these for things only a current RCA parent would know without looking.
-// Every one of these is answerable from a search engine, which is exactly why
-// the gate is a speed bump rather than a barrier.
+// Typed answers, not multiple choice. Four options gave a stranger a one in four
+// shot per try, and the retry loop meant they could just keep clicking. A typed
+// answer with an accept list makes guessing impractical without making it
+// harder for anyone who actually knows the place.
+//
+// `accept` is matched after normalising: lowercased, accents stripped,
+// punctuation dropped, whitespace collapsed. So "Margaret St." and "margaret"
+// both pass. Add spellings generously; the cost of a wrong rejection is a
+// locked-out parent, and the cost of a loose accept is nearly nothing.
 const GATE_QUESTIONS = [
   {
-    ask: 'Amistad, Altruismo, Rêveur and which fourth house?',
-    answer: 'Isibindi',
-    decoys: ['Ubuntu', 'Sankofa', 'Harambee'],
+    ask: 'What street does RCA sit on?',
+    accept: ['margaret', 'margaret st', 'margaret street', 'margaret st se'],
   },
   {
-    ask: 'How many houses does RCA have?',
-    answer: 'Four',
-    decoys: ['Three', 'Five', 'Six'],
+    ask: 'What reality show was Ron Clark on?',
+    accept: ['survivor'],
   },
   {
-    ask: 'What does RCAP stand for?',
-    answer: 'Ron Clark Academy Parents',
-    decoys: [
-      'Ron Clark Academy Partners',
-      'Ron Clark Parent Association',
-      'Ron Clark Academy Patrons',
+    ask: 'Name one of the two ladies at the front desk.',
+    // Staff names date. If either of them moves on, edit this row or drop it.
+    accept: ['stacy', 'stacey', 'leah', 'lea'],
+  },
+  {
+    ask: 'What year did the school open?',
+    accept: ['2007', '07'],
+  },
+  {
+    ask: 'What does Mr. Bonner call his classroom?',
+    accept: ['bonnerville', 'bonner ville'],
+  },
+  {
+    ask: 'How many Collins work at the school?',
+    accept: ['4', 'four'],
+  },
+  {
+    ask: 'What is the school\'s weekly note to families called?',
+    accept: ['in the loop', 'the loop', 'loop'],
+  },
+  {
+    ask: 'Name one of the four houses.',
+    accept: [
+      'amistad', 'ami',
+      'isibindi', 'bindi',
+      'altruismo', 'rismo',
+      'reveur', 're',
     ],
   },
   {
-    ask: 'Educators travel in for two days at a time to watch RCA work. What is it called?',
-    answer: 'EXP',
-    decoys: ['PD Week', 'The Summit', 'Open House'],
-  },
-  {
-    ask: 'Which of these is an RCA house?',
-    answer: 'Rêveur',
-    decoys: ['Rivera', 'Renard', 'Rousseau'],
+    ask: 'What are the two-day educator conferences at RCA called?',
+    accept: ['exp', 'rca exp', 'the exp'],
   },
 ];
+
+// Normalise before comparing so spelling, case, accents and stray punctuation
+// never stand between a parent and the front door.
+function normaliseAnswer(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 
 
 
@@ -1072,12 +1104,7 @@ function SpinLine() {
 // per device rather than once per visit.
 function pickRound() {
   const q = GATE_QUESTIONS[Math.floor(Math.random() * GATE_QUESTIONS.length)];
-  const options = [q.answer, ...q.decoys];
-  for (let i = options.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [options[i], options[j]] = [options[j], options[i]];
-  }
-  return { ask: q.ask, answer: q.answer, options };
+  return { ask: q.ask, accept: q.accept.map(normaliseAnswer) };
 }
 
 function EntryGate({ children }) {
@@ -1092,12 +1119,14 @@ function EntryGate({ children }) {
   const [deadline, setDeadline] = React.useState(() => Date.now() + GATE_SECONDS * 1000);
   const [now, setNow] = React.useState(() => Date.now());
   const [missed, setMissed] = React.useState(false);
+  const [guess, setGuess] = React.useState('');
 
   const nextRound = React.useCallback((wasMiss) => {
     setRound(pickRound());
     setDeadline(Date.now() + GATE_SECONDS * 1000);
     setNow(Date.now());
     setMissed(wasMiss);
+    setGuess('');
   }, []);
 
   React.useEffect(() => {
@@ -1114,8 +1143,10 @@ function EntryGate({ children }) {
 
   if (open) return children;
 
-  const answer = (choice) => {
-    if (choice === round.answer) {
+  const submit = (event) => {
+    event.preventDefault();
+    const given = normaliseAnswer(guess);
+    if (given && round.accept.includes(given)) {
       try {
         window.localStorage.setItem(GATE_KEY, '1');
       } catch {
@@ -1124,6 +1155,7 @@ function EntryGate({ children }) {
       setOpen(true);
       return;
     }
+    setGuess('');
     nextRound(true);
   };
 
@@ -1132,10 +1164,10 @@ function EntryGate({ children }) {
       <div className="gate-inner">
         <SpinLine />
 
-        <div className="gate-ask" role="group" aria-labelledby="gate-question">
-          <p className="gate-question" id="gate-question">
+        <form className="gate-ask" onSubmit={submit}>
+          <label className="gate-question" htmlFor="gate-input">
             {round.ask}
-          </p>
+          </label>
 
           <div
             className="gate-clock"
@@ -1148,21 +1180,34 @@ function EntryGate({ children }) {
             />
           </div>
 
-          <div className="gate-options">
-            {round.options.map((option) => (
-              <button className="gate-option" type="button" key={option} onClick={() => answer(option)}>
-                {option}
-              </button>
-            ))}
+          <div className="gate-field">
+            <input
+              id="gate-input"
+              className="gate-input"
+              value={guess}
+              onChange={(event) => setGuess(event.target.value)}
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck="false"
+              /* eslint-disable-next-line jsx-a11y/no-autofocus */
+              autoFocus
+              placeholder="Type your answer"
+              aria-describedby="gate-note"
+            />
+            <button className="gate-go" type="submit">
+              Enter
+            </button>
           </div>
 
-          <p className="gate-note" role="status">
-            {missed ? 'Not that one. Here is another.' : 'Answer to come in.'}
+          <p className="gate-note" id="gate-note" role="status">
+            {missed ? 'Not it. Here is another one.' : 'For RCA families.'}
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );
+
 }
 
 function ComingSoonGate({ children }) {
