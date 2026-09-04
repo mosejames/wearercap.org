@@ -1601,7 +1601,7 @@ button {
   height: auto;
   aspect-ratio: 3 / 2;
   object-fit: cover;
-  border-radius: 0;
+  border-radius: 12px;
   background: rgba(26, 22, 19, 0.08);
 }
 
@@ -1610,9 +1610,23 @@ button {
 }
 
 @media (max-width: 860px) {
-  /* Stacked, the photos would run the full column and dwarf the copy. */
+  /* Stacked but still on a wide-ish screen, a full-column photo would dwarf the
+     copy under it. */
   .exp-shot {
     max-width: 420px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Edge to edge on a phone. 100vw centred on the column, which is itself
+     centred in the viewport, so the photo escapes the section gutter while the
+     text keeps it. The radius goes: rounded corners against the screen edge
+     would just show slivers of the band behind them. */
+  .exp-shot {
+    max-width: none;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    border-radius: 0;
   }
 }
 
