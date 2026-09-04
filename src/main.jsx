@@ -32,7 +32,7 @@ const COMING_SOON = false;
 // /committee-interest/, /wish-i-knew/, /rcap-recap/, /invite/ and
 // /what-to-expect/ are separate entry points that never see it. Anything that
 // has to be genuinely private needs protection at the server, not here.
-const GATE_ENABLED = false;
+const GATE_ENABLED = true;
 const GATE_KEY = 'rcap-entry';
 const GATE_SECONDS = 10;
 
