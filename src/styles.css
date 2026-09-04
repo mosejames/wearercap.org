@@ -1520,30 +1520,67 @@ button {
    from someone mid-sentence. Escape closes it, so does either button.
    ------------------------------------------------------------------------ */
 
-.committee-pop {
+/* The scrim: everything behind the dialog gets blurred and tinted, so the page
+   is visibly still there but clearly not the thing to read right now. */
+.pop-scrim {
   position: fixed;
-  z-index: 18;
-  right: 26px;
-  bottom: 26px;
-  width: min(370px, calc(100vw - 40px));
-  padding: 22px 22px 20px;
+  inset: 0;
+  z-index: 22;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: pop-fade 0.28s ease both;
+}
+
+.pop-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(10, 8, 6, 0.62);
+  /* Unprefixed only, and one filter function. lightningcss adds the -webkit-
+     prefix itself; writing it by hand made it dedupe to the prefixed line and
+     drop the standard one, which is the only one Chrome accepts. Two functions
+     also get joined without a space, which is invalid. */
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.committee-pop {
+  position: relative;
+  z-index: 1;
+  width: min(430px, 100%);
+  max-height: calc(100svh - 48px);
+  overflow-y: auto;
+  padding: 26px 26px 24px;
   background: var(--ink);
   color: var(--white);
   border: 2px solid var(--gold);
   border-radius: 0;
-  box-shadow: 0 26px 60px rgba(8, 6, 4, 0.42);
+  box-shadow: 0 34px 90px rgba(8, 6, 4, 0.55);
   animation: pop-in 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.committee-pop:focus {
+  outline: none;
+}
+
+@keyframes pop-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px) scale(0.98);
   }
 }
 
-/* The movement is decoration; the card still has to arrive. */
+/* The movement is decoration; the dialog still has to arrive. */
 @media (prefers-reduced-motion: reduce) {
+  .pop-scrim,
   .committee-pop {
     animation: none;
   }
@@ -1661,16 +1698,16 @@ button {
 }
 
 @media (max-width: 560px) {
-  /* A bottom sheet on a phone, where a floating corner card has no corner. */
+  .pop-scrim {
+    padding: 16px;
+  }
+
   .committee-pop {
-    right: 10px;
-    left: 10px;
-    bottom: 10px;
-    width: auto;
-    padding: 20px 18px 18px;
+    width: 100%;
+    padding: 22px 20px 20px;
   }
 
   .committee-pop h2 {
-    font-size: 24px;
+    font-size: 25px;
   }
 }

@@ -23,6 +23,8 @@ import './styles.css';
 const COMING_SOON = false;
 
 const POP_SEEN = 'rcap-committee-pop';
+// How long Serve stays on screen before the modal interrupts it.
+const DWELL_MS = 1600;
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 // Social — set a URL to turn the link on in the footer. Left null until the
@@ -253,6 +255,7 @@ function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
   const [isPopOpen, setIsPopOpen] = React.useState(false);
   const serveRef = React.useRef(null);
+  const popRef = React.useRef(null);
 
   const closePop = React.useCallback(() => {
     setIsPopOpen(false);
@@ -264,58 +267,106 @@ function App() {
     }
   }, []);
 
-  // Arrives when Serve does, once, and never again in this session. It is
-  // deliberately not a focus-trapping modal: nobody asked to be interrupted, so
-  // it must not seize the keyboard from someone mid-read.
+  // Serve gets the screen to itself first. The section has to be properly in
+  // view, not just edging in, and then stay there for a beat: this is a modal
+  // that covers the page, so firing it the instant Serve appears would take the
+  // screen away from the thing the person just arrived at.
   React.useEffect(() => {
     const node = serveRef.current;
-    if (!node || typeof IntersectionObserver === 'undefined') return undefined;
+    if (!node) return undefined;
     try {
       if (window.sessionStorage.getItem(POP_SEEN)) return undefined;
     } catch {
-      // fall through and show it
+      // storage unavailable; fall through and let it show
     }
+
+    let timer = null;
     let done = false;
-    const reveal = () => {
-      if (done) return;
-      done = true;
-      setIsPopOpen(true);
-      observer.disconnect();
-      window.removeEventListener('scroll', onScroll);
-    };
 
-    // Two triggers on purpose. IntersectionObserver is the right API and fires
-    // as soon as a fifth of the section is showing. The scroll check is the
-    // belt: it needs no compositor callback, so the popup still arrives if the
-    // observer is starved of frames.
-    const onScroll = () => {
+    const settled = () => {
       const box = node.getBoundingClientRect();
-      if (box.top < window.innerHeight * 0.8 && box.bottom > 0) reveal();
+      const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
+      // Two thirds of the viewport filled by Serve, or the whole section if it
+      // is shorter than the viewport.
+      return shown > Math.min(window.innerHeight * 0.66, box.height * 0.9);
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) reveal();
-      },
-      { threshold: 0.2 },
-    );
-    observer.observe(node);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', onScroll);
+    const check = () => {
+      if (done) return;
+      if (settled()) {
+        if (timer === null) {
+          timer = window.setTimeout(() => {
+            if (done || !settled()) return;
+            done = true;
+            setIsPopOpen(true);
+            teardown();
+          }, DWELL_MS);
+        }
+      } else if (timer !== null) {
+        // Scrolled back off before the dwell finished. Start over next time.
+        window.clearTimeout(timer);
+        timer = null;
+      }
     };
+
+    const observer =
+      typeof IntersectionObserver === 'undefined'
+        ? null
+        : new IntersectionObserver(check, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+    function teardown() {
+      if (timer !== null) window.clearTimeout(timer);
+      if (observer) observer.disconnect();
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    }
+
+    if (observer) observer.observe(node);
+    // The scroll listener is the belt: it needs no compositor callback, so the
+    // dwell still runs if the observer is starved of frames.
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    check();
+
+    return teardown;
   }, []);
 
+  // Now that it covers the page, it behaves like a dialog: Escape closes it,
+  // focus moves in so the keyboard is not stranded behind the backdrop, and it
+  // goes back where it came from on the way out.
   React.useEffect(() => {
     if (!isPopOpen) return undefined;
+
+    const returnTo = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    popRef.current?.focus();
+
     const onKey = (event) => {
-      if (event.key === 'Escape') closePop();
+      if (event.key === 'Escape') {
+        closePop();
+        return;
+      }
+      if (event.key !== 'Tab' || !popRef.current) return;
+      const focusables = popRef.current.querySelectorAll('button, a[href]');
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+      if (returnTo && typeof returnTo.focus === 'function') returnTo.focus();
+    };
   }, [isPopOpen, closePop]);
   const openVideo = React.useCallback(() => setIsVideoOpen(true), []);
   const closeVideo = React.useCallback(() => setIsVideoOpen(false), []);
@@ -553,31 +604,41 @@ function App() {
       </section>
 
       {isPopOpen ? (
-        <aside className="committee-pop" role="dialog" aria-labelledby="committee-pop-title">
-          <button className="pop-close" type="button" onClick={closePop} aria-label="Close">
-            <X size={18} aria-hidden="true" />
-          </button>
-          <p className="pop-label">{committeePop.label}</p>
-          <h2 id="committee-pop-title">{committeePop.title}</h2>
-          <p className="pop-body">{committeePop.body}</p>
-
-          <ul className="pop-pills">
-            {committees.map(({ title }) => (
-              <li key={title}>{title}</li>
-            ))}
-            <li className="pop-pill-more">and more</li>
-          </ul>
-
-          <div className="pop-actions">
-            <a className="pop-go" href={committeePop.href}>
-              {committeePop.linkLabel}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </a>
-            <button className="pop-dismiss" type="button" onClick={closePop}>
-              Not now
+        <div className="pop-scrim">
+          <button className="pop-backdrop" type="button" onClick={closePop} aria-label="Close" />
+          <aside
+            className="committee-pop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="committee-pop-title"
+            tabIndex={-1}
+            ref={popRef}
+          >
+            <button className="pop-close" type="button" onClick={closePop} aria-label="Close">
+              <X size={18} aria-hidden="true" />
             </button>
-          </div>
-        </aside>
+            <p className="pop-label">{committeePop.label}</p>
+            <h2 id="committee-pop-title">{committeePop.title}</h2>
+            <p className="pop-body">{committeePop.body}</p>
+
+            <ul className="pop-pills">
+              {committees.map(({ title }) => (
+                <li key={title}>{title}</li>
+              ))}
+              <li className="pop-pill-more">and more</li>
+            </ul>
+
+            <div className="pop-actions">
+              <a className="pop-go" href={committeePop.href}>
+                {committeePop.linkLabel}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+              <button className="pop-dismiss" type="button" onClick={closePop}>
+                Not now
+              </button>
+            </div>
+          </aside>
+        </div>
       ) : null}
 
       <VideoModal open={isVideoOpen} onClose={closeVideo} />
