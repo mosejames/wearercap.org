@@ -614,8 +614,8 @@ button {
 }
 
 /* Calendar tiles: square corners, a heavy rule all the way round, and a banner
-   across the top the way a wall calendar prints its month. Red banner is 5.0:1
-   against white, which clears AA for the bold caps it carries. */
+   across the top the way a wall calendar prints its month. Gold on ink is 9.9:1,
+   well clear of AA for the bold caps it carries. */
 .event-card {
   display: grid;
   align-content: start;
@@ -632,8 +632,8 @@ button {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 11px;
-  background: var(--red);
-  color: var(--white);
+  background: var(--ink);
+  color: var(--gold);
   font-size: 11.5px;
   font-weight: 900;
   letter-spacing: 0.09em;
@@ -824,10 +824,6 @@ button {
 }
 
 @media (max-width: 520px) {
-  .event-grid {
-    grid-template-columns: 1fr;
-  }
-
   .hero-actions {
     display: grid;
     grid-template-columns: 1fr;
@@ -1794,6 +1790,30 @@ button {
 }
 
 @media (max-width: 560px) {
+  /* Two tiles across a phone leaves about 160px each. Everything inside steps
+     down so the banner pair and the two-day range still fit on one line. */
+  .event-banner {
+    padding: 7px 8px;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .event-day {
+    padding: 12px 9px 6px;
+    font-size: 46px;
+  }
+
+  .event-card.is-range .event-day {
+    padding-top: 15px;
+    padding-bottom: 9px;
+    font-size: 25px;
+  }
+
+  .event-what {
+    padding: 0 9px 13px;
+    font-size: 12.5px;
+  }
+
   .pop-scrim {
     padding: 16px;
   }
