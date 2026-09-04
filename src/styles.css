@@ -1015,142 +1015,176 @@ button {
   color: var(--ink);
 }
 
-/* Tools — the apps built under wearercap.org. Card look is lifted from the card
-   pattern this page has always used. The whole card is the link via a stretched
-   ::after; the one secondary link (Wish I Knew's reader) sits above it. */
+/* ---------------------------------------------------------------------------
+   Tools — a numbered list, not a grid of cards.
 
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+   Three columns per row: the ordinal, the name, and the detail. A hairline
+   between rows and a single vertical rule before the detail is the whole
+   structure. Hover lights the row's own accent: the rule down the left edge,
+   the number, and the arrow. Each row's `variant` sets --row via the block at
+   the bottom, so one colour drives all three.
+   ------------------------------------------------------------------------ */
+
+.tool-list {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
 }
 
-.tool-card {
+.tool-row {
   position: relative;
   display: grid;
-  align-content: start;
-  gap: 10px;
-  /* extra bottom padding reserves the corner the .tool-go arrow sits in */
-  padding: 22px 22px 46px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-top: 4px solid var(--accent);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  grid-template-columns: 92px minmax(0, 1fr) minmax(0, 0.82fr);
+  align-items: center;
+  gap: 0 12px;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
+  /* An inset shadow rather than a border, so the row does not shift by 3px the
+     moment it lights up. */
+  transition: box-shadow 0.16s ease, background 0.16s ease;
 }
 
-.tool-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 46px rgba(8, 13, 18, 0.18);
+.tool-row:hover,
+.tool-row:focus-within {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 3px 0 0 var(--row);
 }
 
-.tool-top {
+.tool-num {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #c2b39c;
+  font-variant-numeric: tabular-nums;
+  padding-left: 22px;
+  transition: color 0.16s ease;
+}
+
+.tool-row:hover .tool-num,
+.tool-row:focus-within .tool-num {
+  color: var(--row);
+}
+
+.tool-name {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.tool-card > .tool-top svg {
-  color: var(--accent);
+.tool-icon {
+  color: var(--row);
+  flex: none;
 }
 
-.tool-card h3 {
-  margin: 6px 0 0;
-  font-size: 19px;
-  line-height: 1.1;
+.tool-name h3 {
+  margin: 0;
+  font-size: clamp(19px, 1.9vw, 27px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
-.tool-card h3 a::after {
+/* The stretched link: the whole row is the target. */
+.tool-name h3 a::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 10px;
 }
 
-.tool-card p {
+.tool-arrow {
+  flex: none;
+  color: #c2b39c;
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+
+.tool-row:hover .tool-arrow,
+.tool-row:focus-within .tool-arrow {
+  color: var(--row);
+  transform: translateX(5px);
+}
+
+.tool-detail {
+  display: block;
+  padding-left: 30px;
+  border-left: 1px solid var(--line);
+}
+
+.tool-detail p {
   margin: 0;
   color: var(--muted);
-  font-size: 14.5px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.tool-go {
-  position: absolute;
-  right: 18px;
-  bottom: 16px;
-  color: var(--muted);
-  transition: transform 0.18s ease;
-}
-
-.tool-card:hover .tool-go {
-  transform: translate(2px, -2px);
-}
-
-.tool-secondary {
+/* Sits above the stretched link, which is what lets Wish I Knew's action point
+   at the reader while the row points at the tool. */
+.tool-action {
   position: relative;
   z-index: 1;
-  justify-self: start;
-  margin-top: 2px;
-  font-size: 13.5px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
   color: var(--accent);
-  border-bottom: 1px solid rgba(176, 71, 10, 0.32);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.16s ease;
 }
 
-.tool-secondary:hover {
-  border-bottom-color: var(--accent);
+.tool-action:hover {
+  color: var(--accent-bright);
 }
 
-.tool-card.exchange {
-  border-top-color: var(--red);
-}
+.tool-row.exchange { --row: var(--red); }
+.tool-row.carpool { --row: var(--green); }
+.tool-row.committee { --row: var(--gold); }
+.tool-row.wik { --row: var(--green); }
+.tool-row.recap { --row: var(--gold); }
 
-.tool-card.exchange > .tool-top svg {
-  color: var(--red);
-}
+@media (max-width: 900px) {
+  /* The detail drops under the name and the vertical rule goes with it; at this
+     width there is not enough room for three columns without shredding the
+     descriptions into four-word lines. */
+  .tool-row {
+    grid-template-columns: 62px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px 14px;
+    padding: 22px 0;
+  }
 
-.tool-card.carpool {
-  border-top-color: var(--green);
-}
+  .tool-num {
+    font-size: 30px;
+    padding-left: 14px;
+  }
 
-.tool-card.carpool > .tool-top svg {
-  color: var(--green);
-}
+  .tool-detail {
+    grid-column: 2;
+    padding-left: 0;
+    border-left: 0;
+  }
 
-.tool-card.committee {
-  border-top-color: var(--gold);
-}
+  .tool-name {
+    gap: 12px;
+  }
 
-.tool-card.committee > .tool-top svg {
-  color: var(--gold);
-}
-
-.tool-card.wik {
-  border-top-color: var(--green);
-}
-
-.tool-card.wik > .tool-top svg {
-  color: var(--green);
-}
-
-.tool-card.recap {
-  border-top-color: var(--gold);
-}
-
-.tool-card.recap > .tool-top svg {
-  color: var(--gold);
+  .tool-arrow {
+    display: none;
+  }
 }
 
 .tool-reads {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 18px;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-  font-size: 14.5px;
+  align-items: center;
+  gap: 8px 26px;
+  margin-top: 24px;
+  font-size: 14px;
 }
 
 .tool-reads span {
@@ -1159,25 +1193,19 @@ button {
 }
 
 .tool-reads a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--accent);
-  font-weight: 700;
-  border-bottom: 1px solid rgba(176, 71, 10, 0.32);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.16s ease;
 }
 
 .tool-reads a:hover {
-  border-bottom-color: var(--accent);
-}
-
-@media (max-width: 860px) {
-  .tool-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 520px) {
-  .tool-grid {
-    grid-template-columns: 1fr;
-  }
+  color: var(--accent-bright);
 }
 
 /* Footer social — renders only when a URL is actually set (see `socials` in

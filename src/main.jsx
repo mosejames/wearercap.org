@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
+  ArrowRight,
   ArrowUpRight,
   Camera,
   Car,
@@ -99,6 +100,7 @@ const tools = [
       'happen at carline, no phone numbers traded.',
     href: '/uniform-exchange/',
     badge: 'Live',
+    action: 'Open exchange',
   },
   {
     variant: 'carpool',
@@ -109,6 +111,7 @@ const tools = [
       'your address stays private.',
     href: '/carpool/',
     badge: 'Live',
+    action: 'Find a ride',
   },
   {
     variant: 'committee',
@@ -119,6 +122,7 @@ const tools = [
       'to chair one, or just join a team.',
     href: '/committee-interest/',
     badge: 'New',
+    action: 'Open the form',
   },
   {
     variant: 'wik',
@@ -128,7 +132,9 @@ const tools = [
       'Veteran RCA parents leave one piece of advice for the families coming ' +
       'up behind them.',
     href: '/wish-i-knew/',
-    secondary: { label: 'Read what parents said', href: '/wish-i-knew/read/' },
+    // The only row whose action goes somewhere other than the row itself.
+    action: 'Read what parents said',
+    actionHref: '/wish-i-knew/read/',
   },
   {
     variant: 'recap',
@@ -138,8 +144,10 @@ const tools = [
       'Describe EXP in one word, then add the photo or video that goes with ' +
       'it. It posts straight to the board.',
     href: '/rcap-recap/',
+    action: 'Add your recap',
   },
 ];
+
 
 const serveActions = [
   {
@@ -509,44 +517,60 @@ function App() {
         </div>
       </section>
 
-      {/* Tools — everything RCAP has built for families, rendered from the
-          `tools` list above. Each card is a whole-card link; Wish I Knew
-          carries a second link to its reader on top of that. */}
-      <section id="tools" className="content-section tools-section">
+      {/* Tools — a numbered list rather than a grid of cards. Each row is a
+          whole-row link to the tool; the action link on the right sits above
+          that stretched link, which matters for Wish I Knew, the one row whose
+          action points somewhere else. */}
+      <section id="tools" className="content-section">
         <div className="section-heading">
           <p className="section-label">Tools</p>
-          <h2>Built for RCA families, free to use.</h2>
+          <h2>Built for RCA families. Pick what you need.</h2>
           <p>
             All of these live right here on wearercap.org. Nothing to download,
             no account to make.
           </p>
         </div>
-        <div className="tool-grid" aria-label="RCAP tools">
-          {tools.map(({ variant, icon: Icon, title, body, href, badge, secondary }) => (
-            <article className={`tool-card ${variant}`} key={title}>
-              <div className="tool-top">
-                <Icon size={26} aria-hidden="true" />
-                {badge ? <span className="tool-badge">{badge}</span> : null}
-              </div>
-              <h3>
-                <a href={href}>{title}</a>
-              </h3>
-              <p>{body}</p>
-              {secondary ? (
-                <a className="tool-secondary" href={secondary.href}>
-                  {secondary.label}
-                </a>
-              ) : null}
-              <span className="tool-go" aria-hidden="true">
-                <ArrowUpRight size={18} />
+
+        <ol className="tool-list">
+          {tools.map(({ variant, icon: Icon, title, body, href, badge, action, actionHref }, index) => (
+            <li className={`tool-row ${variant}`} key={title}>
+              <span className="tool-num" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
               </span>
-            </article>
+
+              <span className="tool-name">
+                {badge ? (
+                  <span className="tool-badge">{badge}</span>
+                ) : (
+                  <Icon className="tool-icon" size={26} strokeWidth={1.6} aria-hidden="true" />
+                )}
+                <h3>
+                  <a href={href}>{title}</a>
+                </h3>
+                <ArrowRight className="tool-arrow" size={26} aria-hidden="true" />
+              </span>
+
+              <span className="tool-detail">
+                <p>{body}</p>
+                <a className="tool-action" href={actionHref || href}>
+                  {action}
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </a>
+              </span>
+            </li>
           ))}
-        </div>
+        </ol>
+
         <nav className="tool-reads" aria-label="RCAP letters">
           <span>Also here:</span>
-          <a href="/what-to-expect/">What to Expect at EXP</a>
-          <a href="/invite/">Serve at EXP</a>
+          <a href="/what-to-expect/">
+            What to Expect at EXP
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
+          <a href="/invite/">
+            Serve at EXP
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
         </nav>
       </section>
 
