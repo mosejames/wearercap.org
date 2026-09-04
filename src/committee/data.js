@@ -1,4 +1,4 @@
-/* The ten committees.
+/* The eleven committees.
 
    `tags` drives the recommendation step. A parent picks how they like to show
    up, and committees carrying those tags float to the top. Nothing is hidden by
@@ -48,7 +48,7 @@ export const COMMITTEES = [
     name: 'Trunk or Treat',
     accent: 'gold',
     tags: ['maker', 'creative', 'people', 'organizer'],
-    blurb: 'Halloween in the parking lot. Each house decorates a section and the kids work the cars.',
+    blurb: 'A fall festival in the parking lot, with candy handed out from the trunks.',
     what: 'Late October, and the chair seat is open.',
     does: [
       'Lay out the house sections',
@@ -126,12 +126,12 @@ export const COMMITTEES = [
     name: 'Marketing and Communications',
     accent: 'magenta',
     tags: ['creative', 'people'],
-    blurb: 'So the parent who is at work at 9am still gets to see House Cheers.',
+    blurb: 'Finding creative ways to reach our families, on social and everywhere else.',
     what: 'A small team on photo, video, and writing, year round.',
     does: [
       'Shoot and edit at events',
       'Run the Instagram and the parent newsletter',
-      'Go live from House Cheers on Fridays',
+      'Find new ways to pull families in',
     ],
   },
   {
@@ -139,12 +139,25 @@ export const COMMITTEES = [
     name: 'Community Service',
     accent: 'green',
     tags: ['maker', 'organizer', 'people', 'giveback'],
-    blurb: 'The one that has not been built yet. Come help decide what it is.',
+    blurb: 'Our service arm, making sure the magic of RCA is felt outside our walls.',
     what: 'Board-led and school-wide, with the first push around December.',
     does: [
-      'Decide what our service effort is',
-      'Build the first one',
+      'Choose where we put our hands each year',
+      'Build the partnerships that carry it',
       'Bring the whole school into it',
+    ],
+  },
+  {
+    id: 'exp',
+    name: 'EXP Support',
+    accent: 'red',
+    tags: ['people', 'organizer', 'giveback'],
+    blurb: 'Ten times a year the world comes to RCA, and we are the welcome.',
+    what: 'Every EXP session, Thursday and Friday, from September through May.',
+    does: [
+      'Recruit parents for every session',
+      'Cover the posts: greeting, registration, meals, room flips',
+      'Keep first-timers company on their first shift',
     ],
   },
   {

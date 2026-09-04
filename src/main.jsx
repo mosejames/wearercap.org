@@ -15,7 +15,13 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { COMMITTEES } from './committee/data.js';
 import './styles.css';
+
+// Pulled straight from the Find Your Place data so the two can never drift.
+// Editing src/committee/data.js updates the pills, the count, and the form.
+const committeeNames = COMMITTEES.map((c) => c.name);
+
 
 // Pre-launch gate. Flip to false to release the homepage; nothing else needs
 // changing. Only covers the React homepage — static pages under public/ (e.g.
@@ -167,7 +173,7 @@ const upcomingEvents = [
 const committeePop = {
   label: 'Open now',
   title: 'Explore committees',
-  body: 'Nine teams carry RCAP. See which one fits, then raise your hand.',
+  body: `${committeeNames.length} teams carry RCAP. See which one fits, then raise your hand.`,
   href: '/committee-interest/',
   linkLabel: 'Find your place',
 };
@@ -314,32 +320,7 @@ const serveActions = [
 
 // Committees — the standing teams. Chairs and open seats get confirmed at the
 // board's first meeting; keep descriptions evergreen so this list stays true.
-const committees = [
-  {
-    title: 'Teacher & Staff Appreciation',
-    body: 'The flagship. Teacher Appreciation Week every spring since 2011.',
-  },
-  {
-    title: 'Men of RCAP',
-    body: 'Event muscle since 2011. Setup, teardown, and showing up. Open to any man in an RCA family.',
-  },
-  {
-    title: 'Fall Raffle',
-    body: 'The engine of the budget. Beat its $20,000 goal in 2025.',
-  },
-  {
-    title: 'Christmas / Holiday Decor',
-    body: 'Transforms the whole school every November.',
-  },
-  {
-    title: 'Uniform Swap',
-    body: 'Free uniform exchanges since 2010, the longest-running family service RCAP offers.',
-  },
-  {
-    title: 'Concessions',
-    body: 'Feeds every event and game night.',
-  },
-];
+
 
 // A single digit in a masked window, borrowed from the prelaunch reel: fixed
 // height, overflow hidden, and the glyph slides through it. The counter only
@@ -906,10 +887,9 @@ function App() {
             <p className="pop-body">{committeePop.body}</p>
 
             <ul className="pop-pills">
-              {committees.map(({ title }) => (
-                <li key={title}>{title}</li>
+              {committeeNames.map((name) => (
+                <li key={name}>{name}</li>
               ))}
-              <li className="pop-pill-more">and more</li>
             </ul>
 
             <div className="pop-actions">
