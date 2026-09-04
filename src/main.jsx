@@ -976,7 +976,14 @@ function SpinLine({ max = 150 }) {
       });
       reel.style.width = widest + 'px';
 
+      // max-content, not the rendered box. The line is a flex container clamped
+      // by its parent, so its border box reports the parent's width however far
+      // the reel overflows inside it. Measuring the box made fit() circular: it
+      // always looked like it fitted, so it never shrank, and on a phone the
+      // words ran off the screen.
+      line.style.width = 'max-content';
       const lineW = line.getBoundingClientRect().width;
+      line.style.width = '';
       // Measure against whatever box the line is actually in. The prelaunch
       // screen is full width so this matched the viewport; inside the gate the
       // line sits in a 560px column and the viewport figure overflowed it.
