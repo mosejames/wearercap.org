@@ -8,6 +8,7 @@ import {
   Clock,
   Instagram,
   Lightbulb,
+  Mail,
   MapPin,
   PlayCircle,
   Shirt,
@@ -29,11 +30,8 @@ const POP_SEEN = 'rcap-committee-pop';
 const DWELL_MS = 900;
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
-// Social — set a URL to turn the link on in the footer. Left null until the
-// account is confirmed: the archive shows a private @RCAParents from 2023, and
-// a wrong or private link is worse than no link.
 const socials = [
-  { icon: Instagram, label: 'Instagram', href: null },
+  { icon: Instagram, label: '@rcaparents', href: 'https://www.instagram.com/rcaparents/' },
 ];
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
@@ -574,26 +572,10 @@ function App() {
         </nav>
       </section>
 
-      {/* Footer — contact, social, and the whole map of the site. */}
-      <section className="closing">
-        <p className="section-label">We Are RCAP</p>
-        <h2>Connected families make the community stronger.</h2>
-        <p>
-          Questions, corrections, ideas, and ways to help are welcome. Email{' '}
-          <a href={contactHref}>{contactEmail}</a>.
-        </p>
-        {socials.some((s) => s.href) ? (
-          <nav className="footer-socials" aria-label="RCAP on social">
-            {socials
-              .filter((s) => s.href)
-              .map(({ icon: Icon, label, href }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer">
-                  <Icon size={18} aria-hidden="true" />
-                  {label}
-                </a>
-              ))}
-          </nav>
-        ) : null}
+      {/* Footer — the site map plus the two ways to reach RCAP. The old closing
+          block had a headline and a paragraph that repeated the welcome without
+          adding anything, so it is just the footer now. */}
+      <footer className="closing">
         <nav className="footer-map" aria-label="Site sections">
           <a href="#story">Who We Are</a>
           <a href="#events">Events</a>
@@ -607,7 +589,28 @@ function App() {
           <a href="/what-to-expect/">What to Expect at EXP</a>
           <a href="/invite/">Serve at EXP</a>
         </nav>
-      </section>
+
+        <div className="footer-contact">
+          <a className="footer-reach" href={contactHref}>
+            <Mail size={17} aria-hidden="true" />
+            {contactEmail}
+          </a>
+          {socials
+            .filter((s) => s.href)
+            .map(({ icon: Icon, label, href }) => (
+              <a
+                className="footer-reach"
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon size={17} aria-hidden="true" />
+                {label}
+              </a>
+            ))}
+        </div>
+      </footer>
 
       {isPopOpen ? (
         <div className="pop-scrim">

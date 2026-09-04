@@ -346,8 +346,7 @@ button {
 .intro h2,
 .community-copy h2,
 .video-copy h2,
-.section-heading h2,
-.closing h2 {
+.section-heading h2 {
   margin: 0;
   color: var(--ink);
   font-size: clamp(34px, 4.8vw, 64px);
@@ -358,8 +357,7 @@ button {
 .intro p:not(.section-label),
 .community-copy p:not(.section-label),
 .video-copy p:not(.section-label),
-.section-heading p:not(.section-label),
-.closing p:not(.section-label) {
+.section-heading p:not(.section-label) {
   margin: 0;
   color: var(--muted);
   font-size: 19px;
@@ -683,17 +681,8 @@ button {
 }
 
 .closing {
-  padding: 74px 0 88px;
+  padding: 40px 0 56px;
   border-top: 1px solid var(--line);
-}
-
-.closing h2 {
-  max-width: 820px;
-}
-
-.closing p:not(.section-label) {
-  max-width: 700px;
-  margin-top: 22px;
 }
 
 .closing a {
@@ -848,8 +837,7 @@ button {
   .intro h2,
   .community-copy h2,
   .video-copy h2,
-  .section-heading h2,
-  .closing h2 {
+  .section-heading h2 {
     font-size: clamp(32px, 11vw, 44px);
   }
 
@@ -999,9 +987,6 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 22px;
-  margin-top: 26px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
 }
 
 .footer-map a {
@@ -1211,20 +1196,28 @@ button {
 /* Footer social — renders only when a URL is actually set (see `socials` in
    main.jsx), so an unconfirmed account never ships as a live link. */
 
-.footer-socials {
+/* The two ways to reach RCAP, under a hairline below the map. */
+.footer-contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-top: 22px;
+  gap: 12px 28px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 
-.footer-socials a {
+.footer-reach {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  color: var(--accent);
   font-size: 15px;
   font-weight: 800;
-  color: var(--accent);
+  transition: color 0.16s ease;
+}
+
+.footer-reach:hover {
+  color: var(--accent-bright);
 }
 
 @media (max-width: 1040px) {
