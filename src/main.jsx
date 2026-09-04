@@ -24,6 +24,55 @@ import './styles.css';
 // the browser and is readable via view-source or with CSS disabled.
 const COMING_SOON = false;
 
+// Entry gate. Flip to true to put the question in front of the homepage.
+//
+// READ THIS BEFORE RELYING ON IT. This is a front door, not a lock. The answers
+// are in the JavaScript bundle, the gate is bypassed by disabling JS, and it
+// only wraps the React homepage: /carpool/, /uniform-exchange/,
+// /committee-interest/, /wish-i-knew/, /rcap-recap/, /invite/ and
+// /what-to-expect/ are separate entry points that never see it. Anything that
+// has to be genuinely private needs protection at the server, not here.
+const GATE_ENABLED = false;
+const GATE_KEY = 'rcap-entry';
+const GATE_SECONDS = 10;
+
+// Swap these for things only a current RCA parent would know without looking.
+// Every one of these is answerable from a search engine, which is exactly why
+// the gate is a speed bump rather than a barrier.
+const GATE_QUESTIONS = [
+  {
+    ask: 'Amistad, Altruismo, Rêveur and which fourth house?',
+    answer: 'Isibindi',
+    decoys: ['Ubuntu', 'Sankofa', 'Harambee'],
+  },
+  {
+    ask: 'How many houses does RCA have?',
+    answer: 'Four',
+    decoys: ['Three', 'Five', 'Six'],
+  },
+  {
+    ask: 'What does RCAP stand for?',
+    answer: 'Ron Clark Academy Parents',
+    decoys: [
+      'Ron Clark Academy Partners',
+      'Ron Clark Parent Association',
+      'Ron Clark Academy Patrons',
+    ],
+  },
+  {
+    ask: 'Educators travel in for two days at a time to watch RCA work. What is it called?',
+    answer: 'EXP',
+    decoys: ['PD Week', 'The Summit', 'Open House'],
+  },
+  {
+    ask: 'Which of these is an RCA house?',
+    answer: 'Rêveur',
+    decoys: ['Rivera', 'Renard', 'Rousseau'],
+  },
+];
+
+
+
 // Next time the RCAP Recap vault opens for submissions. Local time, which is
 // what a parent in Atlanta is reading it in.
 // Next vault opening. 09:00 on 2026-09-10 in New York; the offset is -04:00
@@ -1017,6 +1066,105 @@ function SpinLine() {
   );
 }
 
+// One question, drawn at random, shuffled, on a ten second clock. Miss it or run
+// out and a fresh one takes its place, so there is no way to sit and grind at a
+// single answer. A pass is remembered in localStorage, so a parent answers once
+// per device rather than once per visit.
+function pickRound() {
+  const q = GATE_QUESTIONS[Math.floor(Math.random() * GATE_QUESTIONS.length)];
+  const options = [q.answer, ...q.decoys];
+  for (let i = options.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return { ask: q.ask, answer: q.answer, options };
+}
+
+function EntryGate({ children }) {
+  const [open, setOpen] = React.useState(() => {
+    try {
+      return window.localStorage.getItem(GATE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [round, setRound] = React.useState(pickRound);
+  const [deadline, setDeadline] = React.useState(() => Date.now() + GATE_SECONDS * 1000);
+  const [now, setNow] = React.useState(() => Date.now());
+  const [missed, setMissed] = React.useState(false);
+
+  const nextRound = React.useCallback((wasMiss) => {
+    setRound(pickRound());
+    setDeadline(Date.now() + GATE_SECONDS * 1000);
+    setNow(Date.now());
+    setMissed(wasMiss);
+  }, []);
+
+  React.useEffect(() => {
+    if (open) return undefined;
+    const id = window.setInterval(() => setNow(Date.now()), 200);
+    return () => window.clearInterval(id);
+  }, [open]);
+
+  const left = Math.max(0, deadline - now);
+
+  React.useEffect(() => {
+    if (!open && left === 0) nextRound(true);
+  }, [open, left, nextRound]);
+
+  if (open) return children;
+
+  const answer = (choice) => {
+    if (choice === round.answer) {
+      try {
+        window.localStorage.setItem(GATE_KEY, '1');
+      } catch {
+        // Private mode. They are still let in; it just asks again next time.
+      }
+      setOpen(true);
+      return;
+    }
+    nextRound(true);
+  };
+
+  return (
+    <div className="gate">
+      <div className="gate-inner">
+        <SpinLine />
+
+        <div className="gate-ask" role="group" aria-labelledby="gate-question">
+          <p className="gate-question" id="gate-question">
+            {round.ask}
+          </p>
+
+          <div
+            className="gate-clock"
+            role="timer"
+            aria-label={`${Math.ceil(left / 1000)} seconds left`}
+          >
+            <span
+              className="gate-bar"
+              style={{ transform: `scaleX(${left / (GATE_SECONDS * 1000)})` }}
+            />
+          </div>
+
+          <div className="gate-options">
+            {round.options.map((option) => (
+              <button className="gate-option" type="button" key={option} onClick={() => answer(option)}>
+                {option}
+              </button>
+            ))}
+          </div>
+
+          <p className="gate-note" role="status">
+            {missed ? 'Not that one. Here is another.' : 'Answer to come in.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ComingSoonGate({ children }) {
   // inert keeps the blurred site out of the tab order and off screen readers;
   // the scale hides the blur's transparent fringe at the viewport edges.
@@ -1033,12 +1181,22 @@ function ComingSoonGate({ children }) {
   );
 }
 
-createRoot(document.getElementById('root')).render(
-  COMING_SOON ? (
-    <ComingSoonGate>
-      <App />
-    </ComingSoonGate>
-  ) : (
-    <App />
-  ),
-);
+function Root() {
+  if (COMING_SOON) {
+    return (
+      <ComingSoonGate>
+        <App />
+      </ComingSoonGate>
+    );
+  }
+  if (GATE_ENABLED) {
+    return (
+      <EntryGate>
+        <App />
+      </EntryGate>
+    );
+  }
+  return <App />;
+}
+
+createRoot(document.getElementById('root')).render(<Root />);
