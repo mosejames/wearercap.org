@@ -23,8 +23,9 @@ import './styles.css';
 const COMING_SOON = false;
 
 const POP_SEEN = 'rcap-committee-pop';
-// How long Serve stays on screen before the modal interrupts it.
-const DWELL_MS = 1600;
+// Beat between reaching Serve and the modal arriving. Long enough to read the
+// heading, short enough that it never feels like waiting.
+const DWELL_MS = 900;
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 // Social — set a URL to turn the link on in the footer. Left null until the
@@ -267,10 +268,10 @@ function App() {
     }
   }, []);
 
-  // Serve gets the screen to itself first. The section has to be properly in
-  // view, not just edging in, and then stay there for a beat: this is a modal
-  // that covers the page, so firing it the instant Serve appears would take the
-  // screen away from the thing the person just arrived at.
+  // Serve gets the screen first, then the modal follows shortly after. The
+  // arming test is just "you have reached Serve": its top has come above the
+  // middle of the viewport. Once armed the timer is not cancelled, so scrolling
+  // onward does not strand the modal and nobody has to sit still waiting.
   React.useEffect(() => {
     const node = serveRef.current;
     if (!node) return undefined;
@@ -281,54 +282,35 @@ function App() {
     }
 
     let timer = null;
-    let done = false;
+    let observer = null;
 
-    const settled = () => {
-      const box = node.getBoundingClientRect();
-      const shown = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
-      // Two thirds of the viewport filled by Serve, or the whole section if it
-      // is shorter than the viewport.
-      return shown > Math.min(window.innerHeight * 0.66, box.height * 0.9);
-    };
-
-    const check = () => {
-      if (done) return;
-      if (settled()) {
-        if (timer === null) {
-          timer = window.setTimeout(() => {
-            if (done || !settled()) return;
-            done = true;
-            setIsPopOpen(true);
-            teardown();
-          }, DWELL_MS);
-        }
-      } else if (timer !== null) {
-        // Scrolled back off before the dwell finished. Start over next time.
-        window.clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    const observer =
-      typeof IntersectionObserver === 'undefined'
-        ? null
-        : new IntersectionObserver(check, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-
-    function teardown() {
-      if (timer !== null) window.clearTimeout(timer);
+    const teardown = () => {
       if (observer) observer.disconnect();
       window.removeEventListener('scroll', check);
       window.removeEventListener('resize', check);
+    };
+
+    function check() {
+      if (timer !== null) return;
+      const box = node.getBoundingClientRect();
+      if (box.top > window.innerHeight * 0.55 || box.bottom <= 0) return;
+      teardown();
+      timer = window.setTimeout(() => setIsPopOpen(true), DWELL_MS);
     }
 
-    if (observer) observer.observe(node);
-    // The scroll listener is the belt: it needs no compositor callback, so the
-    // dwell still runs if the observer is starved of frames.
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(check, { threshold: [0, 0.2, 0.5] });
+      observer.observe(node);
+    }
+    // The scroll listener is the belt: it needs no compositor callback.
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check);
     check();
 
-    return teardown;
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      teardown();
+    };
   }, []);
 
   // Now that it covers the page, it behaves like a dialog: Escape closes it,

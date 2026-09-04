@@ -1015,6 +1015,15 @@ button {
   color: var(--ink);
 }
 
+/* Tools — the apps built under wearercap.org. Card look is lifted from the card
+   pattern this page has always used. The whole card is the link via a stretched
+   ::after; the one secondary link (Wish I Knew's reader) sits above it. */
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
 
 .tool-card {
   position: relative;
