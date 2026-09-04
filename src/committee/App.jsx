@@ -93,7 +93,7 @@ export default function App() {
   /* ------------------------------------------------------------- screens */
 
   if (step === 'welcome') return (
-    <Screen night onNight low>
+    <Screen night onNight low home>
       <p className="eyebrow lead anim">RCAP Committee Interest</p>
       <p className="said anim" style={{ animationDelay: '.04s' }}>
         Your time. Your talents. Your way to contribute.
@@ -446,7 +446,7 @@ export default function App() {
 
 /* --------------------------------------------------------------- pieces */
 
-function Screen({ children, night, onNight, pct, onBack, wide, big, low }) {
+function Screen({ children, night, onNight, pct, onBack, wide, big, low, home }) {
   return (
     <>
       {pct != null && <div className="progress"><i style={{ width: pct + '%' }} /></div>}
@@ -456,6 +456,13 @@ function Screen({ children, night, onNight, pct, onBack, wide, big, low }) {
           <button className="backlink" onClick={onBack}>
             <span aria-hidden="true">&#8249;</span> Back
           </button>
+        )}
+        {/* Only the welcome screen carries this. Once someone is answering
+            questions, Back is the control that belongs in this corner. */}
+        {home && (
+          <a className="backlink homelink" href="/">
+            <span aria-hidden="true">&#8249;</span> wearercap.org
+          </a>
         )}
       </div>
       <section className={'screen' + (night ? ' night' : '') + (wide ? ' wide' : '') + (low ? ' low' : '')}>

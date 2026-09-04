@@ -115,6 +115,14 @@ a{color:inherit}
 .on-night .backlink{color:#fff;border-color:rgba(255,255,255,.32)}
 .on-night .backlink:hover{border-color:#fff}
 
+/* Same pill as Back, but a link off the app rather than a step inside it. */
+.homelink{text-decoration:none;transition:border-color .16s ease,color .16s ease}
+.on-night .homelink:hover{color:var(--gold);border-color:var(--gold)}
+@media (max-width:420px){
+  /* The full domain will not sit next to the wordmark on a small phone. */
+  .homelink{padding:8px 12px 8px 10px;font-size:10px;letter-spacing:.1em}
+}
+
 /* ------------------------------------------------------------------ screens
    One decision per viewport. Screens cross-fade and rise a few pixels; the
    movement is small on purpose, because it happens on every single step and
