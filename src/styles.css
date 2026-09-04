@@ -1405,21 +1405,23 @@ button {
 .serve-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 80px;
   margin-top: 34px;
 }
 
+/* Equal content width in all three columns. The old scheme padded every item
+   40px and then zeroed the outer edges, which left the middle column 80px
+   narrower than its neighbours. Invisible with an icon on top, obvious with a
+   photograph. Now the gutter is a real column gap and each rule hangs in the
+   middle of it, so the three content boxes are identical. */
 .serve-action {
-  padding: 0 40px;
+  padding: 0;
+}
+
+.serve-action + .serve-action {
+  margin-left: -40px;
+  padding-left: 40px;
   border-left: 1px solid var(--line);
-}
-
-.serve-action:first-child {
-  padding-left: 0;
-  border-left: 0;
-}
-
-.serve-action:last-child {
-  padding-right: 0;
 }
 
 .serve-action > svg {
@@ -1473,15 +1475,15 @@ button {
     margin-top: 28px;
   }
 
-  .serve-action {
+  .serve-actions {
+    column-gap: 0;
+  }
+
+  .serve-action + .serve-action {
+    margin-left: 0;
     padding: 26px 0 0;
     border-left: 0;
     border-top: 1px solid var(--line);
-  }
-
-  .serve-action:first-child {
-    padding-top: 0;
-    border-top: 0;
   }
 
   .serve-action p {
@@ -1587,6 +1589,31 @@ button {
 
 .exp-band .serve-actions {
   margin-top: 44px;
+}
+
+/* Photographs instead of icons in these three. Cropped to 3:2 at source and
+   held there with aspect-ratio, so the three tops and the three text blocks
+   line up whatever the column width. Square corners, in step with the calendar
+   tiles rather than the old rounded cards. */
+.exp-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 0;
+  background: rgba(26, 22, 19, 0.08);
+}
+
+.exp-band .serve-action h3 {
+  margin-top: 20px;
+}
+
+@media (max-width: 860px) {
+  /* Stacked, the photos would run the full column and dwarf the copy. */
+  .exp-shot {
+    max-width: 420px;
+  }
 }
 
 @media (max-width: 560px) {

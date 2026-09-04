@@ -3,12 +3,9 @@ import { createRoot } from 'react-dom/client';
 import {
   ArrowRight,
   ArrowUpRight,
-  CalendarDays,
   Camera,
   Car,
   Clock,
-  Eye,
-  HeartHandshake,
   Instagram,
   Lightbulb,
   Mail,
@@ -168,7 +165,8 @@ const expDates = [
 
 const expActions = [
   {
-    icon: Eye,
+    image: '/images/rcap-exp-day.jpg',
+    alt: 'An RCAP parent in an XPERTS shirt leading visitors through the building',
     title: 'See what a day looks like',
     body: 'The posts, the energy, the people. Our recap from the summer.',
     href: '/what-to-expect/',
@@ -176,7 +174,8 @@ const expActions = [
     external: false,
   },
   {
-    icon: CalendarDays,
+    image: '/images/rcap-exp-schedule.jpg',
+    alt: 'Two RCAP dads walking the courtyard during EXP',
     title: 'The whole schedule',
     body: 'All ten sessions, what each post involves, and the other weeks the building fills up.',
     href: '/invite/',
@@ -184,7 +183,8 @@ const expActions = [
     external: false,
   },
   {
-    icon: HeartHandshake,
+    image: '/images/rcap-exp-shift.jpg',
+    alt: 'An RCAP parent carrying a stack of folding chairs in the gym',
     title: 'Take a shift',
     body: 'Grab a spot on SignUpGenius. Shifts for the later sessions post closer to the date.',
     href: volunteerHref,
@@ -590,9 +590,9 @@ function App() {
         </ul>
 
         <div className="serve-actions">
-          {expActions.map(({ icon: Icon, title, body, href, label, external }) => (
+          {expActions.map(({ image, alt, title, body, href, label, external }) => (
             <article className="serve-action" key={title}>
-              <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
+              <img className="exp-shot" src={image} alt={alt} loading="lazy" width="1000" height="667" />
               <h3>{title}</h3>
               <p>{body}</p>
               <a
