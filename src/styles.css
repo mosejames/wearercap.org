@@ -1789,28 +1789,29 @@ button {
   line-height: 1.5;
 }
 
+/* A run of names, not a row of buttons. These were bordered pills, which looked
+   exactly like the controls directly beneath them and promised a tap that was
+   never there: they are plain list items with no behaviour. The list is here as
+   evidence of what a committee is, so a parent can tell whether this is for
+   them. The one button below carries all the action. */
 .pop-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 16px 0 0;
+  display: block;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.75;
 }
 
 .pop-pills li {
-  padding: 5px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
+  display: inline;
 }
 
-.pop-pills .pop-pill-more {
-  border-color: rgba(247, 168, 28, 0.55);
-  color: var(--gold);
+.pop-pills li:not(:last-child)::after {
+  content: ' · ';
+  color: rgba(247, 168, 28, 0.65);
+  font-weight: 900;
 }
 
 .pop-actions {
