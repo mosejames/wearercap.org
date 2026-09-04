@@ -1681,6 +1681,8 @@ button {
 .pop-scrim {
   position: fixed;
   inset: 0;
+  /* Keeps a flick inside the dialog from chaining out to the page behind it. */
+  overscroll-behavior: contain;
   z-index: 22;
   display: grid;
   place-items: center;

@@ -364,6 +364,39 @@ function RollPair({ value, label }) {
 // tick rather than decremented, so a throttled background tab or a sleeping
 // laptop cannot make it drift. Renders nothing once the date has passed, so a
 // stale constant degrades to silence rather than to a row of zeros.
+// Locking the page behind a modal. `overflow: hidden` on body is enough on a
+// desktop browser and does nothing on iOS Safari: the page keeps scrolling
+// underneath, which also collapses the toolbars, which resizes the visual
+// viewport, which slides the fixed panel around. Pinning body with position
+// fixed at its current offset is the technique that actually holds, so long as
+// the scroll position is put back on the way out.
+function lockScroll() {
+  const body = document.body;
+  const before = {
+    overflow: body.style.overflow,
+    position: body.style.position,
+    top: body.style.top,
+    left: body.style.left,
+    right: body.style.right,
+    width: body.style.width,
+  };
+  const y = window.scrollY;
+
+  body.style.overflow = 'hidden';
+  body.style.position = 'fixed';
+  body.style.top = `-${y}px`;
+  body.style.left = '0';
+  body.style.right = '0';
+  body.style.width = '100%';
+
+  return function unlock() {
+    Object.assign(body.style, before);
+    // Restoring position removes the offset, so the page jumps to the top
+    // unless it is put back in the same frame.
+    window.scrollTo(0, y);
+  };
+}
+
 function VaultCountdown({ opensAt }) {
   const [now, setNow] = React.useState(() => Date.now());
 
@@ -408,18 +441,17 @@ function VideoModal({ open, onClose }) {
       return undefined;
     }
 
-    const previousOverflow = document.body.style.overflow;
+    const unlock = lockScroll();
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         onClose();
       }
     };
 
-    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlock();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, onClose]);
@@ -522,8 +554,7 @@ function App() {
     if (!isPopOpen) return undefined;
 
     const returnTo = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     popRef.current?.focus();
 
     const onKey = (event) => {
@@ -547,7 +578,7 @@ function App() {
 
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlock();
       window.removeEventListener('keydown', onKey);
       if (returnTo && typeof returnTo.focus === 'function') returnTo.focus();
     };
