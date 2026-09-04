@@ -123,7 +123,31 @@ a{color:inherit}
   min-height:100svh;display:flex;flex-direction:column;justify-content:center;
   padding:calc(var(--bar) + 34px) 22px 40px;
 }
-.screen.night{background:var(--night);color:#fff}
+.screen.night{background:var(--night);color:#fff;position:relative;isolation:isolate;overflow:hidden}
+
+/* The two dark screens, welcome and finish, carry a photograph rather than a
+   flat field. Three layers under the type, all behind it on z-index:
+     ::before  the photo, dimmed to a texture
+     ::after   the flame gradient, multiplied over it, then a scrim for contrast
+   The scrim is the part that matters: white type has to clear 4.5:1 over the
+   brightest place the photo reaches, not the average. */
+.screen.night::before{
+  content:"";position:absolute;inset:0;z-index:-2;
+  background:url("/images/rcap-find-your-place-bg.jpg") center/cover no-repeat;
+  opacity:.55;
+}
+
+.screen.night::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(180deg,rgba(14,12,11,.74) 0%,rgba(14,12,11,.34) 42%,rgba(14,12,11,.82) 100%),
+    linear-gradient(96deg,rgba(232,165,22,.4) 0%,rgba(242,106,27,.4) 34%,rgba(216,32,45,.4) 68%,rgba(224,33,138,.4) 100%);
+}
+
+@media (max-width:640px){
+  /* Cropped hard on a phone, so hold the two of them rather than the doorway. */
+  .screen.night::before{background-position:62% center;opacity:.3}
+}
 .screen.wide{justify-content:flex-start;padding-top:calc(var(--bar) + 30px)}
 .inner{width:100%;max-width:640px;margin:0 auto}
 .inner.big{max-width:1120px}
@@ -144,7 +168,9 @@ a{color:inherit}
   font-size:clamp(15px,1.7vw,17.5px);line-height:1.6;color:var(--ink-soft);
   margin:16px 0 0;max-width:48ch;text-wrap:pretty;
 }
-.night .sub{color:rgba(255,255,255,.68)}
+/* Lifted from .68 when the photograph went in behind it: the brightest
+   patch of the composite is L .095, and .68 white only reaches 3.5:1 there. */
+.night .sub{color:rgba(255,255,255,.88)}
 .said{
   font-family:'Newsreader',Georgia,serif;font-style:italic;
   font-size:clamp(18px,2.4vw,23px);line-height:1.45;
@@ -208,7 +234,9 @@ a{color:inherit}
   font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--ink-soft);
 }
-.night .hintline{color:rgba(255,255,255,.45)}
+/* .45 originally, then .7. Neither cleared 4.5:1 once the photograph
+   lifted the background: this is 13px text, so it gets no large-text pass. */
+.night .hintline{color:rgba(255,255,255,.82)}
 @media(max-width:520px){
   .row .btn{width:100%}
   .row .hintline{display:none}
