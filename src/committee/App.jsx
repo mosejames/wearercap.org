@@ -93,7 +93,7 @@ export default function App() {
   /* ------------------------------------------------------------- screens */
 
   if (step === 'welcome') return (
-    <Screen night onNight>
+    <Screen night onNight low>
       <p className="eyebrow lead anim">RCAP Committee Interest</p>
       <p className="said anim" style={{ animationDelay: '.04s' }}>
         Your time. Your talents. Your way to contribute.
@@ -102,17 +102,12 @@ export default function App() {
         Find your<br /><span className="flame">place</span>
       </h1>
       <p className="sub anim" style={{ animationDelay: '.14s' }}>
-        RCAP is powered by parents like you. Our committees are one of the ways parents help
-        make the magic happen at RCA, bringing their time, talents, ideas, and energy to the
-        experiences we create for our school community.
+        RCAP is powered by parents like you. Committees are one of the ways the
+        magic happens at RCA.
       </p>
-      <p className="sub anim" style={{ animationDelay: '.17s' }}>
-        And joining a committee isn't the only way to get involved. There will be plenty of
-        opportunities to volunteer throughout the year.
-      </p>
-      <p className="sub anim" style={{ animationDelay: '.2s' }}>
-        But if you're ready to lean in a little more, we'd love to help you find the committee
-        that feels right for you.
+      <p className="sub anim" style={{ animationDelay: '.18s' }}>
+        Joining one is not the only way to help. But if you are ready to lean in,
+        we will help you find the one that fits.
       </p>
       <div className="row anim" style={{ animationDelay: '.24s' }}>
         <button className="btn solid" onClick={() => go('name')}>Let's find your place</button>
@@ -451,7 +446,7 @@ export default function App() {
 
 /* --------------------------------------------------------------- pieces */
 
-function Screen({ children, night, onNight, pct, onBack, wide, big }) {
+function Screen({ children, night, onNight, pct, onBack, wide, big, low }) {
   return (
     <>
       {pct != null && <div className="progress"><i style={{ width: pct + '%' }} /></div>}
@@ -463,7 +458,7 @@ function Screen({ children, night, onNight, pct, onBack, wide, big }) {
           </button>
         )}
       </div>
-      <section className={'screen' + (night ? ' night' : '') + (wide ? ' wide' : '')}>
+      <section className={'screen' + (night ? ' night' : '') + (wide ? ' wide' : '') + (low ? ' low' : '')}>
         <div className={'inner' + (big ? ' big' : '')}>{children}</div>
       </section>
     </>

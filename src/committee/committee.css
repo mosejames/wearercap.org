@@ -149,6 +149,27 @@ a{color:inherit}
   .screen.night::before{background-position:62% center;opacity:.3}
 }
 .screen.wide{justify-content:flex-start;padding-top:calc(var(--bar) + 30px)}
+
+/* The welcome screen sits low on purpose. Its background is a photograph of two
+   parents, and centred copy landed straight across their faces. Bottom-aligning
+   hands the top of the frame back to them and puts the type in the darkest part
+   of the scrim, where it reads best anyway. */
+.screen.night.low{justify-content:flex-end;padding-bottom:clamp(44px,8vh,96px)}
+.screen.night.low::before{background-position:50% 45%}
+
+/* Scrim flipped for this screen. The shared one is heaviest at the top, which
+   is exactly where the two faces are, so it dimmed the subject and protected
+   empty sky. Here it opens at the top and closes underneath, which lets the
+   photograph read and puts the type on the darkest ground on the screen. */
+.screen.night.low::after{
+  background:
+    linear-gradient(180deg,rgba(14,12,11,.38) 0%,rgba(14,12,11,.42) 34%,rgba(14,12,11,.9) 100%),
+    linear-gradient(96deg,rgba(232,165,22,.4) 0%,rgba(242,106,27,.4) 34%,rgba(216,32,45,.4) 68%,rgba(224,33,138,.4) 100%);
+}
+
+@media (max-width:640px){
+  .screen.night.low::before{background-position:62% 45%}
+}
 .inner{width:100%;max-width:640px;margin:0 auto}
 .inner.big{max-width:1120px}
 
