@@ -1504,7 +1504,7 @@ button {
    already carries overflow-x: hidden, so the bleed cannot open a scrollbar.
    ------------------------------------------------------------------------ */
 
-.story-section {
+.band {
   position: relative;
   isolation: isolate;
   /* The slant eats into the corners, so pad by it on top of the usual rhythm. */
@@ -1512,8 +1512,8 @@ button {
   border-top: 0;
 }
 
-.story-section::before,
-.story-section::after {
+.band::before,
+.band::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -1524,16 +1524,21 @@ button {
   transform: translateX(-50%);
 }
 
-/* The gold rule. Sits 6px proud of the band along the top cut only, because
-   both shapes share a bottom edge. */
-.story-section::before {
-  background: var(--gold);
+/* The rule. Sits 6px proud of the fill along the top cut only, because both
+   shapes share a bottom edge. */
+.band::before {
+  background: var(--band-rule);
   clip-path: polygon(0 0, 100% var(--slant), 100% 100%, 0 calc(100% - var(--slant)));
 }
 
-.story-section::after {
-  background: var(--band);
+.band::after {
+  background: var(--band-fill);
   clip-path: polygon(0 6px, 100% calc(var(--slant) + 6px), 100% 100%, 0 calc(100% - var(--slant)));
+}
+
+.story-section {
+  --band-fill: var(--band);
+  --band-rule: var(--gold);
 }
 
 /* The band supplies its own bottom air. */
@@ -1541,11 +1546,72 @@ button {
   padding-bottom: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   Serve, on black.
+
+   Same geometry as the gold band, so the page keeps one angle throughout. The
+   two bands sit back to back, which leaves a cream ribbon exactly one slant
+   tall between them: gold above, black below, one parallel cut on each side.
+
+   Everything inside has to invert. The cream palette's ink headings and muted
+   body would vanish, and the accent orange only reaches 3.4:1 on this ground,
+   so the eyebrow, icons and links all move to gold, which clears 9:1.
+   ------------------------------------------------------------------------ */
+
+.serve-band {
+  --band-fill: #0d0a08;
+  --band-rule: var(--gold);
+  color: var(--white);
+}
+
+.serve-band .section-label {
+  color: var(--gold);
+}
+
+.serve-band .section-heading h2 {
+  color: var(--white);
+}
+
+.serve-band .section-heading p:not(.section-label) {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.serve-band .serve-action {
+  border-left-color: rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
+
+.serve-band .serve-action > svg {
+  color: var(--gold);
+}
+
+.serve-band .serve-action h3 {
+  color: var(--white);
+}
+
+.serve-band .serve-action p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.serve-band .text-link {
+  color: var(--gold);
+}
+
+.serve-band .text-link:hover {
+  color: #ffc751;
+}
+
 /* The section after the band would otherwise draw a straight hairline directly
    under a diagonal edge. */
-.story-section + .content-section {
+.band + .content-section:not(.band) {
   border-top: 0;
   padding-top: calc(56px + var(--slant));
+}
+
+/* Two bands back to back: the lower one keeps its own top padding, and neither
+   draws a hairline across the other's diagonal. */
+.band + .band {
+  border-top: 0;
 }
 
 /* ---------------------------------------------------------------------------

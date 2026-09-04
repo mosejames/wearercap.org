@@ -460,7 +460,7 @@ function App() {
 
       {/* Story — where the hero's video went. A first-time parent gets the
           welcome and the next dates before the ninety-second version. */}
-      <section id="story" className="content-section story-section">
+      <section id="story" className="content-section band story-section">
         <div className="video-callout">
           <div className="video-copy">
             <p className="section-label">Who We Are</p>
@@ -486,7 +486,7 @@ function App() {
       </section>
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
-      <section id="serve" className="content-section" ref={serveRef}>
+      <section id="serve" className="content-section band serve-band" ref={serveRef}>
 
         <div className="section-heading">
           <p className="section-label">Serve</p>
