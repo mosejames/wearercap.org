@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client';
 import {
   ArrowRight,
   ArrowUpRight,
+  CalendarDays,
   Camera,
   Car,
   Clock,
+  Eye,
+  HeartHandshake,
   Instagram,
   Lightbulb,
   Mail,
@@ -46,6 +49,7 @@ const navLinks = [
   { label: 'Events', href: '#events' },
   { label: 'Committees', href: '/committee-interest/' },
   { label: 'Volunteer', href: '#serve' },
+  { label: 'EXP', href: '#exp' },
   { label: 'Resources', href: '#tools' },
 ];
 
@@ -146,6 +150,48 @@ const tools = [
   },
 ];
 
+
+// The 2026-27 EXP schedule, straight off the RCA calendar. Every session runs a
+// Thursday and a Friday. Delete a row once it has passed.
+const expDates = [
+  { label: 'Sept 24 & 25', next: true },
+  { label: 'Nov 5 & 6' },
+  { label: 'Nov 19 & 20' },
+  { label: 'Dec 10 & 11' },
+  { label: 'Jan 21 & 22' },
+  { label: 'Feb 18 & 19' },
+  { label: 'Mar 4 & 5' },
+  { label: 'Mar 11 & 12' },
+  { label: 'Apr 15 & 16' },
+  { label: 'May 13 & 14' },
+];
+
+const expActions = [
+  {
+    icon: Eye,
+    title: 'See what a day looks like',
+    body: 'The posts, the energy, the people. Our recap from the summer.',
+    href: '/what-to-expect/',
+    label: 'Read the recap',
+    external: false,
+  },
+  {
+    icon: CalendarDays,
+    title: 'The whole schedule',
+    body: 'All ten sessions, what each post involves, and the other weeks the building fills up.',
+    href: '/invite/',
+    label: 'See the year',
+    external: false,
+  },
+  {
+    icon: HeartHandshake,
+    title: 'Take a shift',
+    body: 'Grab a spot on SignUpGenius. Shifts for the later sessions post closer to the date.',
+    href: volunteerHref,
+    label: 'Sign up',
+    external: true,
+  },
+];
 
 const serveActions = [
   {
@@ -517,6 +563,50 @@ function App() {
         </div>
       </section>
 
+      {/* EXP — its own section, directly after Serve, so the volunteer thread
+          runs general then specific. It used to be two links in the tail of
+          Tools, which is the wrong shape for the biggest repeat ask RCAP makes.
+          The ten dates sit on the page rather than behind a control: seeing the
+          whole year at once is the argument. */}
+      <section id="exp" className="content-section band exp-band">
+        <div className="section-heading">
+          <p className="section-label">EXP</p>
+          <h2>Ten times a year, the world comes to RCA.</h2>
+          <p>
+            EXP is the Ron Clark Academy Experience. Educators fly in from all
+            over to watch our teachers and our kids work, and parents are the
+            first people they meet. This is where you show up and show out.
+          </p>
+        </div>
+
+        <ul className="exp-dates" aria-label="EXP sessions for 2026-27">
+          {expDates.map(({ label, next }) => (
+            <li className={next ? 'is-next' : undefined} key={label}>
+              {label}
+              {next ? <span className="exp-next">Next</span> : null}
+            </li>
+          ))}
+        </ul>
+
+        <div className="serve-actions">
+          {expActions.map(({ icon: Icon, title, body, href, label, external }) => (
+            <article className="serve-action" key={title}>
+              <Icon size={30} strokeWidth={1.5} aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <a
+                className="text-link"
+                href={href}
+                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              >
+                {label}
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* Tools — a numbered list rather than a grid of cards. Each row is a
           whole-row link to the tool; the action link on the right sits above
           that stretched link, which matters for Wish I Knew, the one row whose
@@ -560,18 +650,6 @@ function App() {
             </li>
           ))}
         </ol>
-
-        <nav className="tool-reads" aria-label="RCAP letters">
-          <span>Also here:</span>
-          <a href="/what-to-expect/">
-            What to Expect at EXP
-            <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-          <a href="/invite/">
-            Serve at EXP
-            <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-        </nav>
       </section>
 
       {/* Footer — the site map plus the two ways to reach RCAP. The old closing

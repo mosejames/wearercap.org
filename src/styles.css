@@ -1523,6 +1523,71 @@ button {
 }
 
 /* ---------------------------------------------------------------------------
+   EXP.
+
+   Same gold band as Who We Are, so the page reads cream, gold, black, gold,
+   cream. The ten dates are chips rather than a control: the whole school year
+   fits on two lines, and seeing it is the argument for showing up. The three
+   actions reuse the Serve column pattern on purpose, since this is the same
+   question asked about one specific thing.
+   ------------------------------------------------------------------------ */
+
+.exp-band {
+  --band-fill: var(--band);
+}
+
+.exp-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exp-dates li {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 15px;
+  border: 1.5px solid rgba(26, 22, 19, 0.2);
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.exp-dates .is-next {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.exp-next {
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.exp-band .serve-actions {
+  margin-top: 44px;
+}
+
+@media (max-width: 560px) {
+  .exp-dates {
+    gap: 6px;
+  }
+
+  .exp-dates li {
+    padding: 8px 12px;
+    font-size: 13.5px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Serve, on black.
 
    Same geometry as the gold band, so the page keeps one angle throughout. The
