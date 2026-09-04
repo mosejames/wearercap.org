@@ -26,7 +26,10 @@ const COMING_SOON = false;
 
 // Next time the RCAP Recap vault opens for submissions. Local time, which is
 // what a parent in Atlanta is reading it in.
+// Next vault opening. 09:00 on 2026-09-10 in New York; the offset is -04:00
+// because Eastern is still on daylight time in September.
 const VAULT_OPENS = new Date('2026-09-10T09:00:00-04:00');
+const ROLL_MS = 420;
 const POP_SEEN = 'rcap-committee-pop';
 // Beat between reaching Serve and the modal arriving. Long enough to read the
 // heading, short enough that it never feels like waiting.
@@ -257,15 +260,53 @@ const committees = [
   },
 ];
 
-// Counts down to the next vault opening. Ticks once a minute rather than once a
-// second: nothing here is to the second, and a second-by-second timer on a
-// static page is just battery. Renders nothing once the date has passed, so a
-// stale constant degrades to silence rather than to "0 days".
+// A single digit in a masked window, borrowed from the prelaunch reel: fixed
+// height, overflow hidden, and the glyph slides through it. The counter only
+// ever runs down, so the old digit leaves through the bottom and the new one
+// arrives from the top, wraps included.
+function RollDigit({ value }) {
+  const [shown, setShown] = React.useState(value);
+
+  React.useEffect(() => {
+    if (shown === value) return undefined;
+    const id = window.setTimeout(() => setShown(value), ROLL_MS);
+    return () => window.clearTimeout(id);
+  }, [value, shown]);
+
+  const rolling = shown !== value;
+
+  return (
+    <span className="roll">
+      {rolling ? <span className="roll-out">{shown}</span> : null}
+      <span className={rolling ? 'roll-in' : undefined} key={value}>
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function RollPair({ value, label }) {
+  const pair = String(Math.min(value, 99)).padStart(2, '0');
+  return (
+    <span className="vault-unit">
+      <span className="vault-digits">
+        <RollDigit value={Number(pair[0])} />
+        <RollDigit value={Number(pair[1])} />
+      </span>
+      <span className="vault-label">{label}</span>
+    </span>
+  );
+}
+
+// Live countdown to the next vault opening. Recomputed from the target on every
+// tick rather than decremented, so a throttled background tab or a sleeping
+// laptop cannot make it drift. Renders nothing once the date has passed, so a
+// stale constant degrades to silence rather than to a row of zeros.
 function VaultCountdown({ opensAt }) {
   const [now, setNow] = React.useState(() => Date.now());
 
   React.useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 60000);
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -275,9 +316,11 @@ function VaultCountdown({ opensAt }) {
   const days = Math.floor(left / 86400000);
   const hours = Math.floor((left % 86400000) / 3600000);
   const mins = Math.floor((left % 3600000) / 60000);
-  const parts = days > 0 ? [[days, 'day'], [hours, 'hr']] : [[hours, 'hr'], [mins, 'min']];
+  const secs = Math.floor((left % 60000) / 1000);
 
+  // Pinned to New York so every parent reads the same clock, wherever they are.
   const opens = opensAt.toLocaleString('en-US', {
+    timeZone: 'America/New_York',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -285,18 +328,15 @@ function VaultCountdown({ opensAt }) {
   });
 
   return (
-    <p className="vault-countdown">
-      <span className="vault-when">Vault opens {opens}</span>
-      <span className="vault-left">
-        {parts.map(([value, unit]) => (
-          <span key={unit}>
-            <b>{value}</b>
-            {unit}
-            {value === 1 ? '' : 's'}
-          </span>
-        ))}
-      </span>
-    </p>
+    <div className="vault-countdown">
+      <p className="vault-when">Vault opens {opens} ET</p>
+      <p className="vault-clock" aria-label={`${days} days, ${hours} hours, ${mins} minutes, ${secs} seconds until the vault opens`}>
+        <RollPair value={days} label="days" />
+        <RollPair value={hours} label="hrs" />
+        <RollPair value={mins} label="min" />
+        <RollPair value={secs} label="sec" />
+      </p>
+    </div>
   );
 }
 

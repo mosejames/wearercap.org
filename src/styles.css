@@ -1926,31 +1926,104 @@ button {
   margin-top: 14px;
 }
 
-/* Vault countdown, on the RCAP Recap row. */
+/* Vault countdown, on the RCAP Recap row.
+
+   The digits use the prelaunch reel's trick: a fixed-height window with
+   overflow hidden, and the glyph slides through it. Because the clock only
+   counts down, the old digit always leaves through the bottom and the new one
+   arrives from the top, which keeps the direction honest through the 00 wraps
+   as well as the ordinary ticks. */
+
 .vault-countdown {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 14px;
-  margin: 12px 0 0;
-  font-size: 13px;
+  margin: 14px 0 0;
 }
 
 .vault-when {
+  margin: 0;
+  font-size: 13px;
   font-weight: 800;
   color: var(--ink);
 }
 
-.vault-left {
-  display: inline-flex;
-  gap: 10px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.vault-clock {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 8px 0 0;
 }
 
-.vault-left b {
-  margin-right: 3px;
+.vault-unit {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.vault-digits {
+  display: inline-flex;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
+}
+
+.vault-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.roll {
+  position: relative;
+  display: inline-block;
+  /* ch on a 900-weight face is wide enough for any digit and identical for all
+     of them, so nothing shifts as the numbers change. */
+  width: 1ch;
+  height: 1em;
+  overflow: hidden;
+}
+
+.roll > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.roll-out {
+  animation: roll-out 0.42s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+.roll-in {
+  animation: roll-in 0.42s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+@keyframes roll-out {
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes roll-in {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* The number still has to change; only the travel goes. */
+@media (prefers-reduced-motion: reduce) {
+  .roll-out {
+    display: none;
+  }
+
+  .roll-in {
+    animation: none;
+  }
 }
 
 /* Footer */
