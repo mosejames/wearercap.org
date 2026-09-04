@@ -33,6 +33,9 @@
   /* Vertical drop of the diagonal across the full viewport width. Matches the
      hero's cut, which falls about 2.3% of its width. */
   --slant: clamp(18px, 2.3vw, 38px);
+  /* Space either side of every section. One number, so anything that needs to
+     escape it can pull back by exactly the right amount. */
+  --gutter: 20px;
 }
 
 * {
@@ -308,7 +311,7 @@ button {
 .image-band,
 .content-section,
 .closing {
-  width: min(1180px, calc(100% - 40px));
+  width: min(1180px, calc(100% - var(--gutter) * 2));
   margin: 0 auto;
 }
 
@@ -738,10 +741,9 @@ button {
   .intro,
   .community-feature,
   .video-callout,
-  .image-band,
-  .content-section,
-  .closing {
-    width: calc(100% - 28px);
+  /* Gutter narrows on small screens; the full-bleed photos read it too. */
+  :root {
+    --gutter: 14px;
   }
 
   .button {
@@ -1563,14 +1565,21 @@ button {
 }
 
 @media (max-width: 640px) {
-  /* Edge to edge on a phone. 100vw centred on the column, which is itself
-     centred in the viewport, so the photo escapes the section gutter while the
-     text keeps it. The radius goes: rounded corners against the screen edge
-     would just show slivers of the band behind them. */
+  /* Edge to edge on a phone: grow by both gutters and pull back by one, so the
+     photo lands exactly on the screen edges while the text keeps its inset.
+     The radius goes, because rounded corners against the screen edge just show
+     slivers of the band behind them.
+
+     Deliberately no vw here. The first version used 100vw with a centring
+     offset, which is correct arithmetic but resolves against the layout
+     viewport, and on iOS that is not the same width as the page whenever
+     anything can scroll sideways. That left a sliver down the left. Measuring
+     against the section's own gutter cannot drift. --gutter is set with the
+     section width, so the two can never disagree. */
   .exp-shot {
     max-width: none;
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
+    width: calc(100% + var(--gutter) * 2);
+    margin-left: calc(-1 * var(--gutter));
     border-radius: 0;
   }
 }
