@@ -418,13 +418,12 @@ function App() {
           </div>
         </div>
 
-        {/* Angled edge into the paper below: two parallel cuts descending to
-            the right, with a charcoal step between them. preserveAspectRatio
-            none lets both lines stretch to any width and stay straight. */}
+        {/* One diagonal into the paper below. There used to be a charcoal step
+            above it and the events section drew its own hairline underneath,
+            which stacked three lines into the same inch. */}
         <div className="hero-edge" aria-hidden="true">
-          <svg viewBox="0 0 1440 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <path className="edge-step" d="M0,12 L1440,50 L1440,90 L0,90 Z" />
-            <path className="edge-paper" d="M0,44 L1440,82 L1440,90 L0,90 Z" />
+          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path className="edge-paper" d="M0,22 L1440,60 L1440,60 L0,60 Z" />
           </svg>
         </div>
       </section>
@@ -462,11 +461,14 @@ function App() {
         <div className="video-callout">
           <div className="video-copy">
             <p className="section-label">Who We Are</p>
-            <h2>Ninety seconds on what this looks like.</h2>
+            <h2>The school teaches. Parents carry the rest.</h2>
             <p>
-              Sixteen years of parents welcoming, building, decorating,
-              feeding, funding, and cheering. Every RCA parent is a member.
-              That includes you.
+              Welcoming visitors, feeding teachers, decorating halls, raising
+              money, filling the seats. Every one of those is a parent who
+              decided to show up, and every one of them holds this school up.
+            </p>
+            <p>
+              Here is why we do it, from the parents doing it.
             </p>
           </div>
 
@@ -476,8 +478,8 @@ function App() {
               <PlayCircle size={54} aria-hidden="true" />
             </span>
             <span className="video-card-text">
-              <strong>Watch the RCAP video</strong>
-              <span>A minute and a half with the families behind it</span>
+              <strong>Hear it from RCA parents</strong>
+              <span>Why we show up, in their own words</span>
             </span>
           </button>
         </div>

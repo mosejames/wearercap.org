@@ -299,13 +299,7 @@ button {
 .hero-edge svg {
   display: block;
   width: 100%;
-  height: clamp(46px, 5.4vw, 86px);
-}
-
-/* A step between the photo and the paper, so the cut reads as two planes
-   rather than one hard line. */
-.edge-step {
-  fill: #2b2724;
+  height: clamp(34px, 4vw, 62px);
 }
 
 .edge-paper {
@@ -541,9 +535,11 @@ button {
   border-radius: 8px;
 }
 
+/* No rule between sections. A diagonal band edge, a heading, or a change of
+   ground already says where one section ends and the next begins; a hairline on
+   top of that was a third line saying the same thing. */
 .content-section {
   padding: 56px 0;
-  border-top: 1px solid var(--line);
 }
 
 .section-heading {
@@ -1501,7 +1497,6 @@ button {
   border-top: 0;
 }
 
-.band::before,
 .band::after {
   content: '';
   position: absolute;
@@ -1513,21 +1508,13 @@ button {
   transform: translateX(-50%);
 }
 
-/* The rule. Sits 6px proud of the fill along the top cut only, because both
-   shapes share a bottom edge. */
-.band::before {
-  background: var(--band-rule);
-  clip-path: polygon(0 0, 100% var(--slant), 100% 100%, 0 calc(100% - var(--slant)));
-}
-
 .band::after {
   background: var(--band-fill);
-  clip-path: polygon(0 6px, 100% calc(var(--slant) + 6px), 100% 100%, 0 calc(100% - var(--slant)));
+  clip-path: polygon(0 0, 100% var(--slant), 100% 100%, 0 calc(100% - var(--slant)));
 }
 
 .story-section {
   --band-fill: var(--band);
-  --band-rule: var(--gold);
 }
 
 /* The band supplies its own bottom air. */
@@ -1549,7 +1536,6 @@ button {
 
 .serve-band {
   --band-fill: #0d0a08;
-  --band-rule: var(--gold);
   color: var(--white);
 }
 
@@ -1597,10 +1583,15 @@ button {
   padding-top: calc(56px + var(--slant));
 }
 
-/* Two bands back to back: the lower one keeps its own top padding, and neither
-   draws a hairline across the other's diagonal. */
+/* Two bands back to back. The lower fill starts a full slant above its own box,
+   which puts its top cut exactly on the upper band's bottom cut: one diagonal
+   where two sections meet, instead of a cream ribbon between two of them. */
+.band + .band::after {
+  top: calc(-1 * var(--slant));
+}
+
 .band + .band {
-  border-top: 0;
+  padding-top: 60px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1827,3 +1818,31 @@ button {
     font-size: 25px;
   }
 }
+
+/* The nav row scrolls below this width and nothing said so. Two cues: the right
+   edge fades, which is how a list says it runs past the frame, and the row rocks
+   once on load the way a thumb would move it. Scoped here rather than to the
+   900px stacking breakpoint, because above this the row fits and the fade would
+   be dimming a link for no reason. Measured: the row is 607px wide against a
+   36px gutter, so it starts overflowing just under 643. */
+@media (max-width: 640px) {
+  .nav-links {
+    mask-image: linear-gradient(90deg, #000 0, #000 86%, transparent 100%);
+    animation: nav-hint 1.5s 0.7s ease-in-out 1 both;
+  }
+
+  @keyframes nav-hint {
+    0%, 22% { transform: translateX(0); }
+    45% { transform: translateX(-18px); }
+    68% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+}
+
+/* The fade is the affordance; the rock is only the flourish. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-links {
+    animation: none;
+  }
+}
+
