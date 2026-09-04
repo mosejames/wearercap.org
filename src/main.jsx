@@ -507,11 +507,12 @@ function App() {
         <div className="video-callout">
           <div className="video-copy">
             <p className="section-label">Who We Are</p>
-            <h2>The school teaches. Parents carry the rest.</h2>
+            <h2>Nothing here is done halfway. That includes us.</h2>
             <p>
-              Welcoming visitors, feeding teachers, decorating halls, raising
-              money, filling the seats. Every one of those is a parent who
-              decided to show up, and every one of them holds this school up.
+              RCA builds experiences most schools never attempt, and the bar
+              never drops. Parents are the support underneath all of it. We
+              welcome the visitors, feed the teachers, decorate the halls,
+              raise the money, and fill the seats.
             </p>
             <p>
               Here is why we do it, from the parents doing it.

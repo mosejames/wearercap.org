@@ -20,6 +20,10 @@
   --accent: #b0470a;
   --accent-bright: #f26a1b;
   --gold: #f7a81c;
+  /* Bright gold is 1.8:1 on cream, so it cannot carry text on a light ground.
+     This is the lightest tone still in the gold family that clears AA on both
+     the paper and the gold band: 5.1:1 and 4.6:1. */
+  --gold-deep: #8f5e04;
   --red: #d8202d;
   --green: #1f9d57;
   --shadow: 0 18px 38px rgba(8, 13, 18, 0.12);
@@ -306,17 +310,26 @@ button {
   fill: var(--paper);
 }
 
+/* Eyebrow. Was the accent orange, which read as red next to the gold bands and
+   the gold hero. The rule underneath uses currentColor so it is always exactly
+   as legible as the word above it, deep gold on light ground, bright gold on
+   black. */
 .section-label {
-  margin: 0 0 14px;
-  color: var(--accent);
+  margin: 0 0 16px;
+  color: var(--gold-deep);
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.section-label {
-  color: var(--red);
+.section-label::after {
+  content: '';
+  display: block;
+  width: 34px;
+  height: 3px;
+  margin-top: 11px;
+  background: currentColor;
 }
 
 .intro,
