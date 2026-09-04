@@ -1,11 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  ArrowRight,
   ArrowUpRight,
   Camera,
   Car,
-  ChevronRight,
   Clock,
   Instagram,
   Lightbulb,
@@ -24,6 +22,7 @@ import './styles.css';
 // the browser and is readable via view-source or with CSS disabled.
 const COMING_SOON = false;
 
+const POP_SEEN = 'rcap-committee-pop';
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 // Social — set a URL to turn the link on in the footer. Left null until the
@@ -43,7 +42,7 @@ const videoPoster = '/images/rcap-video-hero.jpg';
 const navLinks = [
   { label: 'About', href: '#story' },
   { label: 'Events', href: '#events' },
-  { label: 'Committees', href: '#committees' },
+  { label: 'Committees', href: '/committee-interest/' },
   { label: 'Volunteer', href: '#serve' },
   { label: 'Resources', href: '#tools' },
 ];
@@ -70,15 +69,16 @@ const upcomingEvents = [
 
 // The single most time-sensitive ask. One item, not a list — if everything
 // is urgent, nothing is. Set to null to hide the banner entirely.
-const openCall = {
+// The committee prompt. Rendered as a popup that arrives when the Serve section
+// does, rather than as a banner in the flow.
+const committeePop = {
   label: 'Open now',
-  title: 'Committee sign-ups are open for 2026-27',
-  body:
-    'Tell us what you are into and see which of the nine committees fits. ' +
-    'Join a team, or raise your hand to chair one.',
+  title: 'Explore committees',
+  body: 'Nine teams carry RCAP. See which one fits, then raise your hand.',
   href: '/committee-interest/',
   linkLabel: 'Find your place',
 };
+
 
 /* ---------------------------- end edit zone --------------------------- */
 
@@ -140,6 +140,16 @@ const tools = [
 
 const serveActions = [
   {
+    icon: MapPin,
+    title: 'Find your place',
+    body:
+      'Tell us what you are into and see which committees fit. Chair one, ' +
+      'or just join a team.',
+    href: '/committee-interest/',
+    label: 'Open the form',
+    external: false,
+  },
+  {
     icon: Users,
     title: 'Volunteer sign-up',
     body: 'See current needs and claim a spot when help is needed.',
@@ -155,17 +165,8 @@ const serveActions = [
     label: 'Log hours',
     external: true,
   },
-  {
-    icon: MapPin,
-    title: 'Find your place',
-    body:
-      'Tell us what you are into and see which committees fit. Chair one, ' +
-      'or just join a team.',
-    href: '/committee-interest/',
-    label: 'Open the form',
-    external: false,
-  },
 ];
+
 
 // Committees — the standing teams. Chairs and open seats get confirmed at the
 // board's first meeting; keep descriptions evergreen so this list stays true.
@@ -250,9 +251,72 @@ function VideoModal({ open, onClose }) {
 
 function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
-  // One committee is always active: the detail panel is never empty on desktop,
-  // and the mobile accordion always has exactly one section open.
-  const [activeCommittee, setActiveCommittee] = React.useState(0);
+  const [isPopOpen, setIsPopOpen] = React.useState(false);
+  const serveRef = React.useRef(null);
+
+  const closePop = React.useCallback(() => {
+    setIsPopOpen(false);
+    try {
+      window.sessionStorage.setItem(POP_SEEN, '1');
+    } catch {
+      // Private mode or storage disabled. Losing the flag only means the popup
+      // can arrive again on the next page load, which is survivable.
+    }
+  }, []);
+
+  // Arrives when Serve does, once, and never again in this session. It is
+  // deliberately not a focus-trapping modal: nobody asked to be interrupted, so
+  // it must not seize the keyboard from someone mid-read.
+  React.useEffect(() => {
+    const node = serveRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return undefined;
+    try {
+      if (window.sessionStorage.getItem(POP_SEEN)) return undefined;
+    } catch {
+      // fall through and show it
+    }
+    let done = false;
+    const reveal = () => {
+      if (done) return;
+      done = true;
+      setIsPopOpen(true);
+      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
+    };
+
+    // Two triggers on purpose. IntersectionObserver is the right API and fires
+    // as soon as a fifth of the section is showing. The scroll check is the
+    // belt: it needs no compositor callback, so the popup still arrives if the
+    // observer is starved of frames.
+    const onScroll = () => {
+      const box = node.getBoundingClientRect();
+      if (box.top < window.innerHeight * 0.8 && box.bottom > 0) reveal();
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) reveal();
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(node);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!isPopOpen) return undefined;
+    const onKey = (event) => {
+      if (event.key === 'Escape') closePop();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isPopOpen, closePop]);
   const openVideo = React.useCallback(() => setIsVideoOpen(true), []);
   const closeVideo = React.useCallback(() => setIsVideoOpen(false), []);
 
@@ -381,7 +445,7 @@ function App() {
       </section>
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
-      <section id="serve" className="content-section">
+      <section id="serve" className="content-section" ref={serveRef}>
 
         <div className="section-heading">
           <p className="section-label">Serve</p>
@@ -392,19 +456,6 @@ function App() {
           </p>
         </div>
 
-        {openCall ? (
-          <a className="open-call" href={openCall.href}>
-            <span className="open-call-label">{openCall.label}</span>
-            <div className="open-call-text">
-              <h3>{openCall.title}</h3>
-              <p>{openCall.body}</p>
-            </div>
-            <em>
-              {openCall.linkLabel}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </em>
-          </a>
-        ) : null}
 
         <div className="serve-actions">
           {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
@@ -423,68 +474,6 @@ function App() {
             </article>
           ))}
         </div>
-      </section>
-
-      {/* Committees — sits beneath Serve at full width, which the explorer
-          needs: the list gets a readable column and the detail gets room to
-          be the biggest type in the section rather than a cramped sidebar. */}
-      <section id="committees" className="content-section">
-        <div className="section-heading">
-          <p className="section-label">Committees</p>
-          <h2>The teams that carry RCAP.</h2>
-          <p>
-            Sixteen years of traditions run through these committees. Every one
-            of them is open to any RCA parent.
-          </p>
-        </div>
-
-        <div className="explorer">
-          <ul className="committee-list">
-            {committees.map(({ title }, index) => (
-              <li key={title} className={index === activeCommittee ? 'is-active' : undefined}>
-                <button
-                  type="button"
-                  aria-expanded={index === activeCommittee}
-                  aria-controls={`committee-panel-${index}`}
-                  onMouseEnter={() => setActiveCommittee(index)}
-                  onFocus={() => setActiveCommittee(index)}
-                  onClick={() => setActiveCommittee(index)}
-                >
-                  <span>{title}</span>
-                  <ChevronRight size={18} aria-hidden="true" />
-                </button>
-
-                {/* The stacked answer, for the accordion below 860. */}
-                {index === activeCommittee ? (
-                  <div className="committee-panel" id={`committee-panel-${index}`}>
-                    <p>{committees[index].body}</p>
-                    <a className="text-link" href="/committee-interest/">
-                      Learn more
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                    </a>
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-
-          <div className="committee-detail" aria-live="polite">
-            <p className="section-label">Featured</p>
-            <h3>{committees[activeCommittee].title}</h3>
-            <span className="detail-rule" aria-hidden="true" />
-            <p>{committees[activeCommittee].body}</p>
-            <a className="text-link" href="/committee-interest/">
-              Learn more
-              <ArrowUpRight size={15} aria-hidden="true" />
-            </a>
-          </div>
-        </div>
-
-        <a className="explorer-cta" href="/committee-interest/">
-          <Users size={22} strokeWidth={1.5} aria-hidden="true" />
-          See all nine committees and raise your hand
-          <ArrowRight size={18} aria-hidden="true" />
-        </a>
       </section>
 
       {/* Tools — everything RCAP has built for families, rendered from the
@@ -552,7 +541,6 @@ function App() {
           <a href="#story">Who We Are</a>
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
-          <a href="#committees">Committees</a>
           <a href="#tools">Tools</a>
           <a href="/uniform-exchange/">Uniform Exchange</a>
           <a href="/carpool/">Carpool</a>
@@ -563,6 +551,34 @@ function App() {
           <a href="/invite/">Serve at EXP</a>
         </nav>
       </section>
+
+      {isPopOpen ? (
+        <aside className="committee-pop" role="dialog" aria-labelledby="committee-pop-title">
+          <button className="pop-close" type="button" onClick={closePop} aria-label="Close">
+            <X size={18} aria-hidden="true" />
+          </button>
+          <p className="pop-label">{committeePop.label}</p>
+          <h2 id="committee-pop-title">{committeePop.title}</h2>
+          <p className="pop-body">{committeePop.body}</p>
+
+          <ul className="pop-pills">
+            {committees.map(({ title }) => (
+              <li key={title}>{title}</li>
+            ))}
+            <li className="pop-pill-more">and more</li>
+          </ul>
+
+          <div className="pop-actions">
+            <a className="pop-go" href={committeePop.href}>
+              {committeePop.linkLabel}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+            <button className="pop-dismiss" type="button" onClick={closePop}>
+              Not now
+            </button>
+          </div>
+        </aside>
+      ) : null}
 
       <VideoModal open={isVideoOpen} onClose={closeVideo} />
     </main>

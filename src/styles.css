@@ -993,67 +993,6 @@ button {
   text-transform: uppercase;
 }
 
-/* Open call — the single most time-sensitive ask, under Happening Now. */
-
-.open-call {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  /* Sits between the Serve heading and the three actions. The heading already
-     carries 24px below and the actions 34px above, so this only tops those up
-     to something even on both sides. */
-  margin: 14px 0 8px;
-  padding: 22px;
-  background: var(--ink);
-  color: var(--white);
-  border-radius: 10px;
-  transition: transform 0.18s ease;
-}
-
-.open-call:hover {
-  transform: translateY(-2px);
-}
-
-.open-call-label {
-  flex: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(228, 167, 47, 0.18);
-  color: var(--gold);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.open-call-text {
-  flex: 1 1 auto;
-}
-
-.open-call h3 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.open-call p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 14.5px;
-  line-height: 1.5;
-}
-
-.open-call em {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-style: normal;
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--gold);
-}
-
 /* Footer map */
 
 .footer-map {
@@ -1076,25 +1015,6 @@ button {
   color: var(--ink);
 }
 
-@media (max-width: 860px) {
-
-  .open-call {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-}
-
-/* Tools — the apps built under wearercap.org. Card look is lifted from
-   the card pattern this page has always used. The whole card is
-   the link via a stretched ::after; the one secondary link (Wish I Knew's
-   reader) sits above it on z-index. */
-
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
 
 .tool-card {
   position: relative;
@@ -1511,138 +1431,6 @@ button {
   transform: translate(2px, -2px);
 }
 
-/* Committee explorer. At full width the list gets a readable column and the
-   detail gets room to be the largest type in the section. */
-
-.explorer {
-  display: grid;
-  grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
-  gap: 0;
-  margin-top: 20px;
-}
-
-.committee-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--line);
-}
-
-.committee-list li {
-  border-bottom: 1px solid var(--line);
-}
-
-.committee-list button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 19px 16px 19px 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 16.5px;
-  font-weight: 800;
-  line-height: 1.25;
-  text-align: left;
-  cursor: pointer;
-  transition: padding-left 0.16s ease, background 0.16s ease;
-}
-
-.committee-list button svg {
-  flex: none;
-  color: #c9b696;
-  transition: color 0.16s ease, transform 0.16s ease;
-}
-
-.committee-list button:hover {
-  padding-left: 6px;
-}
-
-.committee-list button:hover svg {
-  color: var(--accent);
-  transform: translateX(2px);
-}
-
-/* Active row: a wash of gold and a rule down its left edge. An inset shadow
-   rather than a border, so the row does not shift when it activates. */
-.committee-list .is-active button {
-  padding-left: 16px;
-  background: rgba(247, 168, 28, 0.16);
-  box-shadow: inset 3px 0 0 var(--gold);
-}
-
-.committee-list .is-active button svg {
-  color: var(--accent);
-  transform: translateX(2px);
-}
-
-.committee-detail {
-  padding: 30px 0 0 70px;
-  border-left: 1px solid var(--line);
-  margin-left: 56px;
-}
-
-.committee-detail h3 {
-  margin: 0;
-  max-width: 16ch;
-  font-size: clamp(30px, 3.2vw, 46px);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-}
-
-.detail-rule {
-  display: block;
-  width: 52px;
-  height: 3px;
-  margin: 22px 0;
-  background: var(--gold);
-}
-
-.committee-detail > p:last-of-type {
-  margin: 0;
-  max-width: 40ch;
-  color: var(--muted);
-  font-size: 18px;
-  line-height: 1.6;
-}
-
-.committee-detail .text-link {
-  margin-top: 24px;
-  font-size: 15.5px;
-}
-
-/* Exists only below the accordion breakpoint */
-.committee-panel {
-  display: none;
-}
-
-.explorer-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 40px;
-  color: var(--accent);
-  font-size: 16px;
-  font-weight: 800;
-  transition: color 0.16s ease;
-}
-
-.explorer-cta:hover {
-  color: var(--accent-bright);
-}
-
-.explorer-cta > svg:last-child {
-  transition: transform 0.16s ease;
-}
-
-.explorer-cta:hover > svg:last-child {
-  transform: translateX(4px);
-}
-
 @media (max-width: 860px) {
   /* Actions go vertical and the hairlines rotate with them. */
   .serve-actions {
@@ -1665,33 +1453,6 @@ button {
     max-width: 46ch;
   }
 
-  /* Explorer becomes an accordion: the side panel goes, and each row answers
-     underneath itself. */
-  .explorer {
-    grid-template-columns: 1fr;
-  }
-
-  .committee-detail {
-    display: none;
-  }
-
-  .committee-panel {
-    display: block;
-    padding: 0 0 20px 16px;
-    box-shadow: inset 3px 0 0 var(--gold);
-  }
-
-  .committee-panel p {
-    margin: 0;
-    max-width: 46ch;
-    color: var(--muted);
-    font-size: 15.5px;
-    line-height: 1.55;
-  }
-
-  .committee-panel .text-link {
-    margin-top: 14px;
-  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -1748,4 +1509,168 @@ button {
 .story-section + .content-section {
   border-top: 0;
   padding-top: calc(56px + var(--slant));
+}
+
+/* ---------------------------------------------------------------------------
+   Committee popup.
+
+   Arrives once when Serve scrolls into view, carrying the committee names the
+   removed section used to hold. A corner card, not a full-screen modal: it
+   appears uninvited, so it must not black out the page or take the keyboard
+   from someone mid-sentence. Escape closes it, so does either button.
+   ------------------------------------------------------------------------ */
+
+.committee-pop {
+  position: fixed;
+  z-index: 18;
+  right: 26px;
+  bottom: 26px;
+  width: min(370px, calc(100vw - 40px));
+  padding: 22px 22px 20px;
+  background: var(--ink);
+  color: var(--white);
+  border: 2px solid var(--gold);
+  border-radius: 0;
+  box-shadow: 0 26px 60px rgba(8, 6, 4, 0.42);
+  animation: pop-in 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* The movement is decoration; the card still has to arrive. */
+@media (prefers-reduced-motion: reduce) {
+  .committee-pop {
+    animation: none;
+  }
+}
+
+.pop-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.pop-close:hover {
+  color: var(--gold);
+}
+
+.pop-label {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.committee-pop h2 {
+  margin: 0;
+  padding-right: 26px;
+  font-size: 27px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.pop-body {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.pop-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pop-pills li {
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.pop-pills .pop-pill-more {
+  border-color: rgba(247, 168, 28, 0.55);
+  color: var(--gold);
+}
+
+.pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 20px;
+}
+
+.pop-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background 0.16s ease;
+}
+
+.pop-go:hover {
+  background: #ffbc33;
+}
+
+.pop-dismiss {
+  padding: 6px 2px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.pop-dismiss:hover {
+  color: var(--white);
+}
+
+@media (max-width: 560px) {
+  /* A bottom sheet on a phone, where a floating corner card has no corner. */
+  .committee-pop {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+    padding: 20px 18px 18px;
+  }
+
+  .committee-pop h2 {
+    font-size: 24px;
+  }
 }
