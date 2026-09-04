@@ -904,10 +904,15 @@ button {
 .prelaunch-track {
   display: flex;
   flex-direction: column;
+  /* Without this the words stretch to the reel's width. The reel starts at
+     zero, so they measured zero, so fit() set the reel to zero and nothing
+     ever appeared. Sizing each word to its own text breaks the loop. */
+  align-items: flex-start;
   will-change: transform;
 }
 
 .prelaunch-word {
+  width: max-content;
   height: 1em;
   line-height: 1;
   white-space: nowrap;
@@ -2086,10 +2091,34 @@ button {
 .gate {
   min-height: 100svh;
   display: grid;
-  place-items: center;
+  /* A definite column. With the default auto track, place-items:center let the
+     track size to the panel's max-content, so min(560px, 100%) resolved against
+     an indefinite width and the panel stayed 560 on a narrower phone. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: center;
   padding: 32px 20px;
   background: #0d0a08;
   color: var(--white);
+}
+
+/* The reel was built for the cream pre-launch screen and hard-codes ink. On the
+   gate's near-black that is black on black, which is why only "We are" showed
+   and the words did not. */
+.gate .prelaunch-line {
+  color: var(--white);
+}
+
+.gate .prelaunch-fixed {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.gate .prelaunch-line.landed .prelaunch-fixed {
+  color: var(--white);
+}
+
+.gate .prelaunch-word.final {
+  color: var(--gold);
 }
 
 .gate-inner {

@@ -952,7 +952,7 @@ const SPIN_FLURRY_END = 0.3; // fraction of SPIN_MS spent at full speed
 const SPIN_REVS = 3.2; // times the list rips past before decelerating
 const SPIN_HOLD_FINAL = 2200; // ms RCAP sits before the loop restarts
 
-function SpinLine() {
+function SpinLine({ max = 150 }) {
   const lineRef = React.useRef(null);
   const reelRef = React.useRef(null);
   const trackRef = React.useRef(null);
@@ -997,11 +997,15 @@ function SpinLine() {
       reel.style.width = widest + 'px';
 
       const lineW = line.getBoundingClientRect().width;
-      const avail = window.innerWidth * 0.88;
+      // Measure against whatever box the line is actually in. The prelaunch
+      // screen is full width so this matched the viewport; inside the gate the
+      // line sits in a 560px column and the viewport figure overflowed it.
+      const host = line.parentElement;
+      const avail = (host ? host.clientWidth : window.innerWidth) * 0.92;
       const availH = window.innerHeight * 0.5;
 
       let size = REF * (avail / lineW);
-      size = Math.min(size, availH, 150);
+      size = Math.min(size, availH, max);
       size = Math.max(size, 20);
       line.style.fontSize = size + 'px';
 
@@ -1073,6 +1077,14 @@ function SpinLine() {
     }
 
     window.addEventListener('resize', fit);
+
+    // fit() runs once on mount, when the surrounding column may not have its
+    // final width yet, and the window never resizes afterwards. Watching the
+    // host means the line re-measures as soon as the layout settles.
+    const host = line.parentElement;
+    const ro =
+      host && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => fit()) : null;
+    if (ro) ro.observe(host);
     document.addEventListener('visibilitychange', onVisible);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(run);
@@ -1084,9 +1096,10 @@ function SpinLine() {
       cancelAnimationFrame(rafId);
       clearTimeout(timerId);
       window.removeEventListener('resize', fit);
+      if (ro) ro.disconnect();
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, []);
+  }, [max]);
 
   return (
     <div className="prelaunch-line" ref={lineRef} aria-label="We are RCAP">
@@ -1162,7 +1175,7 @@ function EntryGate({ children }) {
   return (
     <div className="gate">
       <div className="gate-inner">
-        <SpinLine />
+        <SpinLine max={60} />
 
         <form className="gate-ask" onSubmit={submit}>
           <label className="gate-question" htmlFor="gate-input">
