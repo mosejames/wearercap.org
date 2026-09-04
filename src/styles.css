@@ -257,36 +257,6 @@ button {
   color: var(--gold);
 }
 
-/* The "We Are RCAP" lockup, bottom right of the photo. In the overlay layout
-   .hero-media fills the section, so this lands in the hero's corner; in the
-   split layout it lands in the corner of the photo band. */
-
-.hero-lockup {
-  position: absolute;
-  right: 4%;
-  bottom: 58px;
-  text-align: right;
-  line-height: 0.82;
-  pointer-events: none;
-}
-
-.lockup-script {
-  display: block;
-  font-family: 'Newsreader', Georgia, serif;
-  font-style: italic;
-  font-size: clamp(38px, 5.6vw, 78px);
-  color: rgba(255, 255, 255, 0.34);
-}
-
-.lockup-mark {
-  display: block;
-  margin-top: 4px;
-  font-size: clamp(46px, 6.8vw, 96px);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: rgba(247, 168, 28, 0.86);
-}
-
 /* Angled edge into the paper below. Sits on top of everything in the hero and
    bleeds one pixel past the bottom so no hairline shows at any zoom. */
 
@@ -1281,9 +1251,6 @@ button {
     padding: 30px 0 110px;
   }
 
-  .hero-lockup {
-    bottom: 46px;
-  }
 }
 
 @media (max-width: 560px) {
@@ -1302,22 +1269,6 @@ button {
   .hero-content > *,
   .hero-copy {
     max-width: none;
-  }
-
-  /* The lockup was hidden here because it used to land behind the buttons.
-     In the split layout it sits in the photo band's own corner, so it comes
-     back, just smaller. */
-  .hero-lockup {
-    right: 18px;
-    bottom: 12px;
-  }
-
-  .lockup-script {
-    font-size: 24px;
-  }
-
-  .lockup-mark {
-    font-size: 30px;
   }
 
   .hero-actions {
@@ -1366,17 +1317,6 @@ button {
       linear-gradient(180deg, rgba(13, 10, 8, 0.34) 0%, rgba(13, 10, 8, 0) 30%, rgba(13, 10, 8, 0) 58%, rgba(13, 10, 8, 0.72) 100%);
   }
 
-  .hero-lockup {
-    bottom: 18px;
-  }
-
-  .lockup-script {
-    font-size: clamp(28px, 4.4vw, 44px);
-  }
-
-  .lockup-mark {
-    font-size: clamp(32px, 5.2vw, 54px);
-  }
 
   .hero-content {
     order: 3;
@@ -1965,3 +1905,96 @@ button {
   }
 }
 
+
+/* A link sitting in a section heading, under the intro paragraph. */
+.heading-link {
+  grid-column: 2;
+  justify-self: start;
+}
+
+/* The semester label over the EXP chips. */
+.exp-dates-title {
+  margin: 30px 0 0;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.exp-dates-title + .exp-dates {
+  margin-top: 14px;
+}
+
+/* Vault countdown, on the RCAP Recap row. */
+.vault-countdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.vault-when {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.vault-left {
+  display: inline-flex;
+  gap: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.vault-left b {
+  margin-right: 3px;
+  color: var(--ink);
+}
+
+/* Footer */
+
+.footer-heading {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+
+.footer-legal {
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  max-width: 74ch;
+}
+
+.footer-legal p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.footer-legal p:last-child {
+  margin-bottom: 0;
+}
+
+.footer-mark {
+  font-weight: 800;
+  color: var(--ink) !important;
+  letter-spacing: 0.02em;
+}
+
+.footer-legal a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .heading-link {
+    grid-column: 1;
+  }
+}

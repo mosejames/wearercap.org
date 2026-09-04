@@ -24,6 +24,9 @@ import './styles.css';
 // the browser and is readable via view-source or with CSS disabled.
 const COMING_SOON = false;
 
+// Next time the RCAP Recap vault opens for submissions. Local time, which is
+// what a parent in Atlanta is reading it in.
+const VAULT_OPENS = new Date('2026-09-10T09:00:00-04:00');
 const POP_SEEN = 'rcap-committee-pop';
 // Beat between reaching Serve and the modal arriving. Long enough to read the
 // heading, short enough that it never feels like waiting.
@@ -33,6 +36,9 @@ const contactHref = `mailto:${contactEmail}`;
 const socials = [
   { icon: Instagram, label: '@rcaparents', href: 'https://www.instagram.com/rcaparents/' },
 ];
+// The RCA calendar PDF as released. It predates the July 31 and Aug 30
+// reconciliations, so the Google Calendar is the fresher source.
+const calendarHref = '/rca-calendar-2026-2027.pdf';
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
@@ -91,12 +97,23 @@ const committeePop = {
 // section renders straight from this list.
 const tools = [
   {
+    variant: 'committee',
+    icon: Users,
+    title: 'Find Your Place',
+    body:
+      'Tell us your committee interests and see which teams fit. Raise your ' +
+      'hand to chair one, or just join in.',
+    href: '/committee-interest/',
+    badge: 'New',
+    action: 'Open the form',
+  },
+  {
     variant: 'exchange',
     icon: Shirt,
     title: 'Uniform Exchange',
     body:
-      'Ask for the sizes you need, or hold a bin for your house. Handoffs ' +
-      'happen at carline, no phone numbers traded.',
+      'Uniforms that grow with you. Gently loved pieces passed from one RCA ' +
+      'family to the next.',
     href: '/uniform-exchange/',
     badge: 'Live',
     action: 'Open exchange',
@@ -106,30 +123,19 @@ const tools = [
     icon: Car,
     title: 'Carpool',
     body:
-      'Find RCA families near you and share the driving. Opt-in only, and ' +
-      'your address stays private.',
+      'Only if it helps. If you drive in from a way out and would rather share ' +
+      'the trip, find families near you. Your address stays private.',
     href: '/carpool/',
     badge: 'Live',
     action: 'Find a ride',
-  },
-  {
-    variant: 'committee',
-    icon: Users,
-    title: 'Find Your Place',
-    body:
-      'Answer a few questions and see which committees fit. Raise your hand ' +
-      'to chair one, or just join a team.',
-    href: '/committee-interest/',
-    badge: 'New',
-    action: 'Open the form',
   },
   {
     variant: 'wik',
     icon: Lightbulb,
     title: 'One Thing I Wish I Knew',
     body:
-      'Veteran RCA parents leave one piece of advice for the families coming ' +
-      'up behind them.',
+      'RCA is a big place and learning it takes a minute. See what other ' +
+      'parents have shared, and add a best practice of your own.',
     href: '/wish-i-knew/',
     // The only row whose action goes somewhere other than the row itself.
     action: 'Read what parents said',
@@ -140,27 +146,26 @@ const tools = [
     icon: Camera,
     title: 'The RCAP Recap',
     body:
-      'Describe EXP in one word, then add the photo or video that goes with ' +
-      'it. It posts straight to the board.',
+      'After a big day, the vault opens and everyone drops in their photos ' +
+      'and their one word. Right now you are looking at the last one.',
     href: '/rcap-recap/',
-    action: 'Add your recap',
+    action: 'See the last vault',
+    countdown: VAULT_OPENS,
   },
 ];
 
 
+
 // The 2026-27 EXP schedule, straight off the RCA calendar. Every session runs a
 // Thursday and a Friday. Delete a row once it has passed.
+// This semester only. The spring sessions live on the schedule page, which the
+// second card points at, so the chips stay a short list of what is actually
+// close enough to plan around.
 const expDates = [
   { label: 'Sept 24 & 25', next: true },
   { label: 'Nov 5 & 6' },
   { label: 'Nov 19 & 20' },
   { label: 'Dec 10 & 11' },
-  { label: 'Jan 21 & 22' },
-  { label: 'Feb 18 & 19' },
-  { label: 'Mar 4 & 5' },
-  { label: 'Mar 11 & 12' },
-  { label: 'Apr 15 & 16' },
-  { label: 'May 13 & 14' },
 ];
 
 const expActions = [
@@ -168,7 +173,7 @@ const expActions = [
     image: '/images/rcap-exp-day.jpg',
     alt: 'An RCAP parent in an XPERTS shirt leading visitors through the building',
     title: 'See what a day looks like',
-    body: 'The posts, the energy, the people. Our recap from the summer.',
+    body: 'The posts, the energy, the people. Our recap from a recent EXP.',
     href: '/what-to-expect/',
     label: 'Read the recap',
     external: false,
@@ -251,6 +256,49 @@ const committees = [
     body: 'Feeds every event and game night.',
   },
 ];
+
+// Counts down to the next vault opening. Ticks once a minute rather than once a
+// second: nothing here is to the second, and a second-by-second timer on a
+// static page is just battery. Renders nothing once the date has passed, so a
+// stale constant degrades to silence rather than to "0 days".
+function VaultCountdown({ opensAt }) {
+  const [now, setNow] = React.useState(() => Date.now());
+
+  React.useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const left = opensAt.getTime() - now;
+  if (left <= 0) return null;
+
+  const days = Math.floor(left / 86400000);
+  const hours = Math.floor((left % 86400000) / 3600000);
+  const mins = Math.floor((left % 3600000) / 60000);
+  const parts = days > 0 ? [[days, 'day'], [hours, 'hr']] : [[hours, 'hr'], [mins, 'min']];
+
+  const opens = opensAt.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return (
+    <p className="vault-countdown">
+      <span className="vault-when">Vault opens {opens}</span>
+      <span className="vault-left">
+        {parts.map(([value, unit]) => (
+          <span key={unit}>
+            <b>{value}</b>
+            {unit}
+            {value === 1 ? '' : 's'}
+          </span>
+        ))}
+      </span>
+    </p>
+  );
+}
 
 function VideoModal({ open, onClose }) {
   React.useEffect(() => {
@@ -415,10 +463,6 @@ function App() {
         <div className="hero-media" aria-hidden="true">
           <img className="hero-img" src={heroImage} alt="" />
           <div className="hero-scrim" />
-          <div className="hero-lockup">
-            <span className="lockup-script">We Are</span>
-            <span className="lockup-mark">RCAP</span>
-          </div>
         </div>
 
         <header className="nav">
@@ -442,15 +486,13 @@ function App() {
           <p className="kicker">Welcome to RCAP</p>
           <h1>If your child is at RCA, you are already RCAP.</h1>
           <p className="hero-copy">
-            No sign-up sheet. No dues. Every Ron Clark Academy parent is a
-            member the day their child walks through the door. That is the
-            whole idea.
+            Joining is the easy part. Every Ron Clark Academy parent is a
+            member the day their child walks through the door. Your gifts and
+            talents are part of what makes this place so magical.
           </p>
           <p className="hero-copy">
-            Sixteen years of families built this. Parents who welcomed,
-            decorated, fed, funded, drove, and stayed late. First year or
-            fifth, an hour or a whole season, there is a place here with your
-            name on it.
+            We are the welcome. First year or fifth, an hour or a whole
+            season, there is a place here with your name on it.
           </p>
           <div className="hero-actions">
             <a className="button primary" href="/committee-interest/">
@@ -481,6 +523,15 @@ function App() {
         <div className="section-heading">
           <p className="section-label">Happening Now</p>
           <h2>The next dates to plan around.</h2>
+          <p>
+            Being an RCA parent is a busy life, and like a lot of us, we run by
+            the calendar. Between taking kids here and dropping them off there,
+            do not forget to add these to your plans.
+          </p>
+          <a className="text-link heading-link" href={calendarHref} target="_blank" rel="noopener noreferrer">
+            Open the full school calendar
+            <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
         </div>
         <div className="event-grid" aria-label="Upcoming RCAP dates">
           {upcomingEvents.map(({ month, year, weekday, day, label }) => (
@@ -506,7 +557,7 @@ function App() {
       <section id="story" className="content-section band story-section">
         <div className="video-callout">
           <div className="video-copy">
-            <p className="section-label">Who We Are</p>
+            <p className="section-label">We Are The Support</p>
             <h2>Nothing here is done halfway. That includes us.</h2>
             <p>
               RCA builds experiences most schools never attempt, and the bar
@@ -536,7 +587,7 @@ function App() {
       <section id="serve" className="content-section band serve-band" ref={serveRef}>
 
         <div className="section-heading">
-          <p className="section-label">Serve</p>
+          <p className="section-label">We Are Here To Serve</p>
           <h2>Step up in the way that fits.</h2>
           <p>
             Give an hour, give a season, or put a name forward, including your
@@ -571,7 +622,7 @@ function App() {
           whole year at once is the argument. */}
       <section id="exp" className="content-section band exp-band">
         <div className="section-heading">
-          <p className="section-label">EXP</p>
+          <p className="section-label">We Are The Welcome</p>
           <h2>Ten times a year, the world comes to RCA.</h2>
           <p>
             EXP is the Ron Clark Academy Experience. Educators fly in from all
@@ -580,7 +631,8 @@ function App() {
           </p>
         </div>
 
-        <ul className="exp-dates" aria-label="EXP sessions for 2026-27">
+        <p className="exp-dates-title">What is coming up this semester</p>
+        <ul className="exp-dates" aria-label="EXP sessions this semester">
           {expDates.map(({ label, next }) => (
             <li className={next ? 'is-next' : undefined} key={label}>
               {label}
@@ -614,16 +666,16 @@ function App() {
           action points somewhere else. */}
       <section id="tools" className="content-section">
         <div className="section-heading">
-          <p className="section-label">Tools</p>
+          <p className="section-label">We Are The Builders</p>
           <h2>Built for RCA families. Pick what you need.</h2>
           <p>
-            All of these live right here on wearercap.org. Nothing to download,
-            no account to make.
+            Things to make our community stronger and, hopefully, your life a
+            little easier.
           </p>
         </div>
 
         <ol className="tool-list">
-          {tools.map(({ variant, icon: Icon, title, body, href, badge, action, actionHref }, index) => (
+          {tools.map(({ variant, icon: Icon, title, body, href, badge, action, actionHref, countdown }, index) => (
             <li className={`tool-row ${variant}`} key={title}>
               <span className="tool-num" aria-hidden="true">
                 {String(index + 1).padStart(2, '0')}
@@ -643,6 +695,7 @@ function App() {
 
               <span className="tool-detail">
                 <p>{body}</p>
+                {countdown ? <VaultCountdown opensAt={countdown} /> : null}
                 <a className="tool-action" href={actionHref || href}>
                   {action}
                   <ArrowUpRight size={14} aria-hidden="true" />
@@ -657,6 +710,7 @@ function App() {
           block had a headline and a paragraph that repeated the welcome without
           adding anything, so it is just the footer now. */}
       <footer className="closing">
+        <p className="footer-heading">Jump to the cheat sheet</p>
         <nav className="footer-map" aria-label="Site sections">
           <a href="#story">Who We Are</a>
           <a href="#events">Events</a>
@@ -690,6 +744,25 @@ function App() {
                 {label}
               </a>
             ))}
+        </div>
+
+        <div className="footer-legal">
+          <p className="footer-mark">wearercap.org &middot; Established 2026</p>
+          <p>
+            This is a parent-led site. It is not owned, operated, sponsored, or
+            endorsed by the Ron Clark Academy, and nothing here is an official
+            statement of the school. It is built by Ron Clark Academy Parents as
+            a resource for current RCA families.
+          </p>
+          <p>
+            Dates, details, and links are shared in good faith and can change
+            without notice. Always check with the school for anything official.
+            Use of this site and the tools on it is at your own discretion. Any
+            information you enter is shared with the other families and
+            volunteers those tools are built for, so please do not post anything
+            you would not want seen. Questions, corrections, and takedown
+            requests go to <a href={contactHref}>{contactEmail}</a>.
+          </p>
         </div>
       </footer>
 
