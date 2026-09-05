@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   Camera,
@@ -615,15 +616,19 @@ function App() {
             First year or fifth, an hour or a whole season. There is a place
             here with your name on it.
           </p>
+          {/* Both of these move you down the page rather than leaving it. The
+              video opens from its own card in the story section, and Find Your
+              Place is reached from Serve, so the hero introduces the page
+              instead of jumping past it. */}
           <div className="hero-actions">
-            <a className="button primary" href="/committee-interest/">
+            <a className="button primary" href="#serve">
               Get involved
-              <ArrowUpRight size={18} aria-hidden="true" />
+              <ArrowDown size={18} aria-hidden="true" />
             </a>
-            <button className="button ghost" type="button" onClick={openVideo}>
+            <a className="button ghost" href="#story">
               <PlayCircle size={18} aria-hidden="true" />
               Watch the video
-            </button>
+            </a>
           </div>
         </div>
 
