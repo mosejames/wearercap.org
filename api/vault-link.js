@@ -53,17 +53,7 @@ async function describeEvent(slug) {
   const ev = rows && rows[0];
   if (!ev || ev.hidden) return null;
 
-  const shots = await get(
-    `vault_photos?event_id=eq.${ev.id}&hidden=is.false` +
-    `&select=storage,web_key,owner&order=created_at.desc&limit=60`
-  );
-  const list = Array.isArray(shots) ? shots : [];
-  return {
-    ...ev,
-    count: list.length,
-    families: new Set(list.map((s) => s.owner)).size,
-    cover: list[0] || null,
-  };
+  return ev;
 }
 
 export default async function handler(req, res) {
@@ -87,27 +77,20 @@ export default async function handler(req, res) {
     title = `${ev.title} · The ${HOUSE} Vault`;
     alt = `${ev.title}, ${HOUSE} Vault`;
 
-    const so_far =
-      ev.count === 0
-        ? 'No photos yet. Be the first.'
-        : `${ev.count} photo${ev.count === 1 ? '' : 's'} so far from ` +
-          `${ev.families} famil${ev.families === 1 ? 'y' : 'ies'}.`;
-
     desc = [
       date ? `${date}.` : null,
-      ev.blurb ? ev.blurb.trim() : null,
-      so_far,
-      ev.open ? 'Add yours, no sign-in needed.' : 'This one is closed to new photos.',
+      ev.open
+        ? "Let's relive the fun! Explore the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and keep our Amistad memories together."
+        : 'Come relive the smiles, laughs, and unforgettable moments with our Amistad family.',
     ].filter(Boolean).join(' ');
 
-    const imageParams = new URLSearchParams({ title: ev.title, date, v: '2' });
+    const imageParams = new URLSearchParams({ title: ev.title, date, v: '3' });
     if (!ev.open) imageParams.set('closed', '1');
     img = `${SITE}/api/vault-og?${imageParams}`;
   }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  // Short cache: the count moves as people add, and a stale preview that says
-  // "no photos yet" is the opposite of what an invitation is for.
+  // Refresh event details and upload availability regularly.
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
   res.status(200).send(`<!doctype html>
 <html lang="en">

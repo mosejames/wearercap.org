@@ -397,12 +397,7 @@ function InviteSheet({ event, onClose }) {
   const [copied, setCopied] = useState('');
   const url = inviteUrl(event.slug);
   const when = event.kind === 'everyday' ? 'all year' : fmtRange(event.startsOn, event.endsOn);
-  const message =
-    `${event.title} photos wanted. ` +
-    (event.photoCount
-      ? `${plural(event.photoCount, 'item')} in so far from ${plural(event.contributorCount, 'family', 'families')}. `
-      : 'Nobody has added any yet. ') +
-    `Add yours here, no sign-in: ${url}`;
+  const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help our Amistad family keep the memories together: ${url}`;
 
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); }
@@ -418,11 +413,11 @@ function InviteSheet({ event, onClose }) {
   return (
     <Sheet title="Invite to upload" onClose={onClose}>
       <div className="stack">
-        <p className="lede">Send this and the preview card is about <b>{event.title}</b>, not the vault in general. Whoever taps it lands on that event with Add photos waiting.</p>
+        <p className="lede">Invite our Amistad family to relive <b>{event.title}</b> and add their favorite photos and videos.</p>
         <div className="invite-card">
           <span className="eyebrow">The link</span>
           <code>{url}</code>
-          <span className="fine">{when}{event.photoCount ? ` · ${plural(event.photoCount, 'item')} so far` : ' · no photos yet'}</span>
+          <span className="fine">{when}</span>
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => copy(url, 'link')}>{copied === 'link' ? 'Copied' : 'Copy link'}</button>
@@ -1078,7 +1073,7 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
     const ev = byId.get(r.eventId);
     const link = `${SITE.origin}${SITE.base}#/e/${ev.slug}`;
     const due = r.dueOn ? ` by ${fmtDate(r.dueOn, { weekday: 'long' })}` : '';
-    setNudge(`Amistad fam: ${ev.title} photos wanted${due}. ${r.message ? `${r.message} ` : ''}${ev.photoCount} in so far from ${plural(ev.contributorCount, 'family', 'families')}. Add yours here: ${link}`);
+    setNudge(`Amistad fam: ${ev.title} photos wanted${due}. ${r.message ? `${r.message} ` : ''}Check your camera roll for the smiles, laughs, and moments worth keeping. Add yours and let’s relive the fun: ${link}`);
   };
   const copy = async (t) => { try { await navigator.clipboard.writeText(t); showToast('Copied.'); } catch { prompt('Copy', t); } };
 

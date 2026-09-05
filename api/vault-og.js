@@ -14,7 +14,7 @@ export function eventCard(title, date, closed = false) {
     h('div', { style: { fontSize: title.length > 100 ? 42 : title.length > 55 ? 52 : 68, lineHeight: 1.08, fontWeight: 700, wordBreak: 'break-word' } }, title),
     h('div', { style: { fontSize: 24, color: '#ffffff' } }, date)),
   h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
-    h('div', { style: { background: '#ffffff', color: '#bd0032', borderRadius: 36, padding: '16px 28px', fontSize: 27, fontWeight: 700 } }, closed ? 'See the memories' : 'Add your photos'),
+    h('div', { style: { background: '#ffffff', color: '#bd0032', borderRadius: 36, padding: '16px 28px', fontSize: 27, fontWeight: 700 } }, closed ? 'See the memories' : 'Add yours. Share the joy.'),
     h('div', { style: { fontSize: 22 } }, 'One house. Every memory.'))),
   { width: 1200, height: 630 });
 }
