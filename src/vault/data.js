@@ -192,6 +192,7 @@ const photoFromRow = (r) => ({
   caption: r.caption || '',
   hidden: r.hidden,
   removedAt: r.removed_at,
+  cleanupPending: r.cleanup_pending,
   createdAt: r.created_at,
   likes: 0,
 });

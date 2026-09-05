@@ -21,7 +21,7 @@ it('never deletes storage before database ownership approval', async () => {
 });
 it('deletes only keys returned by the database, never client-supplied keys', async () => {
  const keys=['amistad/event/orig.jpg','amistad/event/web.jpg','amistad/event/thumb.jpg'];
- const fetcher=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({storage:'supabase',keys})}).mockResolvedValueOnce({ok:true});vi.stubGlobal('fetch',fetcher);
+ const fetcher=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({storage:'supabase',keys})}).mockResolvedValueOnce({ok:true}).mockResolvedValueOnce({ok:true});vi.stubGlobal('fetch',fetcher);
  const res=response();await remove({method:'POST',headers:{authorization:'Bearer user'},body:{id:'10000000-0000-4000-8000-000000000001',keys:['another/family/orig.jpg']}},res);
  expect(res.code).toBe(200); expect(JSON.parse(fetcher.mock.calls[1][1].body).prefixes).toEqual(keys);
 });

@@ -213,7 +213,7 @@ function ModerationPanel({ pass, onChanged }) {
     {err && <p className="err" role="alert">{err}</p>}
     {reports === null ? <p>Loading reports…</p> : !reports.length ? <p>No open concerns. Thank you for looking after our family.</p> : reports.map((r) => <article className="moderation-report" key={r.id}>
       <img src={mediaUrl(r.photo, 'thumb')} alt="Reported upload" />
-      <div><b>{r.event}</b><details className="moderation-preview"><summary>View full upload</summary>{isVideo(r.photo) ? <video controls playsInline preload="none" src={mediaUrl(r.photo, 'orig')} /> : <img src={mediaUrl(r.photo, 'web')} alt="Reported upload for review" loading="lazy" />}</details><p>{r.photo.uploaderName || 'Amistad family'} · {r.reason === 'privacy' ? 'Removal requested by family' : r.reason}</p>{r.note && <p>{r.note}</p>}
+      <div><b>{r.event}</b>{r.photo.cleanupPending && <p className="err">Hidden from the gallery. Retry removal to finish deleting the files.</p>}<details className="moderation-preview"><summary>View full upload</summary>{isVideo(r.photo) ? <video controls playsInline preload="none" src={mediaUrl(r.photo, 'orig')} /> : <img src={mediaUrl(r.photo, 'web')} alt="Reported upload for review" loading="lazy" />}</details><p>{r.photo.uploaderName || 'Amistad family'} · {r.reason === 'privacy' ? 'Removal requested by family' : r.reason}</p>{r.note && <p>{r.note}</p>}
         <div className="row"><button className="btn small ghost" disabled={busy} onClick={() => act(() => dismissReport(r.id, pass))}>Dismiss report</button>
         <button className="btn small primary" disabled={busy} onClick={() => { if (confirm('Remove this upload and delete its stored files?')) act(() => removeUpload(r.photo.id, pass)); }}>Remove upload</button>
         {r.can_ban && !r.banned && <button className="btn small ghost" disabled={busy} onClick={() => { if (confirm('Ban this verified number from uploading, commenting, and reporting?')) act(() => banUploader(r.photo.id, pass)); }}>Ban contributor</button>}
@@ -720,7 +720,7 @@ function ComingSoonSheet({ events, onClose, onInvite, admin }) {
 
 /* ------------------------------------------------------------- top bar */
 
-function TopBar({ profile, admin, onName, onProfile, route }) {
+function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
   return (
     <header className="topbar calm-header">
       <div className="shell topbar-in">
@@ -731,7 +731,7 @@ function TopBar({ profile, admin, onName, onProfile, route }) {
         <nav className="nav">
           <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
           <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
-          {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin</a>}
+          {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
           {profile
             ? <button className="nav-me" onClick={onProfile} aria-label="My uploads">My uploads</button>
             : <button className="nav-btn" onClick={onName}>Sign in</button>}
@@ -1073,6 +1073,7 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
       </div>
       {photos === null ? <p className="empty">Loading…</p>
         : <PhotoGrid photos={photos} onOpen={setOpen} likedSet={liked} rank emptyText="No hearts yet. Go love something." />}
+      {photos?.some((p) => p.cleanupPending) && <div className="stack"><p>These uploads are hidden, but file cleanup needs another try.</p>{photos.filter((p) => p.cleanupPending).map((p) => <button className="btn small ghost" key={p.id} onClick={async () => { try { await removeUpload(p.id); setPhotos((ps) => ps.filter((x) => x.id !== p.id)); } catch (e) { showToast(e.message); } }}>Finish removing upload</button>)}</div>}
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
           event={byId.get(photos[open].eventId) || { slug: '', title: '' }} owner={owner} profile={profile} admin={false} pass=""
@@ -1089,7 +1090,7 @@ function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showTo
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
-  useEffect(() => { if (owner) listMyPhotos().then((ps) => setPhotos(ps.filter((p) => !p.removedAt))).catch((e) => showToast(e.message)); }, [showToast, owner]);
+  useEffect(() => { if (owner) listMyPhotos().then((ps) => setPhotos(ps.filter((p) => !p.removedAt || p.cleanupPending))).catch((e) => showToast(e.message)); }, [showToast, owner]);
   if (!owner) return <div className="shell page stack"><h1>My uploads</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
   return (
     <div className="shell page">
@@ -1106,6 +1107,7 @@ function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showTo
       <div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
       {photos === null ? <p className="empty">Loading…</p>
         : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}
+      {photos?.some((p) => p.cleanupPending) && <div className="stack"><p>These uploads are hidden, but file cleanup needs another try.</p>{photos.filter((p) => p.cleanupPending).map((p) => <button className="btn small ghost" key={p.id} onClick={async () => { try { await removeUpload(p.id); setPhotos((ps) => ps.filter((x) => x.id !== p.id)); } catch (e) { showToast(e.message); } }}>Finish removing upload</button>)}</div>}
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
           event={byId.get(photos[open].eventId) || { slug: '', title: '' }} owner={owner} profile={profile} admin={false} pass=""
@@ -1297,6 +1299,7 @@ export default function App() {
   const [reporting, setReporting] = useState(null);
   const [pass, setPassState] = useState(() => localPass());
   const [admin, setAdmin] = useState(false);
+  const [reportCount, setReportCount] = useState(0);
   const [events, setEvents] = useState([]);
   const [requests, setRequests] = useState([]);
   const [recent, setRecent] = useState([]);
@@ -1327,6 +1330,13 @@ export default function App() {
     checkPass(pass).then((ok) => { setAdmin(ok); if (!ok) { rememberPass(''); setPassState(''); } });
   }, [pass]);
   const setPass = (p) => { rememberPass(p); setPassState(p); };
+  useEffect(() => {
+    if (!admin) { setReportCount(0); return; }
+    let active = true;
+    const check = () => reviewReports(pass).then((r) => { if (active) setReportCount(r.length); }).catch(() => {});
+    check(); const timer = setInterval(check, 60000);
+    return () => { active = false; clearInterval(timer); };
+  }, [admin, pass]);
 
   const refresh = useCallback(async () => {
     try {
@@ -1377,7 +1387,7 @@ export default function App() {
 
   return (
     <ReportContext.Provider value={askReport}><div className="vault">
-      <TopBar profile={profile} admin={admin} route={route.name}
+      <TopBar reportCount={reportCount} profile={profile} admin={admin} route={route.name}
         onName={() => setPhoneAsk({ then: () => go('/me') })}
         onProfile={() => go('/me')} />
 

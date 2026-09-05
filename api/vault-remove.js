@@ -29,6 +29,10 @@ export default async function handler(req, res) {
       });
       if (!response.ok) throw new Error('Storage deletion failed');
     } else throw new Error('Unknown storage');
+    const finished = await fetch(`${url}/rest/v1/rpc/vault_finish_removal`, {
+      method: 'POST', headers, body: JSON.stringify({ p_id: body.id, p_pass: String(body.pass || '') }), signal: AbortSignal.timeout(10000),
+    });
+    if (!finished.ok) throw new Error('Could not confirm cleanup');
     return res.status(200).json({ removed: true });
   } catch {
     return res.status(502).json({ error: 'The upload may already be hidden. File cleanup could not finish. Please retry removal.' });
