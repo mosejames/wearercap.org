@@ -646,16 +646,12 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
           </div>
         </div>
         <div className="lb-actions" aria-label="Photo actions">
-          {mine ? (
-            <span className="lb-like-count">{I.heart(false)} {p.likes || 0} {(p.likes || 0) === 1 ? 'like' : 'likes'}</span>
-          ) : (
             <button className={`lb-action${liked ? ' on' : ''}`} disabled={liking} onClick={async () => {
               if (!owner || !profile) { onNeedName('Sign in to leave a little love.'); return; }
               setLiking(true); try { await onLike(p); } finally { setLiking(false); }
             }} aria-pressed={liked} aria-label={liked ? 'Unlike photo' : 'Like photo'}>
               {I.heart(liked)}<span>{liked ? 'Liked' : 'Like'}{p.likes > 0 ? ` · ${p.likes}` : ''}</span>
             </button>
-          )}
           <div className="lb-manage-actions">
             {!mine && <button className="lb-action" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>}
             {(mine || admin) && <button className="lb-action lb-delete" disabled={removing} onClick={async () => {
@@ -1252,8 +1248,17 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
   const [activityTab, setActivityTab] = useState('photos');
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
+  const [liked, setLiked] = useState(new Set());
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
-  useEffect(() => { if (owner) listMyPhotos().then((ps) => setPhotos(ps.filter((p) => !p.removedAt || p.cleanupPending))).catch((e) => showToast(e.message)); }, [showToast, owner]);
+  useEffect(() => { if (owner) listMyPhotos().then(async (ps) => { setPhotos(ps.filter((p) => !p.removedAt || p.cleanupPending)); setLiked(await myLikes(ps.map(p => p.id))); }).catch((e) => showToast(e.message)); }, [showToast, owner]);
+  const toggleLike = async p => {
+    const was = liked.has(p.id);
+    try {
+      was ? await unlike(p.id) : await like(p.id);
+      setLiked(prev => { const next = new Set(prev); was ? next.delete(p.id) : next.add(p.id); return next; });
+      setPhotos(ps => ps.map(x => x.id === p.id ? {...x, likes: Math.max(0, (x.likes || 0) + (was ? -1 : 1))} : x));
+    } catch (e) { showToast(e.message); }
+  };
   if (!owner) return <div className="shell page stack"><h1>My Vault</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
   return (
     <div className="shell page">
@@ -1279,7 +1284,7 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
           event={byId.get(photos[open].eventId) || { slug: '', title: '' }} owner={owner} profile={profile} admin={false} pass=""
-          liked={false} onLike={() => {}} onNeedName={() => {}}
+          liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onProfile}
           onHidden={(p) => { setPhotos((ps) => ps.filter((x) => x.id !== p.id)); setOpen(null); }} />
       )}
     </div>
