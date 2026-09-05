@@ -94,13 +94,13 @@ export default async function handler(req, res) {
     'One house, one school year, every photo. Add yours from your phone in under a minute.';
   let img = `${SITE}/ami-vault-og.png`;
   let sized = true;
-  let alt = `The ${HOUSE} Vault — one house, one school year, every photo.`;
+  let alt = `The ${HOUSE} Vault. One house, one school year, every photo.`;
 
   if (ev) {
     const date = when(ev.starts_on, ev.ends_on);
-    og = `${ev.title} — add your photos`;
+    og = `${ev.title}: add your photos`;
     title = `${ev.title} · The ${HOUSE} Vault`;
-    alt = `${ev.title} — ${HOUSE} Vault`;
+    alt = `${ev.title}, ${HOUSE} Vault`;
 
     const so_far =
       ev.count === 0
