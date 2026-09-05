@@ -11,6 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { SaveMedia } from './SaveMedia.jsx';
 import { ACTIVITIES, SuggestionForm, SuggestionReview } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
 import { DashboardStats, MyActivity } from './Activity.jsx';
@@ -543,6 +544,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   const askReport = useContext(ReportContext);
   const [viewReadyId, setViewReadyId] = useState(null);
   const [removing, setRemoving] = useState(false);
+  const [saving, setSaving] = useState(false);
   const p = photos[index];
   const [comments, setComments] = useState(null);
   const [body, setBody] = useState('');
@@ -568,6 +570,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 
   useEffect(() => {
     const k = (e) => {
+      if (saving) return;
       if (e.key === 'Escape') onClose();
       if (['INPUT', 'TEXTAREA', 'VIDEO'].includes(e.target.tagName)) return;
       if (e.key === 'ArrowRight' && index < photos.length - 1) onIndex(index + 1);
@@ -575,7 +578,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  }, [index, photos.length, onClose, onIndex]);
+  }, [index, photos.length, onClose, onIndex, saving]);
 
   // Preload neighbours so a swipe feels instant.
   useEffect(() => {
@@ -617,13 +620,13 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   const when = p.takenAt || p.createdAt;
 
   return (
-    <div className="lb" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className="lb" onTouchStart={saving ? undefined : onTouchStart} onTouchEnd={saving ? undefined : onTouchEnd}>
       <div className="lb-top">
         <button className="icon-btn" onClick={onClose} aria-label="Close">{I.close}</button>
         <span className="lb-count">{index + 1} / {photos.length}</span>
         <div className="lb-top-actions">
           <button className="icon-btn" onClick={share} aria-label="Share">{I.share}</button>
-          <a className="icon-btn" href={mediaUrl(p, 'orig')} download target="_blank" rel="noopener" aria-label="Download original">{I.down}</a>
+          <button className="icon-btn" onClick={() => setSaving(true)} aria-label="Download or save to Photos">{I.down}</button>
         </div>
       </div>
       <div className="lb-stage" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -682,6 +685,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
           <button className="btn small" disabled={busy || !body.trim()}>Post</button>
         </form>
       </div>
+      {saving && <Sheet title={isVideo(p) ? 'Save this video' : 'Save this photo'} onClose={() => setSaving(false)}><SaveMedia key={p.id} photo={p} onClose={() => setSaving(false)} /></Sheet>}
     </div>
   );
 }
