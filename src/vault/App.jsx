@@ -165,7 +165,7 @@ function useToast() {
 const ReportContext = createContext(() => {});
 const FLAG = <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0" /></svg>;
 
-function PhoneSheet({ onClose, onVerified }) {
+function PhoneSheet({ onClose, onVerified, reason }) {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
@@ -187,7 +187,7 @@ function PhoneSheet({ onClose, onVerified }) {
       catch (ex) { setErr(ex.message || 'That code did not work. Please try again.'); }
       finally { setBusy(false); }
     }}>
-      <p>{sent ? `Enter the six-digit code sent to ${phone}.` : 'Verify your mobile number once to share, report a concern, and manage your uploads from any phone.'}</p>
+      <p>{sent ? `Enter the six-digit code sent to ${phone}.` : reason || 'Verify your mobile number once to share, report a concern, and manage your uploads from any phone.'}</p>
       {!sent ? <label className="field"><span>Mobile number</span><input autoFocus type="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(404) 555-0123" maxLength={24} /><small>Your number stays private. Release updates are optional. Message and data rates may apply.</small></label>
         : <label className="field"><span>Verification code</span><input autoFocus inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></label>}
       {err && <p className="err" role="alert">{err}</p>}
@@ -545,6 +545,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   const [viewReadyId, setViewReadyId] = useState(null);
   const [removing, setRemoving] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [liking, setLiking] = useState(false);
   const p = photos[index];
   const [comments, setComments] = useState(null);
   const [body, setBody] = useState('');
@@ -648,7 +649,10 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
           {mine ? (
             <span className="lb-like-count">{I.heart(false)} {p.likes || 0} {(p.likes || 0) === 1 ? 'like' : 'likes'}</span>
           ) : (
-            <button className={`lb-action${liked ? ' on' : ''}`} onClick={() => onLike(p)} aria-pressed={liked} aria-label={liked ? 'Unlike photo' : 'Like photo'}>
+            <button className={`lb-action${liked ? ' on' : ''}`} disabled={liking} onClick={async () => {
+              if (!owner || !profile) { onNeedName('Sign in to leave a little love.'); return; }
+              setLiking(true); try { await onLike(p); } finally { setLiking(false); }
+            }} aria-pressed={liked} aria-label={liked ? 'Unlike photo' : 'Like photo'}>
               {I.heart(liked)}<span>{liked ? 'Liked' : 'Like'}{p.likes > 0 ? ` · ${p.likes}` : ''}</span>
             </button>
           )}
@@ -1047,9 +1051,10 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
 
   const toggleLike = async (p) => {
     const was = liked.has(p.id);
-    setLiked((s) => { const n = new Set(s); was ? n.delete(p.id) : n.add(p.id); return n; });
-    setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, likes: Math.max(0, x.likes + (was ? -1 : 1)) } : x)));
-    try { was ? await unlike(p.id) : await like(p.id); }
+    try { was ? await unlike(p.id) : await like(p.id);
+      setLiked((s) => { const n = new Set(s); was ? n.delete(p.id) : n.add(p.id); return n; });
+      setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, likes: Math.max(0, x.likes + (was ? -1 : 1)) } : x)));
+    }
     catch (e) { showToast(e.message); load(); }
   };
 
@@ -1132,9 +1137,10 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
   }, [showToast]);
   const toggleLike = async (p) => {
     const was = liked.has(p.id);
-    setLiked((s) => { const n = new Set(s); was ? n.delete(p.id) : n.add(p.id); return n; });
-    setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, likes: Math.max(0, x.likes + (was ? -1 : 1)) } : x)));
-    try { was ? await unlike(p.id) : await like(p.id); } catch (e) { showToast(e.message); }
+    try { was ? await unlike(p.id) : await like(p.id);
+      setLiked((s) => { const n = new Set(s); was ? n.delete(p.id) : n.add(p.id); return n; });
+      setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, likes: Math.max(0, x.likes + (was ? -1 : 1)) } : x)));
+    } catch (e) { showToast(e.message); }
   };
   return (
     <div className="shell page">
@@ -1601,7 +1607,7 @@ export default function App() {
         </div>
       </footer>
 
-      {phoneAsk && <PhoneSheet onClose={() => setPhoneAsk(null)} onVerified={async () => {
+      {phoneAsk && <PhoneSheet reason={phoneAsk.reason} onClose={() => setPhoneAsk(null)} onVerified={async () => {
         const o = await syncIdentity(); setOwner(o);
         const p = await fetchProfile();
         const next = phoneAsk; setPhoneAsk(null);

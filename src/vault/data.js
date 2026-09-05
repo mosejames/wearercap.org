@@ -325,12 +325,13 @@ export async function myLikes(photoIds) {
 }
 
 export async function like(photoId) {
-  const owner = await getOwner();
+  const owner = await requireContributor();
   const { error } = await supabase.from('vault_likes').insert({ photo_id: photoId, owner });
-  if (error && error.code !== '23505') throw error;
+  if (error && error.code !== '23505') throw new Error(error.code === '42501' ? 'This like could not be saved. Please sign in again and try once more.' : error.message);
 }
 
 export async function unlike(photoId) {
+  await requireContributor();
   const { error } = await supabase.rpc('vault_unlike', { p_photo: photoId, p_token: getToken() });
   if (error) throw error;
 }
