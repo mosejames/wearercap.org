@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import handler, { card } from '../../api/link.js';
 import { binUrl, holderUrl, myUrl } from './config.js';
 
@@ -19,6 +19,9 @@ const meta = (html, prop) =>
   (html.match(new RegExp(`<meta property="${prop}" content="([^"]*)"`)) || [])[1] || '';
 
 describe('link previews', () => {
+  // These assertions cover fallback cards, independent of live bin names.
+  beforeEach(() => vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false })));
+  afterEach(() => vi.unstubAllGlobals());
   it('sends every page somewhere different', async () => {
     const pages = ['bin', 'holder', 'my', 'admin'];
     const titles = await Promise.all(
