@@ -634,7 +634,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
         <div className="lb-meta">
           <Avatar owner={p.owner} name={p.uploaderName} />
           <div>
-            <b>{p.uploaderName || 'Amistad family'}</b>
+            <a className="lb-uploader" href={`#/person/${p.owner}`} onClick={onClose}><b>{p.uploaderName || 'Amistad family'}</b></a>
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
           </div>
         </div>
@@ -1117,21 +1117,25 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
   const [photos, setPhotos] = useState([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [eventFilter, setEventFilter] = useState('');
+  const requestVersion = useRef(0);
   const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState(null);
   const [liked, setLiked] = useState(new Set());
   useDocTitle(gallery ? `${gallery.name}’s memories` : 'Shared memories');
   const load = useCallback(async (start) => {
+    const version = ++requestVersion.current;
     setBusy(true); setError('');
     try {
-      const result = await listContributorPhotos(contributor, start);
+      const result = await listContributorPhotos(contributor, start, eventFilter || null);
       const hearts = await myLikes(result.photos.map(p => p.id));
+      if (version !== requestVersion.current) return;
       setGallery(result); setPhotos(ps => start ? [...ps, ...result.photos] : result.photos);
       setLiked(prev => new Set([...prev, ...hearts])); setOffset(start + result.ids.length);
-    } catch (e) { setError(e.message); }
-    finally { setBusy(false); }
-  }, [contributor]);
-  useEffect(() => { load(0); }, [load]);
+    } catch (e) { if (version === requestVersion.current) setError(e.message); }
+    finally { if (version === requestVersion.current) setBusy(false); }
+  }, [contributor, eventFilter]);
+  useEffect(() => { setPhotos([]); setOffset(0); setOpen(null); load(0); return () => { requestVersion.current++; }; }, [load]);
   const toggleLike = async p => {
     const was = liked.has(p.id);
     try {
@@ -1143,9 +1147,10 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
   return <main className="shell page contributor-gallery">
     <a href="#/community" className="crumb">← Memory makers</a>
     {gallery && <div className="contributor-heading"><Avatar owner={gallery.owner} name={gallery.name} large /><div><h1>{gallery.name}’s memories</h1><p>Photos and videos shared across our year.</p></div></div>}
+    {gallery && <label className="field contributor-filter"><span>Filter by event</span><select value={eventFilter} onChange={e => setEventFilter(e.target.value)}><option value="">All events</option>{events.filter(e => gallery.events?.includes(e.id)).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.id}>{e.title}</option>)}</select></label>}
     {error && <p className="err">{error} <button className="btn small" onClick={() => load(offset)}>Try again</button></p>}
-    {!gallery && busy ? <p className="empty">Gathering the memories…</p> : gallery && <PhotoGrid photos={photos} onOpen={setOpen} likedSet={liked} emptyText="No shared photos or videos yet." />}
-    {gallery && offset < gallery.total && <button className="btn ghost" disabled={busy} onClick={() => load(offset)}>{busy ? 'Loading…' : 'Load more memories'}</button>}
+    {!photos.length && busy ? <p className="empty">Gathering the memories…</p> : gallery && <PhotoGrid photos={photos} onOpen={setOpen} likedSet={liked} emptyText="No shared photos or videos yet." />}
+    {gallery && photos.length > 0 && offset < gallery.total && <button className="btn ghost" disabled={busy} onClick={() => load(offset)}>{busy ? 'Loading…' : 'Load more memories'}</button>}
     {open !== null && photos[open] && <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)} owner={owner} profile={profile} admin={false} pass=""
       event={events.find(e => e.id === photos[open].eventId) || { slug: '', title: 'Shared memories' }}
       liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onNeedName}

@@ -420,8 +420,8 @@ export async function unbanMember(userId, pass) {
   if (error) throw error;
 }
 
-export async function listContributorPhotos(owner, offset = 0) {
-  const { data: gallery, error } = await supabase.rpc('vault_contributor_gallery', { p_owner: owner, p_offset: offset });
+export async function listContributorPhotos(owner, offset = 0, event = null) {
+  const { data: gallery, error } = await supabase.rpc('vault_contributor_gallery_filtered', { p_owner: owner, p_offset: offset, p_event: event });
   if (error) throw error;
   if (!gallery) throw new Error('This contributor gallery is unavailable.');
   if (!gallery.ids.length) return { ...gallery, photos: [] };

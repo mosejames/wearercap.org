@@ -627,3 +627,6 @@ img{display:block;max-width:100%}
 .nav-me:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .nav-me .avatar{width:28px;height:28px;font-size:11px;background:#fff;color:var(--red);border:1px solid rgba(255,255,255,.65)}
 .nav-me .avatar-merit{display:none}.nav-me .avatar-with-badge{margin:0}
+
+.lb-uploader{color:inherit;text-decoration:none}.lb-uploader:hover{text-decoration:underline;text-underline-offset:3px}.lb-uploader:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.contributor-filter{max-width:340px;margin-bottom:20px}
