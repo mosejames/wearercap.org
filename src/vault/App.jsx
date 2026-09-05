@@ -276,7 +276,7 @@ function UploadSheet({ event, profile, onClose, onDone }) {
               <label><input type="radio" name="video-quality" checked={quality === 'smaller'} onChange={() => setQuality('smaller')} /><span><b>Smaller upload</b><small>Reduce video size on this device. The smaller copy replaces the original in the vault.</small></span></label>
             </fieldset>
             {quality === 'smaller' && <>
-              <p className="fine">Up to 720p for standard video, with sound preserved. Keep this page open. You can review sizes before uploading.</p>
+              <p className="fine">Up to 1080p for standard video, with sound preserved. Keep this page open. You can review sizes before uploading.</p>
               {!optimized && !optimizing && <button className="btn ghost" onClick={optimize}>Optimize videos</button>}
               {optimizing && <><p role="status">{optimizationProgress}</p><button className="btn ghost" onClick={() => optimizationAbort.current?.abort()}>Cancel optimization</button></>}
               {optimizationNotes.length > 0 && <ul className="optimization-notes">{optimizationNotes.map((note, i) => <li key={i}>{note}</li>)}</ul>}

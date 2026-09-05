@@ -2,8 +2,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { fitVideo, optimizeVideo } from './optimize-video.js';
 afterEach(() => vi.unstubAllGlobals());
 it('fits landscape and portrait without upscaling or odd dimensions', () => {
-  expect(fitVideo(1920,1080)).toEqual({width:1280,height:720});
-  expect(fitVideo(1080,1920)).toEqual({width:720,height:1280});
+  expect(fitVideo(3840,2160)).toEqual({width:1920,height:1080});
+  expect(fitVideo(2160,3840)).toEqual({width:1080,height:1920});
   expect(fitVideo(640,480)).toEqual({width:640,height:480});
 });
 it('explains the original-quality fallback when encoders are unavailable', async () => {

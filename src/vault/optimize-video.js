@@ -1,6 +1,6 @@
 // Loaded only on request. Conversion stays on the device; no upload occurs here.
 export function fitVideo(width, height) {
-  const scale = Math.min(1, 1280 / Math.max(width, height));
+  const scale = Math.min(1, 1920 / Math.max(width, height));
   return { width: Math.max(2, Math.floor(width * scale / 2) * 2), height: Math.max(2, Math.floor(height * scale / 2) * 2) };
 }
 export async function optimizeVideo(file, { signal, onProgress } = {}) {
@@ -14,7 +14,7 @@ export async function optimizeVideo(file, { signal, onProgress } = {}) {
   try {
     const output = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() });
     conversion = await Conversion.init({ input, output,
-      video: (track) => ({ ...fitVideo(track.displayWidth, track.displayHeight), fit: 'contain', codec: 'avc', bitrate: 1_800_000, frameRate: 30, forceTranscode: true, allowRotationMetadata: false }),
+      video: (track) => ({ ...fitVideo(track.displayWidth, track.displayHeight), fit: 'contain', codec: 'avc', bitrate: 4_000_000, frameRate: 30, forceTranscode: true, allowRotationMetadata: false }),
       audio: { codec: 'aac' },
     });
     // Never silently remove sound or any other track to make a conversion succeed.
