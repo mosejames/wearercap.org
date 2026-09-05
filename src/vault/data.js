@@ -2,7 +2,7 @@
 // Data layer for the Amistad Vault. Every read and write to Supabase goes
 // through here so the views never touch table names.
 // ---------------------------------------------------------------------------
-import { supabase } from '../carpool/supabaseClient.js';
+import { supabase, authHeaders } from './auth.js';
 import { HOUSE, SITE } from './config.js';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -34,11 +34,28 @@ export function getToken() {
 }
 
 let ownerCache = null;
-export async function getOwner() {
-  if (ownerCache) return ownerCache;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(getToken()));
-  ownerCache = Array.from(new Uint8Array(buf), (x) => x.toString(16).padStart(2, '0')).join('');
+let owned = new Set();
+export const ownsUpload = (owner) => owned.has(owner);
+export async function syncIdentity() {
+  const { data: { session } } = await supabase.auth.getSession();
+  ownerCache = null; owned = new Set();
+  if (!session) return null;
+  const { data, error } = await supabase.rpc('vault_join', { p_token: getToken() });
+  if (error) throw error;
+  ownerCache = data.owner; owned = new Set(data.owners || [data.owner]);
   return ownerCache;
+}
+export async function getOwner() { return ownerCache || await syncIdentity(); }
+export async function requireContributor() {
+  const { data, error } = await supabase.rpc('vault_actor');
+  if (error || !data) throw new Error('Please verify your mobile number. If your account is blocked, contact the house.');
+  return data;
+}
+export async function signOut() {
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error) throw error;
+  ownerCache = null; owned = new Set();
+  try { localStorage.removeItem(NAME_KEY); } catch { /* private browsing */ }
 }
 
 export function localProfile() {
@@ -62,6 +79,7 @@ export async function checkPass(pass) {
 
 export async function fetchProfile() {
   const owner = await getOwner();
+  if (!owner) return null;
   const { data, error } = await supabase
     .from('vault_people').select('owner, display_name, student').eq('owner', owner).maybeSingle();
   if (error) throw error;
@@ -173,6 +191,7 @@ const photoFromRow = (r) => ({
   takenAt: r.taken_at,
   caption: r.caption || '',
   hidden: r.hidden,
+  removedAt: r.removed_at,
   createdAt: r.created_at,
   likes: 0,
 });
@@ -218,12 +237,35 @@ export async function listRecentPhotos(limit = 24) {
 }
 
 export async function listMyPhotos() {
-  const owner = await getOwner();
-  const { data, error } = await supabase
-    .from('vault_photos').select('*').eq('owner', owner)
-    .order('created_at', { ascending: false });
+  const { data, error } = await supabase.rpc('vault_my_uploads');
   if (error) throw error;
   return (data || []).map(photoFromRow);
+}
+export async function removeUpload(id, pass = '') {
+  const response = await fetch('/api/vault-remove', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeaders() },
+    body: JSON.stringify({ id, pass }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Could not remove this upload.');
+  return data;
+}
+export async function reportUpload(id, reason, note) {
+  const { error } = await supabase.rpc('vault_report', { p_photo: id, p_reason: reason, p_note: note });
+  if (error) throw error;
+}
+export async function reviewReports(pass) {
+  const { data, error } = await supabase.rpc('vault_review_reports', { p_pass: pass });
+  if (error) throw error;
+  return (data || []).map((r) => ({ ...r, photo: photoFromRow(r.photo) }));
+}
+export async function dismissReport(id, pass) {
+  const { error } = await supabase.rpc('vault_resolve_report', { p_id: id, p_pass: pass });
+  if (error) throw error;
+}
+export async function banUploader(photoId, pass, hideAll = false) {
+  const { error } = await supabase.rpc('vault_ban_uploader', { p_photo: photoId, p_pass: pass, p_reason: 'Community moderation', p_hide_all: hideAll });
+  if (error) throw error;
 }
 
 async function attachLikes(photos) {
@@ -355,4 +397,14 @@ export async function fetchTotals() {
     events: Number(data?.event_count || 0),
     likes: Number(data?.like_count || 0),
   };
+}
+
+export async function bannedMembers(pass) {
+  const { data, error } = await supabase.rpc('vault_banned_members', { p_pass: pass });
+  if (error) throw error;
+  return data || [];
+}
+export async function unbanMember(userId, pass) {
+  const { error } = await supabase.rpc('vault_unban_member', { p_user: userId, p_pass: pass });
+  if (error) throw error;
 }

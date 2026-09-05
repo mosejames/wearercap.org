@@ -3,6 +3,7 @@
 // time through prepare (it is the memory-hungry step on a phone), a few in
 // flight through the network.
 // ---------------------------------------------------------------------------
+import { authHeaders } from './auth.js';
 import { isVideo, prepareVideo } from './videos.js';
 import { prepareImage } from './images.js';
 import { getOwner, insertPhotos, uploadToSupabase, storageConfig } from './data.js';
@@ -28,7 +29,7 @@ function putWithProgress(url, blob, contentType, onBytes, signal) {
 async function sign(eventSlug, items) {
   const r = await fetch('/api/vault-sign', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({ eventSlug, files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })) }),
   });
   if (!r.ok) {

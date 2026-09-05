@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, plural,
 } from './config.js';
 import {
+  bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
   getOwner, localProfile, fetchProfile, saveProfile, localPass, rememberPass, checkPass,
   storageConfig, mediaUrl, listEvents, saveEvent,
   listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos, updatePhoto,
@@ -11,6 +12,7 @@ import {
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
 import { isVideo } from './videos.js';
+import { supabase, sendCode, verifyCode } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
 
@@ -147,6 +149,84 @@ function useToast() {
   return [msg, show];
 }
 
+const ReportContext = createContext(() => {});
+const FLAG = <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0" /></svg>;
+
+function PhoneSheet({ onClose, onVerified }) {
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => { if (!seconds) return; const id = setTimeout(() => setSeconds((n) => n - 1), 1000); return () => clearTimeout(id); }, [seconds]);
+  const send = async () => {
+    setBusy(true); setErr('');
+    try { await sendCode(phone); setSent(true); setSeconds(60); }
+    catch (e) { setErr(e.message || 'The text could not be sent. Please try again.'); }
+    finally { setBusy(false); }
+  };
+  return <Sheet title={sent ? 'Check your texts' : 'Your memories, connected to you'} onClose={onClose}>
+    <form className="stack" onSubmit={async (e) => {
+      e.preventDefault(); if (!sent) return send();
+      setBusy(true); setErr('');
+      try { await verifyCode(phone, code); await onVerified(); }
+      catch (ex) { setErr(ex.message || 'That code did not work. Please try again.'); }
+      finally { setBusy(false); }
+    }}>
+      <p>{sent ? `Enter the six-digit code sent to ${phone}.` : 'Verify your mobile number once to share, report a concern, and manage your uploads from any phone.'}</p>
+      {!sent ? <label className="field"><span>Mobile number</span><input autoFocus type="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(404) 555-0123" maxLength={24} /><small>Your number stays private. We only text sign-in codes, never likes or comments. Message and data rates may apply.</small></label>
+        : <label className="field"><span>Verification code</span><input autoFocus inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></label>}
+      {err && <p className="err" role="alert">{err}</p>}
+      <button className="btn primary" disabled={busy}>{busy ? 'One moment…' : sent ? 'Verify and continue' : 'Text me a code'}</button>
+      {sent && <div className="row"><button className="link" type="button" disabled={busy || seconds > 0} onClick={send}>{seconds ? `Resend in ${seconds}s` : 'Resend code'}</button><button type="button" className="link" disabled={busy} onClick={() => { setSent(false); setCode(''); setErr(''); }}>Change number</button></div>}
+    </form>
+  </Sheet>;
+}
+function ReportSheet({ photo, onClose }) {
+  const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState('');
+  return <Sheet title={sent ? 'Thank you for looking out for our family' : 'Report a concern'} onClose={onClose}>
+    {sent ? <div className="stack"><p>Your report is in the private review area. Your name will not be shared with other families. Reporting does not automatically remove an upload.</p><button className="btn primary" onClick={onClose}>Done</button></div>
+    : <form className="stack" onSubmit={async (e) => { e.preventDefault(); setBusy(true); setErr(''); try { await reportUpload(photo.id, reason, note); setSent(true); } catch (ex) { setErr(ex.message); } finally { setBusy(false); } }}>
+      <p>Help us keep the House of Friendship welcoming. What needs our attention?</p>
+      <label className="field"><span>Reason</span><select required value={reason} onChange={(e) => setReason(e.target.value)}><option value="">Choose a reason</option><option value="inappropriate">Inappropriate content</option><option value="privacy">Please remove a photo of me or my child</option><option value="spam">Spam or unrelated content</option><option value="other">Something else</option></select></label>
+      <label className="field"><span>A little more detail <i>optional</i></span><textarea rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} /></label>
+      {err && <p role="alert" className="err">{err}</p>}
+      <button className="btn primary" disabled={busy}>{busy ? 'Sending…' : 'Send report'}</button>
+    </form>}
+  </Sheet>;
+}
+function ModerationPanel({ pass, onChanged }) {
+  const [reports, setReports] = useState(null);
+  const [banned, setBanned] = useState([]);
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => Promise.all([reviewReports(pass), bannedMembers(pass)]).then(([r, b]) => { setReports(r); setBanned(b); }).catch((e) => setErr(e.message)), [pass]);
+  useEffect(() => { load(); const timer = setInterval(load, 60000); return () => clearInterval(timer); }, [load]);
+  const act = async (fn) => { setBusy(true); setErr(''); try { await fn(); await load(); onChanged(); } catch (e) { setErr(e.message); } finally { setBusy(false); } };
+  return <section className="adm-sec"><div className="adm-head"><h2>Community reports {reports?.length ? `(${reports.length})` : ''}</h2><button className="btn small ghost" onClick={load}>Refresh</button></div>
+    <p className="fine">Uploads appear immediately. Reports stay private and do not automatically hide anything.</p>
+    {err && <p className="err" role="alert">{err}</p>}
+    {reports === null ? <p>Loading reports…</p> : !reports.length ? <p>No open concerns. Thank you for looking after our family.</p> : reports.map((r) => <article className="moderation-report" key={r.id}>
+      <img src={mediaUrl(r.photo, 'thumb')} alt="Reported upload" />
+      <div><b>{r.event}</b><details className="moderation-preview"><summary>View full upload</summary>{isVideo(r.photo) ? <video controls playsInline preload="none" src={mediaUrl(r.photo, 'orig')} /> : <img src={mediaUrl(r.photo, 'web')} alt="Reported upload for review" loading="lazy" />}</details><p>{r.photo.uploaderName || 'Amistad family'} · {r.reason === 'privacy' ? 'Removal requested by family' : r.reason}</p>{r.note && <p>{r.note}</p>}
+        <div className="row"><button className="btn small ghost" disabled={busy} onClick={() => act(() => dismissReport(r.id, pass))}>Dismiss report</button>
+        <button className="btn small primary" disabled={busy} onClick={() => { if (confirm('Remove this upload and delete its stored files?')) act(() => removeUpload(r.photo.id, pass)); }}>Remove upload</button>
+        {r.can_ban && !r.banned && <button className="btn small ghost" disabled={busy} onClick={() => { if (confirm('Ban this verified number from uploading, commenting, and reporting?')) act(() => banUploader(r.photo.id, pass)); }}>Ban contributor</button>}
+        {r.can_ban && <button className="btn small ghost" disabled={busy} onClick={() => { if (confirm('Ban this number and hide all their uploads and comments?')) act(() => banUploader(r.photo.id, pass, true)); }}>Ban and hide all</button>}
+        {r.banned && <span className="fine">Contributor banned</span>}
+        {!r.can_ban && <span className="fine">Older upload: no verified number linked yet.</span>}
+        </div>
+      </div>
+    </article>)}
+    {banned.length > 0 && <details><summary>Banned contributors ({banned.length})</summary>{banned.map((b) => <div className="row" key={b.user_id}><span>{b.name || 'Contributor'} · number ending {b.last_four}</span><button className="btn small ghost" disabled={busy} onClick={() => { if (confirm('Allow this number to contribute again? Hidden uploads will stay hidden.')) act(() => unbanMember(b.user_id, pass)); }}>Lift ban</button></div>)}</details>}
+  </section>;
+}
+
 /* ------------------------------------------------------------- profile */
 
 function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
@@ -168,7 +248,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
   return (
     <Sheet title={firstTime ? 'Who is this?' : 'Your name in the vault'} onClose={onClose}>
       <form className="stack" onSubmit={submit}>
-        {firstTime && <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} No account, no password. This phone remembers you.</p>}
+        {firstTime && <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} Your phone is verified. Choose the name your Amistad family will see.</p>}
         <label className="field">
           <span>Your name</span>
           <input autoFocus value={form.displayName} onChange={set('displayName')} placeholder="Keisha J." maxLength={60} />
@@ -176,11 +256,6 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
         <label className="field">
           <span>Student(s) <i>optional</i></span>
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
-        </label>
-        <label className="field">
-          <span>Mobile <i>optional</i></span>
-          <input type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} placeholder="(404) 555-0123" maxLength={24} />
-          <small>Only so the house can text you when photos are wanted. Never shown.</small>
         </label>
         {err && <p className="err">{err}</p>}
         <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
@@ -442,6 +517,8 @@ function InviteSheet({ event, onClose }) {
 /* ------------------------------------------------------------ lightbox */
 
 function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLike, admin, pass, onHidden, onNeedName, event }) {
+  const askReport = useContext(ReportContext);
+  const [removing, setRemoving] = useState(false);
   const p = photos[index];
   const [comments, setComments] = useState(null);
   const [body, setBody] = useState('');
@@ -505,7 +582,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
     try { await navigator.clipboard.writeText(url); alert('Link copied.'); } catch { prompt('Copy this link', url); }
   };
 
-  const mine = owner && p.owner === owner;
+  const mine = owner && ownsUpload(p.owner);
   const when = p.takenAt || p.createdAt;
 
   return (
@@ -533,6 +610,16 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
           </div>
           <div className="lb-actions">
+            <button className="pill" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>
+            {(mine || admin) && <button className="pill" disabled={removing} onClick={async () => {
+              if (!confirm('Remove this upload from the vault and delete its stored files?')) return;
+              setRemoving(true);
+              try { await removeUpload(p.id, pass); onHidden(p, true); onClose(); }
+              catch (e) { alert(e.message); }
+              finally { setRemoving(false); }
+            }}>{removing ? 'Removing…' : 'Remove upload'}</button>}
+            {admin && <button className="pill" onClick={async () => { if (!confirm('Ban this uploader’s verified number from contributing?')) return; try { await banUploader(p.id, pass); alert('Contributor banned.'); } catch(e) { alert(e.message); } }}>Ban contributor</button>}
+
             <button className={`pill${liked ? ' on' : ''}`} onClick={() => onLike(p)} aria-pressed={liked}>
               {I.heart(liked)}<span>{p.likes || ''}</span>
             </button>
@@ -553,7 +640,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
               <div key={c.id} className={`cmt${c.hidden ? ' hidden' : ''}`}>
                 <b>{c.author || 'Someone'}</b>
                 <span>{c.body}</span>
-                {(admin || (owner && c.owner === owner)) && !c.hidden && (
+                {(admin || (owner && ownsUpload(c.owner))) && !c.hidden && (
                   <button className="cmt-x" onClick={async () => { try { await hideComment(c.id, pass); setComments((cs) => cs.map((x) => (x.id === c.id ? { ...x, hidden: true } : x))); } catch (ex) { alert(ex.message); } }}>remove</button>
                 )}
               </div>
@@ -573,11 +660,12 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 /* ---------------------------------------------------------------- grid */
 
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }) {
+  const askReport = useContext(ReportContext);
   if (!photos.length) return <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
   return (
     <div className="grid">
       {photos.map((p, i) => (
-        <button key={p.id} className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
+        <div className="tile-wrap" key={p.id}><button className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <img src={mediaUrl(p, 'thumb')} alt="" loading="lazy" decoding="async" />
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
@@ -587,7 +675,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }
               {counts?.get(p.id) > 0 && <em>{I.comment}{counts.get(p.id)}</em>}
             </span>
           )}
-        </button>
+        </button><button className="tile-report" aria-label={`Report ${isVideo(p) ? 'video' : 'photo'} by ${p.uploaderName || 'a family'}`} title="Report a concern" onClick={() => askReport(p)}>{FLAG}</button></div>
       ))}
     </div>
   );
@@ -645,8 +733,8 @@ function TopBar({ profile, admin, onName, onProfile, route }) {
           <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin</a>}
           {profile
-            ? <button className="nav-me" onClick={onProfile} aria-label="You"><span className="avatar sm">{initials(profile.display_name)}</span></button>
-            : <button className="nav-btn" onClick={onName}>Name</button>}
+            ? <button className="nav-me" onClick={onProfile} aria-label="My uploads">My uploads</button>
+            : <button className="nav-btn" onClick={onName}>Sign in</button>}
         </nav>
       </div>
     </header>
@@ -870,7 +958,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
 
   const sorted = useMemo(() => {
     if (!photos) return [];
-    const list = photos.filter((p) => !p.hidden || admin || p.owner === owner);
+    const list = photos.filter((p) => !p.hidden && !p.removedAt);
     if (sort === 'loved') return [...list].sort((a, b) => b.likes - a.likes || (a.createdAt < b.createdAt ? -1 : 1));
     if (sort === 'new') return [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     return list;
@@ -988,7 +1076,7 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
           event={byId.get(photos[open].eventId) || { slug: '', title: '' }} owner={owner} profile={profile} admin={false} pass=""
-          liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onNeedName} onHidden={() => {}} />
+          liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onNeedName} onHidden={(p) => { setPhotos((ps) => ps.filter((x) => x.id !== p.id)); setOpen(null); }} />
       )}
     </div>
   );
@@ -996,32 +1084,33 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
 
 /* ------------------------------------------------------------------ me */
 
-function MePage({ owner, profile, events, onProfile, showToast }) {
+function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showToast }) {
   useDocTitle('Me');
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
-  useEffect(() => { listMyPhotos().then(setPhotos).catch((e) => showToast(e.message)); }, [showToast]);
+  useEffect(() => { if (owner) listMyPhotos().then((ps) => setPhotos(ps.filter((p) => !p.removedAt))).catch((e) => showToast(e.message)); }, [showToast, owner]);
+  if (!owner) return <div className="shell page stack"><h1>My uploads</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
   return (
     <div className="shell page">
       <div className="me-head">
         <span className="avatar lg">{initials(profile?.display_name)}</span>
         <div>
           <h1 className="page-title">{profile?.display_name || 'You'}</h1>
-          <p>{profile?.student ? profile.student : 'This phone remembers you. No account needed.'}</p>
+          <p>{profile?.student ? profile.student : 'Your memories, wherever you sign in.'}</p>
           <div className="row">
-            <button className="btn small ghost" onClick={onProfile}>{profile ? 'Edit name' : 'Add your name'}</button>
+            <button className="btn small ghost" onClick={onProfile}>{profile ? 'Edit name' : 'Add your name'}</button><button className="btn small ghost" onClick={onSignOut}>Sign out</button>
           </div>
         </div>
       </div>
-      <div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.length, 'photo') : ''}</p></div>
+      <div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
       {photos === null ? <p className="empty">Loading…</p>
-        : <PhotoGrid photos={photos} onOpen={setOpen} emptyText="You have not added anything from this phone yet." />}
+        : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
           event={byId.get(photos[open].eventId) || { slug: '', title: '' }} owner={owner} profile={profile} admin={false} pass=""
           liked={false} onLike={() => {}} onNeedName={() => {}}
-          onHidden={(p, hidden) => setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, hidden } : x)))} />
+          onHidden={(p) => { setPhotos((ps) => ps.filter((x) => x.id !== p.id)); setOpen(null); }} />
       )}
     </div>
   );
@@ -1085,6 +1174,7 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
         <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. <button className="link" onClick={() => onPass('')}>Lock</button></p>
       </div>
 
+      <ModerationPanel pass={pass} onChanged={refresh} />
       <div className="adm-sec">
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
         <table className="tbl">
@@ -1202,7 +1292,9 @@ export default function App() {
   const today = todayISO();
 
   const [owner, setOwner] = useState(null);
-  const [profile, setProfile] = useState(() => localProfile());
+  const [profile, setProfile] = useState(null);
+  const [phoneAsk, setPhoneAsk] = useState(null);
+  const [reporting, setReporting] = useState(null);
   const [pass, setPassState] = useState(() => localPass());
   const [admin, setAdmin] = useState(false);
   const [events, setEvents] = useState([]);
@@ -1216,8 +1308,17 @@ export default function App() {
   const [toast, showToast] = useToast();
 
   useEffect(() => {
-    getOwner().then(setOwner);
-    fetchProfile().then((p) => { if (p) setProfile({ display_name: p.display_name, student: p.student }); }).catch(() => {});
+    let live = true;
+    const load = async () => {
+      try {
+        const o = await syncIdentity(); if (!live) return; setOwner(o);
+        const p = o ? await fetchProfile() : null;
+        if (live) setProfile(p ? { display_name: p.display_name, student: p.student } : null);
+      } catch (e) { if (live) { setOwner(null); setProfile(null); } }
+    };
+    load();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { setTimeout(load, 0); });
+    return () => { live = false; subscription.unsubscribe(); };
   }, []);
 
   // Admin passcode is remembered on the device and re-checked on load.
@@ -1257,20 +1358,27 @@ export default function App() {
 
   const [totals, setTotals] = useState(null);
 
-  const needName = useCallback((reason, then) => setNameAsk({ reason, then }), []);
+  const needName = useCallback((reason, then) => {
+    if (!owner) setPhoneAsk({ reason, then });
+    else setNameAsk({ reason, then });
+  }, [owner]);
+  const askReport = (photo) => {
+    if (!owner) setPhoneAsk({ reason: 'Verify your number to report a concern.', then: () => setReporting(photo) });
+    else setReporting(photo);
+  };
   const currentEvent = route.name === 'event' ? events.find((e) => e.slug === route.slug) : null;
 
-  const onAdd = (ev) => {
+  const onAdd = async (ev) => {
     if (!ev) return;
     if (route.name !== 'event' || route.slug !== ev.slug) go(`/e/${ev.slug}`);
-    if (!profile) { needName(`Add your name so your ${ev.title} uploads have it.`, () => setUpload(ev)); return; }
-    setUpload(ev);
+    if (!owner || !profile) { needName(`Add your name so your ${ev.title} uploads have it.`, () => setUpload(ev)); return; }
+    try { await requireContributor(); setUpload(ev); } catch (e) { showToast(e.message); }
   };
 
   return (
-    <div className="vault">
+    <ReportContext.Provider value={askReport}><div className="vault">
       <TopBar profile={profile} admin={admin} route={route.name}
-        onName={() => needName('')}
+        onName={() => setPhoneAsk({ then: () => go('/me') })}
         onProfile={() => go('/me')} />
 
       {route.name === 'home' && <MemoryStrip recent={recent} covers={allCovers} events={events} />}
@@ -1284,7 +1392,7 @@ export default function App() {
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
-      {route.name === 'me' && <MePage owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
+      {route.name === 'me' && <MePage onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
       <footer className="foot">
@@ -1295,6 +1403,14 @@ export default function App() {
         </div>
       </footer>
 
+      {phoneAsk && <PhoneSheet onClose={() => setPhoneAsk(null)} onVerified={async () => {
+        const o = await syncIdentity(); setOwner(o);
+        const p = await fetchProfile();
+        const next = phoneAsk; setPhoneAsk(null);
+        if (p) { setProfile({ display_name: p.display_name, student: p.student }); next.then?.(); }
+        else setNameAsk({ reason: next.reason, then: next.then });
+      }} />}
+      {reporting && <ReportSheet photo={reporting} onClose={() => setReporting(null)} />}
       {(nameAsk || profileOpen) && (
         <ProfileSheet profile={profile} firstTime={!profile} reason={nameAsk?.reason}
           onSaved={(p) => { setProfile({ display_name: p.display_name, student: p.student }); const then = nameAsk?.then; setNameAsk(null); setProfileOpen(false); if (then) then(); }}
@@ -1307,6 +1423,6 @@ export default function App() {
       )}
       {invite && <InviteSheet event={invite} onClose={() => setInvite(null)} />}
       <Toast msg={toast} />
-    </div>
+    </div></ReportContext.Provider>
   );
 }

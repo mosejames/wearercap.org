@@ -9,8 +9,7 @@
 //   POST /api/vault-sign             → { mode, publicBase, items: [...] }
 //        { eventSlug, files: [{ id, ext, contentType }] }
 //
-// There is no sign-in on the vault, so there is nothing to check here beyond
-// the shape of the request: same trust model as the Recap's open bucket.
+// A verified, unbanned contributor is required for every signing request.
 // Presigned URLs live fifteen minutes and only allow PUT to one exact key.
 //
 // Two storage modes, chosen by env:
@@ -59,9 +58,9 @@ function publicBase(m) {
 }
 
 // Object keys. One folder per photo so the three renditions travel together.
-export function keysFor(eventSlug, id, ext) {
+export function keysFor(eventSlug, id, ext, userId) {
   const slug = String(eventSlug || 'misc').toLowerCase().replace(/[^a-z0-9-]+/g, '-').slice(0, 60);
-  const base = `${HOUSE}/${YEAR}/${slug}/${id}`;
+  const base = `${HOUSE}/${YEAR}/${userId}/${slug}/${id}`;
   return {
     orig: `${base}/orig.${ext}`,
     web: `${base}/web.jpg`,
@@ -106,6 +105,24 @@ export default async function handler(req, res) {
   const files = Array.isArray(body?.files) ? body.files.slice(0, MAX_FILES) : [];
   if (!files.length) return res.status(400).json({ error: 'No files' });
 
+  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const authorization = req.headers?.authorization;
+  if (!authorization?.startsWith('Bearer ')) return res.status(401).json({ error: 'Verify your mobile number before uploading.' });
+  let userId;
+  try {
+    const headers = { apikey: key, Authorization: authorization, 'Content-Type': 'application/json' };
+    const actor = await fetch(`${SUPABASE_URL}/rest/v1/rpc/vault_actor`, { method: 'POST', headers, body: '{}', signal: AbortSignal.timeout(5000) });
+    if (!actor.ok || !await actor.json()) return res.status(403).json({ error: 'This account cannot upload.' });
+    const user = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers, signal: AbortSignal.timeout(5000) });
+    if (!user.ok) return res.status(401).json({ error: 'Please sign in again.' });
+    userId = (await user.json()).id;
+    const reservation = await fetch(`${SUPABASE_URL}/rest/v1/rpc/vault_reserve_uploads`, {
+      method: 'POST', headers, body: JSON.stringify({ p_slug: body.eventSlug, p_ids: files.map((f) => f.id) }), signal: AbortSignal.timeout(5000),
+    });
+    if (!reservation.ok) return res.status(403).json({ error: 'This album is closed, the upload limit was reached, or these files were already submitted. Please retry with a new selection.' });
+    if (!UUID.test(userId)) return res.status(403).json({ error: 'Invalid account.' });
+  } catch { return res.status(503).json({ error: 'Could not verify upload permission. Please retry.' }); }
+
   const client = m === 'r2' ? r2client() : null;
   const items = [];
   for (const f of files) {
@@ -115,7 +132,7 @@ export default async function handler(req, res) {
     if (!UUID.test(id) || !EXT_OK.test(ext)) {
       return res.status(400).json({ error: `Bad file entry: ${id || '?'}.${ext}` });
     }
-    const keys = keysFor(body.eventSlug, id, ext);
+    const keys = keysFor(body.eventSlug, id, ext, userId);
     const item = { id, keys };
     if (client) {
       item.urls = {
