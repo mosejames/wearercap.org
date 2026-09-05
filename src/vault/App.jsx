@@ -768,6 +768,15 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           {profile
             ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label="My Vault" aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My Vault</span></button>
             : <button className="nav-btn" onClick={onName}>Sign in</button>}
+          <details className="mobile-nav" onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary').focus();}}}>
+            <summary aria-label="Open navigation menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></summary>
+            <div className="mobile-nav-links" onClick={e=>{if(e.target.closest('a'))e.currentTarget.closest('details').open=false;}}>
+              <a href="#/">Home</a>
+              <a href="#/community">Leaders</a>
+              <a href="#/top">Most loved</a>
+              {admin&&<a href="#/admin">Admin{reportCount>0?` (${reportCount})`:''}</a>}
+            </div>
+          </details>
         </nav>
       </div>
     </header>
