@@ -7,7 +7,7 @@ import {
   bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
   getOwner, localProfile, fetchProfile, saveProfile, localPass, rememberPass, checkPass,
   storageConfig, mediaUrl, listEvents, saveEvent,
-  listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
+  listContributorPhotos, listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
@@ -39,6 +39,7 @@ function parseRoute(hash) {
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 'e' && parts[1]) return { name: 'event', slug: parts[1], photoId: parts[2] === 'p' ? parts[3] : null };
   if (parts[0] === 'community') return { name: 'community', eventId: parts[1] || '' };
+  if (parts[0] === 'person' && parts[1]) return { name: 'person', owner: parts[1] };
   if (parts[0] === 'top') return { name: 'top' };
   if (parts[0] === 'me') return { name: 'me' };
   if (parts[0] === 'admin') return { name: 'admin' };
@@ -822,7 +823,7 @@ function EventCard({ e, covers, today, admin, onInvite }) {
       <div className="ev-body">
         <span className="ev-date">{e.kind === 'everyday' ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
         <h3>{e.title}</h3>
-        {e.kind === 'everyday' && <p className="fine">Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event.</p>}
+        {e.kind === 'everyday' && <p className="fine">At home, at school, or out together. The little moments belong here, too.</p>}
         <p className="ev-stat">
           {e.photoCount
             ? <>{plural(e.photoCount, 'item')}<span> · {plural(e.contributorCount, 'family', 'families')}</span></>
@@ -900,13 +901,18 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
         </div>
         <button className="link latest-other" onClick={() => setChoosing(true)}>Photos from another event? Choose an album →</button>
       </section>}
+      {everyday && !everyday.hidden && <section className="shell everyday-feature"><div className="everyday-invitation">
+        {covers.get(everyday.id)?.[0] && <a className="everyday-thumb" href={`#/e/${everyday.slug}`} aria-label="View Everyday Amistad moments"><img src={mediaUrl(covers.get(everyday.id)[0], 'thumb')} alt="" /></a>}
+        <div className="everyday-copy"><h3>Everyday Amistad</h3><p>At home, at school, or out together. The little moments belong here, too.</p></div>
+        <div className="everyday-actions">{everyday.open && <button className="btn small primary" onClick={() => onAdd(everyday)}>{I.plus} Add a moment</button>}<a href={`#/e/${everyday.slug}`}>View moments →</a></div>
+      </div></section>}
       {choosing && <Sheet title="Which event are these from?" onClose={() => setChoosing(false)}>
         <div className="stack">
-          <p className="lede">Pick the event your photos are from. For classroom moments, friends, or house spirit outside a scheduled event, choose Everyday Amistad.</p>
+          <p className="lede">Pick an event, or choose Everyday Amistad for moments at home, at school, or out together.</p>
           <label className="field"><span>Find an event</span><input autoFocus type="search" value={eventSearch} onChange={(e) => setEventSearch(e.target.value)} placeholder="Search events" /></label>
           <div className="choice">
             {uploadEvents.map((e) => <button key={e.id} onClick={() => { setChoosing(false); setEventSearch(''); onAdd(e); }}>
-              <b>{e.title}</b><span>{e.kind === 'everyday' ? 'Everyday school moments, outside scheduled events' : fmtRange(e.startsOn, e.endsOn)}</span>
+              <b>{e.title}</b><span>{e.kind === 'everyday' ? 'At home, at school, or out together' : fmtRange(e.startsOn, e.endsOn)}</span>
             </button>)}
             {!uploadEvents.length && <p className="fine">No matching open events. Try another name.</p>}
           </div>
@@ -934,10 +940,6 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
               {e.open ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos / videos</button> : <span className="fine">Uploads closed</span>}
             </div>)}</div>
           </details>}
-          {everyday && !everyday.hidden && <div className="everyday-invitation">
-            <div><h3>Everyday Amistad</h3><p>Classroom moments, friends, and house spirit. Photos outside scheduled events belong here.</p></div>
-            <div className="everyday-actions">{everyday.open && <button className="btn small primary" onClick={() => onAdd(everyday)}>Add a moment</button>}<a href={`#/e/${everyday.slug}`}>View album →</a></div>
-          </div>}
           {upcoming.length > 0 && (
             <button className="soon-card" onClick={() => setSoon(true)}>
               <span className="eyebrow">Coming soon</span>
@@ -1021,7 +1023,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
           <a href="#/" className="crumb">← The year</a>
           <span className="ev-date big">{event.kind === 'everyday' ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
           <h1>{event.title}</h1><a className="event-leaders" href={`#/community/${event.id}`}>Meet this event’s memory makers →</a>
-          {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event, any time during the school year.' : event.blurb}</p>}
+          {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'At home, at school, or out together. The little moments belong here, too. Share photos and videos from life beyond scheduled events.' : event.blurb}</p>}
           <p className="ev-counts">
             {photos ? <>{plural(visible.length, 'photo')} · {plural(new Set(visible.map((p) => p.owner)).size, 'family', 'families')} · {plural(visible.reduce((n, p) => n + p.likes, 0), 'love')}</> : 'Loading…'}
           </p>
@@ -1110,6 +1112,47 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
   );
 }
 
+function ContributorPage({ contributor, events, owner, profile, onNeedName, showToast }) {
+  const [gallery, setGallery] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [open, setOpen] = useState(null);
+  const [liked, setLiked] = useState(new Set());
+  useDocTitle(gallery ? `${gallery.name}’s memories` : 'Shared memories');
+  const load = useCallback(async (start) => {
+    setBusy(true); setError('');
+    try {
+      const result = await listContributorPhotos(contributor, start);
+      const hearts = await myLikes(result.photos.map(p => p.id));
+      setGallery(result); setPhotos(ps => start ? [...ps, ...result.photos] : result.photos);
+      setLiked(prev => new Set([...prev, ...hearts])); setOffset(start + result.ids.length);
+    } catch (e) { setError(e.message); }
+    finally { setBusy(false); }
+  }, [contributor]);
+  useEffect(() => { load(0); }, [load]);
+  const toggleLike = async p => {
+    const was = liked.has(p.id);
+    try {
+      was ? await unlike(p.id) : await like(p.id);
+      setLiked(prev => { const n = new Set(prev); was ? n.delete(p.id) : n.add(p.id); return n; });
+      setPhotos(ps => ps.map(x => x.id === p.id ? { ...x, likes: Math.max(0, x.likes + (was ? -1 : 1)) } : x));
+    } catch (e) { showToast(e.message); }
+  };
+  return <main className="shell page contributor-gallery">
+    <a href="#/community" className="crumb">← Memory makers</a>
+    {gallery && <div className="contributor-heading"><Avatar owner={gallery.owner} name={gallery.name} large /><div><h1>{gallery.name}’s memories</h1><p>Photos and videos shared across our year.</p></div></div>}
+    {error && <p className="err">{error} <button className="btn small" onClick={() => load(offset)}>Try again</button></p>}
+    {!gallery && busy ? <p className="empty">Gathering the memories…</p> : gallery && <PhotoGrid photos={photos} onOpen={setOpen} likedSet={liked} emptyText="No shared photos or videos yet." />}
+    {gallery && offset < gallery.total && <button className="btn ghost" disabled={busy} onClick={() => load(offset)}>{busy ? 'Loading…' : 'Load more memories'}</button>}
+    {open !== null && photos[open] && <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)} owner={owner} profile={profile} admin={false} pass=""
+      event={events.find(e => e.id === photos[open].eventId) || { slug: '', title: 'Shared memories' }}
+      liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onNeedName}
+      onHidden={p => { setPhotos(ps => ps.filter(x => x.id !== p.id)); setOffset(n => Math.max(0,n-1)); setGallery(g => ({...g,total:g.total-1})); setOpen(null); }} />}
+  </main>;
+}
+
 /* ------------------------------------------------------------------ me */
 
 function DashboardShare({ events, onAdd, hasUploads }) {
@@ -1117,7 +1160,7 @@ function DashboardShare({ events, onAdd, hasUploads }) {
   const [search, setSearch] = useState('');
   const today = todayISO();
   const available = events.filter(e => e.open && !e.hidden && (e.kind === 'everyday' || e.startsOn <= today))
-    .sort((a, b) => (a.kind === 'everyday') - (b.kind === 'everyday') || b.startsOn.localeCompare(a.startsOn));
+    .sort((a, b) => (b.kind === 'everyday') - (a.kind === 'everyday') || b.startsOn.localeCompare(a.startsOn));
   const latest = available.find(e => e.kind !== 'everyday');
   const choices = available.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
   return <>
@@ -1470,6 +1513,7 @@ export default function App() {
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
+      {route.name === 'person' && <ContributorPage key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}

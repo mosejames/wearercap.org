@@ -419,3 +419,16 @@ export async function unbanMember(userId, pass) {
   const { error } = await supabase.rpc('vault_unban_member', { p_user: userId, p_pass: pass });
   if (error) throw error;
 }
+
+export async function listContributorPhotos(owner, offset = 0) {
+  const { data: gallery, error } = await supabase.rpc('vault_contributor_gallery', { p_owner: owner, p_offset: offset });
+  if (error) throw error;
+  if (!gallery) throw new Error('This contributor gallery is unavailable.');
+  if (!gallery.ids.length) return { ...gallery, photos: [] };
+  const { data, error: photoError } = await supabase.from('vault_photos').select('*').in('id', gallery.ids);
+  if (photoError) throw photoError;
+  const rows = new Map((data || []).map(r => [r.id, photoFromRow(r)]));
+  const photos = gallery.ids.map(id => rows.get(id)).filter(Boolean);
+  await attachLikes(photos);
+  return { ...gallery, photos };
+}
