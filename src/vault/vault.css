@@ -565,7 +565,7 @@ img{display:block;max-width:100%}
 .memory-track{display:flex;width:max-content;animation:memory-loop 80s linear infinite;will-change:transform}
 .memory-group{display:flex;gap:3px;padding-right:3px;flex:none}
 .memory-group a{display:block;flex:none;width:auto;height:140.4px}
-.memory-group img{display:block;width:auto;height:100%;max-width:none;object-fit:contain}
+.memory-group img{display:block;width:100%;height:100%;max-width:none;object-fit:contain;backface-visibility:hidden}
 .memory-track.is-paused,.memory-track:has(a:focus-visible){animation-play-state:paused}
 .memory-pause{position:absolute;right:10px;bottom:14px;border:1px solid rgba(255,255,255,.65);border-radius:5px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:5px 8px;min-height:28px}
 @keyframes memory-loop{from{transform:translateX(-50%)}to{transform:translateX(0)}}

@@ -769,6 +769,14 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
 
 function MemoryStrip({ recent, covers, events }) {
   const [paused, setPaused] = useState(false);
+  const [ready, setReady] = useState([]);
+  const randomOrder = useRef(new Map());
+  const [stripWidth, setStripWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const resize = () => setStripWidth(window.innerWidth);
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
   const photos = useMemo(() => {
     const visibleEvents = new Map(events.filter((e) => !e.hidden).map((e) => [e.id, e]));
     const pool = new Map([...recent, ...Array.from(covers.values()).flat()]
@@ -778,10 +786,11 @@ function MemoryStrip({ recent, covers, events }) {
       if (!groups.has(p.eventId)) groups.set(p.eventId, []);
       groups.get(p.eventId).push(p);
     }
-    const shuffle = (list) => {
-      for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-      return list;
-    };
+    const shuffle = list => list.sort((a, b) => {
+      const key = x => Array.isArray(x) ? x[0]?.eventId : x.id;
+      for (const x of [a, b]) if (!randomOrder.current.has(key(x))) randomOrder.current.set(key(x), Math.random());
+      return randomOrder.current.get(key(a)) - randomOrder.current.get(key(b));
+    });
     // Round-robin albums so a large recent upload cannot dominate the strip.
     const albums = shuffle([...groups.values()].map(shuffle));
     const chosen = [];
@@ -790,14 +799,31 @@ function MemoryStrip({ recent, covers, events }) {
     }
     return chosen.map((p) => ({ ...p, event: visibleEvents.get(p.eventId) }));
   }, [recent, covers, events]);
-  if (!photos.length) return null;
-  const tiles = Array.from({ length: Math.max(40, photos.length) }, (_, i) => photos[i % photos.length]);
+  // Decode first and reserve exact geometry, so loading cannot change the loop width.
+  const sources = photos.map(p => `${p.id}:${mediaUrl(p, 'thumb')}`).join('|');
+  useEffect(() => {
+    let active = true;
+    Promise.all(photos.map(async p => {
+      const img = new Image();
+      img.src = mediaUrl(p, 'thumb');
+      try {
+        await img.decode();
+        return img.naturalWidth && img.naturalHeight ? { ...p, ratio: img.naturalWidth / img.naturalHeight } : null;
+      } catch { return null; }
+    })).then(items => { if (active) setReady(items.filter(Boolean)); });
+    return () => { active = false; };
+  }, [sources]);
+  if (!ready.length) return null;
+  const rowWidth = ready.reduce((n, p) => n + p.ratio * (stripWidth < 680 ? 106.6 : 140.4) + 3, 0);
+  const repeats = Math.max(1, Math.ceil(stripWidth / rowWidth));
+  const tiles = Array.from({ length: repeats }, () => ready).flat();
+
   return <section className="memory-strip" aria-label="Moments from our galleries">
     <div className="memory-window">
-      <div className={`memory-track${paused ? ' is-paused' : ''}`}>
+      <div key={ready.map(p => p.id).join('|')} className={`memory-track${paused ? ' is-paused' : ''}`}>
         {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
-          {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
-            <img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" decoding="async" />
+          {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} style={{ aspectRatio: p.ratio }} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
+            <img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
           </a>)}
         </div>)}
       </div>
