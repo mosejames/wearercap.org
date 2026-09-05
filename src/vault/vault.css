@@ -548,3 +548,16 @@ img{display:block;max-width:100%}
 .video-quality small{display:block;font-size:12px;line-height:1.5;color:var(--ink-soft);margin-top:4px}
 .video-quality input{margin-top:4px;accent-color:var(--red)}
 .optimization-notes{font-size:13px;line-height:1.5;margin:0;padding-left:18px;overflow-wrap:anywhere}
+
+/* In normal page flow so the strip slides beneath the sticky red header. */
+.memory-strip{position:relative;padding:10px 0;background:#fff}
+.memory-window{overflow:hidden}
+.memory-track{display:flex;width:max-content;animation:memory-loop 80s linear infinite;will-change:transform}
+.memory-group{display:flex;gap:3px;padding-right:3px;flex:none;min-width:100vw}
+.memory-group a{display:block;flex:1 0 150px;width:150px;height:108px}
+.memory-group img{display:block;width:100%;height:100%;object-fit:cover}
+.memory-track.is-paused,.memory-track:has(a:focus-visible){animation-play-state:paused}
+.memory-pause{position:absolute;right:10px;bottom:14px;border:1px solid rgba(255,255,255,.65);border-radius:5px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:5px 8px;min-height:28px}
+@keyframes memory-loop{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@media(max-width:679px){.memory-strip{padding:8px 0}.memory-group a{flex-basis:112px;width:112px;height:82px}.memory-track{animation-duration:65s}.memory-pause{bottom:11px}}
+@media(prefers-reduced-motion:reduce){.memory-track{animation:none}.memory-window{overflow-x:auto}.memory-group[aria-hidden=true]{display:none}.memory-pause{display:none}}

@@ -658,6 +658,45 @@ function TopBar({ profile, admin, onName, onProfile, route }) {
   );
 }
 
+function MemoryStrip({ recent, covers, events }) {
+  const [paused, setPaused] = useState(false);
+  const photos = useMemo(() => {
+    const visibleEvents = new Map(events.filter((e) => !e.hidden).map((e) => [e.id, e]));
+    const pool = new Map([...recent, ...Array.from(covers.values()).flat()]
+      .filter((p) => !p.hidden && !isVideo(p) && visibleEvents.has(p.eventId)).map((p) => [p.id, p]));
+    const groups = new Map();
+    for (const p of pool.values()) {
+      if (!groups.has(p.eventId)) groups.set(p.eventId, []);
+      groups.get(p.eventId).push(p);
+    }
+    const shuffle = (list) => {
+      for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+      return list;
+    };
+    // Round-robin albums so a large recent upload cannot dominate the strip.
+    const albums = shuffle([...groups.values()].map(shuffle));
+    const chosen = [];
+    while (chosen.length < 16 && albums.some((a) => a.length)) {
+      for (const album of albums) { if (album.length && chosen.length < 16) chosen.push(album.pop()); }
+    }
+    return chosen.map((p) => ({ ...p, event: visibleEvents.get(p.eventId) }));
+  }, [recent, covers, events]);
+  if (!photos.length) return null;
+  const tiles = Array.from({ length: Math.max(12, photos.length) }, (_, i) => photos[i % photos.length]);
+  return <section className="memory-strip" aria-label="Moments from our galleries">
+    <div className="memory-window">
+      <div className={`memory-track${paused ? ' is-paused' : ''}`}>
+        {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
+          {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
+            <img src={mediaUrl(p, 'thumb')} alt="" decoding="async" />
+          </a>)}
+        </div>)}
+      </div>
+    </div>
+    <button className="memory-pause" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>{paused ? 'Play photos' : 'Pause photos'}</button>
+  </section>;
+}
+
 /* ---------------------------------------------------------------- home */
 
 function EventCard({ e, covers, today, admin, onInvite }) {
@@ -1234,6 +1273,8 @@ export default function App() {
       <TopBar profile={profile} admin={admin} route={route.name}
         onName={() => needName('')}
         onProfile={() => go('/me')} />
+
+      {route.name === 'home' && <MemoryStrip recent={recent} covers={allCovers} events={events} />}
 
       {route.name === 'home' && (
         <Home events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
