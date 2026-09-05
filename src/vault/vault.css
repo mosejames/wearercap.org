@@ -561,3 +561,8 @@ img{display:block;max-width:100%}
 @keyframes memory-loop{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 @media(max-width:679px){.memory-strip{padding:8px 0}.memory-group a{flex-basis:112px;width:112px;height:82px}.memory-track{animation-duration:65s}.memory-pause{bottom:11px}}
 @media(prefers-reduced-motion:reduce){.memory-track{animation:none}.memory-window{overflow-x:auto}.memory-group[aria-hidden=true]{display:none}.memory-pause{display:none}}
+
+.family-note{max-width:760px;margin:0 0 28px;padding-left:18px;border-left:3px solid var(--red)}
+.family-note h2{color:var(--red);font-size:22px;line-height:1.25;margin:0 0 8px}
+.family-note p{font-size:15px;line-height:1.65;color:var(--ink-soft);margin:0}
+@media(max-width:679px){.family-note{padding-left:14px;margin-bottom:24px}.family-note h2{font-size:20px}.family-note p{font-size:14px;line-height:1.6}}

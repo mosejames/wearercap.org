@@ -807,6 +807,10 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 
       <section className="year" id="the-year">
         <div className="shell">
+          <div className="family-note">
+            <h2>Every child. Every smile. Our family.</h2>
+            <p>In the House of Friendship, we look out for one another and capture the joy along the way. When you take a photo, make room for the friends beside your child, too. A moment you share may be a memory another family treasures forever. This is our story, and we get to keep it together.</p>
+          </div>
           <div className="album-heading">
             <div><h2>Our albums</h2><p>The latest memories, ready to explore.</p></div>
             {totals && <span>{plural(totals.photos, 'item')} shared</span>}
