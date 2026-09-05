@@ -26,7 +26,14 @@ export const SITE = {
   get base() {
     if (typeof window === 'undefined') return '/';
     const p = window.location.pathname;
-    return p.endsWith('/') ? p : `${p.slice(0, p.lastIndexOf('/'))}/`;
+    if (p.endsWith('/')) return p;
+    // Strip a filename (/ami-vault/index.html), but never a directory served
+    // without its trailing slash. Vercel answers /ami-vault with the page
+    // rather than redirecting to /ami-vault/, and treating that last segment
+    // as a filename collapsed the base to '/', which is how an invite went
+    // out as /e/<slug> instead of /ami-vault/e/<slug>.
+    const cut = p.lastIndexOf('/');
+    return p.slice(cut + 1).includes('.') ? p.slice(0, cut + 1) : `${p}/`;
   },
   get origin() {
     return typeof window === 'undefined' ? 'https://wearercap.org' : window.location.origin;
