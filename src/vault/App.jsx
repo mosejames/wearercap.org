@@ -10,6 +10,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { isVideo } from './videos.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
 
@@ -198,8 +199,8 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   const inputRef = useRef(null);
 
   const pick = (e) => {
-    const list = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name));
-    if (!list.length) { setErr('Pick photos (JPG, PNG, HEIC).'); return; }
+    const list = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name) || isVideo(f));
+    if (!list.length) { setErr('Choose photos or MP4, MOV, or WebM videos.'); return; }
     setErr(list.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
     setFiles(list.slice(0, MAX_BATCH));
   };
@@ -220,13 +221,13 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   const pct = state ? Math.round(((state.prepared / (state.total || 1)) * 25) + ((state.bytesTotal ? state.bytesSent / state.bytesTotal : 0) * 75)) : 0;
 
   return (
-    <Sheet title={`Add photos · ${event.title}`} onClose={onClose}>
+    <Sheet title={`Add photos or videos · ${event.title}`} onClose={onClose}>
       {!state ? (
         <div className="stack">
-          <p className="lede">Pick as many as you like. Originals are kept at full size; a fast copy is made on your phone for the grid.</p>
-          <input ref={inputRef} type="file" accept="image/*,.heic,.heif" multiple hidden onChange={pick} />
+          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. Originals are kept at full size.</p>
+          <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
           <button className="btn ghost big" onClick={() => inputRef.current?.click()}>
-            {files.length ? `${plural(files.length, 'photo')} picked · change` : 'Choose photos'}
+            {files.length ? `${plural(files.length, 'file')} picked · change` : 'Choose photos or videos'}
           </button>
           {files.length > 0 && (
             <div className="pick-preview">
@@ -236,7 +237,7 @@ function UploadSheet({ event, profile, onClose, onDone }) {
           )}
           {err && <p className="err">{err}</p>}
           <button className="btn primary" disabled={!files.length} onClick={start}>
-            Add {files.length ? plural(files.length, 'photo') : 'photos'} to the vault
+            Add {files.length ? plural(files.length, 'file') : 'files'} to the vault
           </button>
           <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in the house can see, like, comment on, and download what you add.</p>
         </div>
@@ -245,7 +246,7 @@ function UploadSheet({ event, profile, onClose, onDone }) {
           <div className="bar"><i style={{ width: `${Math.min(100, pct)}%` }} /></div>
           <p className="lede">
             {finished
-              ? `${plural(state.done.length, 'photo')} added.`
+              ? `${plural(state.done.length, 'file')} added.`
               : state.prepared < state.total
                 ? `Preparing ${state.prepared + 1} of ${state.total}…`
                 : `Uploading · ${fmtBytes(state.bytesSent)} of ${fmtBytes(state.bytesTotal)}`}
@@ -274,7 +275,7 @@ function PickThumb({ file }) {
     setUrl(u);
     return () => URL.revokeObjectURL(u);
   }, [file]);
-  return <span className="pick-thumb">{url && <img src={url} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />}</span>;
+  return <span className="pick-thumb">{url && (isVideo(file) ? <span className="picked-video" aria-label="Video">▶</span> : <img src={url} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />)}</span>;
 }
 
 /* ------------------------------------------------------------ download */
@@ -283,20 +284,20 @@ function DownloadSheet({ event, photos, onClose }) {
   const [which, setWhich] = useState('web');
   const [prog, setProg] = useState(null);
   const [err, setErr] = useState('');
-  const est = (w) => photos.reduce((n, p) => n + (w === 'orig' ? (p.bytes || 3_500_000) : 350_000), 0);
+  const est = (w) => photos.reduce((n, p) => n + (w === 'orig' || isVideo(p) ? (p.bytes || 3_500_000) : 350_000), 0);
   const start = async () => {
     setErr('');
     try {
       const pad = String(photos.length).length;
       const entries = photos.map((p, i) => {
-        const ext = which === 'orig' ? (p.key.split('.').pop() || 'jpg') : 'jpg';
+        const ext = which === 'orig' || isVideo(p) ? (p.key.split('.').pop() || 'jpg') : 'jpg';
         const who = (p.uploaderName || 'amistad').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
         const when = p.takenAt ? p.takenAt.slice(0, 10) : p.createdAt.slice(0, 10);
         return {
           name: `${event.slug}/${String(i + 1).padStart(pad, '0')}-${when}-${who}.${ext}`,
           date: p.takenAt || p.createdAt,
           open: async () => {
-            const r = await fetch(mediaUrl(p, which));
+            const r = await fetch(mediaUrl(p, isVideo(p) ? 'orig' : which));
             if (!r.ok) throw new Error(`Could not fetch ${p.id}`);
             return r;
           },
@@ -315,10 +316,10 @@ function DownloadSheet({ event, photos, onClose }) {
     <Sheet title={`Download · ${event.title}`} onClose={onClose}>
       {!prog ? (
         <div className="stack">
-          <p className="lede">{plural(photos.length, 'photo')} as one zip.</p>
+          <p className="lede">{plural(photos.length, 'file')} as one zip.</p>
           <div className="choice">
             <button className={which === 'web' ? 'on' : ''} onClick={() => setWhich('web')}>
-              <b>Web size</b><span>Fast. Great on screens, fine for 5×7 prints. ~{fmtBytes(est('web'))}</span>
+              <b>Web size</b><span>Smaller photos for screens. Videos stay original size. ~{fmtBytes(est('web'))}</span>
             </button>
             <button className={which === 'orig' ? 'on' : ''} onClick={() => setWhich('orig')}>
               <b>Originals</b><span>Exactly what was uploaded. Full size. ~{fmtBytes(est('orig'))}</span>
@@ -351,7 +352,7 @@ function InviteSheet({ event, onClose }) {
   const message =
     `${event.title} photos wanted. ` +
     (event.photoCount
-      ? `${plural(event.photoCount, 'photo')} in so far from ${plural(event.contributorCount, 'family', 'families')}. `
+      ? `${plural(event.photoCount, 'item')} in so far from ${plural(event.contributorCount, 'family', 'families')}. `
       : 'Nobody has added any yet. ') +
     `Add yours here, no sign-in: ${url}`;
 
@@ -373,7 +374,7 @@ function InviteSheet({ event, onClose }) {
         <div className="invite-card">
           <span className="eyebrow">The link</span>
           <code>{url}</code>
-          <span className="fine">{when}{event.photoCount ? ` · ${plural(event.photoCount, 'photo')} so far` : ' · no photos yet'}</span>
+          <span className="fine">{when}{event.photoCount ? ` · ${plural(event.photoCount, 'item')} so far` : ' · no photos yet'}</span>
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => copy(url, 'link')}>{copied === 'link' ? 'Copied' : 'Copy link'}</button>
@@ -401,12 +402,14 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   const p = photos[index];
   const [comments, setComments] = useState(null);
   const [body, setBody] = useState('');
+  const [videoError, setVideoError] = useState(false);
   const [busy, setBusy] = useState(false);
   const touch = useRef(null);
   useLockScroll(true);
 
   useEffect(() => {
     setComments(null);
+    setVideoError(false);
     let alive = true;
     listComments(p.id).then((c) => { if (alive) setComments(c); }).catch(() => setComments([]));
     return () => { alive = false; };
@@ -415,6 +418,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   useEffect(() => {
     const k = (e) => {
       if (e.key === 'Escape') onClose();
+      if (['INPUT', 'TEXTAREA', 'VIDEO'].includes(e.target.tagName)) return;
       if (e.key === 'ArrowRight' && index < photos.length - 1) onIndex(index + 1);
       if (e.key === 'ArrowLeft' && index > 0) onIndex(index - 1);
     };
@@ -473,7 +477,9 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
       </div>
       <div className="lb-stage" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
         {index > 0 && <button className="lb-nav prev" onClick={() => onIndex(index - 1)} aria-label="Previous">{I.left}</button>}
-        <img key={p.id} src={mediaUrl(p, 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />
+        {isVideo(p) ? <video key={p.id} className="vault-video" onError={() => setVideoError(true)} controls playsInline preload="metadata" poster={mediaUrl(p, 'web')} src={mediaUrl(p, 'orig')} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+          Your browser cannot play this video. Download the original to watch it.
+        </video> : <img key={p.id} src={mediaUrl(p, 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />}
         {index < photos.length - 1 && <button className="lb-nav next" onClick={() => onIndex(index + 1)} aria-label="Next">{I.right}</button>}
       </div>
       <div className="lb-panel">
@@ -496,6 +502,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
             )}
           </div>
         </div>
+        {videoError && <p className="fine">This browser cannot play this video. <a href={mediaUrl(p, 'orig')} download target="_blank" rel="noopener">Download the original</a> to watch it.</p>}
         {p.caption && <p className="lb-cap">{p.caption}</p>}
         <div className="lb-comments">
           {comments === null ? <p className="fine">Loading…</p> : comments.length === 0 ? <p className="fine">No comments yet. Say the thing.</p> : (
@@ -527,8 +534,9 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }
   return (
     <div className="grid">
       {photos.map((p, i) => (
-        <button key={p.id} className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`Photo by ${p.uploaderName || 'a family'}`}>
+        <button key={p.id} className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <img src={mediaUrl(p, 'thumb')} alt="" loading="lazy" decoding="async" />
+          {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
           {(p.likes > 0 || (counts && counts.get(p.id))) && (
             <span className="tile-meta">
@@ -614,6 +622,7 @@ function EventCard({ e, covers, today, admin, onInvite }) {
       <div className={`ev-cover n${Math.min(thumbs.length, 4)}`}>
         {thumbs.length ? thumbs.slice(0, 4).map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />)
           : <img className="ev-placeholder" src={`${SITE.base}brand/empty-gallery.png`} alt="" loading="lazy" />}
+        {thumbs.some(isVideo) && <span className="video-badge">▶ Includes video</span>}
       </div>
       <div className="ev-body">
         <span className="ev-date">{e.kind === 'everyday' ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
@@ -621,7 +630,7 @@ function EventCard({ e, covers, today, admin, onInvite }) {
         {e.kind === 'everyday' && <p className="fine">Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event.</p>}
         <p className="ev-stat">
           {e.photoCount
-            ? <>{plural(e.photoCount, 'photo')}<span> · {plural(e.contributorCount, 'family', 'families')}</span></>
+            ? <>{plural(e.photoCount, 'item')}<span> · {plural(e.contributorCount, 'family', 'families')}</span></>
             : status === 'upcoming' ? <span>Coming up</span> : status === 'today' ? <span>Happening now. Be first.</span> : <span>Be the first to add a photo.</span>}
         </p>
       </div>
@@ -677,7 +686,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
             {!latestEvent && <h1>Add a moment to our year.</h1>}
           </div>
           {!latestEvent && <div className="home-upload">
-            <button className="btn primary big" disabled={!totals} onClick={() => setChoosing(true)}>{I.plus} Add photos</button>
+            <button className="btn primary big" disabled={!totals} onClick={() => setChoosing(true)}>{I.plus} Add photos / videos</button>
             <span>Choose an event to get started</span>
           </div>}
         </div>
@@ -687,10 +696,10 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
           <div>
             <p className="eyebrow">Latest event · {fmtRange(latestEvent.startsOn, latestEvent.endsOn)}</p>
             <h1 id="latest-event-title">{latestEvent.title}</h1>
-            <p>Were you there? Share your photos.</p>
+            <p>Were you there? Share photos and videos.</p>
           </div>
           <div className="latest-event-actions">
-            <button className="btn" onClick={() => onAdd(latestEvent)}>{I.plus} Add photos</button>
+            <button className="btn" onClick={() => onAdd(latestEvent)}>{I.plus} Add photos / videos</button>
             <a href={`#/e/${latestEvent.slug}`}>View album →</a>
           </div>
         </div>
@@ -712,8 +721,8 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
       <section className="year" id="the-year">
         <div className="shell">
           <div className="album-heading">
-            <div><h2>Our photo albums</h2><p>The latest memories, ready to explore.</p></div>
-            {totals && <span>{plural(totals.photos, 'photo')} shared</span>}
+            <div><h2>Our albums</h2><p>The latest memories, ready to explore.</p></div>
+            {totals && <span>{plural(totals.photos, 'item')} shared</span>}
           </div>
           {!totals ? <p role="status">Loading albums…</p> : albums.length ? <div className="populated-albums">
             {albums.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} />)}
@@ -723,7 +732,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
             <summary><span><b>Have photos from another event?</b><small>{plural(emptyEvents.length, 'event')} waiting for a first photo</small></span><span className="missing-toggle">Show events</span></summary>
             <div className="missing-list">{emptyEvents.map((e) => <div className="missing-row" key={e.id}>
               <a href={`#/e/${e.slug}`}><span>{fmtRange(e.startsOn, e.endsOn)}</span><b>{e.title}</b></a>
-              {e.open ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos</button> : <span className="fine">Uploads closed</span>}
+              {e.open ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos / videos</button> : <span className="fine">Uploads closed</span>}
             </div>)}</div>
           </details>}
           {everyday && !everyday.hidden && <div className="everyday-invitation">
@@ -819,7 +828,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
           </p>
           <div className="ev-actions">
             {event.open
-              ? <button className="btn primary" onClick={() => onAdd(event)}>{I.plus} Add photos</button>
+              ? <button className="btn primary" onClick={() => onAdd(event)}>{I.plus} Add photos / videos</button>
               : <span className="closed">Closed to new photos</span>}
             <button className="btn ghost" onClick={() => onInvite(event)}>{I.share} Invite to upload</button>
             {/* Admins only. A whole event as one zip is both the most expensive
@@ -848,7 +857,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
         )}
       </div>
       {event.open && photos && photos.length > 0 && (
-        <div className="fab-wrap"><button className="fab" onClick={() => onAdd(event)}>{I.plus} Add photos</button></div>
+        <div className="fab-wrap"><button className="fab" onClick={() => onAdd(event)}>{I.plus} Add photos / videos</button></div>
       )}
       {open !== null && sorted[open] && (
         <Lightbox
@@ -1168,7 +1177,7 @@ export default function App() {
   const onAdd = (ev) => {
     if (!ev) return;
     if (route.name !== 'event' || route.slug !== ev.slug) go(`/e/${ev.slug}`);
-    if (!profile) { needName(`Add your name so your ${ev.title} photos have it.`, () => setUpload(ev)); return; }
+    if (!profile) { needName(`Add your name so your ${ev.title} uploads have it.`, () => setUpload(ev)); return; }
     setUpload(ev);
   };
 

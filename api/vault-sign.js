@@ -43,7 +43,7 @@ const HOUSE = 'amistad';
 const YEAR = '2026-27';
 const MAX_FILES = 40;               // per request; the client batches
 const URL_TTL = 15 * 60;            // presigned PUT lifetime, seconds
-const EXT_OK = /^(jpg|jpeg|png|heic|heif|webp|gif|mp4|mov)$/i;
+const EXT_OK = /^(jpg|jpeg|png|heic|heif|webp|gif|mp4|mov|webm)$/i;
 
 export function mode() {
   const forced = (process.env.VAULT_STORAGE || '').toLowerCase();

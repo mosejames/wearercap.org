@@ -3,6 +3,7 @@
 // time through prepare (it is the memory-hungry step on a phone), a few in
 // flight through the network.
 // ---------------------------------------------------------------------------
+import { isVideo, prepareVideo } from './videos.js';
 import { prepareImage } from './images.js';
 import { getOwner, insertPhotos, uploadToSupabase, storageConfig } from './data.js';
 import { HOUSE, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
@@ -77,7 +78,7 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
       continue;
     }
     try {
-      ready.push(await prepareImage(f));
+      ready.push(await (isVideo(f) ? prepareVideo(f) : prepareImage(f)));
     } catch (e) {
       state.failed.push({ name: f.name, error: e.message || 'Could not read' });
     }
