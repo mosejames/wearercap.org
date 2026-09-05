@@ -7,7 +7,7 @@ import {
   bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
   getOwner, localProfile, fetchProfile, saveProfile, localPass, rememberPass, checkPass,
   storageConfig, mediaUrl, listEvents, saveEvent,
-  listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos, updatePhoto,
+  listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
@@ -636,33 +636,31 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
             <b>{p.uploaderName || 'Amistad family'}</b>
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
           </div>
-          <div className="lb-actions">
-            <button className="pill" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>
-            {(mine || admin) && <button className="pill" disabled={removing} onClick={async () => {
-              if (!confirm('Remove this upload from the vault and delete its stored files?')) return;
+        </div>
+        <div className="lb-actions" aria-label="Photo actions">
+          {mine ? (
+            <span className="lb-like-count">{I.heart(false)} {p.likes || 0} {(p.likes || 0) === 1 ? 'like' : 'likes'}</span>
+          ) : (
+            <button className={`lb-action${liked ? ' on' : ''}`} onClick={() => onLike(p)} aria-pressed={liked} aria-label={liked ? 'Unlike photo' : 'Like photo'}>
+              {I.heart(liked)}<span>{liked ? 'Liked' : 'Like'}{p.likes > 0 ? ` · ${p.likes}` : ''}</span>
+            </button>
+          )}
+          <div className="lb-manage-actions">
+            {!mine && <button className="lb-action" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>}
+            {(mine || admin) && <button className="lb-action lb-delete" disabled={removing} onClick={async () => {
+              if (!confirm('Confirm deletion')) return;
               setRemoving(true);
               try { await removeUpload(p.id, pass); onHidden(p, true); onClose(); }
               catch (e) { alert(e.message); }
               finally { setRemoving(false); }
-            }}>{removing ? 'Removing…' : 'Remove upload'}</button>}
-            {admin && <button className="pill" onClick={async () => { if (!confirm('Ban this uploader’s verified number from contributing?')) return; try { await banUploader(p.id, pass); alert('Contributor banned.'); } catch(e) { alert(e.message); } }}>Ban contributor</button>}
-
-            <button className={`pill${liked ? ' on' : ''}`} onClick={() => onLike(p)} aria-pressed={liked}>
-              {I.heart(liked)}<span>{p.likes || ''}</span>
-            </button>
-            {(mine || admin) && (
-              <button className="pill" onClick={async () => {
-                if (!confirm(p.hidden ? 'Show this photo again?' : 'Hide this photo from the vault?')) return;
-                try { await updatePhoto(p.id, { hidden: !p.hidden }, pass); } catch (ex) { alert(ex.message); return; }
-                onHidden(p, !p.hidden);
-              }}>{I.eye}<span>{p.hidden ? 'Show' : 'Hide'}</span></button>
-            )}
+            }}>{removing ? 'Deleting…' : 'Delete'}</button>}
+            {admin && !mine && <button className="lb-action" onClick={async () => { if (!confirm('Ban this uploader’s verified number from contributing?')) return; try { await banUploader(p.id, pass); alert('Contributor banned.'); } catch(e) { alert(e.message); } }}>Ban contributor</button>}
           </div>
         </div>
         {videoError && <p className="fine">This browser cannot play this video. <a href={mediaUrl(p, 'orig')} download target="_blank" rel="noopener">Download the original</a> to watch it.</p>}
         {p.caption && <p className="lb-cap">{p.caption}</p>}
         <div className="lb-comments">
-          {comments === null ? <p className="fine">Loading…</p> : comments.length === 0 ? <p className="fine">No comments yet. Say the thing.</p> : (
+          {comments === null ? <p className="fine">Loading…</p> : comments.length === 0 ? <p className="fine">Be the first to leave a little love.</p> : (
             comments.map((c) => (
               <div key={c.id} className={`cmt${c.hidden ? ' hidden' : ''}`}>
                 <b>{c.author || 'Someone'}</b>
