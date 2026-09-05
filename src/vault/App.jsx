@@ -276,7 +276,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
         </label>
         <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new Ami Vault photo badge.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : 'Milestone texts are being connected. You can still collect and celebrate every badge in the Vault.'}</small></span></label>
-        <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My uploads → Edit profile. Message and data rates may apply.</small></span></label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My Vault → Edit profile. Message and data rates may apply.</small></span></label>
         {err && <p className="err">{err}</p>}
         <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
       </form>
@@ -759,7 +759,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
           {profile
-            ? <button className="nav-me" onClick={onProfile} aria-label="My uploads">My uploads</button>
+            ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label="My Vault" aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My Vault</span></button>
             : <button className="nav-btn" onClick={onName}>Sign in</button>}
         </nav>
       </div>
@@ -1190,7 +1190,7 @@ function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSig
   const [open, setOpen] = useState(null);
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   useEffect(() => { if (owner) listMyPhotos().then((ps) => setPhotos(ps.filter((p) => !p.removedAt || p.cleanupPending))).catch((e) => showToast(e.message)); }, [showToast, owner]);
-  if (!owner) return <div className="shell page stack"><h1>My uploads</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
+  if (!owner) return <div className="shell page stack"><h1>My Vault</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
   return (
     <div className="shell page">
       <div className="me-head">
