@@ -2237,12 +2237,10 @@ button {
 }
 
 /* Homepage: the welcome, the next gathering, and the community in pictures. */
-.homepage-refresh .hero { display: block; min-height: 0; overflow: hidden; }
 .homepage-refresh .nav { padding: 26px 0; border-bottom: 1px solid #ffffff26; }
 .homepage-refresh .brand-sub { max-width: 145px; font-size: 12px; line-height: 1.5; letter-spacing: .06em; }
 .homepage-refresh .nav-links { gap: 20px; }
 .welcome-layout { width: min(1320px, calc(100% - 56px)); margin: auto; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 44px; padding: 62px 0 76px; }
-.homepage-refresh .hero-content { width: auto; margin: 0; padding: 0; }
 .homepage-refresh .hero h1 { font-size: clamp(44px, 5.1vw, 76px); line-height: 1.02; letter-spacing: -.045em; text-wrap: initial; }
 .homepage-refresh .hero h1 span { color: var(--gold); }
 .homepage-refresh .hero .kicker { font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: .14em; }
