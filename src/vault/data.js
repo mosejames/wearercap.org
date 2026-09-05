@@ -86,7 +86,9 @@ export async function fetchProfile() {
   if (!data) return null;
   const { data: choice, error: choiceError } = await supabase.rpc('vault_release_preference');
   if (choiceError) throw choiceError;
-  const profile = { ...data, release_opt_in: !!choice };
+  const { data: badgeChoice, error: badgeError } = await supabase.rpc('vault_badge_text_preference');
+  if (badgeError) throw badgeError;
+  const profile = { ...data, release_opt_in: !!choice, badge_text_opt_in: !!badgeChoice };
   rememberProfile(profile);
   return profile;
 }
@@ -99,6 +101,11 @@ export async function saveProfile(form) {
   });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
+  if (typeof form.badgeTextOptIn === 'boolean') {
+    const { error: badgeError } = await supabase.rpc('vault_set_badge_text_preference', { p_enabled: form.badgeTextOptIn });
+    if (badgeError) throw badgeError;
+    row.badge_text_opt_in = form.badgeTextOptIn;
+  }
   rememberProfile(row);
   return row;
 }

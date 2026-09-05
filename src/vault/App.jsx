@@ -17,7 +17,7 @@ import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } fr
 import { rewardCall, saveAvatar } from './rewards.js';
 import { followSheetViewport } from './sheetViewport.js';
 import { isVideo } from './videos.js';
-import { supabase, sendCode, verifyCode } from './auth.js';
+import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
 
@@ -242,7 +242,10 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
     displayName: profile?.display_name || '',
     student: profile?.student || '',
     releaseOptIn: profile?.release_opt_in === true,
+    badgeTextOptIn: profile?.badge_text_opt_in === true,
   });
+  const [textsAvailable, setTextsAvailable] = useState(false);
+  useEffect(() => { let live=true; fetch('/api/vault-badge-text').then(r=>r.json()).then(r=>{if(live)setTextsAvailable(!!r.available);}).catch(()=>{}); return()=>{live=false;}; }, []);
   const [avatarFile, setAvatarFile] = useState(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -271,6 +274,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
           <span>Student(s) <i>optional</i></span>
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
         </label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new Ami Vault photo badge.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : 'Milestone texts are being connected. You can still collect and celebrate every badge in the Vault.'}</small></span></label>
         <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My uploads → Edit profile. Message and data rates may apply.</small></span></label>
         {err && <p className="err">{err}</p>}
         <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
@@ -683,7 +687,6 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 /* ---------------------------------------------------------------- grid */
 
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }) {
-  const askReport = useContext(ReportContext);
   if (!photos.length) return <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
   return (
     <div className="grid">
@@ -698,7 +701,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }
               {counts?.get(p.id) > 0 && <em>{I.comment}{counts.get(p.id)}</em>}
             </span>
           )}
-        </button><button className="tile-report" aria-label={`Report ${isVideo(p) ? 'video' : 'photo'} by ${p.uploaderName || 'a family'}`} title="Report a concern" onClick={() => askReport(p)}>{FLAG}</button></div>
+        </button></div>
       ))}
     </div>
   );
@@ -1355,9 +1358,9 @@ export default function App() {
   const [avatars, setAvatars] = useState({ keys:{}, version:Date.now() });
   const [earned, setEarned] = useState([]);
   const [rewardVersion, setRewardVersion] = useState(0);
-  const refreshAvatars = useCallback(() => rewardCall('vault_avatars').then(keys=>setAvatars({keys,version:Date.now()})).catch(()=>{}), []);
+  const refreshAvatars = useCallback(() => Promise.all([rewardCall('vault_avatars'),rewardCall('vault_public_badges')]).then(([keys,badges])=>setAvatars({keys,badges,version:Date.now()})).catch(()=>{}), []);
   useEffect(() => { refreshAvatars(); }, [refreshAvatars]);
-  const claimBadges = useCallback(() => rewardCall('vault_claim_badges').then(b=>{if(b.length) {setEarned(b);setRewardVersion(v=>v+1);}}).catch(()=>{}), []);
+  const claimBadges = useCallback(() => rewardCall('vault_claim_badges').then(async b=>{if(b.length) {setEarned(b);setRewardVersion(v=>v+1);refreshAvatars();} const headers=await authHeaders(); await fetch('/api/vault-badge-text',{method:'POST',headers,keepalive:true});}).catch(()=>{}), [refreshAvatars]);
   useEffect(() => { if(owner) claimBadges(); }, [owner,claimBadges]);
   const [profile, setProfile] = useState(null);
   const [phoneAsk, setPhoneAsk] = useState(null);

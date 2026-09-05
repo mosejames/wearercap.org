@@ -1,0 +1,11 @@
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+import handler from '../../api/vault-badge-text.js';
+const response=()=>({setHeader:vi.fn(),status:vi.fn().mockReturnThis(),json:vi.fn()});
+beforeEach(()=>{vi.stubEnv('TWILIO_ACCOUNT_SID','ACtest');vi.stubEnv('TWILIO_AUTH_TOKEN','secret');vi.stubEnv('TWILIO_MESSAGING_SERVICE_SID','MGtest');vi.stubEnv('SUPABASE_URL','https://example.supabase.co');vi.stubEnv('SUPABASE_ANON_KEY','public');});
+afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
+describe('milestone SMS delivery',()=>{
+ it('requires sign-in and does not accept arbitrary recipients',async()=>{const f=vi.fn();vi.stubGlobal('fetch',f);const res=response();await handler({method:'POST',headers:{},body:{To:'+15550000000'}},res);expect(res.status).toHaveBeenCalledWith(401);expect(f).not.toHaveBeenCalled();});
+ it('only sends the milestone and recipient returned by the authenticated queue',async()=>{const f=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({milestone:10,phone:'15550000001'}))).mockResolvedValueOnce(new Response(JSON.stringify({sid:'SMtest'}))).mockResolvedValueOnce(new Response('')).mockResolvedValueOnce(new Response('null'));vi.stubGlobal('fetch',f);const res=response();await handler({method:'POST',headers:{authorization:'Bearer test'},body:{To:'+15559999999',Body:'bad'}},res);const params=f.mock.calls[1][1].body;expect(params.get('To')).toBe('+15550000001');expect(params.get('Body')).toContain('Memory maker');expect(params.get('Body')).toContain('STOP');expect(res.json).toHaveBeenCalledWith({accepted:1});});
+ it('does not blindly resend after an ambiguous timeout',async()=>{const f=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({milestone:50,phone:'15550000001'}))).mockRejectedValueOnce(new Error('timeout'));vi.stubGlobal('fetch',f);const res=response();await handler({method:'POST',headers:{authorization:'Bearer test'}},res);expect(f).toHaveBeenCalledTimes(2);expect(res.status).toHaveBeenCalledWith(502);});
+ it('leaves queued messages untouched while configuration is missing',async()=>{vi.stubEnv('TWILIO_AUTH_TOKEN','');const f=vi.fn();vi.stubGlobal('fetch',f);const res=response();await handler({method:'POST',headers:{authorization:'Bearer test'}},res);expect(res.status).toHaveBeenCalledWith(503);expect(f).not.toHaveBeenCalled();});
+});
