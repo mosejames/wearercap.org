@@ -196,13 +196,14 @@ img{display:block;max-width:100%}
 .sort button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 
 /* ---------------- grid ---------------- */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin:16px -18px 0}
-@media(min-width:520px){.grid{grid-template-columns:repeat(4,1fr);gap:4px;margin:20px 0 0;border-radius:12px;overflow:hidden}}
-@media(min-width:900px){.grid{grid-template-columns:repeat(6,1fr)}}
-@media(min-width:1240px){.grid{grid-template-columns:repeat(7,1fr)}}
-.tile{position:relative;aspect-ratio:1;border:0;padding:0;background:var(--mist);overflow:hidden;display:block}
-.tile img{width:100%;height:100%;object-fit:cover;transition:transform .25s ease}
-.tile:hover img{transform:scale(1.04)}
+.grid{columns:3;column-gap:3px;margin:16px -18px 0}
+.grid .tile-wrap{break-inside:avoid;margin-bottom:3px}
+@media(min-width:520px){.grid{columns:4;column-gap:4px;margin:20px 0 0}.grid .tile-wrap{margin-bottom:4px}}
+@media(min-width:900px){.grid{columns:6}}
+@media(min-width:1240px){.grid{columns:7}}
+.tile{position:relative;border:0;padding:0;background:var(--mist);overflow:hidden;display:block;width:100%}
+.tile img{display:block;width:100%;height:auto}
+.tile:hover{filter:brightness(.94)}
 .tile.hidden{opacity:.35}
 .tile-meta{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;padding:18px 7px 6px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:#fff;font-size:11.5px;font-weight:800;pointer-events:none}
 .tile-meta em{font-style:normal;display:inline-flex;align-items:center;gap:3px}
@@ -559,16 +560,16 @@ img{display:block;max-width:100%}
 .optimization-notes{font-size:13px;line-height:1.5;margin:0;padding-left:18px;overflow-wrap:anywhere}
 
 /* In normal page flow so the strip slides beneath the sticky red header. */
-.memory-strip{position:relative;padding:10px 0;background:#fff}
+.memory-strip{position:relative;padding:3px 0;background:#fff}
 .memory-window{overflow:hidden}
 .memory-track{display:flex;width:max-content;animation:memory-loop 80s linear infinite;will-change:transform}
-.memory-group{display:flex;gap:3px;padding-right:3px;flex:none;min-width:100vw}
-.memory-group a{display:block;flex:1 0 150px;width:150px;height:108px}
-.memory-group img{display:block;width:100%;height:100%;object-fit:cover}
+.memory-group{display:flex;gap:3px;padding-right:3px;flex:none}
+.memory-group a{display:block;flex:none;width:auto;height:140.4px}
+.memory-group img{display:block;width:auto;height:100%;max-width:none;object-fit:contain}
 .memory-track.is-paused,.memory-track:has(a:focus-visible){animation-play-state:paused}
 .memory-pause{position:absolute;right:10px;bottom:14px;border:1px solid rgba(255,255,255,.65);border-radius:5px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:5px 8px;min-height:28px}
 @keyframes memory-loop{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-@media(max-width:679px){.memory-strip{padding:8px 0}.memory-group a{flex-basis:112px;width:112px;height:82px}.memory-track{animation-duration:65s}.memory-pause{bottom:11px}}
+@media(max-width:679px){.memory-group a{height:106.6px}.memory-track{animation-duration:65s}.memory-pause{bottom:11px}}
 @media(prefers-reduced-motion:reduce){.memory-track{animation:none}.memory-window{overflow-x:auto}.memory-group[aria-hidden=true]{display:none}.memory-pause{display:none}}
 
 .family-note{max-width:760px;margin:0 0 28px;padding-left:18px;border-left:3px solid var(--red)}

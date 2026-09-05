@@ -691,7 +691,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }
     <div className="grid">
       {photos.map((p, i) => (
         <div className="tile-wrap" key={p.id}><button className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
-          <img src={mediaUrl(p, 'thumb')} alt="" loading="lazy" decoding="async" />
+          <img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
           {(p.likes > 0 || (counts && counts.get(p.id))) && (
@@ -791,13 +791,13 @@ function MemoryStrip({ recent, covers, events }) {
     return chosen.map((p) => ({ ...p, event: visibleEvents.get(p.eventId) }));
   }, [recent, covers, events]);
   if (!photos.length) return null;
-  const tiles = Array.from({ length: Math.max(12, photos.length) }, (_, i) => photos[i % photos.length]);
+  const tiles = Array.from({ length: Math.max(40, photos.length) }, (_, i) => photos[i % photos.length]);
   return <section className="memory-strip" aria-label="Moments from our galleries">
     <div className="memory-window">
       <div className={`memory-track${paused ? ' is-paused' : ''}`}>
         {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
           {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
-            <img src={mediaUrl(p, 'thumb')} alt="" decoding="async" />
+            <img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" decoding="async" />
           </a>)}
         </div>)}
       </div>
