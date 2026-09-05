@@ -11,6 +11,8 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { DashboardStats, MyActivity } from './Activity.jsx';
+import { recordView } from './viewTracking.js';
 import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } from './Community.jsx';
 import { rewardCall, saveAvatar } from './rewards.js';
 import { followSheetViewport } from './sheetViewport.js';
@@ -531,6 +533,7 @@ function InviteSheet({ event, onClose }) {
 
 function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLike, admin, pass, onHidden, onNeedName, event }) {
   const askReport = useContext(ReportContext);
+  const [viewReadyId, setViewReadyId] = useState(null);
   const [removing, setRemoving] = useState(false);
   const p = photos[index];
   const [comments, setComments] = useState(null);
@@ -539,6 +542,13 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   const [busy, setBusy] = useState(false);
   const touch = useRef(null);
   useLockScroll(true);
+  useEffect(() => {
+    if (viewReadyId !== p.id || (owner && ownsUpload(p.owner)) || admin) return;
+    let timer;
+    const schedule = () => { clearTimeout(timer); if (document.visibilityState === 'visible') timer = setTimeout(() => recordView(p.id), 1500); };
+    schedule(); document.addEventListener('visibilitychange', schedule);
+    return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', schedule); };
+  }, [p.id, p.owner, viewReadyId, owner, admin]);
 
   useEffect(() => {
     setComments(null);
@@ -610,9 +620,9 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
       </div>
       <div className="lb-stage" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
         {index > 0 && <button className="lb-nav prev" onClick={() => onIndex(index - 1)} aria-label="Previous">{I.left}</button>}
-        {isVideo(p) ? <video key={p.id} className="vault-video" onError={() => setVideoError(true)} controls playsInline preload="metadata" poster={mediaUrl(p, 'web')} src={mediaUrl(p, 'orig')} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+        {isVideo(p) ? <video key={p.id} onLoadedData={() => setViewReadyId(p.id)} className="vault-video" onError={() => setVideoError(true)} controls playsInline preload="metadata" poster={mediaUrl(p, 'web')} src={mediaUrl(p, 'orig')} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
           Your browser cannot play this video. Download the original to watch it.
-        </video> : <img key={p.id} src={mediaUrl(p, 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />}
+        </video> : <img key={p.id} onLoad={() => setViewReadyId(p.id)} src={mediaUrl(p, 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />}
         {index < photos.length - 1 && <button className="lb-nav next" onClick={() => onIndex(index + 1)} aria-label="Next">{I.right}</button>}
       </div>
       <div className="lb-panel">
@@ -1129,6 +1139,7 @@ function DashboardShare({ events, onAdd, hasUploads }) {
 
 function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSignIn, onSignOut, showToast }) {
   useDocTitle('Me');
+  const [activityTab, setActivityTab] = useState('photos');
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
@@ -1147,9 +1158,13 @@ function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSig
         </div>
       </div>
       <DashboardShare events={events} onAdd={onAdd} hasUploads={photos?.some(p => !p.removedAt)} />
-      <BadgeShelf owner={owner} refresh={rewardVersion} /><div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
+      <DashboardStats owner={owner} refresh={photos} />
+      <BadgeShelf owner={owner} refresh={rewardVersion} />
+      <div className="community-tabs personal-tabs" aria-label="Your activity">{[['photos','My photos & videos'],['likes','My likes'],['comments','My comments']].map(([key,label])=><button key={key} aria-pressed={activityTab===key} className={activityTab===key?'selected':''} onClick={()=>setActivityTab(key)}>{label}</button>)}</div>
+      {activityTab !== 'photos' && <MyActivity key={activityTab} kind={activityTab} owner={owner} />}
+      {activityTab === 'photos' && <><div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
       {photos === null ? <p className="empty">Loading…</p>
-        : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}
+        : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}</>}
       {photos?.some((p) => p.cleanupPending) && <div className="stack"><p>These uploads are hidden, but file cleanup needs another try.</p>{photos.filter((p) => p.cleanupPending).map((p) => <button className="btn small ghost" key={p.id} onClick={async () => { try { await removeUpload(p.id); setPhotos((ps) => ps.filter((x) => x.id !== p.id)); } catch (e) { showToast(e.message); } }}>Finish removing upload</button>)}</div>}
       {open !== null && photos?.[open] && (
         <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)}

@@ -1,0 +1,35 @@
+begin;
+do $$
+declare u uuid:=gen_random_uuid(); v uuid:=gen_random_uuid(); o text; other text; e uuid:=gen_random_uuid(); p uuid:=gen_random_uuid(); q uuid:=gen_random_uuid(); d jsonb; session_id text:=repeat('a',48);
+begin
+ insert into auth.users(id,phone,phone_confirmed_at) values(u,'15550008301',now()),(v,'15550008302',now());
+ perform set_config('request.jwt.claim.sub',u::text,true);
+ o:=public.vault_join('')->>'owner'; perform public.vault_save_member_profile('Activity fixture A','',false);
+ insert into public.vault_events(id,slug,title,starts_on) values(e,'activity-fixture-'||e,'Activity fixture',current_date);
+ insert into public.vault_photos(id,event_id,owner,storage,key,web_key,thumb_key) values(p,e,o,'supabase','fixture','fixture','fixture');
+ if public.vault_record_view(p,session_id,'') then raise exception 'Owner view counted'; end if;
+ perform set_config('request.jwt.claim.sub',v::text,true);
+ other:=public.vault_join('')->>'owner'; perform public.vault_save_member_profile('Activity fixture B','',false);
+ insert into public.vault_photos(id,event_id,owner,storage,key,web_key,thumb_key) values(q,e,other,'supabase','fixture','fixture','fixture');
+ if not public.vault_record_view(p,session_id,'') or public.vault_record_view(p,session_id,'') then raise exception 'View deduplication failed'; end if;
+ if public.vault_record_view(p,'invalid','') then raise exception 'Invalid session accepted'; end if;
+ insert into public.vault_likes(photo_id,owner) values(p,other);
+ insert into public.vault_comments(photo_id,owner,body) values(p,other,'Such a happy memory!');
+ d:=public.vault_my_activity('comments',0);
+ if (d->>'total')::int<>1 or d->'items'->0->>'body'<>'Such a happy memory!' then raise exception 'Comment history failed'; end if;
+ if (public.vault_my_dashboard()->>'views')::int<>0 then raise exception 'Another owner views leaked'; end if;
+ perform set_config('request.jwt.claim.sub',u::text,true);
+ d:=public.vault_my_dashboard();
+ if (d->>'views')::int<>1 or (d->>'likes_received')::int<>1 or (d->>'comments_received')::int<>1 then raise exception 'Dashboard received totals failed'; end if;
+ if (public.vault_my_activity('comments',0)->>'total')::int<>0 then raise exception 'Another owner activity leaked'; end if;
+ if (d->>'points_to_lead')::bigint<>greatest((d->>'leader_score')::bigint-(d->>'score')::bigint+1,1) then raise exception 'Leaderboard gap failed'; end if;
+ update public.vault_photos set hidden=true where id=p;
+ if public.vault_record_view(p,repeat('b',48),'') then raise exception 'Hidden view counted'; end if;
+ if (public.vault_my_dashboard()->>'views')::int<>0 then raise exception 'Hidden photo included'; end if;
+ perform set_config('request.jwt.claim.sub',v::text,true);
+ if (public.vault_my_activity('likes',0)->>'total')::int<>0 then raise exception 'Hidden activity included'; end if;
+ perform set_config('request.jwt.claim.sub','',true);
+ begin perform public.vault_my_dashboard(); raise exception 'Anonymous dashboard exposed'; exception when others then if sqlerrm='Anonymous dashboard exposed' then raise; end if; end;
+ if not public.vault_record_view(q,repeat('c',48),'') then raise exception 'Public view not counted'; end if;
+end $$;
+rollback;
