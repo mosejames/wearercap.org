@@ -1026,10 +1026,12 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
             {photos ? <>{plural(visible.length, 'photo')} · {plural(new Set(visible.map((p) => p.owner)).size, 'family', 'families')} · {plural(visible.reduce((n, p) => n + p.likes, 0), 'love')}</> : 'Loading…'}
           </p>
           <div className="ev-actions">
+            <div className="ev-share-actions">
             {event.open
-              ? <button className="btn primary" onClick={() => onAdd(event)}>{I.plus} Add photos / videos</button>
+              ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus}<span>Add photos<span className="ev-video-label"> / videos</span></span></button>
               : <span className="closed">Closed to new photos</span>}
-            <button className="btn ghost" onClick={() => onInvite(event)}>{I.share} Invite to upload</button>
+            <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
+            </div>
             {/* Admins only. A whole event as one zip is both the most expensive
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a

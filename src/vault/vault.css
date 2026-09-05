@@ -601,3 +601,12 @@ img{display:block;max-width:100%}
 
 .avatar-with-badge{display:inline-flex;position:relative;flex-shrink:0;margin-right:5px}.avatar-merit{position:absolute;right:-9px;bottom:-6px;width:22px;height:26px;filter:drop-shadow(0 1px 1px #fff)}.avatar-with-badge:has(.lg) .avatar-merit{width:32px;height:38px;right:-9px;bottom:-5px}.merit-patch{display:block;width:100%;height:auto}.merit-collection{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:18px 0}.merit-card{display:flex;align-items:center;flex-direction:column;text-align:center;border:1px solid #e8d9dc;border-radius:12px;padding:14px 8px;background:#fff}.merit-card .merit-patch{width:62px;margin-bottom:10px}.merit-card b{font-size:12px;line-height:1.3}.merit-card span{font-size:11px;color:var(--ink-soft);margin-top:5px}.merit-card small{font-size:10px;margin-top:7px;font-weight:700;color:var(--red)}.merit-card.locked{background:#faf8f9}.merit-card.locked small{color:var(--ink-soft)}.badge-intro{font-size:13px;line-height:1.5;margin:0}.merit-progress{display:flex;flex-direction:column;gap:7px;margin:16px 0}.merit-progress label{font-size:13px;font-weight:700}.merit-progress progress{width:100%;height:8px;accent-color:var(--red)}.merit-progress span{font-size:11px;color:var(--ink-soft)}.badge-rules{font-size:12px;line-height:1.5}.badge-rules summary{cursor:pointer;font-weight:700}.celebration-patch{width:82px;margin:0 auto 12px}.badge-celebration .eyebrow{font-size:10px;margin-bottom:8px}.badge-celebration{max-height:85dvh;overflow-y:auto}
 @media(max-width:639px){.merit-collection{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.merit-card{padding:12px 5px}.merit-card .merit-patch{width:52px}.merit-card b{font-size:11px}.badge-shelf{padding:16px}}
+
+/* Keep the gallery's primary action and invitation together at phone widths. */
+.ev-share-actions{display:flex;align-items:center;gap:16px;max-width:100%}
+.ev-share-actions .btn{min-height:44px;padding:10px 16px;white-space:nowrap;box-shadow:none;font-size:14px}
+.ev-invite{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 4px;background:none;border:0;color:var(--ink-soft);font-size:13px;font-weight:700;white-space:nowrap}
+.ev-invite svg{width:18px;height:18px}
+.ev-invite:hover{color:var(--red)}
+.ev-invite:focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:4px}
+@media(max-width:479px){.ev-video-label{display:none}.ev-share-actions{gap:14px}}
