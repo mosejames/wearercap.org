@@ -197,19 +197,53 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   const [err, setErr] = useState('');
   const abort = useRef(null);
   const inputRef = useRef(null);
+  const [quality, setQuality] = useState('original');
+  const [optimized, setOptimized] = useState(null);
+  const [optimizing, setOptimizing] = useState(false);
+  const [optimizationProgress, setOptimizationProgress] = useState('');
+  const [optimizationNotes, setOptimizationNotes] = useState([]);
+  const optimizationAbort = useRef(null);
+  useEffect(() => () => optimizationAbort.current?.abort(), []);
+  const optimize = async () => {
+    const controller = new AbortController();
+    optimizationAbort.current = controller;
+    setOptimizing(true); setOptimized(null); setOptimizationNotes([]); setErr('');
+    const results = [], notes = [];
+    try {
+      const { optimizeVideo } = await import('./optimize-video.js');
+      for (const file of files) {
+        controller.signal.throwIfAborted();
+        if (!isVideo(file)) { results.push(file); continue; }
+        setOptimizationProgress(`Optimizing ${file.name}…`);
+        try {
+          const result = await optimizeVideo(file, { signal: controller.signal, onProgress: (p) => setOptimizationProgress(`${file.name}: ${Math.round(p * 100)}%`) });
+          results.push(result);
+          notes.push(`${file.name}: ${fmtBytes(file.size)} → ${fmtBytes(result.size)}${result === file ? ' (original kept; no size saving)' : ''}`);
+        } catch (e) {
+          if (controller.signal.aborted) throw e;
+          results.push(file);
+          notes.push(`${file.name}: original kept. ${e.message}`);
+        }
+      }
+      setOptimized(results); setOptimizationNotes(notes);
+    } catch (e) { if (!controller.signal.aborted) setErr(e.message); }
+    finally { setOptimizing(false); setOptimizationProgress(''); }
+  };
+  const uploadFiles = quality === 'smaller' && optimized ? optimized : files;
 
   const pick = (e) => {
     const list = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name) || isVideo(f));
     if (!list.length) { setErr('Choose photos or MP4, MOV, or WebM videos.'); return; }
     setErr(list.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
     setFiles(list.slice(0, MAX_BATCH));
+    setOptimized(null); setOptimizationNotes([]);
   };
 
   const start = async () => {
     setErr('');
     abort.current = new AbortController();
     try {
-      const final = await uploadBatch(files, { event, profile, onProgress: setState, signal: abort.current.signal });
+      const final = await uploadBatch(uploadFiles, { event, profile, onProgress: setState, signal: abort.current.signal });
       setState(final);
       if (final.done.length) onDone(final.done);
     } catch (ex) {
@@ -221,12 +255,12 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   const pct = state ? Math.round(((state.prepared / (state.total || 1)) * 25) + ((state.bytesTotal ? state.bytesSent / state.bytesTotal : 0) * 75)) : 0;
 
   return (
-    <Sheet title={`Add photos or videos · ${event.title}`} onClose={onClose}>
+    <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
       {!state ? (
         <div className="stack">
-          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. Originals are kept at full size.</p>
+          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. Photos keep their originals. Videos use the quality you choose below.</p>
           <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
-          <button className="btn ghost big" onClick={() => inputRef.current?.click()}>
+          <button className="btn ghost big" disabled={optimizing} onClick={() => inputRef.current?.click()}>
             {files.length ? `${plural(files.length, 'file')} picked · change` : 'Choose photos or videos'}
           </button>
           {files.length > 0 && (
@@ -235,8 +269,22 @@ function UploadSheet({ event, profile, onClose, onDone }) {
               {files.length > 12 && <span className="pick-more">+{files.length - 12}</span>}
             </div>
           )}
+          {files.some(isVideo) && <div className="stack">
+            <fieldset className="video-quality" disabled={optimizing}>
+              <legend>Video quality</legend>
+              <label><input type="radio" name="video-quality" checked={quality === 'original'} onChange={() => setQuality('original')} /><span><b>Original quality</b><small>Keep the file exactly as it is.</small></span></label>
+              <label><input type="radio" name="video-quality" checked={quality === 'smaller'} onChange={() => setQuality('smaller')} /><span><b>Smaller upload</b><small>Reduce video size on this device. The smaller copy replaces the original in the vault.</small></span></label>
+            </fieldset>
+            {quality === 'smaller' && <>
+              <p className="fine">Up to 720p for standard video, with sound preserved. Keep this page open. You can review sizes before uploading.</p>
+              {!optimized && !optimizing && <button className="btn ghost" onClick={optimize}>Optimize videos</button>}
+              {optimizing && <><p role="status">{optimizationProgress}</p><button className="btn ghost" onClick={() => optimizationAbort.current?.abort()}>Cancel optimization</button></>}
+              {optimizationNotes.length > 0 && <ul className="optimization-notes">{optimizationNotes.map((note, i) => <li key={i}>{note}</li>)}</ul>}
+            </>}
+            {!optimizing && <p className="fine">Ready to upload: {fmtBytes(uploadFiles.reduce((n, f) => n + f.size, 0))}. Each file must be 50 MB or smaller.</p>}
+          </div>}
           {err && <p className="err">{err}</p>}
-          <button className="btn primary" disabled={!files.length} onClick={start}>
+          <button className="btn primary" disabled={!files.length || optimizing || (files.some(isVideo) && quality === 'smaller' && !optimized)} onClick={start}>
             Add {files.length ? plural(files.length, 'file') : 'files'} to the vault
           </button>
           <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in the house can see, like, comment on, and download what you add.</p>
