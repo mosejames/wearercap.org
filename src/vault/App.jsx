@@ -581,19 +581,9 @@ function ComingSoonSheet({ events, onClose, onInvite, admin }) {
 
 /* ------------------------------------------------------------- top bar */
 
-function TopBar({ profile, admin, onName, onProfile, route, recent }) {
-  const [paused, setPaused] = useState(false);
-  const headerPhotos = recent.slice(0, 12);
-  const stripPhotos = headerPhotos.length ? Array.from({ length: Math.max(12, headerPhotos.length) }, (_, i) => headerPhotos[i % headerPhotos.length]) : [];
+function TopBar({ profile, admin, onName, onProfile, route }) {
   return (
-    <header className="topbar photo-header">
-      {stripPhotos.length > 0 && <div className="header-film" aria-hidden="true">
-        <div className={`header-film-track${paused ? ' paused' : ''}`}>
-          {[0, 1].map((copy) => <div className="header-film-group" key={copy}>
-            {stripPhotos.map((p, i) => <img key={`${p.id}-${i}`} src={mediaUrl(p, 'thumb')} alt="" decoding="async" />)}
-          </div>)}
-        </div>
-      </div>}
+    <header className="topbar calm-header">
       <div className="shell topbar-in">
         <a href="#/" className="mark" aria-label={SITE.title}>
           <span className="vault-label">AMI VAULT</span>
@@ -608,7 +598,6 @@ function TopBar({ profile, admin, onName, onProfile, route, recent }) {
             : <button className="nav-btn" onClick={onName}>Name</button>}
         </nav>
       </div>
-      {stripPhotos.length > 0 && <button className="film-pause" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>{paused ? 'Play photos' : 'Pause photos'}</button>}
     </header>
   );
 }
@@ -1185,7 +1174,7 @@ export default function App() {
 
   return (
     <div className="vault">
-      <TopBar profile={profile} admin={admin} route={route.name} recent={recent}
+      <TopBar profile={profile} admin={admin} route={route.name}
         onName={() => needName('')}
         onProfile={() => go('/me')} />
 

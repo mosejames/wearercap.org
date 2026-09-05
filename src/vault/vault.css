@@ -521,25 +521,6 @@ img{display:block;max-width:100%}
 @media(min-width:680px){.latest-event-card{flex-direction:row;align-items:center}.latest-event-actions{flex-shrink:0}}
 @media(max-width:679px){.latest-event-card{padding:16px;gap:10px}.latest-event-card h1{font-size:21px}.latest-event-actions{gap:16px}.latest-event-card p:not(.eyebrow){font-size:13px}}
 
-/* Two identical, gapless groups make a seamless left-to-right film loop. */
-.photo-header{isolation:isolate;overflow:hidden;height:156px}
-.header-film{position:absolute;inset:0;z-index:-2;overflow:hidden;background:var(--red);pointer-events:none}
-.header-film-track{display:flex;width:max-content;height:100%;animation:header-film-right 72s linear infinite;will-change:transform}
-.header-film-group{display:flex;flex:none;min-width:100vw;height:100%;gap:0}
-.header-film-group img{display:block;width:190px;height:100%;object-fit:cover;flex:1 0 190px;margin:0;border:0;border-radius:0}
-.photo-header::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(110,0,28,.62),rgba(189,0,50,.24) 55%,rgba(100,0,25,.65));z-index:-1;pointer-events:none}
-.photo-header .topbar-in{height:100%;align-items:center;position:relative}
-.photo-header .mark{color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.8)}
-.photo-header .mark .vault-label{font-size:24px;letter-spacing:.06em}
-.photo-header .mark small{color:#fff}
-.photo-header .nav{background:rgba(85,0,22,.75);padding:4px 7px;border-radius:999px}
-.photo-header .nav a{color:#fff}
-.film-pause{position:absolute;right:18px;bottom:8px;background:rgba(60,0,16,.75);color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:6px;padding:5px 9px;font-size:11px;min-height:28px}
-.header-film-track.paused{animation-play-state:paused}
-@keyframes header-film-right{from{transform:translateX(-50%)}to{transform:translateX(0)}}
-@media(max-width:679px){.photo-header{height:126px}.header-film-group img{width:145px;flex-basis:145px}.photo-header .mark .vault-label{font-size:18px}.photo-header .nav{padding:2px 4px}.film-pause{font-size:10px;bottom:5px;min-height:28px}.header-film-track{animation-duration:60s}}
-@media(prefers-reduced-motion:reduce){.header-film-track{animation:none}.film-pause{display:none}}
-
 /* Give the house identity a clearer headline hierarchy. */
 .home-intro .eyebrow{font-size:13px;letter-spacing:.17em;margin:0 0 10px}
 .home-intro .home-tagline{color:var(--red);font-size:clamp(28px,3.4vw,42px);font-weight:900;line-height:1.12;letter-spacing:-.03em}
@@ -548,11 +529,11 @@ img{display:block;max-width:100%}
   .home-intro .home-tagline{font-size:28px;line-height:1.15}
 }
 
-/* Anchor the vault name against the moving photography. */
-.photo-header::after{background:linear-gradient(90deg,rgba(110,0,29,.96) 0%,rgba(135,0,36,.86) 22%,rgba(140,0,38,.32) 54%,rgba(90,0,24,.38) 100%)}
-.photo-header .mark .vault-label{font-size:36px;font-weight:900;letter-spacing:-.025em;line-height:1.05}
-.photo-header .mark small{font-size:10px;margin-top:7px;letter-spacing:.14em}
-@media(max-width:679px){
-  .photo-header .mark .vault-label{font-size:27px}
-  .photo-header::after{background:linear-gradient(90deg,rgba(110,0,29,.96),rgba(135,0,36,.82) 32%,rgba(120,0,32,.35) 75%)}
-}
+/* A quiet, solid house-color header keeps attention on the albums. */
+.calm-header{background:var(--red)}
+.calm-header .topbar-in{min-height:96px;padding-top:20px;padding-bottom:20px}
+.calm-header .mark{color:#fff}
+.calm-header .mark .vault-label{font-size:36px;font-weight:900;letter-spacing:-.025em;line-height:1.05}
+.calm-header .mark small{color:#fff;font-size:10px;margin-top:7px}
+.calm-header .nav a{color:#fff}
+@media(max-width:679px){.calm-header .topbar-in{min-height:76px;padding-top:14px;padding-bottom:14px}.calm-header .mark .vault-label{font-size:27px}}
