@@ -11,6 +11,8 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } from './Community.jsx';
+import { rewardCall, saveAvatar } from './rewards.js';
 import { followSheetViewport } from './sheetViewport.js';
 import { isVideo } from './videos.js';
 import { supabase, sendCode, verifyCode } from './auth.js';
@@ -34,6 +36,7 @@ function parseRoute(hash) {
   const [path] = raw.split('?');
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 'e' && parts[1]) return { name: 'event', slug: parts[1], photoId: parts[2] === 'p' ? parts[3] : null };
+  if (parts[0] === 'community') return { name: 'community', eventId: parts[1] || '' };
   if (parts[0] === 'top') return { name: 'top' };
   if (parts[0] === 'me') return { name: 'me' };
   if (parts[0] === 'admin') return { name: 'admin' };
@@ -238,6 +241,10 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
     student: profile?.student || '',
     releaseOptIn: profile?.release_opt_in === true,
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  useEffect(() => { if (!avatarFile) { setAvatarPreview(null); return; } const url = URL.createObjectURL(avatarFile); setAvatarPreview(url); return () => URL.revokeObjectURL(url); }, [avatarFile]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -245,13 +252,15 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
     e.preventDefault();
     if (form.displayName.trim().length < 2) { setErr('Add the name you want on your photos.'); return; }
     setBusy(true); setErr('');
-    try { onSaved(await saveProfile(form)); }
+    try { const saved = await saveProfile(form); if (avatarFile || removeAvatar) await saveAvatar(avatarFile, removeAvatar); onSaved(saved); }
     catch (ex) { setErr(ex.message || 'Could not save.'); setBusy(false); }
   };
   return (
-    <Sheet title={firstTime ? 'Who is this?' : 'Your name and preferences'} onClose={onClose}>
+    <Sheet title={firstTime ? 'Who is this?' : 'Your name and preferences'} onClose={busy ? () => {} : onClose}>
       <form className="stack" onSubmit={submit}>
         {firstTime && <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} Your phone is verified. Choose the name your Amistad family will see.</p>}
+        <div className="profile-photo-picker"><Avatar owner={profile?.owner} name={form.displayName} photo={avatarPreview} hidePhoto={removeAvatar} large /><label className="field"><span>Profile photo <i>optional</i></span><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={busy} onChange={e=>{setAvatarFile(e.target.files?.[0] || null);setRemoveAvatar(false);}} /><small>A headshot helps your Amistad family recognize you.</small></label></div>
+        {profile && <button type="button" className="btn small ghost" disabled={busy} onClick={()=>{setRemoveAvatar(true);setAvatarFile(null);}}>Use my initials instead{removeAvatar ? ' ✓' : ''}</button>}
         <label className="field">
           <span>Your name</span>
           <input autoFocus value={form.displayName} onChange={set('displayName')} placeholder="Keisha J." maxLength={60} />
@@ -608,7 +617,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
       </div>
       <div className="lb-panel">
         <div className="lb-meta">
-          <span className="avatar">{initials(p.uploaderName)}</span>
+          <Avatar owner={p.owner} name={p.uploaderName} />
           <div>
             <b>{p.uploaderName || 'Amistad family'}</b>
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
@@ -734,6 +743,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
         </a>
         <nav className="nav">
           <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
+          <a href="#/community" className={route === 'community' ? 'on' : ''}>Leaders</a>
           <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
           {profile
@@ -999,7 +1009,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
         <div className="shell">
           <a href="#/" className="crumb">← The year</a>
           <span className="ev-date big">{event.kind === 'everyday' ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
-          <h1>{event.title}</h1>
+          <h1>{event.title}</h1><a className="event-leaders" href={`#/community/${event.id}`}>Meet this event’s memory makers →</a>
           {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event, any time during the school year.' : event.blurb}</p>}
           <p className="ev-counts">
             {photos ? <>{plural(visible.length, 'photo')} · {plural(new Set(visible.map((p) => p.owner)).size, 'family', 'families')} · {plural(visible.reduce((n, p) => n + p.likes, 0), 'love')}</> : 'Loading…'}
@@ -1089,7 +1099,7 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
 
 /* ------------------------------------------------------------------ me */
 
-function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showToast }) {
+function MePage({ owner, rewardVersion, profile, events, onProfile, onSignIn, onSignOut, showToast }) {
   useDocTitle('Me');
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
@@ -1099,7 +1109,7 @@ function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showTo
   return (
     <div className="shell page">
       <div className="me-head">
-        <span className="avatar lg">{initials(profile?.display_name)}</span>
+        <Avatar owner={owner} name={profile?.display_name} large />
         <div>
           <h1 className="page-title">{profile?.display_name || 'You'}</h1>
           <p>{profile?.student ? profile.student : 'Your memories, wherever you sign in.'}</p>
@@ -1108,7 +1118,7 @@ function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showTo
           </div>
         </div>
       </div>
-      <div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
+      <BadgeShelf owner={owner} refresh={rewardVersion} /><div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
       {photos === null ? <p className="empty">Loading…</p>
         : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}
       {photos?.some((p) => p.cleanupPending) && <div className="stack"><p>These uploads are hidden, but file cleanup needs another try.</p>{photos.filter((p) => p.cleanupPending).map((p) => <button className="btn small ghost" key={p.id} onClick={async () => { try { await removeUpload(p.id); setPhotos((ps) => ps.filter((x) => x.id !== p.id)); } catch (e) { showToast(e.message); } }}>Finish removing upload</button>)}</div>}
@@ -1298,6 +1308,13 @@ export default function App() {
   const today = todayISO();
 
   const [owner, setOwner] = useState(null);
+  const [avatars, setAvatars] = useState({ keys:{}, version:Date.now() });
+  const [earned, setEarned] = useState([]);
+  const [rewardVersion, setRewardVersion] = useState(0);
+  const refreshAvatars = useCallback(() => rewardCall('vault_avatars').then(keys=>setAvatars({keys,version:Date.now()})).catch(()=>{}), []);
+  useEffect(() => { refreshAvatars(); }, [refreshAvatars]);
+  const claimBadges = useCallback(() => rewardCall('vault_claim_badges').then(b=>{if(b.length) {setEarned(b);setRewardVersion(v=>v+1);}}).catch(()=>{}), []);
+  useEffect(() => { if(owner) claimBadges(); }, [owner,claimBadges]);
   const [profile, setProfile] = useState(null);
   const [phoneAsk, setPhoneAsk] = useState(null);
   const [reporting, setReporting] = useState(null);
@@ -1320,7 +1337,7 @@ export default function App() {
       try {
         const o = await syncIdentity(); if (!live) return; setOwner(o);
         const p = o ? await fetchProfile() : null;
-        if (live) setProfile(p ? { display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in } : null);
+        if (live) setProfile(p ? { ...p, release_opt_in: !!p.release_opt_in } : null);
       } catch (e) { if (live) { setOwner(null); setProfile(null); } }
     };
     load();
@@ -1390,7 +1407,7 @@ export default function App() {
   };
 
   return (
-    <ReportContext.Provider value={askReport}><div className="vault">
+    <AvatarContext.Provider value={avatars}><ReportContext.Provider value={askReport}><div className="vault">
       <TopBar reportCount={reportCount} profile={profile} admin={admin} route={route.name}
         onName={() => setPhoneAsk({ then: () => go('/me') })}
         onProfile={() => go('/me')} />
@@ -1405,8 +1422,9 @@ export default function App() {
         <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
+      {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
-      {route.name === 'me' && <MePage onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
+      {route.name === 'me' && <MePage rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
       <footer className="foot">
@@ -1421,22 +1439,22 @@ export default function App() {
         const o = await syncIdentity(); setOwner(o);
         const p = await fetchProfile();
         const next = phoneAsk; setPhoneAsk(null);
-        if (p) { setProfile({ display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in }); next.then?.(); }
+        if (p) { setProfile({ ...p, release_opt_in: !!p.release_opt_in }); next.then?.(); }
         else setNameAsk({ reason: next.reason, then: next.then });
       }} />}
       {reporting && <ReportSheet photo={reporting} onClose={() => setReporting(null)} />}
       {(nameAsk || profileOpen) && (
         <ProfileSheet profile={profile} firstTime={!profile} reason={nameAsk?.reason}
-          onSaved={(p) => { setProfile({ display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in }); const then = nameAsk?.then; setNameAsk(null); setProfileOpen(false); if (then) then(); }}
+          onSaved={(p) => { refreshAvatars(); setProfile({ ...p, release_opt_in: !!p.release_opt_in }); const then = nameAsk?.then; setNameAsk(null); setProfileOpen(false); if (then) then(); }}
           onClose={() => { setNameAsk(null); setProfileOpen(false); }} />
       )}
       {upload && profile && !nameAsk && (
         <UploadSheet event={upload} profile={profile}
           onClose={() => setUpload(null)}
-          onDone={() => { refresh(); showToast('Added to the vault.'); }} />
+          onDone={() => { refresh(); claimBadges(); showToast('Added to the vault.'); }} />
       )}
       {invite && <InviteSheet event={invite} onClose={() => setInvite(null)} />}
-      <Toast msg={toast} />
-    </div></ReportContext.Provider>
+      <BadgeCelebration milestones={earned} onClose={()=>setEarned([])} /><Toast msg={toast} />
+    </div></ReportContext.Provider></AvatarContext.Provider>
   );
 }
