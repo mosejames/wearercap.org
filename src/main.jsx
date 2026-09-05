@@ -22,7 +22,6 @@ import './styles.css';
 // Editing src/committee/data.js updates the pills, the count, and the form.
 const committeeNames = COMMITTEES.map((c) => c.name);
 
-
 // Pre-launch gate. Flip to false to release the homepage; nothing else needs
 // changing. Only covers the React homepage — static pages under public/ (e.g.
 // /invite/) are served directly and stay reachable.
@@ -110,7 +109,6 @@ function normaliseAnswer(value) {
 
 
 
-
 // Next time the RCAP Recap vault opens for submissions. Local time, which is
 // what a parent in Atlanta is reading it in.
 // Next vault opening. 09:00 on 2026-09-10 in New York; the offset is -04:00
@@ -173,9 +171,7 @@ const committeePop = {
   linkLabel: 'Find your place',
 };
 
-
 /* ---------------------------- end edit zone --------------------------- */
-
 
 // Tools — the apps RCAP has actually built and shipped. Each one lives under
 // wearercap.org as its own page. Add a row here when a new one goes live; the
@@ -238,7 +234,6 @@ const tools = [
     countdown: VAULT_OPENS,
   },
 ];
-
 
 
 // The 2026-27 EXP schedule, straight off the RCA calendar. Every session runs a
@@ -312,10 +307,8 @@ const serveActions = [
   },
 ];
 
-
 // Committees — the standing committees. Chairs and open seats get confirmed at the
 // board's first meeting; keep descriptions evergreen so this list stays true.
-
 
 // A single digit in a masked window, borrowed from the prelaunch reel: fixed
 // height, overflow hidden, and the glyph slides through it. The counter only
@@ -587,20 +580,6 @@ function App() {
         </div>
       </section>
 
-      <section id="recap" className="content-section recap-feature">
-        <div className="recap-photo">
-          <img src="/images/rcap-exp-day.jpg" alt="An RCAP parent welcoming visitors during EXP" loading="lazy" width="1000" height="667" />
-          <span className="recap-photo-caption">Life at RCA. Through our eyes.</span>
-        </div>
-        <div className="recap-feature-copy">
-          <p className="section-label">The RCAP Recap</p>
-          <h2>Big days.<br />Little moments.<br /><em>All of us.</em></h2>
-          <p>After a big day, the vault opens. Bring your photos and the one word that says it all. See the moments our community shares.</p>
-          <a className="button primary" href="/rcap-recap/">Explore the Recap <ArrowUpRight size={18} aria-hidden="true" /></a>
-          <VaultCountdown opensAt={VAULT_OPENS} />
-        </div>
-      </section>
-
       {/* Story — where the hero's video went. A first-time parent gets the
           welcome and the next dates before the ninety-second version. */}
       <section id="story" className="content-section band story-section">
@@ -643,7 +622,6 @@ function App() {
             own. It all counts, and it all starts here.
           </p>
         </div>
-
 
         {committeePop ? <aside className="committee-invitation" aria-labelledby="committee-invitation-title">
           <div>
@@ -734,7 +712,7 @@ function App() {
         </div>
 
         <ol className="tool-list">
-          {tools.filter(tool => tool.variant !== 'recap').map(({ variant, icon: Icon, title, body, href, badge, action, actionHref, countdown }, index) => (
+          {tools.map(({ variant, icon: Icon, title, body, href, badge, action, actionHref, countdown }, index) => (
             <li className={`tool-row ${variant}`} key={title}>
               <span className="tool-num" aria-hidden="true">
                 {String(index + 1).padStart(2, '0')}

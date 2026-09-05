@@ -2275,16 +2275,6 @@ button {
 .homepage-refresh .event-day { padding: 12px 8px; font-size: 46px; }
 .homepage-refresh .event-card.is-range .event-day { font-size: 32px; padding: 13px 8px; }
 .homepage-refresh .event-what { padding: 0 8px 8px; font-size: 16px; line-height: 1.45; }
-.recap-feature { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(32px, 5vw, 76px); align-items: center; border-top: 1px solid var(--line); padding: 65px 0 85px; }
-.recap-photo { position: relative; padding: 0 18px 18px 0; }
-.recap-photo img { aspect-ratio: .95; width: 100%; object-fit: cover; height: auto; }
-.recap-photo-caption { position: absolute; bottom: 0; right: 0; background: var(--gold); color: var(--ink); padding: 18px 22px; font-weight: 800; font-size: 16px; transform: rotate(-3deg); }
-.recap-feature h2 { font-size: clamp(40px, 4.8vw, 64px); line-height: 1.01; letter-spacing: -.03em; margin: 22px 0; }
-.recap-feature h2 em { font-family: 'Newsreader', Georgia, serif; color: var(--accent); font-weight: 400; }
-.recap-feature-copy > p:not(.section-label) { font-size: 18px; line-height: 1.6; color: var(--muted); max-width: 460px; }
-.recap-feature-copy > .button { margin: 10px 0 22px; }
-.recap-feature .vault-countdown { display: block; }
-.recap-feature .vault-when { margin: 8px 0 12px; }
 .committee-invitation { display: flex; gap: 32px; align-items: center; justify-content: space-between; border: 1px solid #f7a81c80; padding: 28px; margin: 28px 0 36px; }
 .committee-invitation h3 { font-size: 28px; margin: 18px 0 12px; }
 .committee-invitation p:not(.section-label) { font-size: 17px; line-height: 1.6; max-width: 640px; }
