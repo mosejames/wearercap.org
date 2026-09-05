@@ -1099,7 +1099,35 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
 
 /* ------------------------------------------------------------------ me */
 
-function MePage({ owner, rewardVersion, profile, events, onProfile, onSignIn, onSignOut, showToast }) {
+function DashboardShare({ events, onAdd, hasUploads }) {
+  const [choosing, setChoosing] = useState(false);
+  const [search, setSearch] = useState('');
+  const today = todayISO();
+  const available = events.filter(e => e.open && !e.hidden && (e.kind === 'everyday' || e.startsOn <= today))
+    .sort((a, b) => (a.kind === 'everyday') - (b.kind === 'everyday') || b.startsOn.localeCompare(a.startsOn));
+  const latest = available.find(e => e.kind !== 'everyday');
+  const choices = available.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
+  return <>
+    <section className="dashboard-share" aria-labelledby="dashboard-share-title">
+      <span className="eyebrow">{hasUploads ? 'There’s more to our story' : 'You’re part of the story'}</span>
+      <h2 id="dashboard-share-title">{hasUploads ? 'Keep the memories coming.' : 'Let’s share your first memory.'}</h2>
+      <p>A smile you captured could make another family’s day. Share your favorite photos and videos with our Amistad family.</p>
+      {latest && <p className="dashboard-latest"><span>Latest event · {fmtRange(latest.startsOn, latest.endsOn)}</span><b>{latest.title}</b></p>}
+      <div className="dashboard-share-actions">
+        {available.length > 0 ? <button className="btn primary" onClick={() => latest ? onAdd(latest) : setChoosing(true)}>{I.plus} {hasUploads ? 'Share more memories' : 'Start sharing'}</button> : <a className="btn primary" href="#/">Explore our galleries</a>}
+        {latest && <button className="link" onClick={() => setChoosing(true)}>Choose another gallery →</button>}
+      </div>
+      <a className="dashboard-home" href="#/">Explore all galleries →</a>
+    </section>
+    {choosing && <Sheet title="Where did you make these memories?" onClose={() => setChoosing(false)}>
+      <div className="stack"><label className="field"><span>Find your gallery</span><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events" /></label>
+        <div className="choice">{choices.map(e => <button key={e.id} onClick={() => { setChoosing(false); setSearch(''); onAdd(e); }}><b>{e.title}</b><span>{e.kind === 'everyday' ? 'Everyday moments outside scheduled events' : fmtRange(e.startsOn, e.endsOn)}</span></button>)}{!choices.length && <p>No matching galleries. Try another event name.</p>}</div>
+      </div>
+    </Sheet>}
+  </>;
+}
+
+function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSignIn, onSignOut, showToast }) {
   useDocTitle('Me');
   const [photos, setPhotos] = useState(null);
   const [open, setOpen] = useState(null);
@@ -1118,6 +1146,7 @@ function MePage({ owner, rewardVersion, profile, events, onProfile, onSignIn, on
           </div>
         </div>
       </div>
+      <DashboardShare events={events} onAdd={onAdd} hasUploads={photos?.some(p => !p.removedAt)} />
       <BadgeShelf owner={owner} refresh={rewardVersion} /><div className="sec-head"><span className="eyebrow">Your photos</span><p>{photos ? plural(photos.filter((p) => !p.removedAt).length, 'upload') : ''}</p></div>
       {photos === null ? <p className="empty">Loading…</p>
         : <PhotoGrid photos={photos.filter((p) => !p.removedAt)} onOpen={(i) => setOpen(photos.findIndex((p) => p.id === photos.filter((x) => !x.removedAt)[i].id))} emptyText="Your shared memories will appear here." />}
@@ -1424,7 +1453,7 @@ export default function App() {
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
-      {route.name === 'me' && <MePage rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
+      {route.name === 'me' && <MePage onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
       <footer className="foot">
