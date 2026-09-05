@@ -841,13 +841,11 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
             {event.open
               ? <button className="btn primary" onClick={() => onAdd(event)}>{I.plus} Add photos</button>
               : <span className="closed">Closed to new photos</span>}
+            <button className="btn ghost" onClick={() => onInvite(event)}>{I.share} Invite to upload</button>
             {/* Admins only. A whole event as one zip is both the most expensive
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a
                 time stays open to everyone, in the lightbox. */}
-            {admin && (
-              <button className="btn ghost" onClick={() => onInvite(event)}>{I.share} Invite to upload</button>
-            )}
             {admin && visible.length > 0 && (
               <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
             )}
