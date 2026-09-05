@@ -117,10 +117,6 @@ function normaliseAnswer(value) {
 // because Eastern is still on daylight time in September.
 const VAULT_OPENS = new Date('2026-09-10T09:00:00-04:00');
 const ROLL_MS = 420;
-const POP_SEEN = 'rcap-committee-pop';
-// Beat between reaching Serve and the modal arriving. Long enough to read the
-// heading, short enough that it never feels like waiting.
-const DWELL_MS = 900;
 const contactEmail = 'hello@wearercap.org';
 const contactHref = `mailto:${contactEmail}`;
 const socials = [
@@ -159,7 +155,7 @@ const navLinks = [
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day, 8am to 3pm' },
+  { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day', time: '8am to 3pm', description: 'A new year. Familiar faces. A whole community to meet.', image: '/images/rcap-community-table.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, games at 5:30pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
@@ -168,8 +164,7 @@ const upcomingEvents = [
 
 // The single most time-sensitive ask. One item, not a list — if everything
 // is urgent, nothing is. Set to null to hide the banner entirely.
-// The committee prompt. Rendered as a popup that arrives when the Serve section
-// does, rather than as a banner in the flow.
+// The committee invitation lives in the Serve section.
 const committeePop = {
   label: 'Open now',
   title: 'Explore committees',
@@ -488,116 +483,12 @@ function VideoModal({ open, onClose }) {
 
 function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
-  const [isPopOpen, setIsPopOpen] = React.useState(false);
-  const serveRef = React.useRef(null);
-  const popRef = React.useRef(null);
-
-  const closePop = React.useCallback(() => {
-    setIsPopOpen(false);
-    try {
-      window.sessionStorage.setItem(POP_SEEN, '1');
-    } catch {
-      // Private mode or storage disabled. Losing the flag only means the popup
-      // can arrive again on the next page load, which is survivable.
-    }
-  }, []);
-
-  // Serve gets the screen first, then the modal follows shortly after. The
-  // arming test is just "you have reached Serve": its top has come above the
-  // middle of the viewport. Once armed the timer is not cancelled, so scrolling
-  // onward does not strand the modal and nobody has to sit still waiting.
-  React.useEffect(() => {
-    const node = serveRef.current;
-    if (!node) return undefined;
-    try {
-      if (window.sessionStorage.getItem(POP_SEEN)) return undefined;
-    } catch {
-      // storage unavailable; fall through and let it show
-    }
-
-    let timer = null;
-    let observer = null;
-
-    const teardown = () => {
-      if (observer) observer.disconnect();
-      window.removeEventListener('scroll', check);
-      window.removeEventListener('resize', check);
-    };
-
-    function check() {
-      if (timer !== null) return;
-      const box = node.getBoundingClientRect();
-      if (box.top > window.innerHeight * 0.55 || box.bottom <= 0) return;
-      teardown();
-      timer = window.setTimeout(() => setIsPopOpen(true), DWELL_MS);
-    }
-
-    if (typeof IntersectionObserver !== 'undefined') {
-      observer = new IntersectionObserver(check, { threshold: [0, 0.2, 0.5] });
-      observer.observe(node);
-    }
-    // The scroll listener is the belt: it needs no compositor callback.
-    window.addEventListener('scroll', check, { passive: true });
-    window.addEventListener('resize', check);
-    check();
-
-    return () => {
-      if (timer !== null) window.clearTimeout(timer);
-      teardown();
-    };
-  }, []);
-
-  // Now that it covers the page, it behaves like a dialog: Escape closes it,
-  // focus moves in so the keyboard is not stranded behind the backdrop, and it
-  // goes back where it came from on the way out.
-  React.useEffect(() => {
-    if (!isPopOpen) return undefined;
-
-    const returnTo = document.activeElement;
-    const unlock = lockScroll();
-    popRef.current?.focus();
-
-    const onKey = (event) => {
-      if (event.key === 'Escape') {
-        closePop();
-        return;
-      }
-      if (event.key !== 'Tab' || !popRef.current) return;
-      const focusables = popRef.current.querySelectorAll('button, a[href]');
-      if (!focusables.length) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', onKey);
-    return () => {
-      unlock();
-      window.removeEventListener('keydown', onKey);
-      if (returnTo && typeof returnTo.focus === 'function') returnTo.focus();
-    };
-  }, [isPopOpen, closePop]);
   const openVideo = React.useCallback(() => setIsVideoOpen(true), []);
   const closeVideo = React.useCallback(() => setIsVideoOpen(false), []);
 
   return (
-    <main className="site-shell">
+    <main className="site-shell homepage-refresh">
       <section className="hero" aria-label="We Are RCAP">
-        {/* Photo, scrim and lockup travel together. Above 1100px this block is
-            absolutely positioned behind the copy; below it, it becomes a band
-            in the flow with the copy stacked underneath on solid ink. Same
-            markup, two layouts. */}
-        <div className="hero-media" aria-hidden="true">
-          <img className="hero-img" src={heroImage} alt="" />
-          <div className="hero-scrim" />
-        </div>
-
         <header className="nav">
           <a className="brand" href="/">
             <span className="brand-mark">RCAP</span>
@@ -615,17 +506,13 @@ function App() {
           </nav>
         </header>
 
+        <div className="welcome-layout">
         <div className="hero-content">
           <p className="kicker">Welcome to RCAP</p>
-          <h1>If your child is at RCA, you are already RCAP.</h1>
+          <h1>If your child is at RCA,<br /> you are already <span>RCAP.</span></h1>
           <p className="hero-copy">
-            Joining is the easy part. Every Ron Clark Academy parent is a
-            member the day their child walks through the door. Your gifts and
-            talents are part of what makes this place so magical.
-          </p>
-          <p className="hero-copy">
-            We are the welcome. First year or fifth, an hour or a whole
-            season, there is a place here with your name on it.
+            First year or fifth, an hour or a whole season. There is a place
+            here with your name on it.
           </p>
           <div className="hero-actions">
             <a className="button primary" href="/committee-interest/">
@@ -639,14 +526,19 @@ function App() {
           </div>
         </div>
 
-        {/* One diagonal into the paper below. There used to be a charcoal step
-            above it and the events section drew its own hairline underneath,
-            which stacked three lines into the same inch. */}
-        <div className="hero-edge" aria-hidden="true">
-          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <path className="edge-paper" d="M0,22 L1440,60 L1440,60 L0,60 Z" />
-          </svg>
+        <div className="welcome-photos">
+          <img className="welcome-photo-main" src={heroImage} alt="Two RCAP parents smiling together in the courtyard" fetchPriority="high" width="1800" height="1200" />
+          <figure className="welcome-photo-small">
+            <img src="/images/rcap-hero-parents.jpg" alt="Three members of the RCA community together outside" width="2200" height="1466" />
+            <figcaption>We are the welcome.</figcaption>
+          </figure>
         </div>
+        </div>
+        <a className="welcome-next" href="#events">
+          <span className="welcome-next-label">Coming up</span>
+          <span>{upcomingEvents[0].month} {upcomingEvents[0].day} <span aria-hidden="true"> / </span> {upcomingEvents[0].label}</span>
+          <ArrowRight size={22} aria-hidden="true" />
+        </a>
       </section>
 
       {/* Happening now — short, current, dated. The part that must never rot.
@@ -655,19 +547,28 @@ function App() {
       <section id="events" className="content-section events-section">
         <div className="section-heading">
           <p className="section-label">Happening Now</p>
-          <h2>The next dates to plan around.</h2>
-          <p>
-            Being an RCA parent is a busy life, and like a lot of us, we run by
-            the calendar. Between taking kids here and dropping them off there,
-            do not forget to add these to your plans.
-          </p>
+          <h2>Make room for a little RCA.</h2>
+          <p>Come connect, cheer someone on, or lend a hand. Here is what is next.</p>
           <a className="text-link heading-link" href={calendarHref} target="_blank" rel="noopener noreferrer">
             Open the full school calendar
             <ArrowUpRight size={15} aria-hidden="true" />
           </a>
         </div>
-        <div className="event-grid" aria-label="Upcoming RCAP dates">
-          {upcomingEvents.map(({ month, year, weekday, day, label }) => (
+        <article className="featured-event">
+          <div className="featured-event-photo">
+            <img src={upcomingEvents[0].image} alt="Parents gathered at RCA" loading="lazy" width="1800" height="1200" />
+            <span className="featured-event-tag">Next on the calendar</span>
+          </div>
+          <div className="featured-event-copy">
+            <p className="section-label">{upcomingEvents[0].weekday}, {upcomingEvents[0].month} {upcomingEvents[0].day} · {upcomingEvents[0].year}</p>
+            <h3>{upcomingEvents[0].label}</h3>
+            <p className="featured-event-time"><Clock size={18} aria-hidden="true" />{upcomingEvents[0].time}</p>
+            <p>{upcomingEvents[0].description}</p>
+            <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
+          </div>
+        </article>
+        <div className="event-grid" aria-label="More upcoming RCAP dates">
+          {upcomingEvents.slice(1).map(({ month, year, weekday, day, label }) => (
             <article
               className={`event-card${day.length > 2 ? ' is-range' : ''}`}
               key={`${month}-${day}-${label}`}
@@ -682,6 +583,20 @@ function App() {
               <p className="event-what">{label}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section id="recap" className="content-section recap-feature">
+        <div className="recap-photo">
+          <img src="/images/rcap-exp-day.jpg" alt="An RCAP parent welcoming visitors during EXP" loading="lazy" width="1000" height="667" />
+          <span className="recap-photo-caption">Life at RCA. Through our eyes.</span>
+        </div>
+        <div className="recap-feature-copy">
+          <p className="section-label">The RCAP Recap</p>
+          <h2>Big days.<br />Little moments.<br /><em>All of us.</em></h2>
+          <p>After a big day, the vault opens. Bring your photos and the one word that says it all. See the moments our community shares.</p>
+          <a className="button primary" href="/rcap-recap/">Explore the Recap <ArrowUpRight size={18} aria-hidden="true" /></a>
+          <VaultCountdown opensAt={VAULT_OPENS} />
         </div>
       </section>
 
@@ -717,7 +632,7 @@ function App() {
       </section>
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
-      <section id="serve" className="content-section band serve-band" ref={serveRef}>
+      <section id="serve" className="content-section band serve-band">
 
         <div className="section-heading">
           <p className="section-label">We Are Here To Serve</p>
@@ -728,6 +643,16 @@ function App() {
           </p>
         </div>
 
+
+        {committeePop ? <aside className="committee-invitation" aria-labelledby="committee-invitation-title">
+          <div>
+            <p className="section-label">{committeePop.label}</p>
+            <h3 id="committee-invitation-title">{committeePop.title}</h3>
+            <p>{committeePop.body}</p>
+            <ul className="committee-names">{committeeNames.map(name => <li key={name}>{name}</li>)}</ul>
+          </div>
+          <a className="button primary" href={committeePop.href}>{committeePop.linkLabel}<ArrowUpRight size={18} aria-hidden="true" /></a>
+        </aside> : null}
 
         <div className="serve-actions">
           {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
@@ -808,7 +733,7 @@ function App() {
         </div>
 
         <ol className="tool-list">
-          {tools.map(({ variant, icon: Icon, title, body, href, badge, action, actionHref, countdown }, index) => (
+          {tools.filter(tool => tool.variant !== 'recap').map(({ variant, icon: Icon, title, body, href, badge, action, actionHref, countdown }, index) => (
             <li className={`tool-row ${variant}`} key={title}>
               <span className="tool-num" aria-hidden="true">
                 {String(index + 1).padStart(2, '0')}
@@ -898,43 +823,6 @@ function App() {
           </p>
         </div>
       </footer>
-
-      {isPopOpen ? (
-        <div className="pop-scrim">
-          <button className="pop-backdrop" type="button" onClick={closePop} aria-label="Close" />
-          <aside
-            className="committee-pop"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="committee-pop-title"
-            tabIndex={-1}
-            ref={popRef}
-          >
-            <button className="pop-close" type="button" onClick={closePop} aria-label="Close">
-              <X size={18} aria-hidden="true" />
-            </button>
-            <p className="pop-label">{committeePop.label}</p>
-            <h2 id="committee-pop-title">{committeePop.title}</h2>
-            <p className="pop-body">{committeePop.body}</p>
-
-            <ul className="pop-pills">
-              {committeeNames.map((name) => (
-                <li key={name}>{name}</li>
-              ))}
-            </ul>
-
-            <div className="pop-actions">
-              <a className="pop-go" href={committeePop.href}>
-                {committeePop.linkLabel}
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </a>
-              <button className="pop-dismiss" type="button" onClick={closePop}>
-                Not now
-              </button>
-            </div>
-          </aside>
-        </div>
-      ) : null}
 
       <VideoModal open={isVideoOpen} onClose={closeVideo} />
     </main>
