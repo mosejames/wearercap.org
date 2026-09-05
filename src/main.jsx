@@ -489,6 +489,15 @@ function App() {
   return (
     <main className="site-shell homepage-refresh">
       <section className="hero" aria-label="We Are RCAP">
+        {/* Photo, scrim and edge travel together. Above 1100px this block is
+            absolutely positioned behind the copy; below it, it becomes a band
+            in the flow with the copy stacked underneath on solid ink. Same
+            markup, two layouts. */}
+        <div className="hero-media" aria-hidden="true">
+          <img className="hero-img" src={heroImage} alt="" />
+          <div className="hero-scrim" />
+        </div>
+
         <header className="nav">
           <a className="brand" href="/">
             <span className="brand-mark">RCAP</span>
@@ -506,7 +515,6 @@ function App() {
           </nav>
         </header>
 
-        <div className="welcome-layout">
         <div className="hero-content">
           <p className="kicker">Welcome to RCAP</p>
           <h1>If your child is at RCA,<br /> you are already <span>RCAP.</span></h1>
@@ -526,19 +534,12 @@ function App() {
           </div>
         </div>
 
-        <div className="welcome-photos">
-          <img className="welcome-photo-main" src={heroImage} alt="Two RCAP parents smiling together in the courtyard" fetchPriority="high" width="1800" height="1200" />
-          <figure className="welcome-photo-small">
-            <img src="/images/rcap-hero-parents.jpg" alt="Three members of the RCA community together outside" width="2200" height="1466" />
-            <figcaption>We are the welcome.</figcaption>
-          </figure>
+        {/* Single diagonal into the paper below. */}
+        <div className="hero-edge" aria-hidden="true">
+          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path className="edge-paper" d="M0,22 L1440,60 L1440,60 L0,60 Z" />
+          </svg>
         </div>
-        </div>
-        <a className="welcome-next" href="#events">
-          <span className="welcome-next-label">Coming up</span>
-          <span>{upcomingEvents[0].month} {upcomingEvents[0].day} <span aria-hidden="true"> / </span> {upcomingEvents[0].label}</span>
-          <ArrowRight size={22} aria-hidden="true" />
-        </a>
       </section>
 
       {/* Happening now — short, current, dated. The part that must never rot.
