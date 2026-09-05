@@ -2273,11 +2273,6 @@ button {
 .homepage-refresh .event-day { padding: 12px 8px; font-size: 46px; }
 .homepage-refresh .event-card.is-range .event-day { font-size: 32px; padding: 13px 8px; }
 .homepage-refresh .event-what { padding: 0 8px 8px; font-size: 16px; line-height: 1.45; }
-.committee-invitation { display: flex; gap: 32px; align-items: center; justify-content: space-between; border: 1px solid #f7a81c80; padding: 28px; margin: 28px 0 36px; }
-.committee-invitation h3 { font-size: 28px; margin: 18px 0 12px; }
-.committee-invitation p:not(.section-label) { font-size: 17px; line-height: 1.6; max-width: 640px; }
-.committee-invitation .button { flex-shrink: 0; }
-.committee-names { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0; list-style: none; max-width: 750px; color: #fff9; font-size: 14px; line-height: 1.5; }
 .homepage-refresh :is(a, button):focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 5px; }
 @media (max-width: 1100px) {
   .homepage-refresh .nav { flex-direction: column; align-items: stretch; gap: 18px; }
@@ -2308,7 +2303,6 @@ button {
   .recap-feature { grid-template-columns: 1fr; gap: 24px; padding: 45px 0 60px; }
   .recap-photo img { aspect-ratio: 1.4; object-position: center 35%; }
   .recap-feature h2 { font-size: 48px; }
-  .committee-invitation { flex-direction: column; align-items: flex-start; padding: 24px; gap: 12px; }
   .homepage-refresh .events-section { padding: 44px 0; }
 }
 @media (prefers-reduced-motion: reduce) { .homepage-refresh *, .homepage-refresh *::before, .homepage-refresh *::after { scroll-behavior: auto; transition: none; animation: none; } }

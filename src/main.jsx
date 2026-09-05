@@ -162,6 +162,11 @@ const upcomingEvents = [
 
 // The single most time-sensitive ask. One item, not a list — if everything
 // is urgent, nothing is. Set to null to hide the banner entirely.
+const POP_SEEN = 'rcap-committee-pop';
+// Beat between reaching Serve and the modal arriving. Long enough to read the
+// heading, short enough that it never feels like waiting.
+const DWELL_MS = 900;
+
 // The committee invitation lives in the Serve section.
 const committeePop = {
   label: 'Open now',
@@ -476,6 +481,101 @@ function VideoModal({ open, onClose }) {
 
 function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
+  const [isPopOpen, setIsPopOpen] = React.useState(false);
+  const serveRef = React.useRef(null);
+  const popRef = React.useRef(null);
+
+  const closePop = React.useCallback(() => {
+    setIsPopOpen(false);
+    try {
+      window.sessionStorage.setItem(POP_SEEN, '1');
+    } catch {
+      // Private mode or storage disabled. Losing the flag only means the popup
+      // can arrive again on the next page load, which is survivable.
+    }
+  }, []);
+
+  // Serve gets the screen first, then the modal follows shortly after. The
+  // arming test is just "you have reached Serve": its top has come above the
+  // middle of the viewport. Once armed the timer is not cancelled, so scrolling
+  // onward does not strand the modal and nobody has to sit still waiting.
+  React.useEffect(() => {
+    const node = serveRef.current;
+    if (!node) return undefined;
+    try {
+      if (window.sessionStorage.getItem(POP_SEEN)) return undefined;
+    } catch {
+      // storage unavailable; fall through and let it show
+    }
+
+    let timer = null;
+    let observer = null;
+
+    const teardown = () => {
+      if (observer) observer.disconnect();
+      window.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+
+    function check() {
+      if (timer !== null) return;
+      const box = node.getBoundingClientRect();
+      if (box.top > window.innerHeight * 0.55 || box.bottom <= 0) return;
+      teardown();
+      timer = window.setTimeout(() => setIsPopOpen(true), DWELL_MS);
+    }
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(check, { threshold: [0, 0.2, 0.5] });
+      observer.observe(node);
+    }
+    // The scroll listener is the belt: it needs no compositor callback.
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    check();
+
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      teardown();
+    };
+  }, []);
+
+  // Now that it covers the page, it behaves like a dialog: Escape closes it,
+  // focus moves in so the keyboard is not stranded behind the backdrop, and it
+  // goes back where it came from on the way out.
+  React.useEffect(() => {
+    if (!isPopOpen) return undefined;
+
+    const returnTo = document.activeElement;
+    const unlock = lockScroll();
+    popRef.current?.focus();
+
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        closePop();
+        return;
+      }
+      if (event.key !== 'Tab' || !popRef.current) return;
+      const focusables = popRef.current.querySelectorAll('button, a[href]');
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => {
+      unlock();
+      window.removeEventListener('keydown', onKey);
+      if (returnTo && typeof returnTo.focus === 'function') returnTo.focus();
+    };
+  }, [isPopOpen, closePop]);
   const openVideo = React.useCallback(() => setIsVideoOpen(true), []);
   const closeVideo = React.useCallback(() => setIsVideoOpen(false), []);
 
@@ -612,7 +712,7 @@ function App() {
       </section>
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}
-      <section id="serve" className="content-section band serve-band">
+      <section id="serve" className="content-section band serve-band" ref={serveRef}>
 
         <div className="section-heading">
           <p className="section-label">We Are Here To Serve</p>
@@ -623,15 +723,6 @@ function App() {
           </p>
         </div>
 
-        {committeePop ? <aside className="committee-invitation" aria-labelledby="committee-invitation-title">
-          <div>
-            <p className="section-label">{committeePop.label}</p>
-            <h3 id="committee-invitation-title">{committeePop.title}</h3>
-            <p>{committeePop.body}</p>
-            <ul className="committee-names">{committeeNames.map(name => <li key={name}>{name}</li>)}</ul>
-          </div>
-          <a className="button primary" href={committeePop.href}>{committeePop.linkLabel}<ArrowUpRight size={18} aria-hidden="true" /></a>
-        </aside> : null}
 
         <div className="serve-actions">
           {serveActions.map(({ icon: Icon, title, body, href, label, external }) => (
@@ -802,6 +893,43 @@ function App() {
           </p>
         </div>
       </footer>
+
+      {isPopOpen ? (
+        <div className="pop-scrim">
+          <button className="pop-backdrop" type="button" onClick={closePop} aria-label="Close" />
+          <aside
+            className="committee-pop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="committee-pop-title"
+            tabIndex={-1}
+            ref={popRef}
+          >
+            <button className="pop-close" type="button" onClick={closePop} aria-label="Close">
+              <X size={18} aria-hidden="true" />
+            </button>
+            <p className="pop-label">{committeePop.label}</p>
+            <h2 id="committee-pop-title">{committeePop.title}</h2>
+            <p className="pop-body">{committeePop.body}</p>
+
+            <ul className="pop-pills">
+              {committeeNames.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+
+            <div className="pop-actions">
+              <a className="pop-go" href={committeePop.href}>
+                {committeePop.linkLabel}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+              <button className="pop-dismiss" type="button" onClick={closePop}>
+                Not now
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       <VideoModal open={isVideoOpen} onClose={closeVideo} />
     </main>
