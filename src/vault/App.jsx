@@ -12,7 +12,7 @@ import {
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
 import { SaveMedia } from './SaveMedia.jsx';
-import { ACTIVITIES, SuggestionForm, SuggestionReview } from './Categories.jsx';
+import { ACTIVITIES, SuggestionForm, SuggestionReview, GalleryVisibility } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
 import { DashboardStats, MyActivity } from './Activity.jsx';
 import { recordView } from './viewTracking.js';
@@ -935,7 +935,8 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
       </section>}
       <section className="shell around-house"><h2>Around the House</h2><p>Some memories don’t need a date on the calendar.</p><div className="activity-tiles">{ACTIVITIES.map(c=>{
         const album=events.find(e=>e.category===c.id&&e.ongoing&&!e.hidden);
-        const thumb=album&&covers.get(album.id)?.[0];
+        if(!album)return null;
+        const thumb=covers.get(album.id)?.[0];
         return <a key={c.id} className="activity-tile" href={`#/activity/${c.id}`}>{thumb?<img src={mediaUrl(thumb,'thumb')} alt=""/>:<span className="activity-symbol" aria-hidden="true">{c.icon}</span>}<div><h3>{c.title}</h3><p>{c.description}</p></div></a>;
       })}</div><button className="link suggest-link" onClick={onSuggest}>Missing an event? Suggest one →</button></section>
       {choosing && <Sheet title="Which event are these from?" onClose={() => setChoosing(false)}>
@@ -1194,7 +1195,7 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
 function ActivityPage({category,events,covers,onAdd,onSuggest,today}) {
   const c=ACTIVITIES.find(c=>c.id===category);
   useDocTitle(c?.title||'Around the House');
-  if(!c)return <main className="shell page"><h1>Category not found</h1><a href="#/">Back to the Vault</a></main>;
+  if(!c||!events.some(e=>e.category===category&&e.ongoing&&!e.hidden))return <main className="shell page"><h1>This gallery isn’t available right now</h1><a href="#/">Back to the Vault</a></main>;
   const albums=events.filter(e=>e.category===category&&!e.hidden&&(e.ongoing||e.startsOn<=today)).sort((a,b)=>Number(b.ongoing)-Number(a.ongoing)||b.startsOn.localeCompare(a.startsOn));
   const main=albums.find(e=>e.ongoing&&e.open);
   return <main className="shell page"><a href="#/" className="crumb">← Around the House</a><h1>{c.title}</h1><p>{c.description}</p><div className="row">{main&&<button className="btn primary" onClick={()=>onAdd(main)}>{I.plus} Add photos / videos</button>}<button className="link" onClick={onSuggest}>Suggest an event →</button></div><div className="populated-albums activity-albums">{albums.map(e=><EventCard key={e.id} e={e} covers={covers} today={today} admin={false}/>)}</div></main>;
@@ -1330,6 +1331,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       </div>
 
       {staffRole === 'owner' && <StaffPanel />}
+      <GalleryVisibility pass={pass} onChanged={refresh} />
       <SuggestionReview events={events} pass={pass} onChanged={refresh} />
       <ModerationPanel pass={pass} onChanged={refresh} />
       <div className="adm-sec">
