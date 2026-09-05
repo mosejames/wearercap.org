@@ -68,7 +68,7 @@ export default async function handler(req, res) {
   let og = `The ${HOUSE} Vault`;
   let desc =
     'One house, one school year, every photo. Add yours from your phone in under a minute.';
-  let img = `${SITE}/ami-vault-og.png`;
+  let img = `${SITE}/ami-vault-og.png?v=4`;
   let alt = `The ${HOUSE} Vault. One house, one school year, every photo.`;
 
   if (ev) {
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
         : 'Come relive the smiles, laughs, and unforgettable moments with our Amistad family.',
     ].filter(Boolean).join(' ');
 
-    const imageParams = new URLSearchParams({ title: ev.title, date, v: '3' });
+    const imageParams = new URLSearchParams({ title: ev.title, date, v: '4' });
     if (!ev.open) imageParams.set('closed', '1');
     img = `${SITE}/api/vault-og?${imageParams}`;
   }
