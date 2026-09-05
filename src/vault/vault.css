@@ -630,3 +630,5 @@ img{display:block;max-width:100%}
 
 .lb-uploader{color:inherit;text-decoration:none}.lb-uploader:hover{text-decoration:underline;text-underline-offset:3px}.lb-uploader:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .contributor-filter{max-width:340px;margin-bottom:20px}
+
+.staff-list{max-width:620px}.staff-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}.staff-row select{padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}

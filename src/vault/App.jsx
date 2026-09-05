@@ -11,6 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { StaffPanel } from './AdminTools.jsx';
 import { DashboardStats, MyActivity } from './Activity.jsx';
 import { recordView } from './viewTracking.js';
 import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } from './Community.jsx';
@@ -1257,7 +1258,7 @@ function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSig
 
 const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '', endsOn: '', open: true, featured: false, hidden: false };
 
-function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
+function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
   useDocTitle('Admin');
   const [editing, setEditing] = useState(null);       // event form
   const [ask, setAsk] = useState(null);               // request form
@@ -1276,7 +1277,7 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
           else setPassErr('That is not it.');
         }}>
           <span className="eyebrow">Back office</span>
-          <h1 className="page-title">Passcode.</h1>
+<h1 className="page-title">Admin access</h1><button type="button" className="btn primary" onClick={onSignIn}>Sign in as an admin</button><p className="fine">Use your verified phone. The legacy passcode remains available below.</p>
           <label className="field"><span>Admin passcode</span><input type="password" autoFocus value={tryPass} onChange={(e) => setTryPass(e.target.value)} /></label>
           {passErr && <p className="err">{passErr}</p>}
           <button className="btn primary">Open</button>
@@ -1285,6 +1286,7 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
     );
   }
 
+  if (staffRole === 'moderator') return <main className="shell page admin"><h1>Moderation</h1><p>Review concerns raised by our family. Uploads appear immediately; reports are reviewed here.</p><ModerationPanel pass={pass} onChanged={refresh} /></main>;
   const saveEv = async (e) => {
     e.preventDefault();
     try { await saveEvent(editing.form, editing.id, pass); setEditing(null); refresh(); showToast('Saved.'); }
@@ -1308,9 +1310,10 @@ function AdminPage({ admin, pass, onPass, events, requests, refresh, showToast, 
       <div className="sec-head">
         <span className="eyebrow">Back office</span>
         <h1 className="page-title">Run the vault.</h1>
-        <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. <button className="link" onClick={() => onPass('')}>Lock</button></p>
+        <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My Vault to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
       </div>
 
+      {staffRole === 'owner' && <StaffPanel />}
       <ModerationPanel pass={pass} onChanged={refresh} />
       <div className="adm-sec">
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
@@ -1441,6 +1444,7 @@ export default function App() {
   const [reporting, setReporting] = useState(null);
   const [pass, setPassState] = useState(() => localPass());
   const [admin, setAdmin] = useState(false);
+  const [staffRole, setStaffRole] = useState(null);
   const [reportCount, setReportCount] = useState(0);
   const [events, setEvents] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -1466,11 +1470,18 @@ export default function App() {
     return () => { live = false; subscription.unsubscribe(); };
   }, []);
 
-  // Admin passcode is remembered on the device and re-checked on load.
+  // Re-check named staff on sign-in and periodically so revocations update the UI.
   useEffect(() => {
-    if (!pass) { setAdmin(false); return; }
-    checkPass(pass).then((ok) => { setAdmin(ok); if (!ok) { rememberPass(''); setPassState(''); } });
-  }, [pass]);
+    let active = true;
+    const check = async () => {
+      try {
+        const [role, passOK] = await Promise.all([rewardCall('vault_staff_role'), pass ? checkPass(pass) : Promise.resolve(false)]);
+        if (active) { setStaffRole(role); setAdmin(!!role || passOK); }
+      } catch { if (active) { setStaffRole(null); setAdmin(false); } }
+    };
+    check(); const timer = setInterval(check, 60000);
+    return () => { active = false; clearInterval(timer); };
+  }, [pass, owner]);
   const setPass = (p) => { rememberPass(p); setPassState(p); };
   useEffect(() => {
     if (!admin) { setReportCount(0); return; }
@@ -1540,14 +1551,14 @@ export default function App() {
           onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
       {route.name === 'event' && (events.length ? (
-        <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin} pass={pass} onAdd={onAdd}
+        <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
       {route.name === 'person' && <ContributorPage key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
-      {route.name === 'admin' && <AdminPage admin={admin} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
+      {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
       <footer className="foot">
         <div className="shell">
