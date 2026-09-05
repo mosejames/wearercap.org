@@ -11,6 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { ACTIVITIES, SuggestionForm, SuggestionReview } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
 import { DashboardStats, MyActivity } from './Activity.jsx';
 import { recordView } from './viewTracking.js';
@@ -39,6 +40,7 @@ function parseRoute(hash) {
   const [path] = raw.split('?');
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 'e' && parts[1]) return { name: 'event', slug: parts[1], photoId: parts[2] === 'p' ? parts[3] : null };
+  if (parts[0] === 'activity' && parts[1]) return { name: 'activity', category: parts[1] };
   if (parts[0] === 'community') return { name: 'community', eventId: parts[1] || '' };
   if (parts[0] === 'person' && parts[1]) return { name: 'person', owner: parts[1] };
   if (parts[0] === 'top') return { name: 'top' };
@@ -65,7 +67,7 @@ function useLockScroll(on) {
 const fmtBytes = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n >= 1e6 ? `${Math.round(n / 1e6)} MB` : `${Math.round(n / 1e3)} KB`);
 
 const eventStatus = (e, today) => {
-  if (e.kind === 'everyday') return 'open';
+  if (e.ongoing || e.kind === 'everyday') return 'open';
   const end = e.endsOn || e.startsOn;
   if (e.startsOn > today) return 'upcoming';
   if (end >= today) return 'today';
@@ -492,7 +494,7 @@ function DownloadSheet({ event, photos, onClose }) {
 function InviteSheet({ event, onClose }) {
   const [copied, setCopied] = useState('');
   const url = inviteUrl(event.slug);
-  const when = event.kind === 'everyday' ? 'all year' : fmtRange(event.startsOn, event.endsOn);
+  const when = event.ongoing ? 'all year' : fmtRange(event.startsOn, event.endsOn);
   const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help our Amistad family keep the memories together: ${url}`;
 
   const copy = async (text, what) => {
@@ -848,7 +850,7 @@ function EventCard({ e, covers, today, admin, onInvite }) {
         {thumbs.some(isVideo) && <span className="video-badge">▶ Includes video</span>}
       </div>
       <div className="ev-body">
-        <span className="ev-date">{e.kind === 'everyday' ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
+        <span className="ev-date">{e.ongoing ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
         <h3>{e.title}</h3>
         {e.kind === 'everyday' && <p className="fine">At home, at school, or out together. The little moments belong here, too.</p>}
         <p className="ev-stat">
@@ -867,14 +869,14 @@ function EventCard({ e, covers, today, admin, onInvite }) {
   );
 }
 
-function Home({ events, requests, recent, covers, totals, onAdd, today, admin, onInvite }) {
+function Home({ events, requests, recent, covers, totals, onAdd, today, admin, onInvite, onSuggest }) {
   useDocTitle('');
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   const openAsks = requests.filter((r) => r.open && (!r.dueOn || r.dueOn >= today)).map((r) => ({ ...r, event: byId.get(r.eventId) })).filter((r) => r.event);
   // Only what has happened, plus anything running now. The rest is a fold:
   // a wall of empty cards for March made the vault look abandoned rather
   // than young.
-  const dated = useMemo(() => events.filter((x) => x.kind !== 'everyday' && !x.hidden), [events]);
+  const dated = useMemo(() => events.filter((x) => !x.ongoing && x.kind !== 'everyday' && !x.hidden), [events]);
   const upcoming = useMemo(
     () => dated.filter((e) => eventStatus(e, today) === 'upcoming'),
     [dated, today],
@@ -884,14 +886,13 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
   const emptyEvents = dated.filter((e) => !e.photoCount && (e.endsOn || e.startsOn) < today)
     .sort((a, b) => b.startsOn.localeCompare(a.startsOn));
   const [soon, setSoon] = useState(false);
-  const everyday = events.find((e) => e.kind === 'everyday');
   // Feature the newest event that has started and still accepts photos.
   // Future events and closed albums must never become a dead-end upload CTA.
   const latestEvent = dated.filter((e) => e.open && e.startsOn <= today)
     .sort((a, b) => b.startsOn.localeCompare(a.startsOn))[0];
   const [choosing, setChoosing] = useState(false);
   const [eventSearch, setEventSearch] = useState('');
-  const uploadEvents = events.filter((e) => e.open && !e.hidden && (e.kind === 'everyday' || (e.endsOn || e.startsOn) < today))
+  const uploadEvents = events.filter((e) => e.open && !e.hidden && (e.ongoing || e.kind === 'everyday' || (e.endsOn || e.startsOn) < today))
     .sort((a, b) => {
       if (a.kind === 'everyday') return -1;
       if (b.kind === 'everyday') return 1;
@@ -928,18 +929,19 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
         </div>
         <button className="link latest-other" onClick={() => setChoosing(true)}>Photos from another event? Choose an album →</button>
       </section>}
-      {everyday && !everyday.hidden && <section className="shell everyday-feature"><div className="everyday-invitation">
-        {covers.get(everyday.id)?.[0] && <a className="everyday-thumb" href={`#/e/${everyday.slug}`} aria-label="View Everyday Amistad moments"><img src={mediaUrl(covers.get(everyday.id)[0], 'thumb')} alt="" /></a>}
-        <div className="everyday-copy"><h3>Everyday Amistad</h3><p>At home, at school, or out together. The little moments belong here, too.</p></div>
-        <div className="everyday-actions">{everyday.open && <button className="btn small primary" onClick={() => onAdd(everyday)}>{I.plus} Add a moment</button>}<a href={`#/e/${everyday.slug}`}>View moments →</a></div>
-      </div></section>}
+      <section className="shell around-house"><h2>Around the House</h2><p>Some memories don’t need a date on the calendar.</p><div className="activity-tiles">{ACTIVITIES.map(c=>{
+        const album=events.find(e=>e.category===c.id&&e.ongoing&&!e.hidden);
+        const thumb=album&&covers.get(album.id)?.[0];
+        return <a key={c.id} className="activity-tile" href={`#/activity/${c.id}`}>{thumb?<img src={mediaUrl(thumb,'thumb')} alt=""/>:<span className="activity-symbol" aria-hidden="true">{c.icon}</span>}<div><h3>{c.title}</h3><p>{c.description}</p></div></a>;
+      })}</div><button className="link suggest-link" onClick={onSuggest}>Missing an event? Suggest one →</button></section>
       {choosing && <Sheet title="Which event are these from?" onClose={() => setChoosing(false)}>
         <div className="stack">
+          <button className="link" onClick={() => {setChoosing(false);onSuggest();}}>Missing an event? Suggest one →</button>
           <p className="lede">Pick an event, or choose Everyday Amistad for moments at home, at school, or out together.</p>
           <label className="field"><span>Find an event</span><input autoFocus type="search" value={eventSearch} onChange={(e) => setEventSearch(e.target.value)} placeholder="Search events" /></label>
           <div className="choice">
             {uploadEvents.map((e) => <button key={e.id} onClick={() => { setChoosing(false); setEventSearch(''); onAdd(e); }}>
-              <b>{e.title}</b><span>{e.kind === 'everyday' ? 'At home, at school, or out together' : fmtRange(e.startsOn, e.endsOn)}</span>
+              <b>{e.title}</b><span>{e.kind === 'everyday' ? 'At home, at school, or out together' : e.ongoing ? 'Ongoing activity · all year' : fmtRange(e.startsOn, e.endsOn)}</span>
             </button>)}
             {!uploadEvents.length && <p className="fine">No matching open events. Try another name.</p>}
           </div>
@@ -1048,7 +1050,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
       <div className="ev-head">
         <div className="shell">
           <a href="#/" className="crumb">← The year</a>
-          <span className="ev-date big">{event.kind === 'everyday' ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
+          <span className="ev-date big">{event.ongoing ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
           <h1>{event.title}</h1><a className="event-leaders" href={`#/community/${event.id}`}>Meet this event’s memory makers →</a>
           {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'At home, at school, or out together. The little moments belong here, too. Share photos and videos from life beyond scheduled events.' : event.blurb}</p>}
           <p className="ev-counts">
@@ -1185,15 +1187,24 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
   </main>;
 }
 
+function ActivityPage({category,events,covers,onAdd,onSuggest,today}) {
+  const c=ACTIVITIES.find(c=>c.id===category);
+  useDocTitle(c?.title||'Around the House');
+  if(!c)return <main className="shell page"><h1>Category not found</h1><a href="#/">Back to the Vault</a></main>;
+  const albums=events.filter(e=>e.category===category&&!e.hidden&&(e.ongoing||e.startsOn<=today)).sort((a,b)=>Number(b.ongoing)-Number(a.ongoing)||b.startsOn.localeCompare(a.startsOn));
+  const main=albums.find(e=>e.ongoing&&e.open);
+  return <main className="shell page"><a href="#/" className="crumb">← Around the House</a><h1>{c.title}</h1><p>{c.description}</p><div className="row">{main&&<button className="btn primary" onClick={()=>onAdd(main)}>{I.plus} Add photos / videos</button>}<button className="link" onClick={onSuggest}>Suggest an event →</button></div><div className="populated-albums activity-albums">{albums.map(e=><EventCard key={e.id} e={e} covers={covers} today={today} admin={false}/>)}</div></main>;
+}
+
 /* ------------------------------------------------------------------ me */
 
-function DashboardShare({ events, onAdd, hasUploads }) {
+function DashboardShare({ events, onAdd, hasUploads, onSuggest }) {
   const [choosing, setChoosing] = useState(false);
   const [search, setSearch] = useState('');
   const today = todayISO();
-  const available = events.filter(e => e.open && !e.hidden && (e.kind === 'everyday' || e.startsOn <= today))
+  const available = events.filter(e => e.open && !e.hidden && (e.ongoing || e.kind === 'everyday' || e.startsOn <= today))
     .sort((a, b) => (b.kind === 'everyday') - (a.kind === 'everyday') || b.startsOn.localeCompare(a.startsOn));
-  const latest = available.find(e => e.kind !== 'everyday');
+  const latest = available.find(e => !e.ongoing && e.kind !== 'everyday');
   const choices = available.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
   return <>
     <section className="dashboard-share" aria-labelledby="dashboard-share-title">
@@ -1208,14 +1219,15 @@ function DashboardShare({ events, onAdd, hasUploads }) {
       <a className="dashboard-home" href="#/">Explore all galleries →</a>
     </section>
     {choosing && <Sheet title="Where did you make these memories?" onClose={() => setChoosing(false)}>
+      <button className="link" onClick={() => {setChoosing(false);onSuggest();}}>Missing an event? Suggest one →</button>
       <div className="stack"><label className="field"><span>Find your gallery</span><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events" /></label>
-        <div className="choice">{choices.map(e => <button key={e.id} onClick={() => { setChoosing(false); setSearch(''); onAdd(e); }}><b>{e.title}</b><span>{e.kind === 'everyday' ? 'Everyday moments outside scheduled events' : fmtRange(e.startsOn, e.endsOn)}</span></button>)}{!choices.length && <p>No matching galleries. Try another event name.</p>}</div>
+        <div className="choice">{choices.map(e => <button key={e.id} onClick={() => { setChoosing(false); setSearch(''); onAdd(e); }}><b>{e.title}</b><span>{e.kind === 'everyday' ? 'Everyday moments outside scheduled events' : e.ongoing ? 'Ongoing activity · all year' : fmtRange(e.startsOn, e.endsOn)}</span></button>)}{!choices.length && <p>No matching galleries. Try another event name.</p>}</div>
       </div>
     </Sheet>}
   </>;
 }
 
-function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSignIn, onSignOut, showToast }) {
+function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onProfile, onSignIn, onSignOut, showToast }) {
   useDocTitle('Me');
   const [activityTab, setActivityTab] = useState('photos');
   const [photos, setPhotos] = useState(null);
@@ -1235,7 +1247,7 @@ function MePage({ owner, rewardVersion, profile, events, onAdd, onProfile, onSig
           </div>
         </div>
       </div>
-      <DashboardShare events={events} onAdd={onAdd} hasUploads={photos?.some(p => !p.removedAt)} />
+      <DashboardShare onSuggest={onSuggest} events={events} onAdd={onAdd} hasUploads={photos?.some(p => !p.removedAt)} />
       <DashboardStats owner={owner} refresh={photos} />
       <BadgeShelf owner={owner} refresh={rewardVersion} />
       <div className="community-tabs personal-tabs" aria-label="Your activity">{[['photos','My photos & videos'],['likes','My likes'],['comments','My comments']].map(([key,label])=><button key={key} aria-pressed={activityTab===key} className={activityTab===key?'selected':''} onClick={()=>setActivityTab(key)}>{label}</button>)}</div>
@@ -1314,6 +1326,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       </div>
 
       {staffRole === 'owner' && <StaffPanel />}
+      <SuggestionReview events={events} pass={pass} onChanged={refresh} />
       <ModerationPanel pass={pass} onChanged={refresh} />
       <div className="adm-sec">
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
@@ -1369,7 +1382,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
                 <td>{e.photoCount}</td>
                 <td>{[!e.open && 'closed', e.featured && 'featured', e.hidden && 'hidden'].filter(Boolean).join(' · ') || '—'}</td>
                 <td className="acts">
-                  <button className="link" onClick={() => setEditing({ id: e.id, form: { title: e.title, slug: e.slug, blurb: e.blurb, kind: e.kind, startsOn: e.startsOn, endsOn: e.endsOn || '', open: e.open, featured: e.featured, hidden: e.hidden } })}>edit</button>
+                  <button className="link" onClick={() => setEditing({ id: e.id, form: { title: e.title, slug: e.slug, blurb: e.blurb, kind: e.kind, category: e.category, ongoing: e.ongoing, startsOn: e.startsOn, endsOn: e.endsOn || '', open: e.open, featured: e.featured, hidden: e.hidden } })}>edit</button>
                   <button className="link" onClick={() => onInvite(e)}>invite</button>
                 </td>
               </tr>
@@ -1382,6 +1395,8 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         <Sheet title={editing.id ? 'Edit event' : 'New event'} onClose={() => setEditing(null)}>
           <form className="stack" onSubmit={saveEv}>
             <label className="field"><span>Title</span><input required value={editing.form.title} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, title: e.target.value, slug: x.id ? x.form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') } }))} /></label>
+            <label className="field"><span>Activity category</span><select value={editing.form.category||''} onChange={e=>setEditing(x=>({...x,form:{...x.form,category:e.target.value}}))}><option value="">Event albums</option>{ACTIVITIES.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
+            <label className="row"><input type="checkbox" checked={!!editing.form.ongoing} onChange={e=>setEditing(x=>({...x,form:{...x.form,ongoing:e.target.checked}}))}/>Ongoing activity</label>
             <label className="field"><span>Slug (in the link)</span><input required value={editing.form.slug} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, slug: e.target.value } }))} /></label>
             <label className="field"><span>Blurb</span><textarea rows={2} maxLength={400} value={editing.form.blurb} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, blurb: e.target.value } }))} /></label>
             <div className="row">
@@ -1453,6 +1468,7 @@ export default function App() {
   const [nameAsk, setNameAsk] = useState(null);     // { reason, then } | null
   const [profileOpen, setProfileOpen] = useState(false);
   const [upload, setUpload] = useState(null);       // event | null
+  const [suggesting, setSuggesting] = useState(false);
   const [invite, setInvite] = useState(null);      // event | null
   const [toast, showToast] = useToast();
 
@@ -1547,19 +1563,21 @@ export default function App() {
       {route.name === 'home' && <MemoryStrip recent={recent} covers={allCovers} events={events} />}
 
       {route.name === 'home' && (
-        <Home events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
+        <Home onSuggest={() => setSuggesting(true)} events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
           onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
       {route.name === 'event' && (events.length ? (
         <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
+      {route.name === 'activity' && <ActivityPage category={route.category} events={events} covers={allCovers} today={today} onAdd={onAdd} onSuggest={() => setSuggesting(true)} />}
       {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
       {route.name === 'person' && <ContributorPage key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
-      {route.name === 'me' && <MePage onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
+      {route.name === 'me' && <MePage onSuggest={() => setSuggesting(true)} onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
 
+      {suggesting && <Sheet title="Suggest an event" onClose={() => setSuggesting(false)}><SuggestionForm profile={profile} onSignIn={() => needName('Sign in to suggest an event.')} onDone={() => setSuggesting(false)} /></Sheet>}
       <footer className="foot">
         <div className="shell">
           <p className="foot-mark"><span>AMI</span> VAULT · {YEAR.label}</p>

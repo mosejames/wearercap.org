@@ -48,7 +48,7 @@ async function describeEvent(slug) {
 
   const rows = await get(
     `vault_events?slug=eq.${encodeURIComponent(slug)}&house=eq.amistad` +
-    `&select=id,slug,title,blurb,kind,starts_on,ends_on,open,hidden&limit=1`
+    `&select=id,slug,title,blurb,kind,starts_on,ends_on,ongoing,open,hidden&limit=1`
   );
   const ev = rows && rows[0];
   if (!ev || ev.hidden) return null;
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
   let alt = `The ${HOUSE} Vault. One house, one school year, every photo.`;
 
   if (ev) {
-    const date = when(ev.starts_on, ev.ends_on);
+    const date = ev.ongoing ? 'All year long' : when(ev.starts_on, ev.ends_on);
     og = 'Our Amistad memories';
     title = `${ev.title} · The ${HOUSE} Vault`;
     alt = `${ev.title}, ${HOUSE} Vault`;
