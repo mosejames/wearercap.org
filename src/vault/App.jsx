@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, plural,
@@ -11,6 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
+import { followSheetViewport } from './sheetViewport.js';
 import { isVideo } from './videos.js';
 import { supabase, sendCode, verifyCode } from './auth.js';
 import { uploadBatch } from './upload.js';
@@ -114,6 +115,8 @@ const I = {
 /* -------------------------------------------------------------- shells */
 
 function Sheet({ title, onClose, children, wide = false }) {
+  const backdrop = useRef(null);
+  useLayoutEffect(() => followSheetViewport(backdrop.current), []);
   useLockScroll(true);
   useEffect(() => {
     const k = (e) => { if (e.key === 'Escape') onClose(); };
@@ -121,7 +124,7 @@ function Sheet({ title, onClose, children, wide = false }) {
     return () => window.removeEventListener('keydown', k);
   }, [onClose]);
   return (
-    <div className="sheet-back" onClick={onClose}>
+    <div ref={backdrop} className="sheet-back" onClick={onClose}>
       <div className={`sheet${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <h3>{title}</h3>
