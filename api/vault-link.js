@@ -73,15 +73,15 @@ export default async function handler(req, res) {
 
   if (ev) {
     const date = when(ev.starts_on, ev.ends_on);
-    og = `${ev.title}: add your photos`;
+    og = 'Our Amistad memories';
     title = `${ev.title} · The ${HOUSE} Vault`;
     alt = `${ev.title}, ${HOUSE} Vault`;
 
     desc = [
       date ? `${date}.` : null,
       ev.open
-        ? "Let's relive the fun! Explore the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and keep our Amistad memories together."
-        : 'Come relive the smiles, laughs, and unforgettable moments with our Amistad family.',
+        ? "Photos and videos from our House of Friendship."
+        : 'A little piece of our year, kept together.',
     ].filter(Boolean).join(' ');
 
     const imageParams = new URLSearchParams({ title: ev.title, date, v: '4' });

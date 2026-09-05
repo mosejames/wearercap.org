@@ -491,7 +491,7 @@ function InviteSheet({ event, onClose }) {
   const [copied, setCopied] = useState('');
   const url = inviteUrl(event.slug);
   const when = event.kind === 'everyday' ? 'all year' : fmtRange(event.startsOn, event.endsOn);
-  const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help our Amistad family keep the memories together: ${url}`;
+  const message = `Got a moment we missed? Add it to our memories ❤️ ${url}`;
 
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); }
