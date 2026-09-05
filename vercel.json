@@ -22,6 +22,10 @@
       "destination": "/api/vault-link?slug=:slug"
     },
     {
+      "source": "/e/:slug",
+      "destination": "/api/vault-link?slug=:slug"
+    },
+    {
       "source": "/committeeinterest",
       "destination": "/committee-interest/index.html"
     }
