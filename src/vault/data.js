@@ -83,20 +83,23 @@ export async function fetchProfile() {
   const { data, error } = await supabase
     .from('vault_people').select('owner, display_name, student').eq('owner', owner).maybeSingle();
   if (error) throw error;
-  if (data) rememberProfile({ display_name: data.display_name, student: data.student });
-  return data;
+  if (!data) return null;
+  const { data: choice, error: choiceError } = await supabase.rpc('vault_release_preference');
+  if (choiceError) throw choiceError;
+  const profile = { ...data, release_opt_in: !!choice };
+  rememberProfile(profile);
+  return profile;
 }
 
 export async function saveProfile(form) {
-  const { data, error } = await supabase.rpc('vault_save_profile', {
-    p_token: getToken(),
+  const { data, error } = await supabase.rpc('vault_save_member_profile', {
     p_name: form.displayName.trim(),
     p_student: (form.student || '').trim(),
-    p_phone: (form.phone || '').trim(),
+    p_release_opt_in: !!form.releaseOptIn,
   });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
-  rememberProfile({ display_name: row.display_name, student: row.student, phone: (form.phone || '').trim() });
+  rememberProfile(row);
   return row;
 }
 

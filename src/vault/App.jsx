@@ -175,7 +175,7 @@ function PhoneSheet({ onClose, onVerified }) {
       finally { setBusy(false); }
     }}>
       <p>{sent ? `Enter the six-digit code sent to ${phone}.` : 'Verify your mobile number once to share, report a concern, and manage your uploads from any phone.'}</p>
-      {!sent ? <label className="field"><span>Mobile number</span><input autoFocus type="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(404) 555-0123" maxLength={24} /><small>Your number stays private. We only text sign-in codes, never likes or comments. Message and data rates may apply.</small></label>
+      {!sent ? <label className="field"><span>Mobile number</span><input autoFocus type="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(404) 555-0123" maxLength={24} /><small>Your number stays private. Release updates are optional. Message and data rates may apply.</small></label>
         : <label className="field"><span>Verification code</span><input autoFocus inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} /></label>}
       {err && <p className="err" role="alert">{err}</p>}
       <button className="btn primary" disabled={busy}>{busy ? 'One moment…' : sent ? 'Verify and continue' : 'Text me a code'}</button>
@@ -233,7 +233,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
   const [form, setForm] = useState({
     displayName: profile?.display_name || '',
     student: profile?.student || '',
-    phone: profile?.phone || '',
+    releaseOptIn: profile?.release_opt_in === true,
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -246,7 +246,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
     catch (ex) { setErr(ex.message || 'Could not save.'); setBusy(false); }
   };
   return (
-    <Sheet title={firstTime ? 'Who is this?' : 'Your name in the vault'} onClose={onClose}>
+    <Sheet title={firstTime ? 'Who is this?' : 'Your name and preferences'} onClose={onClose}>
       <form className="stack" onSubmit={submit}>
         {firstTime && <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} Your phone is verified. Choose the name your Amistad family will see.</p>}
         <label className="field">
@@ -257,6 +257,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
           <span>Student(s) <i>optional</i></span>
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
         </label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My uploads → Edit profile. Message and data rates may apply.</small></span></label>
         {err && <p className="err">{err}</p>}
         <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
       </form>
@@ -1100,7 +1101,7 @@ function MePage({ owner, profile, events, onProfile, onSignIn, onSignOut, showTo
           <h1 className="page-title">{profile?.display_name || 'You'}</h1>
           <p>{profile?.student ? profile.student : 'Your memories, wherever you sign in.'}</p>
           <div className="row">
-            <button className="btn small ghost" onClick={onProfile}>{profile ? 'Edit name' : 'Add your name'}</button><button className="btn small ghost" onClick={onSignOut}>Sign out</button>
+            <button className="btn small ghost" onClick={onProfile}>{profile ? 'Edit profile' : 'Add your name'}</button><button className="btn small ghost" onClick={onSignOut}>Sign out</button>
           </div>
         </div>
       </div>
@@ -1316,7 +1317,7 @@ export default function App() {
       try {
         const o = await syncIdentity(); if (!live) return; setOwner(o);
         const p = o ? await fetchProfile() : null;
-        if (live) setProfile(p ? { display_name: p.display_name, student: p.student } : null);
+        if (live) setProfile(p ? { display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in } : null);
       } catch (e) { if (live) { setOwner(null); setProfile(null); } }
     };
     load();
@@ -1417,13 +1418,13 @@ export default function App() {
         const o = await syncIdentity(); setOwner(o);
         const p = await fetchProfile();
         const next = phoneAsk; setPhoneAsk(null);
-        if (p) { setProfile({ display_name: p.display_name, student: p.student }); next.then?.(); }
+        if (p) { setProfile({ display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in }); next.then?.(); }
         else setNameAsk({ reason: next.reason, then: next.then });
       }} />}
       {reporting && <ReportSheet photo={reporting} onClose={() => setReporting(null)} />}
       {(nameAsk || profileOpen) && (
         <ProfileSheet profile={profile} firstTime={!profile} reason={nameAsk?.reason}
-          onSaved={(p) => { setProfile({ display_name: p.display_name, student: p.student }); const then = nameAsk?.then; setNameAsk(null); setProfileOpen(false); if (then) then(); }}
+          onSaved={(p) => { setProfile({ display_name: p.display_name, student: p.student, release_opt_in: !!p.release_opt_in }); const then = nameAsk?.then; setNameAsk(null); setProfileOpen(false); if (then) then(); }}
           onClose={() => { setNameAsk(null); setProfileOpen(false); }} />
       )}
       {upload && profile && !nameAsk && (
