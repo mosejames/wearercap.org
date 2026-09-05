@@ -7,8 +7,8 @@ export const HOUSE = {
   name: 'Amistad',
   short: 'AMI',
   meaning: 'Friendship',
-  color: '#D8202D',
-  fg: '#FFF2F1',
+  color: '#BD0032',
+  fg: '#FFFFFF',
 };
 
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };

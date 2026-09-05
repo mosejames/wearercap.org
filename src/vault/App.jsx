@@ -387,7 +387,7 @@ function InviteSheet({ event, onClose }) {
           <textarea rows={4} readOnly value={message} onFocus={(e) => e.target.select()} />
         </label>
         <p className="fine">
-          The card shows this event's newest photo once there is one, and the house card until then.
+          The shared preview includes an AMI Vault image with this event’s name, so everyone knows where to add their photos.
           {!event.open && ' Heads up: this event is closed to new photos, so the link will not let anyone add.'}
         </p>
       </div>
@@ -581,23 +581,34 @@ function ComingSoonSheet({ events, onClose, onInvite, admin }) {
 
 /* ------------------------------------------------------------- top bar */
 
-function TopBar({ profile, admin, onName, onProfile, route }) {
+function TopBar({ profile, admin, onName, onProfile, route, recent }) {
+  const [paused, setPaused] = useState(false);
+  const headerPhotos = recent.slice(0, 12);
+  const stripPhotos = headerPhotos.length ? Array.from({ length: Math.max(12, headerPhotos.length) }, (_, i) => headerPhotos[i % headerPhotos.length]) : [];
   return (
-    <header className="topbar">
+    <header className="topbar photo-header">
+      {stripPhotos.length > 0 && <div className="header-film" aria-hidden="true">
+        <div className={`header-film-track${paused ? ' paused' : ''}`}>
+          {[0, 1].map((copy) => <div className="header-film-group" key={copy}>
+            {stripPhotos.map((p, i) => <img key={`${p.id}-${i}`} src={mediaUrl(p, 'thumb')} alt="" decoding="async" />)}
+          </div>)}
+        </div>
+      </div>}
       <div className="shell topbar-in">
         <a href="#/" className="mark" aria-label={SITE.title}>
-          <span>AMI</span> VAULT
+          <span className="vault-label">AMI VAULT</span>
           <small>{YEAR.label} · {HOUSE.name} House</small>
         </a>
         <nav className="nav">
           <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
-          <a href="#/top" className={route === 'top' ? 'on' : ''}>Favorites</a>
+          <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin</a>}
           {profile
             ? <button className="nav-me" onClick={onProfile} aria-label="You"><span className="avatar sm">{initials(profile.display_name)}</span></button>
             : <button className="nav-btn" onClick={onName}>Name</button>}
         </nav>
       </div>
+      {stripPhotos.length > 0 && <button className="film-pause" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>{paused ? 'Play photos' : 'Pause photos'}</button>}
     </header>
   );
 }
@@ -613,15 +624,16 @@ function EventCard({ e, covers, today, admin, onInvite }) {
     <a href={`#/e/${e.slug}`} className={`ev ${status}${e.featured ? ' featured' : ''}${e.kind === 'everyday' ? ' everyday' : ''}`}>
       <div className={`ev-cover n${Math.min(thumbs.length, 4)}`}>
         {thumbs.length ? thumbs.slice(0, 4).map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />)
-          : <span className="ev-blank">{status === 'upcoming' ? fmtDate(e.startsOn) : kind.short}</span>}
+          : <img className="ev-placeholder" src={`${SITE.base}brand/empty-gallery.png`} alt="" loading="lazy" />}
       </div>
       <div className="ev-body">
         <span className="ev-date">{e.kind === 'everyday' ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
         <h3>{e.title}</h3>
+        {e.kind === 'everyday' && <p className="fine">Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event.</p>}
         <p className="ev-stat">
           {e.photoCount
             ? <>{plural(e.photoCount, 'photo')}<span> · {plural(e.contributorCount, 'family', 'families')}</span></>
-            : status === 'upcoming' ? <span>Coming up</span> : status === 'today' ? <span>Happening now. Be first.</span> : <span>No photos yet. Fix that.</span>}
+            : status === 'upcoming' ? <span>Coming up</span> : status === 'today' ? <span>Happening now. Be first.</span> : <span>Be the first to add a photo.</span>}
         </p>
       </div>
     </a>
@@ -646,110 +658,89 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
     () => dated.filter((e) => eventStatus(e, today) === 'upcoming'),
     [dated, today],
   );
-  const months = useMemo(() => {
-    const m = new Map();
-    for (const e of dated.filter((e) => eventStatus(e, today) !== 'upcoming')) {
-      const k = monthKey(e.startsOn);
-      if (!m.has(k)) m.set(k, []);
-      m.get(k).push(e);
-    }
-    return [...m.entries()];
-  }, [dated, today]);
+  const albums = dated.filter((e) => e.photoCount > 0 && e.startsOn <= today)
+    .sort((a, b) => b.startsOn.localeCompare(a.startsOn));
+  const emptyEvents = dated.filter((e) => !e.photoCount && (e.endsOn || e.startsOn) < today)
+    .sort((a, b) => b.startsOn.localeCompare(a.startsOn));
   const [soon, setSoon] = useState(false);
   const everyday = events.find((e) => e.kind === 'everyday');
-  const firstOpen = openAsks[0]?.event || events.filter((e) => e.open && eventStatus(e, today) !== 'upcoming').sort((a, b) => (a.startsOn < b.startsOn ? 1 : -1))[0] || everyday;
+  // Feature the newest event that has started and still accepts photos.
+  // Future events and closed albums must never become a dead-end upload CTA.
+  const latestEvent = dated.filter((e) => e.open && e.startsOn <= today)
+    .sort((a, b) => b.startsOn.localeCompare(a.startsOn))[0];
+  const [choosing, setChoosing] = useState(false);
+  const [eventSearch, setEventSearch] = useState('');
+  const uploadEvents = events.filter((e) => e.open && !e.hidden && (e.kind === 'everyday' || (e.endsOn || e.startsOn) < today))
+    .sort((a, b) => {
+      if (a.kind === 'everyday') return -1;
+      if (b.kind === 'everyday') return 1;
+      return b.startsOn.localeCompare(a.startsOn);
+    })
+    .filter((e) => e.title.toLowerCase().includes(eventSearch.toLowerCase()));
 
   return (
     <>
-      <section className="hero">
-        <div className="shell">
-          <p className="kicker">{SITE.kicker}</p>
-          <h1>{SITE.titleLead} <span className="ember">{SITE.titleGrad}</span></h1>
-          <p className="intro">{SITE.intro}</p>
-          <div className="hero-cta">
-            <button className="btn primary big" onClick={() => onAdd(firstOpen)}>{I.plus} Add photos</button>
-            <a className="btn ghost-light big" href="#the-year">See the year</a>
+      <section className="home-intro">
+        <div className="shell home-intro-row">
+          <div>
+            <p className="eyebrow">House of Friendship</p>
+            <p className="home-tagline">Our year. All together.</p>
+            {!latestEvent && <h1>Add a moment to our year.</h1>}
           </div>
-          <dl className="stats">
-            <div><dt>{totals.photos}</dt><dd>photos</dd></div>
-            <div><dt>{totals.families}</dt><dd>families</dd></div>
-            <div><dt>{totals.events}</dt><dd>events with photos</dd></div>
-          </dl>
+          {!latestEvent && <div className="home-upload">
+            <button className="btn primary big" disabled={!totals} onClick={() => setChoosing(true)}>{I.plus} Add photos</button>
+            <span>Choose an event to get started</span>
+          </div>}
         </div>
       </section>
-
-      <section className="asks">
-        <div className="shell">
-          <div className="sec-head">
-            <span className="eyebrow">{ASK.eyebrow}</span>
-            <p>{openAsks.length ? 'Open right now. Every family that adds one makes the record better.' : ASK.none}</p>
+      {latestEvent && <section className="latest-event shell" aria-labelledby="latest-event-title">
+        <div className="latest-event-card">
+          <div>
+            <p className="eyebrow">Latest event · {fmtRange(latestEvent.startsOn, latestEvent.endsOn)}</p>
+            <h1 id="latest-event-title">{latestEvent.title}</h1>
+            <p>Were you there? Share your photos.</p>
           </div>
-          {openAsks.length > 0 && (
-            <div className="ask-row">
-              {openAsks.map((r) => {
-                const pct = Math.min(100, Math.round((r.event.photoCount / r.goal) * 100));
-                return (
-                  <div key={r.id} className="ask">
-                    <div className="ask-top">
-                      <span className="ask-date">{fmtRange(r.event.startsOn, r.event.endsOn)}</span>
-                      {r.dueOn && <span className="ask-due">by {fmtDate(r.dueOn, { weekday: 'short' })}</span>}
-                    </div>
-                    <h3>{r.event.title}</h3>
-                    {r.message && <p>{r.message}</p>}
-                    <div className="ask-bar"><i style={{ width: `${pct}%` }} /></div>
-                    <div className="ask-foot">
-                      <span><b>{r.event.photoCount}</b> of {r.goal} · {plural(r.event.contributorCount, 'family', 'families')}</span>
-                      <button className="btn small primary" onClick={() => onAdd(r.event)}>Add mine</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="latest-event-actions">
+            <button className="btn" onClick={() => onAdd(latestEvent)}>{I.plus} Add photos</button>
+            <a href={`#/e/${latestEvent.slug}`}>View album →</a>
+          </div>
         </div>
-      </section>
-
-      {recent.length > 0 && (
-        <section className="recent">
-          <div className="shell">
-            <div className="sec-head">
-              <span className="eyebrow">Just added</span>
-              <p>The newest photos in the vault, from whoever got there first.</p>
-            </div>
+        <button className="link latest-other" onClick={() => setChoosing(true)}>Photos from another event? Choose an album →</button>
+      </section>}
+      {choosing && <Sheet title="Which event are these from?" onClose={() => setChoosing(false)}>
+        <div className="stack">
+          <p className="lede">Pick the event your photos are from. For classroom moments, friends, or house spirit outside a scheduled event, choose Everyday Amistad.</p>
+          <label className="field"><span>Find an event</span><input autoFocus type="search" value={eventSearch} onChange={(e) => setEventSearch(e.target.value)} placeholder="Search events" /></label>
+          <div className="choice">
+            {uploadEvents.map((e) => <button key={e.id} onClick={() => { setChoosing(false); setEventSearch(''); onAdd(e); }}>
+              <b>{e.title}</b><span>{e.kind === 'everyday' ? 'Everyday school moments, outside scheduled events' : fmtRange(e.startsOn, e.endsOn)}</span>
+            </button>)}
+            {!uploadEvents.length && <p className="fine">No matching open events. Try another name.</p>}
           </div>
-          <div className="strip">
-            {recent.map((p) => {
-              const e = byId.get(p.eventId);
-              return (
-                <a key={p.id} href={`#/e/${e?.slug || ''}/p/${p.id}`} className="strip-item">
-                  <img src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />
-                  <span>{e?.title}</span>
-                </a>
-              );
-            })}
-          </div>
-        </section>
-      )}
+        </div>
+      </Sheet>}
 
       <section className="year" id="the-year">
         <div className="shell">
-          <div className="sec-head">
-            <span className="eyebrow">The year</span>
-            <p>Every event, in order. Tap one to see it, or to add to it. Past, present and coming up.</p>
+          <div className="album-heading">
+            <div><h2>Our photo albums</h2><p>The latest memories, ready to explore.</p></div>
+            {totals && <span>{plural(totals.photos, 'photo')} shared</span>}
           </div>
-          {everyday && (
-            <div className="ev-month">
-              <div className="ev-list one"><EventCard e={everyday} covers={covers} today={today} admin={admin} onInvite={onInvite} /></div>
-            </div>
-          )}
-          {months.map(([k, list]) => (
-            <div key={k} className="ev-month">
-              <h2 className="month">{monthLabel(k)}</h2>
-              <div className="ev-list">
-                {list.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} />)}
-              </div>
-            </div>
-          ))}
+          {!totals ? <p role="status">Loading albums…</p> : albums.length ? <div className="populated-albums">
+            {albums.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} />)}
+            {emptyEvents.slice(0, 2).map((e) => <div className="desktop-empty-album" key={e.id}><EventCard e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} /></div>)}
+          </div> : <p className="empty">Your photos will start our first album. Choose an event above to add a memory.</p>}
+          {emptyEvents.length > 0 && <details className="missing-albums">
+            <summary><span><b>Have photos from another event?</b><small>{plural(emptyEvents.length, 'event')} waiting for a first photo</small></span><span className="missing-toggle">Show events</span></summary>
+            <div className="missing-list">{emptyEvents.map((e) => <div className="missing-row" key={e.id}>
+              <a href={`#/e/${e.slug}`}><span>{fmtRange(e.startsOn, e.endsOn)}</span><b>{e.title}</b></a>
+              {e.open ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos</button> : <span className="fine">Uploads closed</span>}
+            </div>)}</div>
+          </details>}
+          {everyday && !everyday.hidden && <div className="everyday-invitation">
+            <div><h3>Everyday Amistad</h3><p>Classroom moments, friends, and house spirit. Photos outside scheduled events belong here.</p></div>
+            <div className="everyday-actions">{everyday.open && <button className="btn small primary" onClick={() => onAdd(everyday)}>Add a moment</button>}<a href={`#/e/${everyday.slug}`}>View album →</a></div>
+          </div>}
           {upcoming.length > 0 && (
             <button className="soon-card" onClick={() => setSoon(true)}>
               <span className="eyebrow">Coming soon</span>
@@ -833,7 +824,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
           <a href="#/" className="crumb">← The year</a>
           <span className="ev-date big">{event.kind === 'everyday' ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
           <h1>{event.title}</h1>
-          {event.blurb && <p className="ev-blurb">{event.blurb}</p>}
+          {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'Classroom moments, friends, and house spirit. Add photos that aren’t from a scheduled event, any time during the school year.' : event.blurb}</p>}
           <p className="ev-counts">
             {photos ? <>{plural(visible.length, 'photo')} · {plural(new Set(visible.map((p) => p.owner)).size, 'family', 'families')} · {plural(visible.reduce((n, p) => n + p.likes, 0), 'love')}</> : 'Loading…'}
           </p>
@@ -887,7 +878,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
 /* ----------------------------------------------------------------- top */
 
 function TopPage({ events, owner, profile, onNeedName, showToast }) {
-  useDocTitle('Favorites');
+  useDocTitle('Most loved');
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
   const [open, setOpen] = useState(null);
@@ -904,7 +895,7 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
   return (
     <div className="shell page">
       <div className="sec-head">
-        <span className="eyebrow">Favorites</span>
+        <span className="eyebrow">Most loved</span>
         <h1 className="page-title">The most loved photos of the year.</h1>
         <p>Ranked by the house, live. Tap the heart on anything and it moves.</p>
       </div>
@@ -1180,7 +1171,7 @@ export default function App() {
   }, [events, covers]);
   const allCovers = useMemo(() => new Map([...extraCovers, ...covers]), [covers, extraCovers]);
 
-  const [totals, setTotals] = useState({ photos: 0, families: 0, events: 0 });
+  const [totals, setTotals] = useState(null);
 
   const needName = useCallback((reason, then) => setNameAsk({ reason, then }), []);
   const currentEvent = route.name === 'event' ? events.find((e) => e.slug === route.slug) : null;
@@ -1194,7 +1185,7 @@ export default function App() {
 
   return (
     <div className="vault">
-      <TopBar profile={profile} admin={admin} route={route.name}
+      <TopBar profile={profile} admin={admin} route={route.name} recent={recent}
         onName={() => needName('')}
         onProfile={() => go('/me')} />
 

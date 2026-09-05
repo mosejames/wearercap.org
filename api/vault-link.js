@@ -12,10 +12,7 @@
 // This answers with tags written for that event, then bounces a real visitor
 // into the app. The old hash links still work exactly as they did.
 //
-// The picture: once an event has photos, the newest one IS the card, which is
-// the whole pitch in one image. Before that it falls back to the house card.
-// Deliberately no og:image:width/height on a real photo — declaring 1200x630
-// for an image that is not 1200x630 makes scrapers crop it badly.
+// Every invite uses a branded PNG with the event name, even before photos arrive.
 // ---------------------------------------------------------------------------
 
 const SITE = 'https://wearercap.org';
@@ -69,17 +66,6 @@ async function describeEvent(slug) {
   };
 }
 
-// Where a stored object actually lives. Rows remember their own store, so a
-// photo uploaded before the R2 cut-over still resolves.
-function coverUrl(cover) {
-  if (!cover || !cover.web_key) return null;
-  if (cover.storage === 'r2') {
-    const base = (process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
-    return base ? `${base}/${cover.web_key}` : null;
-  }
-  return SUPA ? `${SUPA}/storage/v1/object/public/vault-media/${cover.web_key}` : null;
-}
-
 export default async function handler(req, res) {
   const slug = String((req.query && req.query.slug) || '').trim();
   const ev = await describeEvent(slug);
@@ -93,7 +79,6 @@ export default async function handler(req, res) {
   let desc =
     'One house, one school year, every photo. Add yours from your phone in under a minute.';
   let img = `${SITE}/ami-vault-og.png`;
-  let sized = true;
   let alt = `The ${HOUSE} Vault. One house, one school year, every photo.`;
 
   if (ev) {
@@ -115,8 +100,9 @@ export default async function handler(req, res) {
       ev.open ? 'Add yours, no sign-in needed.' : 'This one is closed to new photos.',
     ].filter(Boolean).join(' ');
 
-    const c = coverUrl(ev.cover);
-    if (c) { img = c; sized = false; }
+    const imageParams = new URLSearchParams({ title: ev.title, date, v: '2' });
+    if (!ev.open) imageParams.set('closed', '1');
+    img = `${SITE}/api/vault-og?${imageParams}`;
   }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -139,9 +125,10 @@ export default async function handler(req, res) {
     <meta property="og:title" content="${esc(og)}" />
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${esc(canonical)}" />
-    <meta property="og:image" content="${esc(img)}" />${sized ? `
+    <meta property="og:image" content="${esc(img)}" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />` : ''}
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${esc(alt)}" />
 
     <meta name="twitter:card" content="summary_large_image" />
