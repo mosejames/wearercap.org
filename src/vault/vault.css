@@ -659,3 +659,5 @@ img{display:block;max-width:100%}
 @media(max-width:359px){.topbar .nav-me>span{display:none}}
 
 .move-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:16px;padding:16px 0}.tile.move-selected{outline:4px solid var(--red);outline-offset:-4px}.selection-check{position:absolute;top:8px;left:8px;z-index:2;border-radius:50%;background:white;color:var(--red);padding:4px 8px;font-weight:900}.selection-check[hidden]{display:none}
+
+.lb-gallery-link{display:block;margin-top:6px;font-size:12px;line-height:1.5;color:#fff;text-decoration:underline;text-underline-offset:3px}.lb-gallery-link:focus-visible{outline:2px solid white;outline-offset:3px}

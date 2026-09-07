@@ -643,6 +643,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
           <div>
             <a className="lb-uploader" href={`#/person/${p.owner}`} onClick={onClose}><b>{p.uploaderName || 'Amistad family'}</b></a>
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
+            {event?.slug&&<a className="lb-gallery-link" href={`#/e/${event.slug}`} onClick={onClose}>Gallery: {event.title} →</a>}
           </div>
         </div>
         <div className="lb-actions" aria-label="Photo actions">
@@ -1165,7 +1166,8 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
   );
 }
 
-function ContributorPage({ contributor, events, owner, profile, onNeedName, showToast }) {
+function ContributorPage({ contributor, events, owner, profile, onNeedName, showToast, canMove, pass, refreshEvents }) {
+  const [movePhoto,setMovePhoto]=useState(null),[moveTarget,setMoveTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const [gallery, setGallery] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [error, setError] = useState('');
@@ -1206,8 +1208,10 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
     {gallery && photos.length > 0 && offset < gallery.total && <button className="btn ghost" disabled={busy} onClick={() => load(offset)}>{busy ? 'Loading…' : 'Load more memories'}</button>}
     {open !== null && photos[open] && <Lightbox photos={photos} index={open} onIndex={setOpen} onClose={() => setOpen(null)} owner={owner} profile={profile} admin={false} pass=""
       event={events.find(e => e.id === photos[open].eventId) || { slug: '', title: 'Shared memories' }}
+      onMove={canMove?p=>{setOpen(null);setMovePhoto(p);setMoveTarget('');setMoveError('');}:undefined}
       liked={liked.has(photos[open].id)} onLike={toggleLike} onNeedName={onNeedName}
       onHidden={p => { setPhotos(ps => ps.filter(x => x.id !== p.id)); setOffset(n => Math.max(0,n-1)); setGallery(g => ({...g,total:g.total-1})); setOpen(null); }} />}
+    {movePhoto&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMovePhoto(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:[movePhoto.id],p_from:movePhoto.eventId,p_to:moveTarget,p_pass:pass});setMovePhoto(null);setOpen(null);await load(0);refreshEvents();showToast('Upload moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move this upload from {events.find(e=>e.id===movePhoto.eventId)?.title||'its current gallery'}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required disabled={moveBusy} value={moveTarget} onChange={e=>setMoveTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==movePhoto.eventId&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!moveTarget||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
   </main>;
 }
 
@@ -1606,7 +1610,7 @@ export default function App() {
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'activity' && <ActivityPage category={route.category} events={events} covers={allCovers} today={today} onAdd={onAdd} onSuggest={() => setSuggesting(true)} />}
       {route.name === 'community' && <CommunityPage rewardVersion={rewardVersion} key={route.eventId} events={events} eventId={route.eventId} owner={owner} />}
-      {route.name === 'person' && <ContributorPage key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
+      {route.name === 'person' && <ContributorPage canMove={admin} pass={pass} refreshEvents={refresh} key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage onSuggest={() => setSuggesting(true)} onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
       {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
