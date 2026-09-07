@@ -146,7 +146,7 @@ function SignIn({ onError }) {
       <ShieldCheck size={25} />
       <div>
         <strong>Sign in to submit and track your request</strong>
-        <p>Use the email you use with RCAP. We’ll send you a sign-in code.</p>
+        <p>Use any personal email address. We’ll send a verification code to your inbox. No school or RCAP email is needed.</p>
       </div>
       <form className="signin-form full" onSubmit={sent ? verify : send}>
         <div className="fields">
@@ -1261,7 +1261,7 @@ function App() {
               <h2>{tab === "board" ? "Board review" : "Your requests"}</h2>
               <p className="muted">
                 {tab === "board"
-                  ? "Use the email assigned to your board role to review requests and receipts."
+                  ? "Use your personal email address. Board access is added to that email by the secretary."
                   : "Sign in to see your requests, reviewer notes, and payment status."}
               </p>
               <SignIn onError={setError} />
