@@ -35,9 +35,10 @@ export { Card } from "./ListingUI.jsx";
 function currentRoute() {
   return new URLSearchParams(window.location.search);
 }
-function SignIn({ onError, nextView = "manage" }) {
+export function SignIn({ onError, nextView = "manage" }) {
   const [email, setEmail] = useState(""),
     [sent, setSent] = useState(false),
+    [code, setCode] = useState(""),
     [busy, setBusy] = useState(false);
   const callback = new URL(window.location.href);
   callback.pathname = callback.pathname.replace(/\/?$/, "/");
@@ -54,11 +55,26 @@ function SignIn({ onError, nextView = "manage" }) {
             options: { redirectTo },
           })
         : await supabase.auth.signInWithOtp({
-            email,
+            email: email.trim(),
             options: { emailRedirectTo: redirectTo },
           });
       if (result.error) throw result.error;
       if (!provider) setSent(true);
+    } catch (e) {
+      onError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function verifyCode(e) {
+    e.preventDefault();
+    setBusy(true);
+    onError("");
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim(), token: code.trim(), type: "email",
+      });
+      if (error) throw error;
     } catch (e) {
       onError(e.message);
     } finally {
@@ -94,6 +110,7 @@ function SignIn({ onError, nextView = "manage" }) {
             autoComplete="email"
             required
             value={email}
+            disabled={busy || sent}
             onChange={(e) => setEmail(e.target.value)}
           />
         </label>
@@ -101,15 +118,27 @@ function SignIn({ onError, nextView = "manage" }) {
           {busy
             ? "Please wait…"
             : sent
-              ? "Sign-in link sent"
-              : "Email me a sign-in link"}
+              ? "Code sent"
+              : "Email me a sign-in code"}
         </button>
       </form>
       {sent && (
-        <p role="status">
-          Check your inbox for a link to sign in. You can close this page and
-          follow the link from your email.
-        </p>
+        <>
+          <p role="status">Enter the code sent to {email.trim()}. If your email includes a sign-in link, you can use that too.</p>
+          <form onSubmit={verifyCode}>
+            <label>
+              Sign-in code
+              <input value={code} onChange={(e) => setCode(e.target.value.replace(/\s/g, ""))}
+                autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]+"
+                required autoFocus disabled={busy} />
+            </label>
+            <button className="dir-button" disabled={busy || !code.trim()}>
+              {busy ? "Please wait…" : "Verify code and sign in"}
+            </button>
+          </form>
+          <button className="dir-button dir-secondary" disabled={busy} onClick={() => signIn()}>Resend code</button>
+          <button className="dir-button dir-secondary" disabled={busy} onClick={() => { setSent(false); setCode(""); onError(""); }}>Use a different email</button>
+        </>
       )}
       <small>
         Use the same sign-in method each time to find your listings.
