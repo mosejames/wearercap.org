@@ -76,10 +76,10 @@ const advisors = [
   // One per grade. A name goes up only once we have it right, and a photo only
   // once we are certain whose face it is.
   { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg' },
-  { key: 'g5', grade: '5th grade', name: 'Sydney', photo: null },
+  { key: 'g5', grade: '5th grade', name: 'Sidonie Holloman', photo: '/images/board/sidonie.jpg' },
   { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg' },
-  { key: 'g7', grade: '7th grade', name: 'Sara', photo: null },
-  { key: 'g8', grade: '8th grade', name: 'Camille', photo: '/images/board/camille.jpg' },
+  { key: 'g7', grade: '7th grade', name: 'Sara White', photo: null },
+  { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg' },
 ];
 
 function initials(name) {
