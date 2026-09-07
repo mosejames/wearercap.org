@@ -2188,3 +2188,9 @@ textarea:focus-visible {
 .dir-product-spotlight h2 { margin: 10px 0; }
 .dir-product-spotlight p { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media(max-width: 500px) { .dir-product-spotlight { grid-template-columns: 1fr; } .dir-product-spotlight img { max-width: 200px; } }
+
+.collective-student-prompt { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 24px; margin:24px 0; border:1px solid #ffffff20; border-radius:12px; }
+.collective-student-prompt strong { font-size:16px; }
+.collective-student-prompt p { margin:5px 0 0; font-size:14px; color:#aaa8b3; }
+.collective-student-prompt .dir-button { font-size:13px; min-height:44px; }
+@media(max-width:600px) { .collective-student-prompt { align-items:flex-start; flex-direction:column; gap:12px; padding:18px; } }

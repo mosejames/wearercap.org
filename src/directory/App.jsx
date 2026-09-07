@@ -814,17 +814,6 @@ export default function App() {
           >
             Explore
           </a>
-          <a
-            href="?view=students"
-            aria-current={view === "students" ? "page" : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              go("students");
-            }}
-          >
-            <Sparkles size={14} />
-            Student spotlight
-          </a>
           <a href="/">
             We Are RCAP
             <ArrowUpRight size={13} />

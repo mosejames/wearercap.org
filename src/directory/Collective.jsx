@@ -144,80 +144,11 @@ function Showcase({ items, studentMode }) {
   );
 }
 
-function StudentSpotlight({ items, loading, studentMode }) {
-  const students = items.filter((item) => item.venture === "student");
-  return (
-    <section className="collective-students" aria-labelledby="student-heading">
-      <div className="collective-student-intro">
-        <span className="dir-eyebrow">
-          <Sparkles size={14} />
-          The next generation
-        </span>
-        <h2 id="student-heading">
-          Small ventures.
-          <br />
-          <em>Big futures.</em>
-        </h2>
-        <p>
-          The first booking. The first order. The first person who says, “I
-          believe in you.” Let’s be that community.
-        </p>
-        <button
-          className="dir-button dir-secondary"
-          onClick={() => go("new-student")}
-        >
-          Share a student venture
-          <ArrowUpRight size={17} />
-        </button>
-        {!studentMode && students.length > 0 && (
-          <button className="dir-text-button" onClick={() => go("students")}>
-            Explore all student ventures
-            <ArrowRight size={16} />
-          </button>
-        )}
-      </div>
-      {students.length ? (
-        <div className="student-preview-grid">
-          {students.slice(0, 2).map((item) => (
-            <Card key={item.id} item={item} />
-          ))}
-        </div>
-      ) : (
-        <div className="student-invitation">
-          <span className="student-orbit" aria-hidden="true">
-            <Lightbulb size={60} />
-          </span>
-          <span className="dir-eyebrow">
-            {loading
-              ? "Finding our young makers…"
-              : "A place for their next big idea"}
-          </span>
-          <h3>
-            Their first customer
-            <br />
-            could be <em>you.</em>
-          </h3>
-          <p>
-            Young DJs. Budding artists. Future founders.
-            <br />
-            Parent managed. Community supported.
-          </p>
-          <div className="student-invitation-bottom">
-            <span>
-              <Sparkles size={14} />
-              Student spotlight
-            </span>
-            <button
-              aria-label="Create a student venture listing"
-              onClick={() => go("new-student")}
-            >
-              <ArrowUpRight size={23} />
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
-  );
+function StudentSpotlight() {
+  return <section className="collective-student-prompt" aria-label="Share a student venture">
+    <div><strong>Have a young creator at home?</strong><p>Add their venture with a parent-managed listing.</p></div>
+    <button className="dir-button dir-secondary" onClick={() => go("new-student")}>Share a student venture <ArrowUpRight size={16} /></button>
+  </section>;
 }
 
 export default function Collective({
@@ -375,14 +306,7 @@ export default function Collective({
               >
                 The whole Collective
               </button>
-              <button
-                className={studentMode ? "active" : ""}
-                onClick={() => go("students")}
-                aria-pressed={studentMode}
-              >
-                <Sparkles size={14} />
-                Student ventures
-              </button>
+
             </div>
             <span>Find a service. Make a connection.</span>
           </div>
