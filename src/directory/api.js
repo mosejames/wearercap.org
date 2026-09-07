@@ -35,6 +35,7 @@ export async function saveBusiness(listing, user) {
     offers = [],
     community_perk = "",
     collaboration_note = "",
+    social_profiles = [],
   } = listing;
   const { data, error } = await supabase
     .from("directory_listings")
@@ -57,6 +58,7 @@ export async function saveBusiness(listing, user) {
       offers,
       community_perk,
       collaboration_note,
+      social_profiles,
     })
     .select()
     .single();

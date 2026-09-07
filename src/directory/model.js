@@ -1,3 +1,24 @@
+export const SOCIAL_PLATFORMS = {
+  Instagram: "https://www.instagram.com/",
+  Facebook: "https://www.facebook.com/",
+  TikTok: "https://www.tiktok.com/@",
+  YouTube: "https://www.youtube.com/@",
+  LinkedIn: "https://www.linkedin.com/in/",
+  "X / Twitter": "https://x.com/",
+  Threads: "https://www.threads.net/@",
+  Pinterest: "https://www.pinterest.com/",
+  Other: "",
+};
+export function socialUrl(profile) {
+  const value = (profile.url || "").trim();
+  if (!value) return "";
+  if (!Object.hasOwn(SOCIAL_PLATFORMS, profile.platform)) throw new Error("Choose a social platform.");
+  if (/^https?:\/\//i.test(value) || /^[^/]+\.[^/]+\//.test(value)) return webUrl(value);
+  if (!SOCIAL_PLATFORMS[profile.platform]) throw new Error("Enter the full profile link for Other.");
+  const handle = value.replace(/^@/, "");
+  if (!/^[a-z\d_.-]+$/i.test(handle)) throw new Error("Enter a social handle or a full profile link.");
+  return SOCIAL_PLATFORMS[profile.platform] + handle;
+}
 export const CATEGORIES = [
   "Arts, Books & Handmade",
   "Beauty & Personal Care",
@@ -57,6 +78,7 @@ export const emptyListing = () => ({
   connect_url: "",
   location: "",
   photos: [],
+  social_profiles: [],
   house: "",
   reach: "local",
   offers: [],
@@ -104,12 +126,14 @@ export function validateListing(listing, publish = false) {
     (listing.collaboration_note || "").length > 280
   )
     throw new Error("Shorten your community offer or collaboration note.");
+  const social_profiles = (listing.social_profiles || []).filter(p => p.url?.trim()).map(p => ({ platform: p.platform, url: socialUrl(p) }));
+  if (social_profiles.some(p => p.url.length > 500)) throw new Error("Keep social profile links under 501 characters.");
   const website = webUrl(listing.website),
     connect_url = webUrl(listing.connect_url);
   if (
     publish &&
     (!listing.bio.trim() ||
-      !(listing.email || listing.phone || website || connect_url))
+      !(listing.email || listing.phone || website || connect_url || social_profiles.length))
   )
     throw new Error(
       "Add a short bio and at least one way to connect before publishing.",
@@ -120,6 +144,7 @@ export function validateListing(listing, publish = false) {
     bio: listing.bio.trim(),
     website,
     connect_url,
+    social_profiles,
     published: publish,
   };
 }

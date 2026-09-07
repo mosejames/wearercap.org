@@ -12,6 +12,8 @@ import {
   Handshake,
 } from "lucide-react";
 import {
+  SOCIAL_PLATFORMS,
+  socialUrl,
   CATEGORIES,
   HOUSES,
   OFFERS,
@@ -448,6 +450,25 @@ export function Editor({
                   {field("phone", "Business phone", "tel", 40)}
                 </div>
                 {field("website", "Website", "text", 500)}
+                <fieldset className="dir-social-editor">
+                  <legend>Social profiles</legend>
+                  <p>Add a handle or paste a full profile link. Add as many accounts as you need.</p>
+                  {(form.social_profiles || []).map((profile, index) => (
+                    <div className="dir-social-row" key={index}>
+                      <label>Platform {index + 1}
+                        <select value={profile.platform} onChange={e => update("social_profiles", form.social_profiles.map((p, i) => i === index ? { ...p, platform: e.target.value } : p))}>
+                          {Object.keys(SOCIAL_PLATFORMS).map(platform => <option key={platform}>{platform}</option>)}
+                        </select>
+                      </label>
+                      <label>Handle or profile link {index + 1}
+                        <input type="text" maxLength={500} placeholder={profile.platform === "Other" ? "https://…" : "@yourbusiness or https://…"} value={profile.url}
+                          onChange={e => update("social_profiles", form.social_profiles.map((p, i) => i === index ? { ...p, url: e.target.value } : p))} />
+                      </label>
+                      <button type="button" className="dir-button dir-secondary" aria-label={`Remove social profile ${index + 1}`} onClick={() => update("social_profiles", form.social_profiles.filter((_, i) => i !== index))}>Remove</button>
+                    </div>
+                  ))}
+                  <button type="button" className="dir-button dir-secondary" onClick={() => update("social_profiles", [...(form.social_profiles || []), { platform: "Instagram", url: "" }])}><Plus size={18} /> Add another social profile</button>
+                </fieldset>
                 {field(
                   "connect_url",
                   "Booking, shop, or social profile link",
@@ -640,6 +661,11 @@ function Details({ item, preview = false }) {
                 {item.phone}
               </a>
             )}
+            {(item.social_profiles || []).map((profile, index) => {
+              let href;
+              try { href = socialUrl(profile); } catch { return null; }
+              return <SafeLink key={index} href={href}><ArrowUpRight size={18} />{profile.platform}: {profile.url}</SafeLink>;
+            })}
             <SafeLink href={item.website}>
               <Globe size={18} />
               Visit website
