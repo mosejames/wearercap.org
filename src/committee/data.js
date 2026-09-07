@@ -29,7 +29,7 @@ export const HOUSES = ['Altruismo', 'Amistad', 'Isibindi', 'Rêveur', 'Not sorte
 
 export const CLASS_YEARS = ['2027', '2028', '2029', '2030', '2031', '2032'];
 
-export const COMMITTEES = [
+const ALL_COMMITTEES = [
   {
     id: 'raffle',
     name: 'Fall Raffle',
@@ -148,12 +148,17 @@ export const COMMITTEES = [
     ],
   },
   {
+    // Not on the site yet. Flip `hidden` to false and it appears in the form,
+    // the matcher and the homepage list at once. 'hands' and 'quiet' are not
+    // traits anyone can pick, so the old tags could only ever match on
+    // 'organizer'; backstage is what this actually is.
     id: 'merch',
     name: 'Merchandising',
     accent: 'blue',
-    tags: ['hands', 'organizer', 'quiet'],
+    tags: ['backstage', 'giveback'],
     blurb: 'The hands behind the school store and every EXP table of folded shirts.',
-    what: 'Year round, heaviest around each EXP session.',
+    what: 'Any weekday you are already in the building. Ms. Laverne runs the room.',
+    hidden: true,
     does: [
       'Fold, sort and restock for EXP',
       'Keep the school store in order',
@@ -193,7 +198,14 @@ export const COMMITTEES = [
   },
 ];
 
-export const byId = (id) => COMMITTEES.find((c) => c.id === id);
+// Everything the site renders reads COMMITTEES, so a hidden entry is invisible
+// everywhere at once: the form, the matcher, the admin tally, the homepage
+// list. byId searches the full roster so an old submission never loses its
+// name if a committee is hidden after the fact.
+export const ALL = ALL_COMMITTEES;
+export const COMMITTEES = ALL_COMMITTEES.filter((c) => !c.hidden);
+
+export const byId = (id) => ALL_COMMITTEES.find((c) => c.id === id);
 
 const MATCHABLE = COMMITTEES.filter((c) => !c.noMatch);
 
