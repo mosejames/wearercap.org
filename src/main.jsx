@@ -139,6 +139,7 @@ const navLinks = [
   { label: 'Volunteer', href: '#serve' },
   { label: 'EXP', href: '#exp' },
   { label: 'Resources', href: '#tools' },
+  { label: 'Board', href: '/board/' },
 ];
 
 /* ------------------------------------------------------------------------
@@ -856,6 +857,7 @@ function App() {
           <a href="/rcap-recap/">The RCAP Recap</a>
           <a href="/what-to-expect/">What to Expect at EXP</a>
           <a href="/invite/">Serve at EXP</a>
+          <a href="/board/">Your Board</a>
         </nav>
 
         <div className="footer-contact">

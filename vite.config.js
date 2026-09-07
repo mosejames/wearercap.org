@@ -16,6 +16,7 @@ export default defineConfig({
         wishiknewread: resolve(__dirname, 'wish-i-knew/read/index.html'),
         amivault: resolve(__dirname, 'ami-vault/index.html'),
         committeeinterest: resolve(__dirname, 'committee-interest/index.html'),
+        board: resolve(__dirname, 'board/index.html'),
       },
     },
   },

@@ -1,0 +1,179 @@
+/* Board page. Inherits the homepage tokens and section rules from styles.css;
+   this file only adds what the page has that the homepage does not. */
+
+.board-page {
+  padding-top: 0;
+}
+
+.bd-top {
+  width: min(1180px, calc(100% - var(--gutter) * 2));
+  margin: 0 auto;
+  padding: 22px 0 0;
+}
+
+.bd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px 9px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.bd-back:hover {
+  border-color: var(--gold-deep);
+  color: var(--gold-deep);
+}
+
+.bd-hero {
+  padding-top: 40px;
+}
+
+.bd-hero h1 {
+  margin: 0;
+  max-width: 820px;
+  font-size: clamp(36px, 5.4vw, 68px);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.bd-lede {
+  margin: 22px 0 0;
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+/* Cards */
+
+.bd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bd-grid-five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.bd-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.bd-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--paper-2);
+}
+
+/* Empty headshot: initials on a field. Four tones so a row does not read as
+   four copies of one card. */
+.bd-photo-empty {
+  display: grid;
+  place-items: center;
+  color: var(--paper);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.bd-photo-empty.tone-0 { background: var(--ink); }
+.bd-photo-empty.tone-1 { background: var(--red); }
+.bd-photo-empty.tone-2 { background: var(--green); }
+.bd-photo-empty.tone-3 { background: var(--gold-deep); }
+
+.bd-card-sm .bd-photo-empty {
+  font-size: clamp(28px, 3vw, 40px);
+}
+
+.bd-body {
+  padding: 16px 2px 0;
+}
+
+.bd-role {
+  margin: 0 0 6px;
+  color: var(--gold-deep);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bd-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.bd-bio {
+  margin: 10px 0 14px;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+/* The letter */
+
+.bd-letter h2 {
+  margin: 0;
+  max-width: 720px;
+  font-size: clamp(30px, 4.2vw, 52px);
+  line-height: 1;
+}
+
+.bd-letter-body {
+  max-width: 640px;
+  margin-top: 24px;
+}
+
+.bd-letter-body p {
+  margin: 0 0 18px;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.bd-sign {
+  margin-top: 26px !important;
+  color: var(--gold-deep);
+  font-size: 13px !important;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1000px) {
+  .bd-grid,
+  .bd-grid-five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .bd-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bd-grid-five {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bd-name {
+    font-size: 18px;
+  }
+}
