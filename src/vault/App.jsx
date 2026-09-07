@@ -7,7 +7,7 @@ import {
   bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
   getOwner, localProfile, fetchProfile, saveProfile, localPass, rememberPass, checkPass,
   storageConfig, mediaUrl, listEvents, saveEvent,
-  listContributorPhotos, listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
+  listContributorPhotos, listCoverPhotos, listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
 } from './data.js';
@@ -785,7 +785,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
   );
 }
 
-function MemoryStrip({ recent, covers, events }) {
+export function MemoryStrip({ recent, covers, events }) {
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState([]);
   const randomOrder = useRef(new Map());
@@ -841,7 +841,7 @@ function MemoryStrip({ recent, covers, events }) {
       <div key={ready.map(p => p.id).join('|')} className={`memory-track${paused ? ' is-paused' : ''}`}>
         {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
           {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} style={{ aspectRatio: p.ratio }} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
-            <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
+            <img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
           </a>)}
         </div>)}
       </div>
@@ -1547,12 +1547,15 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [ev, rq, rc, tt] = await Promise.all([listEvents(), listRequests(), listRecentPhotos(24), fetchTotals()]);
-      setEvents(ev); setRequests(rq); setRecent(rc); setTotals(tt);
+      const results = await Promise.allSettled([
+        listEvents().then(setEvents), listRequests().then(setRequests),
+        listRecentPhotos(24).then(setRecent), fetchTotals().then(setTotals),
+      ]);
+      if (results.some(r => r.status === 'rejected')) showToast('Some memories could not load. Refresh to try again.');
     } catch (e) { showToast(e.message || 'Could not load the vault.'); }
   }, [showToast]);
 
-  useEffect(() => { storageConfig().then((c) => { setStorage(c); refresh(); }); }, [refresh]);
+  useEffect(() => { storageConfig().then(setStorage).catch(() => showToast('Photo storage could not load. Please refresh.')); refresh(); }, [refresh]);
 
   // Covers: the four most recent thumbs per event, from the recent strip plus
   // one light query for events the strip does not reach.
@@ -1568,7 +1571,7 @@ export default function App() {
   useEffect(() => {
     const need = events.filter((e) => e.photoCount > 0 && !covers.has(e.id));
     if (!need.length) return;
-    Promise.all(need.map((e) => listPhotos(e.id).then((ps) => [e.id, ps.filter((p) => !p.hidden).slice(-4).reverse()]).catch(() => [e.id, []])))
+    Promise.all(need.map((e) => listCoverPhotos(e.id).then((ps) => [e.id, ps]).catch(() => [e.id, []])))
       .then((pairs) => setExtraCovers(new Map(pairs)));
   }, [events, covers]);
   const allCovers = useMemo(() => new Map([...extraCovers, ...covers]), [covers, extraCovers]);

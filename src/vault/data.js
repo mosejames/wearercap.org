@@ -437,3 +437,10 @@ export async function listContributorPhotos(owner, offset = 0, event = null) {
   await attachLikes(photos);
   return { ...gallery, photos };
 }
+
+// Covers need only four thumbnails, not a full album and its like totals.
+export async function listCoverPhotos(eventId) {
+  const {data,error}=await supabase.from('vault_photos').select('*').eq('event_id',eventId).eq('hidden',false).is('removed_at',null).order('created_at',{ascending:false}).limit(4);
+  if(error)throw error;
+  return (data||[]).map(photoFromRow);
+}
