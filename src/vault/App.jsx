@@ -1309,6 +1309,10 @@ const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '
 
 function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
   useDocTitle('Admin');
+  const [tab,setTab]=useState('reports'),[pending,setPending]=useState({reports:0,suggestions:0});
+  const updateCounts=useCallback(async()=>{if(!admin)return;const results=await Promise.allSettled([reviewReports(pass),staffRole==='moderator'?Promise.resolve([]):rewardCall('vault_event_suggestions',{p_pass:pass})]);setPending({reports:results[0].status==='fulfilled'?results[0].value.length:0,suggestions:results[1].status==='fulfilled'?results[1].value.length:0});},[admin,pass,staffRole]);
+  useEffect(()=>{updateCounts();},[updateCounts,tab]);
+  const changed=()=>{refresh();updateCounts();};
   const [editing, setEditing] = useState(null);       // event form
   const [ask, setAsk] = useState(null);               // request form
   const [phones, setPhones] = useState(null);
@@ -1362,10 +1366,13 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My Vault to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
       </div>
 
-      {staffRole === 'owner' && <StaffPanel />}
-      <GalleryVisibility pass={pass} onChanged={refresh} />
-      <SuggestionReview events={events} pass={pass} onChanged={refresh} />
-      <ModerationPanel pass={pass} onChanged={refresh} />
+      <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],['suggestions','Suggestions'],...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
+      {tab==='team'&&staffRole==='owner'&&<StaffPanel key="team" />}
+      {tab==='members'&&staffRole==='owner'&&<StaffPanel key="members" directory />}
+      {tab==='suggestions'&&<SuggestionReview events={events} pass={pass} onChanged={changed} />}
+      {tab==='reports'&&<ModerationPanel pass={pass} onChanged={changed} />}
+      {tab==='galleries'&&<>
+      <GalleryVisibility pass={pass} onChanged={changed} />
       <div className="adm-sec">
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
         <table className="tbl">
@@ -1429,6 +1436,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         </table>
       </div>
 
+      </>}
       {editing && (
         <Sheet title={editing.id ? 'Edit event' : 'New event'} onClose={() => setEditing(null)}>
           <form className="stack" onSubmit={saveEv}>
