@@ -711,10 +711,12 @@ export default function App() {
             <button
               onClick={() => {
                 setError("");
-                setRevision((r) => r + 1);
+                if (error.startsWith("We could not load the directory")) {
+                  setRevision((r) => r + 1);
+                }
               }}
             >
-              Try again
+              {error.startsWith("We could not load the directory") ? "Try again" : "Dismiss"}
             </button>
           </div>
         )}
