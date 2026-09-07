@@ -1,0 +1,115 @@
+export const STATUS = {
+  submitted: "Awaiting approval",
+  needs_changes: "Changes requested",
+  approved: "Approved",
+  declined: "Declined",
+  paid: "Paid",
+};
+export const dollars = (cents) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    cents / 100,
+  );
+export const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+export function toCents(value) {
+  const s = String(value).trim();
+  if (!/^\d{1,7}(\.\d{1,2})?$/.test(s)) return null;
+  const [a, b = ""] = s.split(".");
+  const n = Number(a) * 100 + Number(b.padEnd(2, "0"));
+  return n > 0 && n <= 100000000 ? n : null;
+}
+export const normalizePhone = (value) =>
+  String(value)
+    .replace(/\D/g, "")
+    .replace(/^1(?=\d{10}$)/, "");
+export function validateDraft(d) {
+  if (d.requester_name.trim().length < 2 || d.payee.trim().length < 2)
+    return "Enter your full name and the check payee.";
+  if (!/^\d{10}$/.test(normalizePhone(d.phone)))
+    return "Enter a 10-digit phone number.";
+  if (!d.committee) return "Choose a committee.";
+  if (d.purpose.trim().length < 10)
+    return "Describe what these expenses were for in at least 10 characters.";
+  if (d.delivery === "mail" && d.address.trim().length < 10)
+    return "Enter your complete mailing address.";
+  if (!d.items.length || d.items.length > 20)
+    return "Include between 1 and 20 expenses.";
+  for (let i = 0; i < d.items.length; i++) {
+    const item = d.items[i];
+    if (item.description.trim().length < 2) return `Describe expense ${i + 1}.`;
+    if (!item.date || item.date > today())
+      return `Choose a valid date for expense ${i + 1}.`;
+    if (toCents(item.amount) === null)
+      return `Enter a positive amount with no more than two decimal places for expense ${i + 1}.`;
+    if (!item.receipts?.length)
+      return `Attach at least one receipt for expense ${i + 1}.`;
+  }
+  if (!d.acknowledged)
+    return "Confirm the reimbursement statement before submitting.";
+  return null;
+}
+export function validateFiles(files) {
+  if (files.length > 5) return "Use no more than 5 receipts per expense.";
+  if (
+    files.some(
+      (f) => !["application/pdf", "image/jpeg", "image/png"].includes(f.type),
+    )
+  )
+    return "Use PDF, JPG, or PNG receipts.";
+  if (files.some((f) => f.size === 0 || f.size > 10 * 1024 * 1024))
+    return "Each receipt must be between 1 byte and 10 MB.";
+  return null;
+}
+export function actionAllowed(r, role, email, action) {
+  const own = r.email === email;
+  if (action === "edit") return own && r.status === "needs_changes";
+  if (action === "assign")
+    return (
+      ["secretary", "manager"].includes(role) &&
+      ["submitted", "needs_changes"].includes(r.status)
+    );
+  if (own) return false;
+  if (action === "paid") return role === "treasurer" && r.status === "approved";
+  if (r.status !== "submitted") return false;
+  if (action === "needs_changes")
+    return (
+      r.approver_email === email || ["secretary", "manager"].includes(role)
+    );
+  return (
+    ["approved", "declined"].includes(action) && r.approver_email === email
+  );
+}
+export const newItem = () => ({
+  key: crypto.randomUUID(),
+  date: "",
+  description: "",
+  amount: "",
+  receipts: [],
+});
+export const newDraft = () => ({
+  id: crypto.randomUUID(),
+  requester_name: "",
+  phone: "",
+  payee: "",
+  delivery: "pickup",
+  address: "",
+  committee: "",
+  purpose: "",
+  approver_email: "",
+  items: [newItem()],
+  acknowledged: false,
+});
+export function fromRecord(r) {
+  return {
+    ...r,
+    acknowledged: false,
+    approver_email: r.approver_email || "",
+    items: r.items.map((i) => ({
+      ...i,
+      key: crypto.randomUUID(),
+      amount: (i.amount_cents / 100).toFixed(2),
+    })),
+  };
+}
