@@ -1309,6 +1309,10 @@ const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '
 
 function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
   useDocTitle('Admin');
+  const [galleryQuery,setGalleryQuery]=useState(''),[galleryFilter,setGalleryFilter]=useState('recent'),[galleryPage,setGalleryPage]=useState(0);
+  const filteredGalleries=events.filter(e=>e.title.toLowerCase().includes(galleryQuery.trim().toLowerCase())&&(galleryFilter==='all'||(galleryFilter==='ongoing'?e.ongoing:!e.ongoing&&(galleryFilter==='recent'?e.startsOn<=todayISO():e.startsOn>todayISO())))).sort((a,b)=>b.startsOn.localeCompare(a.startsOn)||a.title.localeCompare(b.title));
+  const galleryPages=Math.max(1,Math.ceil(filteredGalleries.length/10)),currentGalleryPage=Math.min(galleryPage,galleryPages-1);
+
   const [tab,setTab]=useState('reports'),[pending,setPending]=useState({reports:0,suggestions:0});
   const updateCounts=useCallback(async()=>{if(!admin)return;const results=await Promise.allSettled([reviewReports(pass),staffRole==='moderator'?Promise.resolve([]):rewardCall('vault_event_suggestions',{p_pass:pass})]);setPending({reports:results[0].status==='fulfilled'?results[0].value.length:0,suggestions:results[1].status==='fulfilled'?results[1].value.length:0});},[admin,pass,staffRole]);
   useEffect(()=>{updateCounts();},[updateCounts,tab]);
@@ -1373,7 +1377,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       {tab==='reports'&&<ModerationPanel pass={pass} onChanged={changed} />}
       {tab==='galleries'&&<>
       <GalleryVisibility pass={pass} onChanged={changed} />
-      <div className="adm-sec">
+      <details className="adm-sec photo-requests"><summary>Photo requests · {requests.filter(r=>r.open).length} active</summary>
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
         <table className="tbl">
           <thead><tr><th>Event</th><th>Message</th><th>Progress</th><th>Due</th><th></th></tr></thead>
@@ -1412,33 +1416,21 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
             )}
           </div>
         )}
-      </div>
+      </details>
 
       <div className="adm-sec">
-        <div className="adm-head"><h2>Events</h2><button className="btn small primary" onClick={() => setEditing({ id: null, form: { ...EMPTY_EVENT, startsOn: todayISO() } })}>New event</button></div>
-        <table className="tbl">
-          <thead><tr><th>Date</th><th>Title</th><th>Kind</th><th>Photos</th><th>Flags</th><th></th></tr></thead>
-          <tbody>
-            {events.map((e) => (
-              <tr key={e.id} className={e.hidden ? 'off' : ''}>
-                <td>{fmtRange(e.startsOn, e.endsOn)}</td>
-                <td><a href={`#/e/${e.slug}`}>{e.title}</a></td>
-                <td>{KINDS[e.kind]?.label}</td>
-                <td>{e.photoCount}</td>
-                <td>{[!e.open && 'closed', e.featured && 'featured', e.hidden && 'hidden'].filter(Boolean).join(' · ') || '—'}</td>
-                <td className="acts">
-                  <button className="link" onClick={() => setEditing({ id: e.id, form: { title: e.title, slug: e.slug, blurb: e.blurb, kind: e.kind, category: e.category, ongoing: e.ongoing, startsOn: e.startsOn, endsOn: e.endsOn || '', open: e.open, featured: e.featured, hidden: e.hidden } })}>edit</button>
-                  <button className="link" onClick={() => onInvite(e)}>invite</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="adm-head"><h2>Gallery manager</h2><button className="btn small primary" onClick={() => setEditing({ id: null, form: { ...EMPTY_EVENT, startsOn: todayISO() } })}>New event</button></div>
+        <label className="field"><span>Search galleries</span><input type="search" placeholder="Find an event or activity" value={galleryQuery} onChange={e=>{setGalleryQuery(e.target.value);setGalleryPage(0);}}/></label>
+        <div className="admin-tabs" aria-label="Gallery filters">{[['recent','Recent'],['upcoming','Upcoming'],['ongoing','Ongoing'],['all','All']].map(([key,label])=><button key={key} className={galleryFilter===key?'active':''} aria-pressed={galleryFilter===key} onClick={()=>{setGalleryFilter(key);setGalleryPage(0);}}>{label}</button>)}</div>
+        <div className="gallery-manager-list">{filteredGalleries.slice(currentGalleryPage*10,(currentGalleryPage+1)*10).map(e=><div className="gallery-manager-row" key={e.id}><div><a href={`#/e/${e.slug}`}><b>{e.title}</b></a><small>{e.ongoing?'Ongoing · all year':fmtRange(e.startsOn,e.endsOn)}{e.hidden?' · Hidden':''}</small></div><span>{e.photoCount} uploads</span><button className="btn small ghost" onClick={()=>setEditing({id:e.id,form:{...e,endsOn:e.endsOn||''}})}>Manage</button></div>)}</div>
+        {!filteredGalleries.length&&<p>No galleries match this search.</p>}
+        <div className="member-pagination"><span>{filteredGalleries.length} galleries · Page {currentGalleryPage+1} of {galleryPages}</span><button className="btn small ghost" disabled={!currentGalleryPage} onClick={()=>setGalleryPage(currentGalleryPage-1)}>Previous</button><button className="btn small ghost" disabled={currentGalleryPage+1>=galleryPages} onClick={()=>setGalleryPage(currentGalleryPage+1)}>Next</button></div>
       </div>
 
       </>}
       {editing && (
-        <Sheet title={editing.id ? 'Edit event' : 'New event'} onClose={() => setEditing(null)}>
+        <Sheet title={editing.id ? 'Manage gallery' : 'New event'} onClose={() => setEditing(null)}>
+          {editing.id&&<button className="btn small ghost" onClick={()=>{const event=events.find(e=>e.id===editing.id);setEditing(null);onInvite(event);}}>Invite to upload</button>}
           <form className="stack" onSubmit={saveEv}>
             <label className="field"><span>Title</span><input required value={editing.form.title} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, title: e.target.value, slug: x.id ? x.form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') } }))} /></label>
             <label className="field"><span>Activity category</span><select value={editing.form.category||''} onChange={e=>setEditing(x=>({...x,form:{...x.form,category:e.target.value}}))}><option value="">Event albums</option>{ACTIVITIES.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
