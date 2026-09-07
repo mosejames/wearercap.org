@@ -67,3 +67,70 @@ describe("directory publishing", () => {
     expect(filterListings(rows, "book", "", false)).toEqual([]);
   });
 });
+
+describe("Collective discovery", () => {
+  const rows = [
+    {
+      ...emptyListing(),
+      name: "Mentor Studio",
+      bio: "Creative coaching",
+      house: "amistad",
+      reach: "worldwide",
+      offers: ["mentor", "speaker"],
+      community_perk: "Free first consultation",
+    },
+    {
+      ...emptyListing(),
+      name: "Student Sounds",
+      bio: "DJ for celebrations",
+      venture: "student",
+      house: "isibindi",
+      reach: "local",
+      offers: ["collaborate"],
+    },
+    {
+      ...emptyListing(),
+      name: "Neighborhood Books",
+      bio: "Stories",
+      house: "amistad",
+      reach: "local",
+    },
+  ];
+  it("combines house, reach, opportunity, perk, and search filters", () => {
+    expect(
+      filterListings(rows, "consultation", "", false, {
+        house: "amistad",
+        reach: "worldwide",
+        offer: "mentor",
+        perks: true,
+      }).map((r) => r.name),
+    ).toEqual(["Mentor Studio"]);
+    expect(
+      filterListings(rows, "", "", true, {
+        house: "isibindi",
+        offer: "collaborate",
+      }).map((r) => r.name),
+    ).toEqual(["Student Sounds"]);
+  });
+  it("rejects invented houses and opportunity badges", () => {
+    expect(() => validateListing({ ...rows[0], house: "unknown" })).toThrow(
+      "house",
+    );
+    expect(() => validateListing({ ...rows[0], offers: ["verified"] })).toThrow(
+      "opportunities",
+    );
+    expect(() =>
+      validateListing({ ...rows[0], community_perk: "a".repeat(161) }),
+    ).toThrow("Shorten");
+  });
+  it("keeps older listings without new optional fields searchable", () => {
+    expect(
+      filterListings(
+        [{ name: "Original", bio: "Books", category: "Other", location: "" }],
+        "original",
+        "",
+        false,
+      ),
+    ).toHaveLength(1);
+  });
+});

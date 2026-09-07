@@ -30,6 +30,11 @@ export async function saveBusiness(listing, user) {
     location,
     photos,
     published,
+    house = "",
+    reach = "local",
+    offers = [],
+    community_perk = "",
+    collaboration_note = "",
   } = listing;
   const { data, error } = await supabase
     .from("directory_listings")
@@ -47,6 +52,11 @@ export async function saveBusiness(listing, user) {
       location,
       photos,
       published,
+      house,
+      reach,
+      offers,
+      community_perk,
+      collaboration_note,
     })
     .select()
     .single();

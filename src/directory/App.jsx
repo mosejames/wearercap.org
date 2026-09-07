@@ -2,18 +2,20 @@ import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
-  Search,
   Plus,
   Store,
   Mail,
   Phone,
   Globe,
   Sparkles,
+  Gift,
+  Handshake,
 } from "lucide-react";
 import {
   CATEGORIES,
+  HOUSES,
+  OFFERS,
   emptyListing,
-  filterListings,
   validateListing,
   webUrl,
 } from "./model.js";
@@ -21,112 +23,25 @@ import {
   supabase,
   listBusinesses,
   saveBusiness,
-  photoUrl,
   uploadPhoto,
   removePhotos,
 } from "./api.js";
 
+import Collective from "./Collective.jsx";
+import { Card, Photo, SafeLink, HouseBadge } from "./ListingUI.jsx";
+import { go } from "./navigation.js";
+export { Card } from "./ListingUI.jsx";
+
 function currentRoute() {
   return new URLSearchParams(window.location.search);
 }
-function go(view = "", id = "") {
-  const url = new URL(window.location.href);
-  url.search = "";
-  if (view) url.searchParams.set("view", view);
-  if (id) url.searchParams.set("id", id);
-  window.history.pushState({}, "", url);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-  window.scrollTo(0, 0);
-}
-function Photo({ path, name, className = "" }) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    let active = true;
-    setUrl("");
-    if (path)
-      photoUrl(path)
-        .then((value) => {
-          if (active) setUrl(value);
-        })
-        .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [path]);
-  return url ? (
-    <img
-      className={className}
-      src={url}
-      alt={name}
-      loading="lazy"
-      onError={() => setUrl("")}
-    />
-  ) : (
-    <div className={`dir-placeholder ${className}`}>
-      <Store size={42} aria-hidden="true" />
-      <span>{name?.slice(0, 1) || "RCAP"}</span>
-    </div>
-  );
-}
-function SafeLink({ href, children, ...props }) {
-  try {
-    const url = webUrl(href);
-    return url ? (
-      <a href={url} target="_blank" rel="noopener noreferrer" {...props}>
-        {children}
-      </a>
-    ) : null;
-  } catch {
-    return null;
-  }
-}
-export function Card({ item, manage = false }) {
-  return (
-    <article className="dir-card">
-      <a
-        href={`?view=${manage ? "edit" : "listing"}&id=${item.id}`}
-        onClick={(e) => {
-          e.preventDefault();
-          go(manage ? "edit" : "listing", item.id);
-        }}
-      >
-        <div className="dir-card-image">
-          <Photo path={item.photos[0]} name={item.name} />
-          {item.venture === "student" && (
-            <span className="dir-student">
-              <Sparkles size={13} /> Student venture
-            </span>
-          )}
-        </div>
-        <div className="dir-card-copy">
-          <span className="dir-eyebrow">{item.category}</span>
-          <h3>
-            {item.name}
-            <ArrowUpRight size={22} />
-          </h3>
-          <p>{item.bio || "Your story starts here. Add a short bio."}</p>
-          <div className="dir-card-bottom">
-            {manage ? (
-              <span>
-                {item.published ? "Published" : "Draft"} · Edit listing
-              </span>
-            ) : (
-              <span>{item.location || "From our RCA community"}</span>
-            )}
-          </div>
-        </div>
-      </a>
-    </article>
-  );
-}
-
-function SignIn({ onError }) {
+function SignIn({ onError, nextView = "manage" }) {
   const [email, setEmail] = useState(""),
     [sent, setSent] = useState(false),
     [busy, setBusy] = useState(false);
   const callback = new URL(window.location.href);
   callback.pathname = callback.pathname.replace(/\/?$/, "/");
-  callback.search = "?view=manage";
+  callback.search = `?view=${nextView}`;
   callback.hash = "";
   const redirectTo = callback.href;
   async function signIn(provider) {
@@ -203,10 +118,19 @@ function SignIn({ onError }) {
   );
 }
 
-export function Editor({ initial, user, onSaved, onError }) {
-  const [form, setForm] = useState(
-    initial || { ...emptyListing(), id: crypto.randomUUID() },
-  );
+export function Editor({
+  initial,
+  user,
+  onSaved,
+  onError,
+  defaultVenture = "parent",
+}) {
+  const [form, setForm] = useState(() => ({
+    ...emptyListing(),
+    id: crypto.randomUUID(),
+    venture: defaultVenture,
+    ...initial,
+  }));
   const [busy, setBusy] = useState(false),
     [consent, setConsent] = useState(Boolean(initial?.published)),
     [dirty, setDirty] = useState(false),
@@ -387,6 +311,32 @@ export function Editor({ initial, user, onSaved, onError }) {
                   "text",
                   100,
                 )}
+                <div className="dir-two">
+                  <label>
+                    House (optional)
+                    <select
+                      value={form.house}
+                      onChange={(e) => update("house", e.target.value)}
+                    >
+                      <option value="">No house selected</option>
+                      {HOUSES.map((h) => (
+                        <option key={h.key} value={h.key}>
+                          {h.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Service reach
+                    <select
+                      value={form.reach}
+                      onChange={(e) => update("reach", e.target.value)}
+                    >
+                      <option value="local">Local / in person</option>
+                      <option value="worldwide">Online / worldwide</option>
+                    </select>
+                  </label>
+                </div>
               </div>
             </div>
             <div className="dir-form-section">
@@ -475,9 +425,68 @@ export function Editor({ initial, user, onSaved, onError }) {
                   "text",
                   500,
                 )}
+              </div>
+            </div>
+            <div className="dir-form-section">
+              <div>
+                <span className="dir-step">04</span>
+                <h2>Build something together.</h2>
+                <p>
+                  Optional ways to support the community. Visitors will reach
+                  out through your business contact details.
+                </p>
+              </div>
+              <div className="dir-fields">
+                <fieldset className="collective-offer-choices">
+                  <legend>What would you like to offer?</legend>
+                  {OFFERS.map((offer) => (
+                    <label className="dir-check" key={offer.key}>
+                      <input
+                        type="checkbox"
+                        checked={form.offers.includes(offer.key)}
+                        onChange={(e) =>
+                          update(
+                            "offers",
+                            e.target.checked
+                              ? [...form.offers, offer.key]
+                              : form.offers.filter((key) => key !== offer.key),
+                          )
+                        }
+                      />
+                      <span>
+                        {offer.label}
+                        <small>{offer.description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+                {field(
+                  "community_perk",
+                  "RCAP community perk (optional)",
+                  "text",
+                  160,
+                )}
+                <small>
+                  Describe your offer and any terms, such as a family discount
+                  or complimentary consultation.
+                </small>
+                <label>
+                  Collaboration or opportunity details (optional)
+                  <textarea
+                    rows={3}
+                    maxLength={280}
+                    value={form.collaboration_note}
+                    onChange={(e) =>
+                      update("collaboration_note", e.target.value)
+                    }
+                    placeholder="Tell families how you would like to connect."
+                  />
+                  <small>{form.collaboration_note.length}/280 characters</small>
+                </label>
                 <label className="dir-check">
                   <input
                     type="checkbox"
+                    aria-label="Permission to publish"
                     checked={consent}
                     onChange={(e) => setConsent(e.target.checked)}
                   />
@@ -520,7 +529,7 @@ function Details({ item, preview = false }) {
     <article className="dir-detail">
       {!preview && (
         <button className="dir-text-button" onClick={() => go()}>
-          <ArrowLeft size={17} /> Back to directory
+          <ArrowLeft size={17} /> Back to the Collective
         </button>
       )}
       <div className="dir-detail-grid">
@@ -552,11 +561,42 @@ function Details({ item, preview = false }) {
               <Sparkles size={16} /> Student venture · Parent managed
             </p>
           )}
+          <HouseBadge house={item.house} />
           <h1>{item.name || "Your business name"}</h1>
           {item.location && <p className="dir-location">{item.location}</p>}
           <p className="dir-bio">
             {item.bio || "Your story will appear here."}
           </p>
+          {item.community_perk && (
+            <div className="collective-detail-perk">
+              <span className="dir-eyebrow">
+                <Gift size={15} />
+                RCAP community perk
+              </span>
+              <p>{item.community_perk}</p>
+            </div>
+          )}
+          {Boolean(item.offers?.length || item.collaboration_note) && (
+            <div className="collective-detail-opportunities">
+              <h2>
+                <Handshake size={22} />
+                Open to connection
+              </h2>
+              <div className="dir-card-tags">
+                {OFFERS.filter((offer) => item.offers?.includes(offer.key)).map(
+                  (offer) => (
+                    <span className="collective-tag" key={offer.key}>
+                      {offer.action}
+                    </span>
+                  ),
+                )}
+              </div>
+              {item.collaboration_note && <p>{item.collaboration_note}</p>}
+              <small>
+                Contact this business directly to discuss an opportunity.
+              </small>
+            </div>
+          )}
           <div className="dir-contact">
             <h2>Let’s connect.</h2>
             {item.email && (
@@ -596,15 +636,14 @@ export default function App() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [query, setQuery] = useState(""),
-    [category, setCategory] = useState(""),
-    [students, setStudents] = useState(false),
-    [revision, setRevision] = useState(0);
+    [revision, setRevision] = useState(0),
+    [pageKey, setPageKey] = useState(0);
   const view = route.get("view") || "",
     id = route.get("id");
   useEffect(() => {
     const navigate = () => {
       setRoute(currentRoute());
+      setPageKey((key) => key + 1);
       setError("");
     };
     window.addEventListener("popstate", navigate);
@@ -655,7 +694,7 @@ export default function App() {
     };
   }, [user?.id, revision]);
   useEffect(() => {
-    document.title = `${view === "manage" ? "My listings" : "The RCAP Directory"} | We Are RCAP`;
+    document.title = `${view === "manage" ? "My listings" : "The RCAP Collective"} | We Are RCAP`;
   }, [view]);
   async function signOut() {
     const { error } = await supabase.auth.signOut();
@@ -665,7 +704,6 @@ export default function App() {
       go();
     }
   }
-  const visible = filterListings(items, query, category, students);
   const selected = (view === "edit" ? owned : [...items, ...owned]).find(
     (item) => item.id === id,
   );
@@ -676,17 +714,49 @@ export default function App() {
   };
   return (
     <div className="dir-shell">
+      <a className="collective-skip" href="#main">
+        Skip to content
+      </a>
       <header className="dir-header">
-        <a className="dir-brand" href="/">
-          RCAP
-          <span>
-            Ron Clark Academy
-            <br />
-            Parents
+        <a
+          className="dir-brand"
+          href="/directory/"
+          onClick={(e) => {
+            e.preventDefault();
+            go();
+          }}
+        >
+          <span className="collective-brand-name">
+            <b>RCAP</b> Collective
+            <span>Our community. Your next connection.</span>
           </span>
         </a>
-        <nav aria-label="Directory">
-          <a href="/">Back to RCAP</a>
+        <nav aria-label="Collective navigation">
+          <a
+            href="/directory/"
+            aria-current={!view ? "page" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              go();
+            }}
+          >
+            Explore
+          </a>
+          <a
+            href="?view=students"
+            aria-current={view === "students" ? "page" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              go("students");
+            }}
+          >
+            <Sparkles size={14} />
+            Student spotlight
+          </a>
+          <a href="/">
+            We Are RCAP
+            <ArrowUpRight size={13} />
+          </a>
           <a
             className="dir-button dir-secondary"
             href="?view=manage"
@@ -716,7 +786,9 @@ export default function App() {
                 }
               }}
             >
-              {error.startsWith("We could not load the directory") ? "Try again" : "Dismiss"}
+              {error.startsWith("We could not load the directory")
+                ? "Try again"
+                : "Dismiss"}
             </button>
           </div>
         )}
@@ -728,17 +800,22 @@ export default function App() {
             </button>
           </div>
         )}
-        {["manage", "edit", "new"].includes(view) ? (
+        {["manage", "edit", "new", "new-student"].includes(view) ? (
           !authReady ? (
             <p className="dir-empty">Checking your sign-in…</p>
           ) : !user ? (
-            <SignIn onError={setError} />
+            <SignIn
+              onError={setError}
+              nextView={["new", "new-student"].includes(view) ? view : "manage"}
+            />
           ) : loading ? (
             <p className="dir-empty">Loading your listings…</p>
-          ) : view === "new" || (view === "edit" && selected) ? (
+          ) : ["new", "new-student"].includes(view) ||
+            (view === "edit" && selected) ? (
             <Editor
-              key={id || "new"}
+              key={id || view}
               initial={selected}
+              defaultVenture={view === "new-student" ? "student" : "parent"}
               user={user}
               onSaved={saved}
               onError={setError}
@@ -794,166 +871,32 @@ export default function App() {
               <h1>This listing is not available.</h1>
               <p>It may have been taken offline by its owner.</p>
               <button className="dir-button" onClick={() => go()}>
-                Browse the directory
+                Browse the Collective
               </button>
             </div>
           )
         ) : (
-          <>
-            <section className="dir-hero">
-              <div>
-                <span className="dir-eyebrow">The RCAP Directory</span>
-                <h1>
-                  What you need
-                  <br />
-                  might be <em>right here.</em>
-                </h1>
-                <p>
-                  The coach. The caterer. The next great read. Discover the
-                  businesses, talents, and big ideas in our own RCA community.
-                </p>
-                <a
-                  className="dir-button"
-                  href="?view=new"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    go("new");
-                  }}
-                >
-                  Share what you do
-                  <ArrowUpRight size={18} />
-                </a>
-              </div>
-              <aside className="dir-hero-note">
-                <span className="dir-star" aria-hidden="true">
-                  ✳
-                </span>
-                <p>
-                  We are parents.
-                  <br />
-                  We are makers.
-                  <br />
-                  We are possibility.
-                </p>
-                <span>And our kids have big ideas, too.</span>
-              </aside>
-            </section>
-            <section className="dir-content">
-              <div className="dir-section-heading">
-                <div>
-                  <span className="dir-eyebrow">Start with your community</span>
-                  <h2>Find your people.</h2>
-                </div>
-                <p>Big businesses. Side hustles. Small beginnings.</p>
-              </div>
-              <div className="dir-filters">
-                <label className="dir-search">
-                  <Search size={20} />
-                  <input
-                    aria-label="Search the directory"
-                    placeholder="What are you looking for?"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </label>
-                <label className="dir-category">
-                  <span className="dir-sr">Category</span>
-                  <select
-                    aria-label="Category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <option value="">All categories</option>
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  className={`dir-student-filter ${students ? "active" : ""}`}
-                  aria-pressed={students}
-                  onClick={() => setStudents(!students)}
-                >
-                  <Sparkles size={17} />
-                  Student ventures
-                </button>
-              </div>
-              <div className="dir-result-line" aria-live="polite">
-                <span>
-                  {loading
-                    ? "Finding our community…"
-                    : `${visible.length} ${visible.length === 1 ? "listing" : "listings"}`}
-                </span>
-                {(query || category || students) && (
-                  <button
-                    className="dir-text-button"
-                    onClick={() => {
-                      setQuery("");
-                      setCategory("");
-                      setStudents(false);
-                    }}
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-              {!loading &&
-                (visible.length ? (
-                  <div className="dir-grid">
-                    {visible.map((item) => (
-                      <Card key={item.id} item={item} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="dir-empty">
-                    <Store size={42} />
-                    <h2>
-                      {items.length
-                        ? "No matches just yet."
-                        : error
-                          ? "We’re having trouble connecting."
-                          : "Someone here needs what you do."}
-                    </h2>
-                    <p>
-                      {items.length
-                        ? "Try another search or explore all categories."
-                        : error
-                          ? "Try again shortly to see the community’s listings."
-                          : "Be one of the first to share a business, a talent, or a big idea."}
-                    </p>
-                    {!items.length && !error && (
-                      <button className="dir-button" onClick={() => go("new")}>
-                        Add your listing
-                        <Plus size={18} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-            </section>
-            <section className="dir-band">
-              <Sparkles size={34} />
-              <div>
-                <h2>Small venture. Big possibility.</h2>
-                <p>
-                  A DJ in the making? A lemonade stand with a following? Student
-                  entrepreneurs belong here, too. Parents and guardians can
-                  create and manage their listings.
-                </p>
-              </div>
-              <button
-                className="dir-button dir-secondary"
-                onClick={() => go("new")}
-              >
-                Make room for their idea
-                <ArrowUpRight size={18} />
-              </button>
-            </section>
-          </>
+          <Collective
+            key={pageKey}
+            items={items}
+            loading={loading}
+            error={error}
+            studentMode={view === "students"}
+          />
         )}
       </main>
       <footer className="dir-footer">
-        <strong>WE ARE RCAP.</strong>
-        <p>Our community has a lot to offer. Let’s start with each other.</p>
+        <div>
+          <strong>
+            RCAP <span>Collective</span>
+          </strong>
+          <p>Four houses. One extraordinary community.</p>
+        </div>
+        <div className="collective-footer-houses">
+          {HOUSES.map((house) => (
+            <HouseBadge key={house.key} house={house.key} />
+          ))}
+        </div>
         <small>
           A parent-led directory. Listings are provided by their owners and are
           not endorsements by RCAP or the Ron Clark Academy.{" "}

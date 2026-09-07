@@ -97,7 +97,9 @@ describe("listing management", () => {
   });
   it("rejects publication when public sharing permission is unchecked", async () => {
     const { saved, error } = await render();
-    await act(async () => host.querySelector("input[type=checkbox]").click());
+    await act(async () =>
+      host.querySelector('input[aria-label="Permission to publish"]').click(),
+    );
     await act(async () =>
       host
         .querySelector("form")
@@ -111,4 +113,44 @@ describe("listing management", () => {
       "Confirm that you have permission to share this listing.",
     );
   });
+});
+
+it("saves owner-selected house and community opportunities with the listing", async () => {
+  await render();
+  const select = [...host.querySelectorAll("select")].find((el) =>
+    el.parentElement.textContent.startsWith("House"),
+  );
+  await act(async () => {
+    select.value = "isibindi";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const mentor = [...host.querySelectorAll("input[type=checkbox]")].find((el) =>
+    el.parentElement.textContent.includes("Student mentorship"),
+  );
+  await act(async () => mentor.click());
+  await act(async () => button("Save as draft").click());
+  expect(api.saveBusiness).toHaveBeenCalledWith(
+    expect.objectContaining({ house: "isibindi", offers: ["mentor"] }),
+    { id: "owner" },
+  );
+});
+it("starts a student listing with the parent-management guidance visible", async () => {
+  await act(async () =>
+    root.render(
+      <Editor
+        user={{ id: "owner" }}
+        defaultVenture="student"
+        onSaved={vi.fn()}
+        onError={vi.fn()}
+      />,
+    ),
+  );
+  expect(host.textContent).toContain(
+    "A parent or guardian manages this listing",
+  );
+  expect(
+    [...host.querySelectorAll("select")].find((el) =>
+      el.parentElement.textContent.includes("Who runs"),
+    ).value,
+  ).toBe("student");
 });

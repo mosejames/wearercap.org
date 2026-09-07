@@ -14,6 +14,38 @@ export const CATEGORIES = [
   "Travel & Experiences",
   "Other",
 ];
+export const HOUSES = [
+  { name: "Amistad", color: "#f17e8a", key: "amistad" },
+  { name: "Isibindi", color: "#77cfa0", key: "isibindi" },
+  { name: "Rêveur", color: "#7eaafb", key: "reveur" },
+  { name: "Altruismo", color: "#d9d6ce", key: "altruismo" },
+];
+export const OFFERS = [
+  {
+    key: "mentor",
+    label: "Student mentorship",
+    action: "Available to mentor",
+    description: "Help a student turn an idea into a next step.",
+  },
+  {
+    key: "speaker",
+    label: "Career-day speaking",
+    action: "Available to speak",
+    description: "Bring your work and experience into the conversation.",
+  },
+  {
+    key: "internship",
+    label: "Internships & job shadowing",
+    action: "Learning opportunities",
+    description: "Offer a window into your profession.",
+  },
+  {
+    key: "collaborate",
+    label: "Business collaboration",
+    action: "Open to collaboration",
+    description: "Connect with another family to make something happen.",
+  },
+];
 export const emptyListing = () => ({
   name: "",
   bio: "",
@@ -25,6 +57,11 @@ export const emptyListing = () => ({
   connect_url: "",
   location: "",
   photos: [],
+  house: "",
+  reach: "local",
+  offers: [],
+  community_perk: "",
+  collaboration_note: "",
   published: false,
 });
 export function webUrl(value) {
@@ -52,6 +89,21 @@ export function validateListing(listing, publish = false) {
     throw new Error("Choose one main photo and up to four more.");
   if (listing.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(listing.email))
     throw new Error("Enter a valid business email.");
+  if (listing.house && !HOUSES.some((house) => house.key === listing.house))
+    throw new Error("Choose an RCA house or leave it blank.");
+  if (listing.reach && !["local", "worldwide"].includes(listing.reach))
+    throw new Error("Choose a service reach.");
+  if (
+    (listing.offers || []).some(
+      (offer) => !OFFERS.some((option) => option.key === offer),
+    )
+  )
+    throw new Error("Choose one of the community opportunities.");
+  if (
+    (listing.community_perk || "").length > 160 ||
+    (listing.collaboration_note || "").length > 280
+  )
+    throw new Error("Shorten your community offer or collaboration note.");
   const website = webUrl(listing.website),
     connect_url = webUrl(listing.connect_url);
   if (
@@ -71,14 +123,24 @@ export function validateListing(listing, publish = false) {
     published: publish,
   };
 }
-export function filterListings(listings, query, category, students) {
+export function filterListings(
+  listings,
+  query,
+  category,
+  students,
+  filters = {},
+) {
   const words = query.toLowerCase().trim().split(/\s+/);
   return listings.filter(
     (item) =>
       (!category || item.category === category) &&
       (!students || item.venture === "student") &&
+      (!filters.house || item.house === filters.house) &&
+      (!filters.reach || item.reach === filters.reach) &&
+      (!filters.offer || (item.offers || []).includes(filters.offer)) &&
+      (!filters.perks || Boolean(item.community_perk?.trim())) &&
       words.every((word) =>
-        `${item.name} ${item.bio} ${item.category} ${item.location}`
+        `${item.name} ${item.bio} ${item.category} ${item.location} ${item.community_perk || ""} ${item.collaboration_note || ""}`
           .toLowerCase()
           .includes(word),
       ),

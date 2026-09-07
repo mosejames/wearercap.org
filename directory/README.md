@@ -1,4 +1,4 @@
-# The RCAP Directory
+# The RCAP Collective
 
 Public business listings at `/directory/`, with Google or email magic-link sign-in for owners. Uses the existing Supabase project and browser client. Homepage entry is in the Resources section and footer.
 
@@ -33,3 +33,15 @@ The shared authentication email sender is currently branded RCAP Carpool. Changi
 The editor tests cover unpublishing, save failures, publication consent, and removing images only after saving. Browser checks cover desktop/mobile rendering, directory loading, and reaching the Google account chooser. Completing an actual Google or email sign-in and submitting a real listing remains the final user acceptance check.
 
 The Supabase security advisor reports three pre-existing security-definer views in other apps (`ue_inventory`, `ue_commitments`, `vault_people`). No directory security advisor errors were reported.
+
+## Collective redesign
+
+The September 2026 redesign adds an obsidian, burgundy, and gold visual system; a community spotlight; a dedicated student route at `?view=students`; house discovery; and a collaboration hub. The showcase uses up to five newest published listings with manual previous/next controls. When no listing exists, it shows existing RCA community photography. It never invents a featured business, endorsement, award, or impact total.
+
+Owners can choose an optional house, local or worldwide service reach, mentorship/speaking/internship/collaboration opportunities, a 160-character community perk, and a 280-character opportunity note. These fields are saved with the listing, protected by its existing ownership policies, and shown in the listing details. Search, house, reach, opportunity, and perk filters are combined and retained in the page URL. The house symbols are simple interface icons, not reproductions of official house crests.
+
+`20260907204927_collective_discovery.sql` adds the fields with database constraints. Existing listings and photos are retained. Owners should review the new service-reach setting, which initially defaults to local, and select worldwide when appropriate.
+
+Student creation uses `?view=new-student` and preselects a parent-managed student venture. Sign-in returns to the creation route the visitor selected; `?view=new` and `?view=new-student` have been added to the same production and localhost auth allowlists as the existing manage route.
+
+The collaboration hub filters listings by owner-selected opportunities. Any discussion, booking, or mentoring arrangement happens through the owner's business contact details. The site does not handle payments, grants, house points, social endorsements, or official verification.

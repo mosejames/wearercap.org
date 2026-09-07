@@ -24,6 +24,18 @@ do $$ begin
   if sqlerrm <> 'Listing photos must belong to this owner and listing' then raise; end if;
  end;
 end $$;
+do $$ begin
+ update public.directory_listings set house = 'isibindi', reach = 'worldwide', offers = array['mentor','speaker'], community_perk = 'Test perk', collaboration_note = 'Test opportunity' where id = '712aa9ea-4e6f-4434-bf8e-deaf94309b23';
+ if not exists(select 1 from public.directory_listings where id = '712aa9ea-4e6f-4434-bf8e-deaf94309b23' and house = 'isibindi' and offers = array['mentor','speaker'] and community_perk = 'Test perk') then raise exception 'Community fields did not persist'; end if;
+ begin
+  update public.directory_listings set house = 'invented-house' where id = '712aa9ea-4e6f-4434-bf8e-deaf94309b23';
+  raise exception 'Invalid house was accepted';
+ exception when check_violation then null; end;
+ begin
+  update public.directory_listings set offers = array['officially-verified'] where id = '712aa9ea-4e6f-4434-bf8e-deaf94309b23';
+  raise exception 'Invalid opportunity badge was accepted';
+ exception when check_violation then null; end;
+end $$;
 set local role anon;
 do $$ begin
  if exists(select 1 from public.directory_listings where id = '712aa9ea-4e6f-4434-bf8e-deaf94309b23') then raise exception 'Anonymous visitor can read draft'; end if;
