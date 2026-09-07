@@ -18,9 +18,9 @@ The secretary or manager can add or update board cellphone numbers in **Board re
 
 ## Workflow
 
-1. Parent supplies payee, contact information, committee, purpose, and itemized expenses. Payment options are Mail, Pickup at school, and Zelle. Mail requires a complete address; Zelle requires its registered email or cellphone number.
-2. Every expense requires 1 to 5 PDF/JPG/PNG receipts, each at most 10 MB. The server verifies the stored objects and computes the total in integer cents.
-3. Parent chooses an overseeing board member or lets the secretary assign one.
+1. Parent supplies payee, contact information, committee, purpose, and itemized expenses. Choose reimbursement or direct vendor payment. Reimbursements use Zelle; vendors use Zelle or debit card when Zelle is unavailable. No card credentials are collected. Zelle requires its registered email or cellphone number.
+2. Every expense requires 1 to 5 PDF/JPG/PNG paid receipts or unpaid vendor invoices, each at most 10 MB. Requesters confirm expenses are within budget and identify covered items and amounts. Order confirmations alone are insufficient proof of payment, particularly Amazon/Walmart. The server checks requested amounts against entered document totals and computes the request total in integer cents. Board reviewers verify the documents themselves; no OCR verification is claimed.
+3. Parent chooses an overseeing board member or lets an admin assign one. Approval within the form is sufficient.
 4. A reviewer can approve, decline, or request corrections. Reasons are required for decline/corrections. A corrected request retains its ID and returns to review.
 5. Treasurer records the check/payment reference and date. The app records a payment; it does not transfer funds.
 

@@ -52,6 +52,7 @@ export async function submit(d, user, onProgress) {
       date: item.date,
       description: item.description.trim(),
       amount_cents: toCents(item.amount),
+      document_total_cents: toCents(item.document_total),
       receipts,
     });
   }

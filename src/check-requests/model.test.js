@@ -32,6 +32,8 @@ describe("check request validation", () => {
       requester_name: "Test Parent",
       payee: "Test Parent",
       phone: "4045550123",
+      zelle_contact: "4045550123",
+      budget_confirmed: true,
       committee: "General RCAP",
       purpose: "Supplies for an RCAP event",
       items: [
@@ -39,6 +41,7 @@ describe("check request validation", () => {
           date: "2026-01-01",
           description: "Supplies",
           amount: "25.00",
+          document_total: "25.00",
           receipts: [],
         },
       ],
@@ -136,4 +139,44 @@ describe("cellphone identity and Zelle", () => {
       false,
     );
   });
+});
+
+it("enforces budget, Zelle rules, and supported amounts for vendor and parent requests", () => {
+  const d = {
+    ...newDraft(),
+    requester_name: "Test Parent",
+    payee: "Vendor",
+    phone: "4045550123",
+    zelle_contact: "4045550123",
+    committee: "General",
+    purpose: "Event supplies for RCAP",
+    budget_confirmed: true,
+    acknowledged: true,
+    items: [
+      {
+        date: "2026-01-01",
+        description: "Covered supplies",
+        amount: "20",
+        document_total: "30",
+        receipts: [{}],
+      },
+    ],
+  };
+  expect(validateDraft(d)).toBeNull();
+  expect(validateDraft({ ...d, budget_confirmed: false })).toMatch(
+    /within budget/,
+  );
+  expect(validateDraft({ ...d, delivery: "mail" })).toMatch(/Zelle/);
+  expect(validateDraft({ ...d, delivery: "debit_card" })).toMatch(/Zelle/);
+  expect(
+    validateDraft({
+      ...d,
+      request_type: "vendor",
+      delivery: "debit_card",
+      zelle_contact: "",
+    }),
+  ).toBeNull();
+  expect(
+    validateDraft({ ...d, items: [{ ...d.items[0], amount: "30.01" }] }),
+  ).toMatch(/must not exceed/);
 });

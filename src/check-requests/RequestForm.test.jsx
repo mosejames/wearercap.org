@@ -33,6 +33,7 @@ function setup(receipts) {
         requester_name: "Test Parent",
         payee: "Test Parent",
         phone: "4045550123",
+        zelle_contact: "4045550123",
         committee: "Other",
         purpose: "Supplies for school event",
         items: [
@@ -41,6 +42,7 @@ function setup(receipts) {
             date: today(),
             description: "Supplies",
             amount: "12.50",
+            document_total: "12.50",
             receipts,
           },
         ],
@@ -85,7 +87,11 @@ it("keeps receipts when moving between steps and requires final confirmation", (
   expect(panel().textContent).toContain("receipt.jpg");
   expect(panel().textContent).toContain("$12.50");
   expect(host.querySelector("form").checkValidity()).toBe(false);
-  act(() => panel().querySelector('input[type="checkbox"]').click());
+  act(() =>
+    panel()
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((box) => box.click()),
+  );
   expect(host.querySelector("form").checkValidity()).toBe(true);
   act(() =>
     [...host.querySelectorAll("button")]
@@ -105,6 +111,6 @@ it("blocks review when an expense has no receipt", () => {
   advance();
   expect(panel().textContent).toContain("Expense 1");
   expect(onError).toHaveBeenLastCalledWith(
-    "Add a positive amount and at least one receipt to every expense.",
+    "Add supporting documents and a positive requested amount no greater than the combined receipt or invoice total.",
   );
 });

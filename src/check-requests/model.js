@@ -32,10 +32,13 @@ export function validateDraft(d) {
   if (!d.committee) return "Choose a committee.";
   if (d.purpose.trim().length < 10)
     return "Describe what these expenses were for in at least 10 characters.";
-  if (d.delivery === "mail" && d.address.trim().length < 10)
-    return "Enter your complete mailing address.";
-  if (!["mail", "pickup", "zelle"].includes(d.delivery))
-    return "Choose a payment method.";
+  if (!["reimbursement", "vendor"].includes(d.request_type))
+    return "Choose reimbursement or direct vendor payment.";
+  if (
+    d.delivery !== "zelle" &&
+    !(d.request_type === "vendor" && d.delivery === "debit_card")
+  )
+    return "Use Zelle for reimbursements, or debit card for vendors without Zelle.";
   if (d.delivery === "zelle" && !validZelle(d.zelle_contact))
     return "Enter the email or cellphone number registered with Zelle.";
   if (!d.items.length || d.items.length > 20)
@@ -47,6 +50,11 @@ export function validateDraft(d) {
       return `Choose a valid date for expense ${i + 1}.`;
     if (toCents(item.amount) === null)
       return `Enter a positive amount with no more than two decimal places for expense ${i + 1}.`;
+    if (
+      toCents(item.document_total) === null ||
+      toCents(item.amount) > toCents(item.document_total)
+    )
+      return `Requested amount must not exceed the receipt or invoice total for expense ${i + 1}.`;
     if (!item.receipts?.length)
       return `Attach at least one receipt for expense ${i + 1}.`;
   }
@@ -55,6 +63,7 @@ export function validateDraft(d) {
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.archive_email.trim())
   )
     return "Enter a valid email for your PDF copy.";
+  if (!d.budget_confirmed) return "Confirm this expense is within budget.";
   if (!d.acknowledged)
     return "Confirm the reimbursement statement before submitting.";
   return null;
@@ -95,6 +104,7 @@ export const newItem = () => ({
   date: "",
   description: "",
   amount: "",
+  document_total: "",
   receipts: [],
 });
 export const newDraft = () => ({
@@ -102,7 +112,9 @@ export const newDraft = () => ({
   requester_name: "",
   phone: "",
   payee: "",
-  delivery: "pickup",
+  delivery: "zelle",
+  request_type: "reimbursement",
+  budget_confirmed: false,
   address: "",
   zelle_contact: "",
   committee: "",
@@ -115,12 +127,17 @@ export const newDraft = () => ({
 export function fromRecord(r) {
   return {
     ...r,
+    delivery: r.delivery === "debit_card" ? "debit_card" : "zelle",
+    budget_confirmed: false,
     acknowledged: false,
     approver_email: r.approver_email || "",
     items: r.items.map((i) => ({
       ...i,
       key: crypto.randomUUID(),
       amount: (i.amount_cents / 100).toFixed(2),
+      document_total: (
+        (i.document_total_cents || i.amount_cents) / 100
+      ).toFixed(2),
     })),
   };
 }

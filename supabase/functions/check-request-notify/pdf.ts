@@ -21,7 +21,7 @@ export async function summaryPdf(snapshot: any) {
   function next() {
     page = doc.addPage([612, 792]);
     y = 728;
-    page.drawText("RCAP / REIMBURSEMENT RECORD", {
+    page.drawText("RCAP / PAYMENT REQUEST RECORD", {
       x: 44,
       y,
       size: 11,
@@ -59,10 +59,16 @@ export async function summaryPdf(snapshot: any) {
   line(`Submitted: ${r.created_at}`);
   line(`Requester: ${r.requester_name}`);
   line(`Contact: ${r.phone}`);
+  line(
+    `Request type: ${r.request_type === "vendor" ? "Direct payment to vendor" : "Reimbursement"}`,
+  );
+  line(
+    `Within budget: ${r.budget_confirmed ? "Confirmed by requester" : "Not recorded on this version"}`,
+  );
   line(`Payee: ${r.payee}`);
   line(`Committee: ${r.committee}`);
   line(
-    `Payment preference: ${{ mail: "Mail", pickup: "Pickup at school", zelle: "Zelle" }[r.delivery] || r.delivery}`,
+    `Payment preference: ${{ mail: "Mail", pickup: "Pickup at school", zelle: "Zelle", debit_card: "Vendor debit card payment (Zelle unavailable)" }[r.delivery] || r.delivery}`,
   );
   if (r.delivery === "mail") line(`Mailing address: ${r.address}`);
   if (r.delivery === "zelle") line(`Zelle contact: ${r.zelle_contact}`);
@@ -74,8 +80,10 @@ export async function summaryPdf(snapshot: any) {
       `${i + 1}. ${item.description} | ${item.date} | ${money(item.amount_cents)}`,
       true,
     );
+    if (item.document_total_cents)
+      line(`Supporting document total: ${money(item.document_total_cents)}`);
     item.receipts.forEach((receipt: any, j: number) =>
-      line(`Receipt ${i + 1}.${j + 1}: ${receipt.name}`),
+      line(`Document ${i + 1}.${j + 1}: ${receipt.name}`),
     );
   });
   line("APPROVAL AND PAYMENT HISTORY", true);
@@ -89,10 +97,12 @@ export async function summaryPdf(snapshot: any) {
   if (r.payment_reference) line(`Payment reference: ${r.payment_reference}`);
   if (r.payment_date) line(`Payment date: ${r.payment_date}`);
   line(
-    "The requester certified that the expenses were incurred for RCAP, have not already been reimbursed, and are supported by the attached receipts. Board approval is required; committee funds are not advanced.",
+    r.request_type === "vendor"
+      ? "The requester certified that the RCAP invoice remains unpaid and supports the requested amount. Assigned Board Member approval is required before vendor payment."
+      : "The requester certified that RCAP expenses were paid and have not already been reimbursed. Paid receipts support the request. Assigned Board Member approval is required; committee funds are not advanced.",
   );
   line(
-    "Archive copy. Receipt pages follow, or arrive as numbered companion parts for larger requests. Keep all parts together.",
+    "Archive copy. Supporting document pages follow, or arrive as numbered companion parts for larger requests. Keep all parts together.",
   );
   for (const [i, p] of doc.getPages().entries())
     p.drawText(

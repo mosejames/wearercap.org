@@ -74,7 +74,7 @@ function Guide() {
           <li>
             <ReceiptText />
             <div>
-              <strong>Include every receipt</strong>
+              <strong>Include supporting documents</strong>
               <p>Upload a clear photo or PDF for each expense.</p>
             </div>
           </li>
@@ -98,8 +98,9 @@ function Guide() {
         <div className="policy">
           <strong>Reimbursements, not advances.</strong>
           <p>
-            Committee funds are not advanced. Documentation and approval are
-            required for reimbursement.
+            Committee funds are not advanced. Expenses must be within budget.
+            Paid receipts or vendor invoices and assigned Board Member approval
+            are required for payment. Approval happens within this form.
           </p>
         </div>
       </div>
@@ -290,7 +291,7 @@ export function RequestForm({
   const previousStep = useRef(step);
   const stepNames = [
     "Request details",
-    "Expenses & receipts",
+    "Expenses & documents",
     "Review & submit",
   ];
   function goStep(next) {
@@ -335,11 +336,15 @@ export function RequestForm({
     }
     if (step === 1) {
       const expenseError = draft.items.some(
-        (item) => !item.receipts.length || toCents(item.amount) === null,
+        (item) =>
+          !item.receipts.length ||
+          toCents(item.amount) === null ||
+          toCents(item.document_total) === null ||
+          toCents(item.amount) > toCents(item.document_total),
       );
       if (expenseError) {
         onError(
-          "Add a positive amount and at least one receipt to every expense.",
+          "Add supporting documents and a positive requested amount no greater than the combined receipt or invoice total.",
         );
         return;
       }
@@ -392,7 +397,7 @@ export function RequestForm({
               {
                 [
                   "Tell us who to pay and what the expenses were for.",
-                  "Add each expense and its supporting receipts.",
+                  "Add each expense and its paid receipt or vendor invoice.",
                   "Check your details, then send your request for approval.",
                 ][step]
               }
@@ -432,13 +437,33 @@ export function RequestForm({
                   onChange={(e) => set("phone", e.target.value)}
                   placeholder="(404) 555-0123"
                 />
+                <Field label="Request type">
+                  <select
+                    value={draft.request_type}
+                    onChange={(e) =>
+                      setDraft((d) => ({
+                        ...d,
+                        request_type: e.target.value,
+                        delivery: "zelle",
+                        acknowledged: false,
+                      }))
+                    }
+                  >
+                    <option value="reimbursement">Reimbursement</option>
+                    <option value="vendor">Direct payment to vendor</option>
+                  </select>
+                </Field>
                 <Field
-                  label="Payee full name"
+                  label={
+                    draft.request_type === "vendor"
+                      ? "Vendor name"
+                      : "Payee full name"
+                  }
                   required
                   maxLength={150}
                   value={draft.payee}
                   onChange={(e) => set("payee", e.target.value)}
-                  placeholder="Name of the person receiving payment"
+                  placeholder="Person or vendor receiving payment"
                 />
                 <Field label="Committee">
                   <select
@@ -459,11 +484,20 @@ export function RequestForm({
                     value={draft.delivery}
                     onChange={(e) => set("delivery", e.target.value)}
                   >
-                    <option value="mail">Mail</option>
-                    <option value="pickup">Pickup at school</option>
                     <option value="zelle">Zelle</option>
+                    {draft.request_type === "vendor" && (
+                      <option value="debit_card">
+                        Debit card (vendor does not accept Zelle)
+                      </option>
+                    )}
                   </select>
                 </Field>
+                {draft.delivery === "debit_card" && (
+                  <p className="muted">
+                    The finance team will arrange the vendor card payment after
+                    approval. Do not enter card details here.
+                  </p>
+                )}
                 <Field label="Overseeing board member (optional)">
                   <select
                     value={draft.approver_email}
@@ -524,16 +558,18 @@ export function RequestForm({
                 <div className="card-heading">
                   <span className="step-number">02</span>
                   <div>
-                    <h2>Expenses & receipts</h2>
-                    <p>
-                      Add a receipt to every expense. PDF, JPG, or PNG, up to 10
-                      MB each.
-                    </p>
+                    <h2>Expenses & documents</h2>
+                    <p>Add supporting documents to every expense.</p>
                   </div>
                 </div>
                 <p className="muted">
-                  Add a receipt to every expense. PDF, JPG, or PNG, up to 10 MB
-                  each.
+                  {draft.request_type === "vendor"
+                    ? "Attach an unpaid invoice for every vendor expense."
+                    : "Attach receipts showing payment completed, not just an order confirmation. Check Amazon and Walmart documents carefully."}{" "}
+                  Identify the reimbursable items on the receipt. One
+                  description is fine when the entire receipt is for one
+                  expense. For partial reimbursement, list the covered items and
+                  their amounts. PDF, JPG, or PNG, up to 10 MB each.
                 </p>
                 {draft.items.map((item, i) => (
                   <div className="expense" key={item.key}>
@@ -556,7 +592,11 @@ export function RequestForm({
                     </div>
                     <div className="fields">
                       <Field
-                        label="Purchase date"
+                        label={
+                          draft.request_type === "vendor"
+                            ? "Invoice date"
+                            : "Purchase date"
+                        }
                         type="date"
                         required
                         max={today()}
@@ -564,7 +604,7 @@ export function RequestForm({
                         onChange={(e) => setItem(i, "date", e.target.value)}
                       />
                       <Field
-                        label="Amount (USD)"
+                        label="Amount requested (USD)"
                         required
                         inputMode="decimal"
                         pattern="[0-9]+(\.[0-9]{1,2})?"
@@ -573,8 +613,23 @@ export function RequestForm({
                         placeholder="0.00"
                       />
                       <Field
+                        label={
+                          draft.request_type === "vendor"
+                            ? "Invoice total (USD)"
+                            : "Paid receipt total (USD)"
+                        }
+                        required
+                        inputMode="decimal"
+                        pattern="[0-9]+(\.[0-9]{1,2})?"
+                        value={item.document_total || ""}
+                        onChange={(e) =>
+                          setItem(i, "document_total", e.target.value)
+                        }
+                        placeholder="0.00"
+                      />
+                      <Field
                         full
-                        label="Merchant & expense description"
+                        label="Merchant, covered items & amounts"
                         required
                         maxLength={300}
                         value={item.description}
@@ -587,7 +642,10 @@ export function RequestForm({
                     <div className="upload">
                       <label>
                         <span>
-                          <Upload size={16} /> Attach receipts
+                          <Upload size={16} />{" "}
+                          {draft.request_type === "vendor"
+                            ? "Attach invoice"
+                            : "Attach paid receipts"}
                         </span>
                         <input
                           aria-label={`Upload receipts for expense ${i + 1}`}
@@ -638,7 +696,8 @@ export function RequestForm({
                         </ul>
                       ) : (
                         <p className="muted">
-                          At least one receipt is required for this expense.
+                          At least one paid receipt or vendor invoice is
+                          required for this expense.
                         </p>
                       )}
                     </div>
@@ -681,6 +740,12 @@ export function RequestForm({
                     <dd>{draft.requester_name}</dd>
                   </div>
                   <div>
+                    <dt>Request type</dt>
+                    <dd>
+                      {draft.request_type === "vendor"
+                        ? "Direct payment to vendor"
+                        : "Reimbursement"}
+                    </dd>
                     <dt>Payee</dt>
                     <dd>{draft.payee}</dd>
                   </div>
@@ -696,6 +761,7 @@ export function RequestForm({
                           mail: "Mail",
                           pickup: "Pickup at school",
                           zelle: "Zelle",
+                          debit_card: "Vendor debit card payment",
                         }[draft.delivery]
                       }
                       {draft.delivery === "mail" && <p>{draft.address}</p>}
@@ -721,7 +787,7 @@ export function RequestForm({
                   </div>
                 </dl>
                 <div className="detail-head">
-                  <h3>Expenses & receipts</h3>
+                  <h3>Expenses & documents</h3>
                   <button
                     type="button"
                     className="text-button"
@@ -768,14 +834,26 @@ export function RequestForm({
                 <input
                   type="checkbox"
                   required
+                  checked={draft.budget_confirmed}
+                  onChange={(e) => set("budget_confirmed", e.target.checked)}
+                />
+                <span>
+                  I confirm this expense is within the approved committee
+                  budget. Approval by the assigned Board Member will take place
+                  through this form.
+                </span>
+              </label>
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  required
                   checked={draft.acknowledged}
                   onChange={(e) => set("acknowledged", e.target.checked)}
                 />
                 <span>
-                  I confirm these expenses were incurred for RCAP, have not
-                  already been reimbursed, and the attached receipts support
-                  this request. I understand that board approval is required and
-                  committee funds are not advanced.
+                  {draft.request_type === "vendor"
+                    ? "I confirm this invoice is for RCAP, remains unpaid, and the requested amount is supported by the invoice. The finance team will pay the vendor after Board Member approval."
+                    : "I confirm these RCAP expenses have been paid, have not already been reimbursed, and the receipts show completed payment. I have identified the reimbursable items and amounts. An order confirmation alone is not proof of payment."}
                 </span>
               </label>
             </fieldset>
@@ -819,7 +897,7 @@ export function RequestForm({
         )}
       </section>
       <details className="request-help">
-        <summary>Receipt requirements & reimbursement policy</summary>
+        <summary>Document requirements & payment policy</summary>
         <Guide />
       </details>
     </div>
@@ -1052,13 +1130,27 @@ function Detail({
               <dd>{r.committee}</dd>
             </div>
             <div>
+              <dt>Request type</dt>
+              <dd>
+                {r.request_type === "vendor"
+                  ? "Direct payment to vendor"
+                  : "Reimbursement"}
+              </dd>
+              <dt>Within budget</dt>
+              <dd>
+                {r.budget_confirmed
+                  ? "Confirmed by requester"
+                  : "Not recorded (legacy request)"}
+              </dd>
               <dt>Delivery</dt>
               <dd>
                 {r.delivery === "mail"
                   ? r.address
                   : r.delivery === "zelle"
                     ? `Zelle: ${r.zelle_contact}`
-                    : "Pickup at school"}
+                    : r.delivery === "debit_card"
+                      ? "Vendor debit card payment"
+                      : "Pickup at school"}
               </dd>
             </div>
             <div>
@@ -1074,7 +1166,7 @@ function Detail({
             </div>
           </dl>
           <div className="form-section">
-            <h2>Expenses & receipts</h2>
+            <h2>Expenses & documents</h2>
             {r.items.map((item, i) => (
               <div className="expense" key={i}>
                 <div className="detail-head">
@@ -1535,7 +1627,7 @@ function App() {
             <p className="eyebrow">RCAP FINANCE</p>
             <h1>Check requests.</h1>
             <p className="intro-copy">
-              The RCAP reimbursement resource for parents helping with
+              The RCAP payment request resource for parents helping with
               committees, events, and assigned jobs. Submit your expenses and
               receipts in one place, then follow your request through approval
               and payment.
@@ -1548,7 +1640,7 @@ function App() {
         {tab === "new" && !selected && (
           <div
             className="process-overview"
-            aria-label="How reimbursement works"
+            aria-label="How payment requests work"
           >
             <p className="eyebrow">HOW IT WORKS</p>
             <div>

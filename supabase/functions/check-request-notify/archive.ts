@@ -40,7 +40,7 @@ export async function deliverArchive(job: any, db: any, config: any) {
           bytes = await receiptPdf(
             new Uint8Array(await data.arrayBuffer()),
             receipt.path,
-            `RCAP #${r.reference} | Receipt ${i + 1}.${j + 1}: ${receipt.name}`,
+            `RCAP #${r.reference} | Document ${i + 1}.${j + 1}: ${receipt.name}`,
           );
         } catch {
           throw new Error(

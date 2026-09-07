@@ -77,3 +77,19 @@ it("does not claim an attachment when sending a status-only email", () => {
   expect(body).not.toContain("receipts are attached");
   expect(body).toContain("notification preference");
 });
+
+it("recaps unpaid vendor payments and budget confirmation", () => {
+  const body = requesterRecap({
+    ...snapshot,
+    request: {
+      ...snapshot.request,
+      request_type: "vendor",
+      budget_confirmed: true,
+      delivery: "debit_card",
+    },
+  });
+  expect(body).toContain("Direct payment to vendor");
+  expect(body).toContain("Zelle unavailable");
+  expect(body).toContain("Confirmed by requester");
+  expect(body).not.toContain("reimbursement request");
+});

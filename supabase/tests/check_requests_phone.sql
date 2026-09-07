@@ -6,7 +6,7 @@ begin
  insert into auth.users(id,phone,phone_confirmed_at) values(parent,'+15005550101',now()),(reviewer,'+15005550102',now()),(treasurer,'+15005550103',now()),(outsider,'+15005550104',now());
  insert into public.cr_staff(email,name,role) values('+15005550102','Test Reviewer','approver'),('+15005550103','Test Treasurer','treasurer');
  perform set_config('request.jwt.claim.sub',parent::text,true);
- p:=jsonb_build_object('id',rid,'requester_name','Test Parent','phone','4045550123','payee','Test Parent','delivery','pickup','committee','General RCAP','purpose','Supplies for an RCAP event','acknowledged',true,'approver_email','+15005550102','total_cents',1,'items',jsonb_build_array(jsonb_build_object('date',current_date::text,'description','Test expense','amount_cents',1250,'receipts','[]'::jsonb)));
+ p:=jsonb_build_object('id',rid,'requester_name','Test Parent','phone','4045550123','payee','Test Parent','delivery','zelle','zelle_contact','parent@example.test','request_type','reimbursement','budget_confirmed',true,'committee','General RCAP','purpose','Supplies for an RCAP event','acknowledged',true,'approver_email','+15005550102','total_cents',1,'items',jsonb_build_array(jsonb_build_object('date',current_date::text,'description','Test expense','amount_cents',1250,'document_total_cents',1250,'receipts','[]'::jsonb)));
  begin perform public.cr_action('submit',p);raise exception 'TEST missing receipts passed';exception when others then if sqlerrm not like '%Attach 1 to 5 receipts%' then raise;end if;end;
  p:=jsonb_set(p,'{items,0,receipts}',jsonb_build_array(jsonb_build_object('path',parent::text||'/'||rid::text||'/receipt.pdf','name','receipt.pdf')));
  begin perform public.cr_action('submit',p);raise exception 'TEST missing upload passed';exception when others then if sqlerrm not like '%not finished uploading%' then raise;end if;end;
@@ -14,6 +14,17 @@ begin
  p:=p||jsonb_build_object('delivery','zelle','zelle_contact','invalid');
  begin perform public.cr_action('submit',p);raise exception 'TEST invalid Zelle passed';exception when others then if sqlerrm not like '%registered with Zelle%' then raise;end if;end;
  p:=p||jsonb_build_object('zelle_contact','parent@example.test','archive_email','parent@example.test');
+
+ begin perform public.cr_action('submit',p||'{"budget_confirmed":false}');raise exception 'TEST budget bypass';exception when others then if sqlerrm not like '%within budget%' then raise;end if;end;
+ begin perform public.cr_action('submit',p||'{"delivery":"debit_card"}');raise exception 'TEST reimbursement debit';exception when others then if sqlerrm not like '%must use Zelle%' then raise;end if;end;
+ begin perform public.cr_action('submit',jsonb_set(p,'{items,0,document_total_cents}','1249'));raise exception 'TEST unsupported amount';exception when others then if sqlerrm not like '%must not exceed%' then raise;end if;end;
+ -- Exercise vendor fallback in a subtransaction, then roll it back to preserve the main workflow.
+ begin
+  r:=public.cr_action('submit',p||'{"request_type":"vendor","delivery":"debit_card","zelle_contact":""}');
+  if r->>'request_type'<>'vendor' or r->>'budget_confirmed'<>'true' then raise exception 'TEST vendor fields';end if;
+  if not exists(select 1 from public.cr_notifications where request_id=rid and archive_snapshot->'request'->>'request_type'='vendor') then raise exception 'TEST vendor snapshot';end if;
+  raise exception 'ROLLBACK_VENDOR_TEST';
+ exception when others then if sqlerrm<>'ROLLBACK_VENDOR_TEST' then raise;end if;end;
  r:=public.cr_action('submit',p);
  if (select count(*) from public.cr_notifications where request_id=rid and archive_snapshot is not null)<>2 then raise exception 'TEST archive copies missing';end if;
  if r->>'zelle_contact'<>'parent@example.test' then raise exception 'TEST Zelle recipient not saved';end if;
@@ -22,7 +33,7 @@ begin
  perform public.cr_action('submit',p);
  if (select count(*) from public.cr_history where request_id=rid)<>1 then raise exception 'TEST duplicate submission';end if;
  begin perform public.cr_action('approved',jsonb_build_object('id',rid,'version',1));raise exception 'TEST self review passed';exception when others then if sqlerrm not like '%own request%' then raise;end if;end;
- begin perform public.cr_action('staff','{"email":"intruder@example.test","name":"Intruder","role":"secretary"}');raise exception 'TEST escalation passed';exception when others then if sqlerrm not like '%Secretary access%' then raise;end if;end;
+ begin perform public.cr_action('staff','{"email":"intruder@example.test","name":"Intruder","role":"secretary"}');raise exception 'TEST escalation passed';exception when others then if sqlerrm not like '%Admin access%' then raise;end if;end;
  perform set_config('request.jwt.claim.sub',outsider::text,true);
  set local role authenticated;
  select count(*) into count_rows from public.cr_requests where id=rid;
