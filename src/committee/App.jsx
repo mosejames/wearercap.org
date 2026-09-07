@@ -70,6 +70,11 @@ export default function App() {
   });
 
   const ORDER = ['welcome', 'name', 'email', 'students', 'traits', 'discover', 'leadAsk', 'leadPick', 'phone', 'review', 'done'];
+  // The direct path: pick from the list, then one page of details. It reuses
+  // every piece of state the funnel does and submits through the same call,
+  // so the admin table cannot tell the two apart except that personality is
+  // empty. Nothing new on the backend.
+  const DIRECT = ['choose', 'quick'];
   const pct = Math.round(((ORDER.indexOf(step) + 1) / ORDER.length) * 100);
 
   const payload = () => ({
@@ -110,8 +115,141 @@ export default function App() {
         we will help you find the one that fits.
       </p>
       <div className="row anim" style={{ animationDelay: '.24s' }}>
-        <button className="btn solid" onClick={() => go('name')}>Let's find your place</button>
+        <button className="btn solid" onClick={() => go('choose')}>Choose my committee</button>
+        <button className="btn ghost" onClick={() => go('name')}>Help me find my committee</button>
         <span className="hintline">Takes about three minutes</span>
+      </div>
+    </Screen>
+  );
+
+  if (step === 'choose') return (
+    <Screen onBack={() => go('welcome')} wide>
+      <p className="eyebrow anim">Choose my committee</p>
+      <h2 className="q anim" style={{ animationDelay: '.04s' }}>Pick as many as you like.</h2>
+      <p className="sub anim" style={{ animationDelay: '.08s' }}>
+        Tap a committee to add it. You can always change your mind later.
+      </p>
+      <div className="grid anim" style={{ animationDelay: '.12s' }}>
+        {COMMITTEES.filter((c) => !c.noMatch).map((c) => {
+          const on = picks.includes(c.id);
+          return (
+            <article className={'cc' + (on ? ' picked' : '')} data-a={c.accent} key={c.id}>
+              <h3 className="cc-name">{c.name}</h3>
+              <p className="cc-blurb">{c.blurb}</p>
+              <div className="cc-acts">
+                <button
+                  className={'add' + (on ? ' on' : '')}
+                  onClick={() => setPicks(on ? picks.filter((id) => id !== c.id) : [...picks, c.id])}
+                  aria-pressed={on}
+                >
+                  {on ? 'Added' : 'Add to my list'}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      {err && <p className="err">{err}</p>}
+      <div className="row anim" style={{ animationDelay: '.16s' }}>
+        <button className="btn solid" onClick={() => {
+          if (!picks.length) return setErr('Pick at least one.');
+          setErr(''); go('quick');
+        }}>
+          Continue{picks.length ? ` with ${picks.length}` : ''}
+        </button>
+      </div>
+    </Screen>
+  );
+
+  if (step === 'quick') return (
+    <Screen onBack={() => go('choose')} wide>
+      <p className="eyebrow anim">Almost done</p>
+      <h2 className="q anim" style={{ animationDelay: '.04s' }}>Tell us who you are.</h2>
+      <div className="anim" style={{ animationDelay: '.1s' }}>
+        <span className="lab">You</span>
+        <input
+          className="field" placeholder="Your name" value={name} autoFocus
+          onChange={(e) => setName(e.target.value)}
+        />
+        <div className="two" style={{ marginTop: 10 }}>
+          <input
+            className="field" type="email" placeholder="Email" value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="field" type="tel" placeholder="Phone (optional)" value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+
+        <span className="lab" style={{ marginTop: 22 }}>Your student</span>
+        {students.map((s, i) => (
+          <div className="kid" key={i}>
+            <div className="kid-top">
+              <span className="kid-n">{students.length > 1 ? `Student ${i + 1}` : 'Student'}</span>
+              {students.length > 1 && (
+                <button className="drop" onClick={() => setStudents(students.filter((_, j) => j !== i))}>Remove</button>
+              )}
+            </div>
+            <div className="two">
+              <input
+                className="field" placeholder="Their name" value={s.name}
+                onChange={(e) => setStudents(students.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+              />
+              <select
+                className="field" value={s.year} aria-label="Class year"
+                onChange={(e) => setStudents(students.map((x, j) => (j === i ? { ...x, year: e.target.value } : x)))}
+              >
+                <option value="">Class of</option>
+                {CLASS_YEARS.map((y) => <option key={y}>{y}</option>)}
+              </select>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <span className="lab">House</span>
+              <div className="pills">
+                {HOUSES.map((h) => (
+                  <button
+                    key={h}
+                    className={'pill' + (s.house === h ? ' on' : '')}
+                    onClick={() => setStudents(students.map((x, j) => (j === i ? { ...x, house: h } : x)))}
+                  >{h}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+        {students.length < 4 && (
+          <button className="addmore" onClick={() => setStudents([...students, { name: '', year: '', house: '' }])}>
+            Add another student
+          </button>
+        )}
+
+        <span className="lab" style={{ marginTop: 22 }}>Your committees</span>
+        <ul className="rlist">
+          {picks.map((id) => {
+            const c = byId(id);
+            return <li key={id}><span className="dot" data-a={c.accent} />{c.name}</li>;
+          })}
+        </ul>
+        <button className="editbtn" onClick={() => go('choose')}>Change my list</button>
+      </div>
+      {err && <p className="err">{err}</p>}
+      <div className="row anim" style={{ animationDelay: '.14s' }}>
+        <button className="btn flame" disabled={sending} onClick={async () => {
+          if (!name.trim()) return setErr('We need something to call you.');
+          if (!email.includes('@')) return setErr('That address does not look right.');
+          if (!students.some((s) => s.name.trim())) return setErr('Add at least one student.');
+          setErr(''); setSending(true);
+          try {
+            await submit(token, payload());
+            sendConfirmation(token);
+            clearToken();
+            go('done');
+          } catch (e) {
+            console.error(e);
+            setErr('That did not go through. Try once more, or text the board and we will add you by hand.');
+          } finally { setSending(false); }
+        }}>{sending ? 'Sending' : 'Send it'}</button>
       </div>
     </Screen>
   );
@@ -534,7 +672,7 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
       {matches.length > 0 && (
         <div className="seg anim" style={{ animationDelay: '.06s' }}>
           <button className={tab === 'fit' ? 'on' : ''} onClick={() => setTab('fit')}>Your fits</button>
-          <button className={tab === 'all' ? 'on' : ''} onClick={() => setTab('all')}>Explore all ten</button>
+          <button className={tab === 'all' ? 'on' : ''} onClick={() => setTab('all')}>Explore all of them</button>
         </div>
       )}
 
@@ -584,7 +722,7 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
 
       {tab === 'fit' && (
         <div className="row">
-          <button className="btn ghost" onClick={() => setTab('all')}>Explore all ten</button>
+          <button className="btn ghost" onClick={() => setTab('all')}>Explore all of them</button>
         </div>
       )}
 

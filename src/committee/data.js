@@ -1,4 +1,4 @@
-/* The eleven committees.
+/* The twelve committees.
 
    `tags` drives the recommendation step. A parent picks how they like to show
    up, and committees carrying those tags float to the top. Nothing is hidden by
@@ -145,6 +145,19 @@ export const COMMITTEES = [
       'Choose where we put our hands each year',
       'Build the partnerships that carry it',
       'Bring the whole school into it',
+    ],
+  },
+  {
+    id: 'merch',
+    name: 'Merchandising',
+    accent: 'blue',
+    tags: ['hands', 'organizer', 'quiet'],
+    blurb: 'The hands behind the school store and every EXP table of folded shirts.',
+    what: 'Year round, heaviest around each EXP session.',
+    does: [
+      'Fold, sort and restock for EXP',
+      'Keep the school store in order',
+      'Back up the merchandising team whenever they need hands',
     ],
   },
   {
