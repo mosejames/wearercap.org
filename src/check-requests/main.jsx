@@ -44,6 +44,7 @@ import {
 } from "./api.js";
 import "./requests.css";
 import Account from "./Account.jsx";
+import PdfDownloads from "./PdfDownloads.jsx";
 
 const dateLabel = (value) =>
   new Date(value).toLocaleString("en-US", {
@@ -468,7 +469,7 @@ export function RequestForm({
                     disabled={!!draft.version}
                     onChange={(e) => set("approver_email", e.target.value)}
                   >
-                    <option value="">Let the secretary route it</option>
+                    <option value="">Let the admin route it</option>
                     {staff
                       .filter((s) => s.email !== contactOf(user))
                       .map((s) => (
@@ -911,26 +912,29 @@ function RequestList({ records, board, onSelect, onNew, loading, onRefresh }) {
         </div>
       ) : (
         shown.map((r) => (
-          <button
-            key={r.id}
-            className="record-card record-button"
-            onClick={() => onSelect(r.id)}
-          >
-            <div>
-              <p>
-                REQUEST #{r.reference} ·{" "}
-                {new Date(r.created_at).toLocaleDateString()}
-              </p>
-              <h3>{r.payee}</h3>
-              <p>
-                {r.committee}
-                {board ? ` · ${r.requester_name}` : ""}
-              </p>
-            </div>
-            <Badge status={r.status} />
-            <strong className="money">{dollars(r.total_cents)}</strong>
-            <ArrowRight size={18} />
-          </button>
+          <article className="record-card" key={r.id} style={{ padding: 0 }}>
+            <button
+              className="record-card record-button"
+              style={{ border: 0, margin: 0, boxShadow: "none" }}
+              onClick={() => onSelect(r.id)}
+            >
+              <div>
+                <p>
+                  REQUEST #{r.reference} ·{" "}
+                  {new Date(r.created_at).toLocaleDateString()}
+                </p>
+                <h3>{r.payee}</h3>
+                <p>
+                  {r.committee}
+                  {board ? ` · ${r.requester_name}` : ""}
+                </p>
+              </div>
+              <Badge status={r.status} />
+              <strong className="money">{dollars(r.total_cents)}</strong>
+              <ArrowRight size={18} />
+            </button>
+            <PdfDownloads requestId={r.id} />
+          </article>
         ))
       )}
     </>
@@ -1650,10 +1654,10 @@ function App() {
               <h2>{tab === "board" ? "Board review" : "Your requests"}</h2>
               <p className="muted">
                 {tab === "board"
-                  ? "Use your cellphone number. Board access is added to that number by the secretary."
+                  ? "Use your cellphone number. Board access is added to that number by the admin."
                   : "Sign in to see your requests, reviewer notes, and payment status."}
               </p>
-              <SignIn onError={setError} allowEmail={tab === "board"} />
+              <SignIn onError={setError} />
             </section>
             <Guide />
           </div>
@@ -1662,7 +1666,7 @@ function App() {
             <ShieldCheck size={35} />
             <h2>Board access is needed</h2>
             <p className="muted">
-              The secretary can add your cellphone number in Board access.
+              The admin can add your cellphone number in Board access.
             </p>
             <p>{contactOf(user)}</p>
             <button className="secondary" onClick={() => navigate("mine")}>

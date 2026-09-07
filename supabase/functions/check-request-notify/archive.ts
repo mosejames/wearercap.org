@@ -1,4 +1,5 @@
 import { summaryPdf, receiptPdf, mergePdfs } from "./pdf.ts";
+import { requesterRecap } from "./recap.ts";
 import { sendNotice } from "./send.ts";
 export async function deliverArchive(job: any, db: any, config: any) {
   const snapshot = job.archive_snapshot;
@@ -70,6 +71,10 @@ export async function deliverArchive(job: any, db: any, config: any) {
     await sendNotice(
       {
         ...job,
+        body:
+          job.recipient === r.archive_email
+            ? requesterRecap(snapshot)
+            : job.body,
         id: `${job.id}-part-${i + 1}`,
         subject: `${job.subject} [${i + 1}/${files.length}]`,
         attachments: [{ filename: file.name, content: btoa(binary) }],
