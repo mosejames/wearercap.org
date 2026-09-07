@@ -116,7 +116,7 @@ const advisors = [
   { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg', houses: ['amistad', 'altruismo'] },
   { key: 'g5', grade: '5th grade', name: 'Sidonie Holloman', photo: '/images/board/sidonie.jpg', houses: ['amistad'] },
   { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg', houses: ['amistad'] },
-  { key: 'g7', grade: '7th grade', name: 'Sara White', photo: null, houses: ['amistad'] },
+  { key: 'g7', grade: '7th grade', name: 'Sara White', photo: '/images/board/sara.jpg', houses: ['amistad'] },
   { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg', houses: ['altruismo'] },
 ];
 
