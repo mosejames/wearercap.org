@@ -12,14 +12,27 @@ const contactEmail = 'hello@wearercap.org';
 
 // Headshots: drop a file at /public/images/board/<key>.jpg and set `photo` to
 // its path. Cards without one show initials on a house-coloured field.
+// Bios follow one shape, four beats: name and who you parent, a turn that says
+// one true thing a little too plainly, what you are like in the building, then
+// "in his free time" written in full board-bio register about something
+// completely ordinary. The joke is the mismatch between the grammar and the
+// content, so keep the sentences straight and let the detail be small.
+//
+// Grades, never ages. Anything still in brackets is waiting on that officer to
+// fill in her own; nobody's bio should go public before she has read it.
 const officers = [
   {
     key: 'mose',
     name: 'Mose James IV',
     role: 'Chairperson',
-    photo: null,
+    // Drop the file at public/images/board/mose.jpg and this turns on.
+    photo: '/images/board/mose.jpg',
     email: contactEmail,
-    bio: 'A short paragraph about Mose goes here. Two or three sentences: who he is, what he does when he is not doing this, and what he hopes the year looks like.',
+    bio:
+      'Mose James IV, father of Mose James V, a seventh grader. Yes, there are ' +
+      'five of them. He is happiest building something with a group and letting ' +
+      'somebody else stand in front of it. In his free time, he enjoys long walks ' +
+      'around his neighborhood and sipping his favorite beverage on the porch.',
   },
   {
     key: 'crystal',
@@ -27,7 +40,11 @@ const officers = [
     role: 'Co-Chairperson',
     photo: null,
     email: contactEmail,
-    bio: 'A short paragraph about Crystal goes here.',
+    bio:
+      'Crystal Claybrooks Jones, mother of [name], a [grade] grader. She will say ' +
+      'the thing everyone in the room was already thinking. This is a feature, not ' +
+      'a bug, and it is most of why she is Co-Chair. In her free time, she enjoys ' +
+      '[something small], done properly.',
   },
   {
     key: 'latasha',
@@ -35,7 +52,10 @@ const officers = [
     role: 'Treasurer',
     photo: null,
     email: contactEmail,
-    bio: 'A short paragraph about Latasha goes here.',
+    bio:
+      'Latasha Emeri, mother of [name], a [grade] grader. She keeps the receipts. ' +
+      'All of them. She will ask you for a second quote, and she will be right. In ' +
+      'her free time, she enjoys [something small].',
   },
   {
     key: 'farren',
@@ -43,7 +63,11 @@ const officers = [
     role: 'Secretary',
     photo: null,
     email: contactEmail,
-    bio: 'A short paragraph about Farren goes here.',
+    bio:
+      'Farren Salter, mother of [name], a [grade] grader. She has logged more ' +
+      'volunteer hours than she has ever mentioned, most of them in rooms you have ' +
+      'never been in. If it got folded, sorted, or written down this year, look for ' +
+      'her name on it. In her free time, she enjoys [something small].',
   },
 ];
 

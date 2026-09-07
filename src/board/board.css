@@ -74,6 +74,11 @@
 .bd-photo {
   display: block;
   width: 100%;
+  /* The img carries width/height attributes so the layout does not jump while
+     it loads. Those map to a used height, and aspect-ratio only applies when a
+     dimension is auto, so without this the photo cards render at the attribute
+     height while the initials cards sit at 4:5. */
+  height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   border-radius: 12px;
