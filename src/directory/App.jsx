@@ -29,6 +29,7 @@ import {
   removePhotos,
 } from "./api.js";
 
+import SocialIcon from "./SocialIcon.jsx";
 import Collective from "./Collective.jsx";
 import { Card, Photo, SafeLink, HouseBadge } from "./ListingUI.jsx";
 import { go } from "./navigation.js";
@@ -664,7 +665,8 @@ function Details({ item, preview = false }) {
             {(item.social_profiles || []).map((profile, index) => {
               let href;
               try { href = socialUrl(profile); } catch { return null; }
-              return <SafeLink key={index} href={href}><ArrowUpRight size={18} />{profile.platform}: {profile.url}</SafeLink>;
+              const handle = new URL(href).pathname.split("/").filter(Boolean).pop() || profile.platform;
+              return <SafeLink key={index} href={href} className="dir-social-link" aria-label={`${profile.platform}: ${handle}`}><SocialIcon platform={profile.platform} /><span>{profile.platform}<small>{handle.startsWith("@") ? handle : `@${handle}`}</small></span></SafeLink>;
             })}
             <SafeLink href={item.website}>
               <Globe size={18} />

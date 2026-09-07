@@ -2175,3 +2175,10 @@ textarea:focus-visible {
 .dir-social-row > * { min-width: 0; }
 .dir-contact a { overflow-wrap: anywhere; }
 @media (max-width: 650px) { .dir-social-row { grid-template-columns: 1fr; } }
+
+.dir-contact .dir-social-link { text-decoration: none; min-height: 44px; gap: 12px; }
+.dir-social-link svg { flex-shrink: 0; }
+.dir-social-link span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.dir-social-link small { color: #aaa8b3; font-size: .85em; }
+.dir-social-link:hover span { text-decoration: underline; }
+.dir-social-link:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 4px; }
