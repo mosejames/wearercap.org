@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   Lightbulb,
 } from "lucide-react";
+import { DEFAULT_VISIBILITY } from "./Visibility.jsx";
 import { CATEGORIES, HOUSES, OFFERS, filterListings } from "./model.js";
 import { Card, HouseBadge, Photo } from "./ListingUI.jsx";
 import { go } from "./navigation.js";
@@ -151,13 +152,91 @@ function StudentSpotlight() {
   </section>;
 }
 
+function FullStudentSpotlight({ items, loading, studentMode }) {
+  const students = items.filter((item) => item.venture === "student");
+  return (
+    <section className="collective-students" aria-labelledby="student-heading">
+      <div className="collective-student-intro">
+        <span className="dir-eyebrow">
+          <Sparkles size={14} />
+          The next generation
+        </span>
+        <h2 id="student-heading">
+          Small ventures.
+          <br />
+          <em>Big futures.</em>
+        </h2>
+        <p>
+          The first booking. The first order. The first person who says, “I
+          believe in you.” Let’s be that community.
+        </p>
+        <button
+          className="dir-button dir-secondary"
+          onClick={() => go("new-student")}
+        >
+          Share a student venture
+          <ArrowUpRight size={17} />
+        </button>
+        {!studentMode && students.length > 0 && (
+          <button className="dir-text-button" onClick={() => go("students")}>
+            Explore all student ventures
+            <ArrowRight size={16} />
+          </button>
+        )}
+      </div>
+      {students.length ? (
+        <div className="student-preview-grid">
+          {students.slice(0, 2).map((item) => (
+            <Card key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <div className="student-invitation">
+          <span className="student-orbit" aria-hidden="true">
+            <Lightbulb size={60} />
+          </span>
+          <span className="dir-eyebrow">
+            {loading
+              ? "Finding our young makers…"
+              : "A place for their next big idea"}
+          </span>
+          <h3>
+            Their first customer
+            <br />
+            could be <em>you.</em>
+          </h3>
+          <p>
+            Young DJs. Budding artists. Future founders.
+            <br />
+            Parent managed. Community supported.
+          </p>
+          <div className="student-invitation-bottom">
+            <span>
+              <Sparkles size={14} />
+              Student spotlight
+            </span>
+            <button
+              aria-label="Create a student venture listing"
+              onClick={() => go("new-student")}
+            >
+              <ArrowUpRight size={23} />
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Collective({
   items,
   loading,
   error,
   studentMode = false,
+  settings = DEFAULT_VISIBILITY,
 }) {
   const initial = new URLSearchParams(window.location.search);
+  const [house,setHouse] = useState("");
   const [query, setQuery] = useState(initial.get("q") || "");
   const [category, setCategory] = useState(initial.get("category") || "");
 
@@ -184,7 +263,7 @@ export default function Collective({
     }
     window.history.replaceState({}, "", url);
   }, [query, category, reach, offer, perks]);
-  const visible = filterListings(items, query, category, studentMode, {
+  const visible = filterListings(settings.house_filter && house ? items.filter(item=>item.house===house) : items, query, category, studentMode, {
     reach,
     offer,
     perks,
@@ -269,11 +348,7 @@ export default function Collective({
         </div>
         <Showcase items={items} studentMode={studentMode} />
       </section>
-      <StudentSpotlight
-        items={items}
-        loading={loading}
-        studentMode={studentMode}
-      />
+      {settings.student_spotlight ? <FullStudentSpotlight items={items} loading={loading} studentMode={studentMode} /> : settings.student_invitation ? <StudentSpotlight /> : null}
       <section
         id="collective-browse"
         className="collective-browse"
@@ -281,11 +356,9 @@ export default function Collective({
       >
         <div className="dir-section-heading">
           <div>
-            <span className="dir-eyebrow">Start with your community</span>
+            {settings.partner_heading && <span className="dir-eyebrow">Start with your community</span>}
             <h2 id="collective-heading">
-              {studentMode
-                ? "Meet our young makers."
-                : "Find your future partners."}
+              {studentMode ? "Meet our young makers." : settings.partner_heading ? "Find your future partners." : "The RCAP Collective"}
             </h2>
           </div>
           <button
@@ -310,6 +383,7 @@ export default function Collective({
             </div>
             <span>Find a service. Make a connection.</span>
           </div>
+          {settings.house_filter && <label className="collective-select">House<select value={house} onChange={e=>setHouse(e.target.value)}><option value="">All houses</option>{HOUSES.map(h=><option key={h.key} value={h.key}>{h.name}</option>)}</select></label>}
           <div className="dir-filters">
             <label className="dir-search">
               <Search size={20} />
@@ -462,7 +536,7 @@ export default function Collective({
           </div>
         )}
       </section>
-      <section
+      {settings.collaboration && <section
         className="collective-collaboration"
         id="collective-collaboration"
         aria-labelledby="collaboration-heading"
@@ -531,7 +605,7 @@ export default function Collective({
             })}
           </div>
         </div>
-      </section>
+      </section>}
       <section className="collective-join">
         <span className="dir-eyebrow">Built within. Shared with all.</span>
         <h2>

@@ -29,6 +29,7 @@ import {
   removePhotos,
 } from "./api.js";
 
+import Visibility, { DEFAULT_VISIBILITY } from "./Visibility.jsx";
 import SocialIcon from "./SocialIcon.jsx";
 import Collective from "./Collective.jsx";
 import { Card, Photo, SafeLink, HouseBadge } from "./ListingUI.jsx";
@@ -710,6 +711,15 @@ export default function App() {
     [notice, setNotice] = useState(""),
     [revision, setRevision] = useState(0),
     [pageKey, setPageKey] = useState(0);
+  const [visibility,setVisibility] = useState(DEFAULT_VISIBILITY), [isAdmin,setIsAdmin] = useState(false);
+  useEffect(() => {
+    supabase.from("directory_settings").select("*").eq("id",true).single().then(({data}) => {if(data) setVisibility(data);});
+  }, []);
+  useEffect(() => {
+    let active=true;setIsAdmin(false);
+    if(user) supabase.from("directory_admins").select("user_id").eq("user_id",user.id).maybeSingle().then(({data})=>{if(active) setIsAdmin(Boolean(data));});
+    return ()=>{active=false;};
+  },[user]);
   const view = route.get("view") || "",
     id = route.get("id");
   useEffect(() => {
@@ -814,6 +824,8 @@ export default function App() {
           >
             Explore
           </a>
+          {isAdmin && <a href="?view=admin" onClick={e=>{e.preventDefault();go("admin");}}>Admin</a>}
+          {visibility.student_spotlight && <a href="?view=students" onClick={e=>{e.preventDefault();go("students");}}>Student spotlight</a>}
           <a href="/">
             We Are RCAP
             <ArrowUpRight size={13} />
@@ -861,7 +873,7 @@ export default function App() {
             </button>
           </div>
         )}
-        {["manage", "edit", "new", "new-student"].includes(view) ? (
+        {view === "admin" ? (!authReady ? <p>Checking your sign-in…</p> : !user ? <SignIn onError={setError} /> : isAdmin ? <Visibility settings={visibility} onSaved={setVisibility} /> : <p className="dir-empty">This account does not have directory admin access.</p>) : ["manage", "edit", "new", "new-student"].includes(view) ? (
           !authReady ? (
             <p className="dir-empty">Checking your sign-in…</p>
           ) : !user ? (
@@ -942,7 +954,8 @@ export default function App() {
             items={items}
             loading={loading}
             error={error}
-            studentMode={view === "students"}
+            settings={visibility}
+            studentMode={visibility.student_spotlight && view === "students"}
           />
         )}
       </main>
