@@ -134,3 +134,7 @@ describe("Collective discovery", () => {
     ).toHaveLength(1);
   });
 });
+it('does not narrow businesses by a legacy house filter', () => {
+ const rows=[{...emptyListing(),name:'One',house:'amistad'},{...emptyListing(),name:'Two',house:'isibindi'}];
+ expect(filterListings(rows,'','',false,{house:'amistad'})).toHaveLength(2);
+});

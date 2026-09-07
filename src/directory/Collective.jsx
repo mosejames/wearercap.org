@@ -229,7 +229,7 @@ export default function Collective({
   const initial = new URLSearchParams(window.location.search);
   const [query, setQuery] = useState(initial.get("q") || "");
   const [category, setCategory] = useState(initial.get("category") || "");
-  const [house, setHouse] = useState(initial.get("house") || "");
+
   const [reach, setReach] = useState(initial.get("reach") || "");
   const [offer, setOffer] = useState(initial.get("offer") || "");
   const [perks, setPerks] = useState(initial.get("perks") === "1");
@@ -243,7 +243,7 @@ export default function Collective({
     for (const [key, value] of Object.entries({
       q: query,
       category,
-      house,
+      house: "",
       reach,
       offer,
       perks: perks ? "1" : "",
@@ -252,20 +252,19 @@ export default function Collective({
       else url.searchParams.delete(key);
     }
     window.history.replaceState({}, "", url);
-  }, [query, category, house, reach, offer, perks]);
+  }, [query, category, reach, offer, perks]);
   const visible = filterListings(items, query, category, studentMode, {
-    house,
     reach,
     offer,
     perks,
   });
   const hasFilters = Boolean(
-    query || category || house || reach || offer || perks,
+    query || category || reach || offer || perks,
   );
   const clear = () => {
     setQuery("");
     setCategory("");
-    setHouse("");
+
     setReach("");
     setOffer("");
     setPerks(false);
@@ -334,38 +333,11 @@ export default function Collective({
             </button>
           </div>
           <div className="collective-hero-footnote">
-            <span className="tiny-house-dots" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-            Four houses. One extraordinary community.
+            Every family. Every talent. One RCAP community.
           </div>
         </div>
         <Showcase items={items} studentMode={studentMode} />
       </section>
-      <div className="collective-house-bar">
-        <span>
-          Different houses.
-          <br />
-          <strong>Shared possibility.</strong>
-        </span>
-        <div>
-          {HOUSES.map((h) => (
-            <button
-              key={h.key}
-              aria-pressed={house === h.key}
-              onClick={() => {
-                setHouse(house === h.key ? "" : h.key);
-                scrollToBrowse();
-              }}
-            >
-              <HouseBadge house={h.key} large />
-            </button>
-          ))}
-        </div>
-      </div>
       <StudentSpotlight
         items={items}
         loading={loading}
@@ -434,21 +406,6 @@ export default function Collective({
                 <option value="">All categories</option>
                 {CATEGORIES.map((c) => (
                   <option key={c}>{c}</option>
-                ))}
-              </select>
-            </label>
-            <label className="collective-select">
-              <span>House</span>
-              <select
-                aria-label="House"
-                value={house}
-                onChange={(e) => setHouse(e.target.value)}
-              >
-                <option value="">All houses</option>
-                {HOUSES.map((h) => (
-                  <option value={h.key} key={h.key}>
-                    {h.name}
-                  </option>
                 ))}
               </select>
             </label>

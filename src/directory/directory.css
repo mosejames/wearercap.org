@@ -2182,3 +2182,9 @@ textarea:focus-visible {
 .dir-social-link small { color: #aaa8b3; font-size: .85em; }
 .dir-social-link:hover span { text-decoration: underline; }
 .dir-social-link:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 4px; }
+
+.dir-product-spotlight { margin: 28px 0; padding: 22px; border: 1px solid #c8a96b66; border-radius: 14px; display: grid; grid-template-columns: 130px 1fr; gap: 20px; }
+.dir-product-spotlight img { width: 100%; max-height: 220px; object-fit: contain; }
+.dir-product-spotlight h2 { margin: 10px 0; }
+.dir-product-spotlight p { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media(max-width: 500px) { .dir-product-spotlight { grid-template-columns: 1fr; } .dir-product-spotlight img { max-width: 200px; } }

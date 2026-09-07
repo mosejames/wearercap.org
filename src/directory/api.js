@@ -34,6 +34,10 @@ export async function saveBusiness(listing, user) {
     reach = "local",
     offers = [],
     community_perk = "",
+    product_name = "",
+    product_description = "",
+    product_url = "",
+    product_photo = "",
     collaboration_note = "",
     social_profiles = [],
   } = listing;
@@ -57,6 +61,10 @@ export async function saveBusiness(listing, user) {
       reach,
       offers,
       community_perk,
+      product_name,
+      product_description,
+      product_url,
+      product_photo,
       collaboration_note,
       social_profiles,
     })

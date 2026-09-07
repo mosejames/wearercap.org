@@ -113,6 +113,7 @@ export function Card({ item, manage = false }) {
           <p>{item.bio || "Your story starts here. Add a short bio."}</p>
           <div className="dir-card-tags">
             <HouseBadge house={item.house} />
+            {item.product_name && <span className="collective-tag">Creation spotlight: {item.product_name}</span>}
             {item.community_perk && (
               <span className="collective-tag">
                 <Gift size={12} />

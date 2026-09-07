@@ -437,6 +437,16 @@ export function Editor({
               </div>
             </div>
             <div className="dir-form-section">
+              <div><span className="dir-eyebrow">For authors & makers</span><h2>Spotlight something you created.</h2><p>Feature a book, artwork, handmade piece, or other product. Tell its story and invite visitors to learn more. This is an introduction, with no checkout or sales handled here.</p></div>
+              <div className="dir-fields">
+                {field("product_name", "Featured creation (optional)", "text", 100)}
+                <label>About this creation<textarea maxLength={400} value={form.product_description} onChange={e => update("product_description", e.target.value)} placeholder="What did you create, and what makes it special?" /></label>
+                {field("product_url", "Learn more link (optional)", "text", 500)}
+                <label>Spotlight photo<select value={form.product_photo || ""} onChange={e => update("product_photo", e.target.value)}><option value="">Use main listing photo</option>{form.photos.map((photo, index) => <option key={photo} value={photo}>Photo {index + 1}{index === 0 ? " (main)" : ""}</option>)}</select></label>
+                <small>Upload a book cover or product image in Show your work above, then choose it here. Clear the creation name to remove the spotlight.</small>
+              </div>
+            </div>
+            <div className="dir-form-section">
               <div>
                 <span className="dir-step">03</span>
                 <h2>Make a connection.</h2>
@@ -612,6 +622,7 @@ function Details({ item, preview = false }) {
               <Sparkles size={16} /> Student venture · Parent managed
             </p>
           )}
+
           <HouseBadge house={item.house} />
           <h1>{item.name || "Your business name"}</h1>
           {item.location && <p className="dir-location">{item.location}</p>}
@@ -648,6 +659,10 @@ function Details({ item, preview = false }) {
               </small>
             </div>
           )}
+          {item.product_name && <section className="dir-product-spotlight">
+            {(item.product_photo || item.photos?.[0]) && <Photo path={item.photos?.includes(item.product_photo) ? item.product_photo : item.photos?.[0]} name={item.product_name} />}
+            <div><span className="dir-eyebrow">Creation spotlight</span><h2>{item.product_name}</h2>{item.product_description && <p>{item.product_description}</p>}<SafeLink href={item.product_url}>Learn more <ArrowUpRight size={16} /></SafeLink></div>
+          </section>}
           <div className="dir-contact">
             <h2>Let’s connect.</h2>
             {item.email && (
@@ -947,12 +962,7 @@ export default function App() {
           <strong>
             RCAP <span>Collective</span>
           </strong>
-          <p>Four houses. One extraordinary community.</p>
-        </div>
-        <div className="collective-footer-houses">
-          {HOUSES.map((house) => (
-            <HouseBadge key={house.key} house={house.key} />
-          ))}
+          <p>Every family. Every talent. One RCAP community.</p>
         </div>
         <small>
           A parent-led directory. Listings are provided by their owners and are

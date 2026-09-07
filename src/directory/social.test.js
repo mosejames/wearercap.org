@@ -10,3 +10,9 @@ it('publishes with social contact alone and ignores unused extra rows', () => {
   const result=validateListing({...emptyListing(),name:'OMG',bio:'Photo booths',social_profiles:[{platform:'Instagram',url:'@omgbooth'},{platform:'Instagram',url:''}]},true);
   expect(result.social_profiles).toEqual([{platform:'Instagram',url:'https://www.instagram.com/omgbooth'}]);
 });
+it('keeps a creation spotlight and safely falls back after its photo is removed', () => {
+ const result=validateListing({...emptyListing(),name:'Author',product_name:'My Book',product_description:'A story',product_url:'example.com/book',product_photo:'removed',photos:[]});
+ expect(result.product_name).toBe('My Book');
+ expect(result.product_url).toBe('https://example.com/book');
+ expect(result.product_photo).toBe('');
+});

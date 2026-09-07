@@ -68,6 +68,10 @@ export const OFFERS = [
   },
 ];
 export const emptyListing = () => ({
+  product_name: "",
+  product_description: "",
+  product_url: "",
+  product_photo: "",
   name: "",
   bio: "",
   category: CATEGORIES[0],
@@ -126,6 +130,9 @@ export function validateListing(listing, publish = false) {
     (listing.collaboration_note || "").length > 280
   )
     throw new Error("Shorten your community offer or collaboration note.");
+  if ((listing.product_name || "").length > 100 || (listing.product_description || "").length > 400) throw new Error("Shorten the creation name or description.");
+  const product_url = webUrl(listing.product_url);
+  if (product_url.length > 500) throw new Error("Keep the learn more link under 501 characters.");
   const social_profiles = (listing.social_profiles || []).filter(p => p.url?.trim()).map(p => ({ platform: p.platform, url: socialUrl(p) }));
   if (social_profiles.some(p => p.url.length > 500)) throw new Error("Keep social profile links under 501 characters.");
   const website = webUrl(listing.website),
@@ -144,6 +151,9 @@ export function validateListing(listing, publish = false) {
     bio: listing.bio.trim(),
     website,
     connect_url,
+    product_url,
+    product_name: (listing.product_name || "").trim(),
+    product_photo: listing.photos.includes(listing.product_photo) ? listing.product_photo : "",
     social_profiles,
     published: publish,
   };
@@ -160,12 +170,11 @@ export function filterListings(
     (item) =>
       (!category || item.category === category) &&
       (!students || item.venture === "student") &&
-      (!filters.house || item.house === filters.house) &&
       (!filters.reach || item.reach === filters.reach) &&
       (!filters.offer || (item.offers || []).includes(filters.offer)) &&
       (!filters.perks || Boolean(item.community_perk?.trim())) &&
       words.every((word) =>
-        `${item.name} ${item.bio} ${item.category} ${item.location} ${item.community_perk || ""} ${item.collaboration_note || ""}`
+        `${item.product_name || ""} ${item.product_description || ""} ${item.name} ${item.bio} ${item.category} ${item.location} ${item.community_perk || ""} ${item.collaboration_note || ""}`
           .toLowerCase()
           .includes(word),
       ),
