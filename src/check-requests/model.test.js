@@ -110,3 +110,30 @@ describe("finance action visibility", () => {
     expect(actionAllowed(r, null, r.email, "edit")).toBe(false);
   });
 });
+
+import { phoneIdentity, contactOf, validZelle } from "./model.js";
+describe("cellphone identity and Zelle", () => {
+  it("normalizes phone numbers consistently with verified auth identities", () => {
+    expect(phoneIdentity("(404) 555-0123")).toBe("+14045550123");
+    expect(phoneIdentity("+1 404 555 0123")).toBe("+14045550123");
+    expect(phoneIdentity("123")).toBeNull();
+    expect(contactOf({ phone: "14045550123" })).toBe("+14045550123");
+  });
+  it("accepts a Zelle email or cellphone and rejects invalid recipients", () => {
+    expect(validZelle("parent@example.test")).toBe(true);
+    expect(validZelle("(404) 555-0123")).toBe(true);
+    expect(validZelle("invalid")).toBe(false);
+    expect(validZelle("")).toBe(false);
+  });
+  it("gates actions by verified phone identity", () => {
+    const r = {
+      email: "+14045550123",
+      approver_email: "+14045550124",
+      status: "submitted",
+    };
+    expect(actionAllowed(r, "approver", "+14045550124", "approved")).toBe(true);
+    expect(actionAllowed(r, "approver", "+14045550123", "approved")).toBe(
+      false,
+    );
+  });
+});

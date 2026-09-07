@@ -34,6 +34,10 @@ export function validateDraft(d) {
     return "Describe what these expenses were for in at least 10 characters.";
   if (d.delivery === "mail" && d.address.trim().length < 10)
     return "Enter your complete mailing address.";
+  if (!["mail", "pickup", "zelle"].includes(d.delivery))
+    return "Choose a payment method.";
+  if (d.delivery === "zelle" && !validZelle(d.zelle_contact))
+    return "Enter the email or cellphone number registered with Zelle.";
   if (!d.items.length || d.items.length > 20)
     return "Include between 1 and 20 expenses.";
   for (let i = 0; i < d.items.length; i++) {
@@ -95,6 +99,7 @@ export const newDraft = () => ({
   payee: "",
   delivery: "pickup",
   address: "",
+  zelle_contact: "",
   committee: "",
   purpose: "",
   approver_email: "",
@@ -112,4 +117,22 @@ export function fromRecord(r) {
       amount: (i.amount_cents / 100).toFixed(2),
     })),
   };
+}
+
+export function phoneIdentity(value) {
+  const digits = normalizePhone(value);
+  return /^\d{10}$/.test(digits) ? `+1${digits}` : null;
+}
+export function contactOf(user) {
+  return user?.phone
+    ? `+${user.phone.replace(/^\+/, "")}`
+    : user?.email?.toLowerCase() || "";
+}
+
+export function validZelle(value) {
+  const s = String(value || "").trim();
+  return (
+    s.length <= 254 &&
+    (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || Boolean(phoneIdentity(s)))
+  );
 }

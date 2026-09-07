@@ -27,6 +27,9 @@ import {
   newItem,
   fromRecord,
   actionAllowed,
+  phoneIdentity,
+  contactOf,
+  normalizePhone,
 } from "./model.js";
 import {
   supabase,
@@ -98,19 +101,29 @@ function Guide() {
     </aside>
   );
 }
-function SignIn({ onError }) {
-  const [email, setEmail] = useState(""),
+function SignIn({ onError, allowEmail = false }) {
+  const [emailMode, setEmailMode] = useState(false);
+  const [phone, setPhone] = useState(""),
     [code, setCode] = useState(""),
     [sent, setSent] = useState(false),
     [busy, setBusy] = useState(false);
   async function send(e) {
     e.preventDefault();
+    if (!emailMode && !phoneIdentity(phone)) {
+      onError("Enter your 10-digit US cellphone number.");
+      return;
+    }
     setBusy(true);
     onError("");
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { shouldCreateUser: true },
+        ...(emailMode
+          ? { email: phone.trim().toLowerCase() }
+          : { phone: phoneIdentity(phone) }),
+        options: {
+          shouldCreateUser: true,
+          ...(emailMode ? {} : { channel: "sms" }),
+        },
       });
       if (error) throw error;
       setSent(true);
@@ -126,13 +139,19 @@ function SignIn({ onError }) {
   }
   async function verify(e) {
     e.preventDefault();
+    if (!emailMode && !phoneIdentity(phone)) {
+      onError("Enter your 10-digit US cellphone number.");
+      return;
+    }
     setBusy(true);
     onError("");
     try {
       const { error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
+        ...(emailMode
+          ? { email: phone.trim().toLowerCase() }
+          : { phone: phoneIdentity(phone) }),
         token: code.trim(),
-        type: "email",
+        type: emailMode ? "email" : "sms",
       });
       if (error) throw error;
     } catch {
@@ -146,20 +165,24 @@ function SignIn({ onError }) {
       <ShieldCheck size={25} />
       <div>
         <strong>Sign in to submit and track your request</strong>
-        <p>Use any personal email address. We’ll send a verification code to your inbox. No school or RCAP email is needed.</p>
+        <p>
+          {emailMode
+            ? "Use the personal email already linked to your board access. We’ll send a code to your inbox."
+            : "Enter your cellphone number. We’ll text you a verification code. No email or password needed."}
+        </p>
       </div>
       <form className="signin-form full" onSubmit={sent ? verify : send}>
         <div className="fields">
           <Field
-            label="Email address"
-            type="email"
+            label={emailMode ? "Personal email" : "Cellphone number"}
+            type={emailMode ? "email" : "tel"}
             required
-            autoComplete="email"
-            maxLength={254}
-            value={email}
+            autoComplete={emailMode ? "email" : "tel"}
+            maxLength={emailMode ? 254 : 20}
+            value={phone}
             disabled={sent}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder={emailMode ? "you@example.com" : "(404) 555-0123"}
           />
           {sent && (
             <Field
@@ -179,7 +202,9 @@ function SignIn({ onError }) {
               ? "Please wait…"
               : sent
                 ? "Verify & continue"
-                : "Send sign-in code"}
+                : emailMode
+                  ? "Email me a code"
+                  : "Text me a code"}
             <ArrowRight size={16} />
           </button>
           {sent && (
@@ -192,12 +217,34 @@ function SignIn({ onError }) {
                 setCode("");
               }}
             >
-              Change email or resend
+              Change details or resend
             </button>
           )}
         </div>
         {sent && (
-          <p role="status">Check your inbox and spam folder for your code.</p>
+          <p role="status">
+            {emailMode
+              ? "Check your inbox for your verification code."
+              : "Check your text messages for your verification code."}
+          </p>
+        )}
+        {allowEmail && (
+          <button
+            className="text-button"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setEmailMode(!emailMode);
+              setPhone("");
+              setCode("");
+              setSent(false);
+              onError("");
+            }}
+          >
+            {emailMode
+              ? "Use cellphone instead"
+              : "Existing board access by email? Sign in here"}
+          </button>
         )}
       </form>
     </div>
@@ -286,12 +333,12 @@ function RequestForm({
                 placeholder="(404) 555-0123"
               />
               <Field
-                label="Check payable to"
+                label="Payee full name"
                 required
                 maxLength={150}
                 value={draft.payee}
                 onChange={(e) => set("payee", e.target.value)}
-                placeholder="Name on the check"
+                placeholder="Name of the person receiving payment"
               />
               <Field label="Committee">
                 <select
@@ -307,13 +354,14 @@ function RequestForm({
                   <option>Other RCAP expense</option>
                 </select>
               </Field>
-              <Field label="Check delivery">
+              <Field label="How would you like to receive payment?">
                 <select
                   value={draft.delivery}
                   onChange={(e) => set("delivery", e.target.value)}
                 >
-                  <option value="pickup">Coordinate pickup</option>
-                  <option value="mail">Mail the check</option>
+                  <option value="mail">Mail</option>
+                  <option value="pickup">Pickup at school</option>
+                  <option value="zelle">Zelle</option>
                 </select>
               </Field>
               <Field label="Overseeing board member (optional)">
@@ -324,7 +372,7 @@ function RequestForm({
                 >
                   <option value="">Let the secretary route it</option>
                   {staff
-                    .filter((s) => s.email !== user?.email)
+                    .filter((s) => s.email !== contactOf(user))
                     .map((s) => (
                       <option key={s.email} value={s.email}>
                         {s.name}
@@ -343,6 +391,17 @@ function RequestForm({
                     autoComplete="street-address"
                   />
                 </Field>
+              )}
+              {draft.delivery === "zelle" && (
+                <Field
+                  full
+                  label="Email or cellphone number registered with Zelle"
+                  required
+                  maxLength={254}
+                  value={draft.zelle_contact || ""}
+                  onChange={(e) => set("zelle_contact", e.target.value)}
+                  placeholder="Your Zelle recipient email or cellphone"
+                />
               )}
               <Field full label="What were these expenses for?">
                 <textarea
@@ -502,7 +561,9 @@ function RequestForm({
             </label>
             {user && (
               <div className="actions">
-                <span className="muted">Submitting as {user.email}</span>
+                <span className="muted">
+                  Request updates go to {contactOf(user)}
+                </span>
                 <button className="primary" disabled={busy}>
                   {busy
                     ? progress
@@ -672,7 +733,7 @@ function Detail({
       clearInterval(timer);
     };
   }, [r.id, r.version]);
-  const allowed = (a) => actionAllowed(r, role, user.email, a);
+  const allowed = (a) => actionAllowed(r, role, contactOf(user), a);
   async function change(a) {
     setBusy(true);
     onError("");
@@ -746,7 +807,13 @@ function Detail({
             </div>
             <div>
               <dt>Delivery</dt>
-              <dd>{r.delivery === "mail" ? r.address : "Coordinate pickup"}</dd>
+              <dd>
+                {r.delivery === "mail"
+                  ? r.address
+                  : r.delivery === "zelle"
+                    ? `Zelle: ${r.zelle_contact}`
+                    : "Pickup at school"}
+              </dd>
             </div>
             <div>
               <dt>Overseeing board member</dt>
@@ -937,7 +1004,7 @@ function Detail({
             )}
           </section>
           <section className="record-card" style={{ marginTop: 20 }}>
-            <h3>Email updates</h3>
+            <h3>Request updates</h3>
             {loading ? (
               <p>Loading delivery status…</p>
             ) : extra.notifications.length ? (
@@ -963,7 +1030,7 @@ function Detail({
                 </ul>
               </>
             ) : (
-              <p>No email updates to show yet.</p>
+              <p>No request updates to show yet.</p>
             )}
           </section>
         </aside>
@@ -981,7 +1048,9 @@ function Staff({ staff, onRefresh, onError }) {
     setBusy(true);
     onError("");
     try {
-      await act("staff", { name, email, role });
+      if (!phoneIdentity(email))
+        throw new Error("Enter a valid cellphone number.");
+      await act("staff", { name, email: phoneIdentity(email), role });
       setName("");
       setEmail("");
       await onRefresh();
@@ -995,8 +1064,9 @@ function Staff({ staff, onRefresh, onError }) {
     <section className="form-card admin-panel">
       <h2>Board access</h2>
       <p className="muted">
-        Add the email each board member uses to sign in. Assigned reviewers see
-        their requests; secretary and treasurer accounts see the full queue.
+        Add the cellphone number each board member uses to sign in. Assigned
+        reviewers see their requests; secretary and treasurer accounts see the
+        full queue.
       </p>
       <ul className="inline-list">
         {staff.map((s) => (
@@ -1021,8 +1091,8 @@ function Staff({ staff, onRefresh, onError }) {
             onChange={(e) => setName(e.target.value)}
           />
           <Field
-            label="Sign-in email"
-            type="email"
+            label="Board member cellphone"
+            type="tel"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -1066,7 +1136,13 @@ function App() {
         block: "center",
       });
   }, [error]);
-  const role = staff.find((s) => s.email === user?.email?.toLowerCase())?.role;
+  useEffect(() => {
+    if (user?.phone)
+      setDraft((d) =>
+        d.phone ? d : { ...d, phone: normalizePhone(user.phone) },
+      );
+  }, [user?.phone]);
+  const role = staff.find((s) => s.email === contactOf(user))?.role;
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error)
@@ -1130,14 +1206,14 @@ function App() {
   }
   function update(r) {
     setRecords((a) => [r, ...a.filter((x) => x.id !== r.id)]);
-    setNotice("Request updated. Email updates have been queued.");
+    setNotice("Request updated. Request updates have been queued.");
     refresh();
   }
   function saved(r) {
     update(r);
     setDraft(newDraft());
     setNotice(
-      `Request #${r.reference} submitted. Your receipts and request are saved, and email updates are queued.`,
+      `Request #${r.reference} submitted. Your receipts and request are saved, and request updates are queued.`,
     );
     select(r.id);
     setTab("mine");
@@ -1236,8 +1312,8 @@ function App() {
             <div className="empty">
               <h2>Request unavailable</h2>
               <p>
-                It may belong to another account. Sign in with the email used
-                for this request.
+                It may belong to another account. Sign in with the cellphone
+                number used for this request.
               </p>
               <button className="secondary" onClick={() => navigate("mine")}>
                 Back to my requests
@@ -1261,10 +1337,10 @@ function App() {
               <h2>{tab === "board" ? "Board review" : "Your requests"}</h2>
               <p className="muted">
                 {tab === "board"
-                  ? "Use your personal email address. Board access is added to that email by the secretary."
+                  ? "Use your cellphone number. Board access is added to that number by the secretary."
                   : "Sign in to see your requests, reviewer notes, and payment status."}
               </p>
-              <SignIn onError={setError} />
+              <SignIn onError={setError} allowEmail={tab === "board"} />
             </section>
             <Guide />
           </div>
@@ -1273,9 +1349,9 @@ function App() {
             <ShieldCheck size={35} />
             <h2>Board access is needed</h2>
             <p className="muted">
-              The secretary can add your sign-in email in Board access.
+              The secretary can add your cellphone number in Board access.
             </p>
-            <p>{user.email}</p>
+            <p>{contactOf(user)}</p>
             <button className="secondary" onClick={() => navigate("mine")}>
               View my requests
             </button>

@@ -56,7 +56,17 @@ export async function submit(d, user, onProgress) {
     });
   }
   onProgress("Saving your request…");
-  return act("submit", { ...d, phone: normalizePhone(d.phone), items });
+  return act("submit", {
+    ...d,
+    phone: normalizePhone(d.phone),
+    zelle_contact:
+      d.delivery === "zelle"
+        ? d.zelle_contact.includes("@")
+          ? d.zelle_contact.trim().toLowerCase()
+          : normalizePhone(d.zelle_contact)
+        : "",
+    items,
+  });
 }
 export async function details(id) {
   const [h, n] = await Promise.all([
@@ -67,7 +77,7 @@ export async function details(id) {
       .order("created_at"),
     supabase
       .from("cr_notifications")
-      .select("id,state,recipient,sent_at,created_at")
+      .select("id,state,recipient,channel,sent_at,created_at")
       .eq("request_id", id)
       .order("created_at", { ascending: false }),
   ]);
