@@ -40,8 +40,10 @@ import {
   act,
   details,
   receiptUrl,
+  archiveUrl,
 } from "./api.js";
 import "./requests.css";
+import Account from "./Account.jsx";
 
 const dateLabel = (value) =>
   new Date(value).toLocaleString("en-US", {
@@ -102,7 +104,7 @@ function Guide() {
     </aside>
   );
 }
-function SignIn({ onError, allowEmail = false }) {
+function SignIn({ onError, allowEmail = true, allowGoogle = true }) {
   const [emailMode, setEmailMode] = useState(false);
   const [phone, setPhone] = useState(""),
     [code, setCode] = useState(""),
@@ -168,10 +170,31 @@ function SignIn({ onError, allowEmail = false }) {
         <strong>Sign in to submit and track your request</strong>
         <p>
           {emailMode
-            ? "Use the personal email already linked to your board access. We’ll send a code to your inbox."
+            ? "Use your personal email. If you previously used cellphone sign-in, first add this email under Account & backup sign-in to keep your requests together."
             : "Enter your cellphone number. We’ll text you a verification code. No email or password needed."}
         </p>
       </div>
+      {allowGoogle && (
+        <button
+          type="button"
+          className="secondary"
+          onClick={async () => {
+            const { error } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: { redirectTo: location.origin + "/check-requests/" },
+            });
+            if (error) onError(error.message);
+          }}
+        >
+          Continue with Google
+        </button>
+      )}
+      {allowGoogle && (
+        <p className="muted">
+          Already used your cellphone here? Sign in by text and add your Google
+          email under Account & backup sign-in first.
+        </p>
+      )}
       <form className="signin-form full" onSubmit={sent ? verify : send}>
         <div className="fields">
           <Field
@@ -242,9 +265,7 @@ function SignIn({ onError, allowEmail = false }) {
               onError("");
             }}
           >
-            {emailMode
-              ? "Use cellphone instead"
-              : "Existing board access by email? Sign in here"}
+            {emailMode ? "Use cellphone instead" : "Use email instead"}
           </button>
         )}
       </form>
@@ -727,6 +748,20 @@ export function RequestForm({
                   <strong>{dollars(total)}</strong>
                 </div>
               </div>
+              <Field
+                full
+                label="Email me a PDF copy (optional)"
+                type="email"
+                maxLength={254}
+                value={draft.archive_email || ""}
+                onChange={(e) => set("archive_email", e.target.value)}
+                placeholder="Your personal email address"
+              />
+              <p className="muted">
+                A PDF with your request and receipts is emailed to RCAP for its
+                records. Add your email above if you would like a copy too.
+                Sign-in stays by cellphone.
+              </p>
               <label className="check-row">
                 <input
                   type="checkbox"
@@ -777,7 +812,9 @@ export function RequestForm({
             )}
           </fieldset>
         </form>
-        {!user && step === 2 && <SignIn onError={onError} />}
+        {!user && step === 2 && (
+          <SignIn onError={onError} allowGoogle={false} />
+        )}
       </section>
       <details className="request-help">
         <summary>Receipt requirements & reimbursement policy</summary>
@@ -1208,6 +1245,41 @@ function Detail({
             )}
           </section>
           <section className="record-card" style={{ marginTop: 20 }}>
+            <h3>PDF records & receipts</h3>
+            <p className="muted">
+              Each receipt image stays on one page. Download a dated copy of
+              your request and its approval or payment record.
+            </p>
+            {extra.notifications.filter((n) => n.archive_files?.length)
+              .length ? (
+              extra.notifications
+                .filter((n) => n.archive_files?.length)
+                .map((n) => (
+                  <div key={n.id}>
+                    <p>{dateLabel(n.created_at)}</p>
+                    {n.archive_files.map((file) => (
+                      <button
+                        type="button"
+                        className="text-button"
+                        key={file.path}
+                        onClick={async () => {
+                          try {
+                            window.location.assign(await archiveUrl(file.path));
+                          } catch {
+                            onError(
+                              "Could not open the PDF. Please try again.",
+                            );
+                          }
+                        }}
+                      >
+                        {file.name}
+                      </button>
+                    ))}
+                  </div>
+                ))
+            ) : (
+              <p>PDF records will appear here after background processing.</p>
+            )}
             <h3>Request updates</h3>
             {loading ? (
               <p>Loading delivery status…</p>
@@ -1219,6 +1291,12 @@ function Detail({
                     <li key={n.id}>
                       <span style={{ overflowWrap: "anywhere", fontSize: 14 }}>
                         {n.recipient}
+                        {n.state === "failed" && (
+                          <small style={{ display: "block" }}>
+                            {n.last_error ||
+                              "Delivery will retry automatically."}
+                          </small>
+                        )}
                       </span>
                       <span className="badge">
                         {n.state === "sent"
@@ -1490,7 +1568,7 @@ function App() {
         <nav className="tabs" aria-label="Check request sections">
           {[
             ["new", "New request"],
-            ["mine", "My requests"],
+            ["mine", "Past requests"],
             ["board", "Board review"],
           ].map(([key, label]) => (
             <button
@@ -1512,6 +1590,7 @@ function App() {
             </button>
           )}
         </nav>
+        {user && tab === "mine" && <Account user={user} onError={setError} />}
         {error && (
           <div ref={errorRef} className="notice error" role="alert">
             {error}

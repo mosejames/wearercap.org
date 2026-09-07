@@ -13,8 +13,9 @@ begin
  insert into storage.objects(bucket_id,name,metadata) values('check-receipts',parent::text||'/'||rid::text||'/receipt.pdf','{"size":100,"mimetype":"application/pdf"}');
  p:=p||jsonb_build_object('delivery','zelle','zelle_contact','invalid');
  begin perform public.cr_action('submit',p);raise exception 'TEST invalid Zelle passed';exception when others then if sqlerrm not like '%registered with Zelle%' then raise;end if;end;
- p:=p||jsonb_build_object('zelle_contact','parent@example.test');
+ p:=p||jsonb_build_object('zelle_contact','parent@example.test','archive_email','parent@example.test');
  r:=public.cr_action('submit',p);
+ if (select count(*) from public.cr_notifications where request_id=rid and archive_snapshot is not null)<>2 then raise exception 'TEST archive copies missing';end if;
  if r->>'zelle_contact'<>'parent@example.test' then raise exception 'TEST Zelle recipient not saved';end if;
  if r->>'status'<>'submitted' or (r->>'total_cents')::int<>1250 then raise exception 'TEST total/status failed';end if;
  if (select count(*) from public.cr_notifications where request_id=rid and channel='sms')<2 then raise exception 'TEST notifications missing';end if;
@@ -52,6 +53,9 @@ begin
  r:=public.cr_action('paid',jsonb_build_object('id',rid,'version',4,'payment_date',current_date,'payment_reference','TEST-123'));
  if r->>'status'<>'paid' then raise exception 'TEST payment not recorded';end if;
  if (select count(*) from public.cr_history where request_id=rid)<>5 then raise exception 'TEST history incomplete';end if;
+ if (select count(*) from public.cr_notifications where request_id=rid and archive_snapshot is not null)<>10 then raise exception 'TEST archive history copies missing';end if;
+ if not exists(select 1 from public.cr_notifications where request_id=rid and archive_snapshot->'event'->>'action'='submitted' and archive_snapshot->'request'->>'purpose'='Supplies for an RCAP event') then raise exception 'TEST original snapshot overwritten';end if;
+ if not exists(select 1 from public.cr_notifications where request_id=rid and archive_snapshot->'request'->>'payment_reference'='TEST-123') then raise exception 'TEST payment absent from archive';end if;
  raise notice 'PASS: receipt gates, exact totals, idempotency, self-review, escalation, private records and receipts, correction, assigned approval, stale updates, payment gating, audit and notification queue';
 end $$;
 rollback;

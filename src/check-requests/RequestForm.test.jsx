@@ -13,6 +13,7 @@ vi.mock("./api.js", () => ({
   act: vi.fn(),
   details: vi.fn(),
   receiptUrl: vi.fn(),
+  archiveUrl: vi.fn(),
 }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root, host;

@@ -4,6 +4,7 @@ type Job = {
   recipient: string;
   subject: string;
   body: string;
+  attachments?: Array<{ filename: string; content: string }>;
 };
 type Config = {
   emailKey: string;
@@ -57,6 +58,7 @@ export async function sendNotice(
         to: [job.recipient],
         subject: job.subject,
         text: job.body,
+        ...(job.attachments ? { attachments: job.attachments } : {}),
       }),
       signal: AbortSignal.timeout(15000),
     });

@@ -47,3 +47,32 @@ The private config table intentionally has row-level security with no client pol
 Migration `20260907010038_check_requests_phone_signin.sql` lets the legacy `email` and `approver_email` fields carry a verified E.164 contact identity as well as an email. No client-supplied contact or profile metadata is trusted for identity. The database reads confirmed contact fields from `auth.users`. Existing email identities remain compatible; no accounts are automatically merged by an unverified phone or email.
 
 `supabase/tests/check_requests_phone.sql` verifies phone-only accounts with no email, private receipts, approval gates, SMS queueing, and valid/invalid Zelle recipients. Test data and notifications roll back. SMS notification delivery is at least once; provider/network ambiguity can cause a duplicate retry.
+
+## Permanent PDF archives
+
+Each submitted/resubmitted, needs-changes, approved, declined, or paid history
+entry captures an immutable request and history snapshot in the same transaction.
+The existing notification worker renders the summary and receipts into PDFs,
+stores them privately in `check-archives`, and emails them to
+`rcaparents+check-requests@ronclarkacademy.com`. Parents may request an emailed
+copy without changing their sign-in method. PDFs are available inside each Past
+requests detail view to its owner and authorized board reviewers.
+
+Each image is fitted intact to one letter-sized page. Uploaded PDF receipts keep
+every source page, each fitted onto one archive page. Large bundles become
+numbered PDF parts to stay under email limits. Missing or corrupt receipts fail
+visibly rather than producing an incomplete archive. The original JSON snapshot
+is embedded in each PDF to preserve exact text, including Unicode not available
+in the printed standard font. Stored files are reused on mail retry; each email
+part has its own provider idempotency key. Provider acceptance is recorded as
+sent, not a guarantee that the recipient read the email.
+
+The school Gmail account has a `RCAP Check Requests` label and a filter matching
+the tagged destination. Google Drive filing remains a separate manual action
+unless the school authorizes an automation. No Drive API credentials are used.
+
+Cellphone remains the default sign-in method. Account & backup sign-in lets a
+signed-in parent verify an email on the same auth user. Google uses the existing
+Supabase Google provider and automatic matching of verified email identities.
+Phone-first users must add/verify their Google email first to avoid creating a
+separate account. The optional PDF delivery email is not a verified login email.

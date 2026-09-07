@@ -50,6 +50,11 @@ export function validateDraft(d) {
     if (!item.receipts?.length)
       return `Attach at least one receipt for expense ${i + 1}.`;
   }
+  if (
+    d.archive_email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.archive_email.trim())
+  )
+    return "Enter a valid email for your PDF copy.";
   if (!d.acknowledged)
     return "Confirm the reimbursement statement before submitting.";
   return null;
@@ -104,6 +109,7 @@ export const newDraft = () => ({
   purpose: "",
   approver_email: "",
   items: [newItem()],
+  archive_email: "",
   acknowledged: false,
 });
 export function fromRecord(r) {

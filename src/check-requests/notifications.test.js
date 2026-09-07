@@ -53,3 +53,21 @@ it("fails clearly when text service is unavailable", async () => {
   ).rejects.toThrow("not configured");
   expect(f).not.toHaveBeenCalled();
 });
+it("sends the PDF as an attachment with a stable retry key", async () => {
+  const request = vi.fn().mockResolvedValue({ ok: true });
+  await sendNotice(
+    {
+      id: "archive-part-1",
+      channel: "email",
+      recipient: "rcaparents+check-requests@ronclarkacademy.com",
+      subject: "RCAP archive",
+      body: "Save the attached record.",
+      attachments: [{ filename: "RCAP-123.pdf", content: "cGRm" }],
+    },
+    config,
+    request,
+  );
+  const options = request.mock.calls[0][1];
+  expect(JSON.parse(options.body).attachments[0].filename).toBe("RCAP-123.pdf");
+  expect(options.headers["Idempotency-Key"]).toBe("rcap-check-archive-part-1");
+});

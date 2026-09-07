@@ -58,6 +58,7 @@ export async function submit(d, user, onProgress) {
   onProgress("Saving your request…");
   return act("submit", {
     ...d,
+    archive_email: (d.archive_email || "").trim().toLowerCase(),
     phone: normalizePhone(d.phone),
     zelle_contact:
       d.delivery === "zelle"
@@ -77,7 +78,9 @@ export async function details(id) {
       .order("created_at"),
     supabase
       .from("cr_notifications")
-      .select("id,state,recipient,channel,sent_at,created_at")
+      .select(
+        "id,state,recipient,channel,sent_at,created_at,archive_files,last_error",
+      )
       .eq("request_id", id)
       .order("created_at", { ascending: false }),
   ]);
@@ -87,6 +90,13 @@ export async function details(id) {
 export async function receiptUrl(path) {
   const { data, error } = await supabase.storage
     .from("check-receipts")
+    .createSignedUrl(path, 120, { download: true });
+  if (error) throw error;
+  return data.signedUrl;
+}
+export async function archiveUrl(path) {
+  const { data, error } = await supabase.storage
+    .from("check-archives")
     .createSignedUrl(path, 120, { download: true });
   if (error) throw error;
   return data.signedUrl;
