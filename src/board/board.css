@@ -187,7 +187,12 @@
      third of the height. The advisory cards stay 2-up and are left alone. */
   .bd-grid:not(.bd-grid-five) .bd-card {
     display: grid;
-    grid-template-columns: 104px minmax(0, 1fr);
+    /* Exactly the width an advisory photo comes out at, since that grid is two
+       columns with the same 30px gap in the same container. An officer's photo
+       was smaller than an advisor's, which put the hierarchy upside down. They
+       match now, and the officers still read as the senior row because they
+       carry a bio and a way to reach them. */
+    grid-template-columns: calc((100% - 30px) / 2) minmax(0, 1fr);
     column-gap: 14px;
     align-items: center;
   }
