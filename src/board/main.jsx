@@ -38,7 +38,7 @@ const officers = [
     key: 'crystal',
     name: 'Crystal Claybrooks Jones',
     role: 'Co-Chairperson',
-    photo: null,
+    photo: '/images/board/crystal.jpg',
     email: contactEmail,
     bio:
       'Crystal Claybrooks Jones, mother of [name], a [grade] grader. She will say ' +
@@ -50,7 +50,7 @@ const officers = [
     key: 'latasha',
     name: 'Latasha Emeri',
     role: 'Treasurer',
-    photo: null,
+    photo: '/images/board/latasha.jpg',
     email: contactEmail,
     bio:
       'Latasha Emeri, mother of [name], a [grade] grader. She keeps the receipts. ' +
@@ -61,7 +61,7 @@ const officers = [
     key: 'farren',
     name: 'Farren Salter',
     role: 'Secretary',
-    photo: null,
+    photo: '/images/board/farren.jpg',
     email: contactEmail,
     bio:
       'Farren Salter, mother of [name], a [grade] grader. She has logged more ' +
