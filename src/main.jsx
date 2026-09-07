@@ -187,6 +187,17 @@ const tools = [
   {
     variant: 'committee',
     icon: Users,
+    title: 'The RCAP Directory',
+    body:
+      'What you need might be right here. Discover businesses, services, ' +
+      'creative work, and student ventures from our own RCA community.',
+    href: '/directory/',
+    badge: 'New',
+    action: 'Explore the directory',
+  },
+  {
+    variant: 'committee',
+    icon: Users,
     title: 'Find Your Place',
     body:
       'Tell us your committee interests and see where you fit. Raise your ' +
@@ -850,6 +861,7 @@ function App() {
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
           <a href="#tools">Tools</a>
+          <a href="/directory/">The RCAP Directory</a>
           <a href="/uniform-exchange/">Uniform Exchange</a>
           <a href="/carpool/">Carpool</a>
           <a href="/committee-interest/">Find Your Place</a>
