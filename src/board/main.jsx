@@ -114,19 +114,18 @@ function App() {
 
       <section className="content-section bd-hero">
         <p className="section-label">Your 2026-27 board</p>
-        <h1>The parents who said yes this year.</h1>
+        <h1>Meet your RCAP board.</h1>
         <p className="bd-lede">
-          Four officers, one parent from every grade, and a lot of other people
-          who show up without a title. If you see one of these faces at carline
-          or at an event, come say hello. That is the whole point of putting
-          them here.
+          We are RCA parents, here to support our families and school. Have a
+          question, an idea, or something you would like us to know? Reach out
+          anytime, or come say hello at carline or the next event.
         </p>
       </section>
 
       <section className="content-section" aria-labelledby="officers-h">
         <div className="section-heading">
           <p className="section-label">Executive board</p>
-          <h2 id="officers-h">Four seats, one year.</h2>
+          <h2 id="officers-h">Your parent leadership team.</h2>
         </div>
         <ul className="bd-grid">
           {officers.map((o, i) => (
