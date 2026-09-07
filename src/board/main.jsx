@@ -132,15 +132,18 @@ function App() {
           {officers.map((o, i) => (
             <li className="bd-card" key={o.key}>
               <Headshot name={o.name} photo={o.photo} tone={i % 4} />
+              {/* Bio and the mail link are siblings of the body, not children,
+                  so on a phone the photo can sit beside the name while the bio
+                  runs the full width underneath. */}
               <div className="bd-body">
                 <p className="bd-role">{o.role}</p>
                 <h3 className="bd-name">{o.name}</h3>
-                <p className="bd-bio">{o.bio}</p>
-                <a className="text-link" href={`mailto:${o.email}`}>
-                  <Mail size={15} aria-hidden="true" />
-                  Email {o.name.split(' ')[0]}
-                </a>
               </div>
+              <p className="bd-bio">{o.bio}</p>
+              <a className="bd-mail text-link" href={`mailto:${o.email}`}>
+                <Mail size={15} aria-hidden="true" />
+                Email {o.name.split(' ')[0]}
+              </a>
             </li>
           ))}
         </ul>

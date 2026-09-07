@@ -109,6 +109,12 @@
   padding: 16px 2px 0;
 }
 
+.bd-bio,
+.bd-mail {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
 .bd-role {
   margin: 0 0 6px;
   color: var(--gold-deep);
@@ -172,6 +178,43 @@
 @media (max-width: 480px) {
   .bd-grid {
     grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  /* Officer cards turn sideways. Stacked full width, a 4:5 photo eats most of
+     the screen before you reach a single word. A thumbnail beside the name,
+     with the bio running full width underneath, says the same thing in about a
+     third of the height. The advisory cards stay 2-up and are left alone. */
+  .bd-grid:not(.bd-grid-five) .bd-card {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+  }
+
+  .bd-grid:not(.bd-grid-five) .bd-photo {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .bd-grid:not(.bd-grid-five) .bd-body {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0;
+  }
+
+  .bd-grid:not(.bd-grid-five) .bd-bio {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 12px;
+    padding: 0;
+  }
+
+  .bd-grid:not(.bd-grid-five) .bd-mail {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin-top: 10px;
+    padding: 0;
   }
 
   .bd-grid-five {
