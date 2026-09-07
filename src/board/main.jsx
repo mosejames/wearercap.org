@@ -73,11 +73,13 @@ const officers = [
 
 // One parent per grade level, nominated by the officers. Names to come.
 const advisors = [
-  { key: 'g4', grade: '4th grade', name: 'To be announced', photo: null },
-  { key: 'g5', grade: '5th grade', name: 'To be announced', photo: null },
-  { key: 'g6', grade: '6th grade', name: 'To be announced', photo: null },
-  { key: 'g7', grade: '7th grade', name: 'To be announced', photo: null },
-  { key: 'g8', grade: '8th grade', name: 'To be announced', photo: null },
+  // One per grade. A name goes up only once we have it right, and a photo only
+  // once we are certain whose face it is.
+  { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg' },
+  { key: 'g5', grade: '5th grade', name: 'Sydney', photo: null },
+  { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg' },
+  { key: 'g7', grade: '7th grade', name: 'Sara', photo: null },
+  { key: 'g8', grade: '8th grade', name: 'Camille', photo: '/images/board/camille.jpg' },
 ];
 
 function initials(name) {
