@@ -657,3 +657,5 @@ img{display:block;max-width:100%}
  .mobile-nav-links a:hover{background:rgba(255,255,255,.12)}
 }
 @media(max-width:359px){.topbar .nav-me>span{display:none}}
+
+.move-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:16px;padding:16px 0}.tile.move-selected{outline:4px solid var(--red);outline-offset:-4px}.selection-check{position:absolute;top:8px;left:8px;z-index:2;border-radius:50%;background:white;color:var(--red);padding:4px 8px;font-weight:900}.selection-check[hidden]{display:none}

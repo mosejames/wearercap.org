@@ -540,7 +540,7 @@ function InviteSheet({ event, onClose }) {
 
 /* ------------------------------------------------------------ lightbox */
 
-function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLike, admin, pass, onHidden, onNeedName, event }) {
+function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLike, admin, pass, onHidden, onNeedName, event, onMove }) {
   const askReport = useContext(ReportContext);
   const [viewReadyId, setViewReadyId] = useState(null);
   const [removing, setRemoving] = useState(false);
@@ -653,6 +653,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
               {I.heart(liked)}<span>{liked ? 'Liked' : 'Like'}{p.likes > 0 ? ` · ${p.likes}` : ''}</span>
             </button>
           <div className="lb-manage-actions">
+            {onMove&&<button className="lb-action" onClick={()=>onMove(p)}>Move</button>}
             {!mine && <button className="lb-action" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>}
             {(mine || admin) && <button className="lb-action lb-delete" disabled={removing} onClick={async () => {
               if (!confirm('Confirm deletion')) return;
@@ -692,13 +693,13 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 
 /* ---------------------------------------------------------------- grid */
 
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false }) {
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected }) {
   if (!photos.length) return <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
   return (
     <div className="grid">
       {photos.map((p, i) => (
-        <div className="tile-wrap" key={p.id}><button className={`tile${p.hidden ? ' hidden' : ''}`} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
-          <img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
+        <div className="tile-wrap" key={p.id}><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
+          <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
           {(p.likes > 0 || (counts && counts.get(p.id))) && (
@@ -839,7 +840,7 @@ function MemoryStrip({ recent, covers, events }) {
       <div key={ready.map(p => p.id).join('|')} className={`memory-track${paused ? ' is-paused' : ''}`}>
         {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
           {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} style={{ aspectRatio: p.ratio }} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
-            <img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
+            <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
           </a>)}
         </div>)}
       </div>
@@ -1006,7 +1007,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 
 /* --------------------------------------------------------------- event */
 
-function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
+function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
@@ -1014,6 +1015,9 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
   const [sort, setSort] = useState('time');
   const [open, setOpen] = useState(null);
   const [dl, setDl] = useState(false);
+  const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
+  const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
+
 
   const load = useCallback(async () => {
     if (!event) return;
@@ -1082,6 +1086,7 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a
                 time stays open to everyone, in the lightbox. */}
+            {canMove&&visible.length>0&&<button className="btn ghost" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting?'Cancel selection':'Select uploads to move'}</button>}
             {admin && visible.length > 0 && (
               <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
             )}
@@ -1096,9 +1101,10 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
         </div>
       </div>
       <div className="shell">
+        {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(sorted.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button></div>}
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
-            photos={sorted} onOpen={setIndex} likedSet={liked} counts={counts}
+            photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
             emptyText={status === 'upcoming' ? `Not yet. ${event.title} is ${fmtDate(event.startsOn, { weekday: 'long' })}.` : 'No photos yet. Somebody has to be first.'}
           />
         )}
@@ -1110,11 +1116,13 @@ function EventPage({ event, owner, profile, admin, pass, onAdd, onNeedName, onIn
         <Lightbox
           photos={sorted} index={open} onIndex={setIndex} onClose={close} event={event}
           owner={owner} profile={profile} admin={admin} pass={pass}
+          onMove={canMove?p=>{close();setMoving([p.id]);setTarget('');setMoveError('');}:undefined}
           liked={liked.has(sorted[open].id)} onLike={toggleLike}
           onNeedName={onNeedName}
           onHidden={(p, hidden) => { setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, hidden } : x))); refreshEvents(); }}
         />
       )}
+      {moving&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMoving(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:moving,p_from:event.id,p_to:target,p_pass:pass});setPhotos(ps=>ps.filter(p=>!moving.includes(p.id)));setMoving(null);setSelected(new Set());setSelecting(false);refreshEvents();showToast('Uploads moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move {moving.length} {moving.length===1?'upload':'uploads'} from {event.title}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required value={target} disabled={moveBusy} onChange={e=>setTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==event.id&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!target||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
       {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
   );
@@ -1593,7 +1601,7 @@ export default function App() {
           onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
       {route.name === 'event' && (events.length ? (
-        <EventPage key={route.slug} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
+        <EventPage key={route.slug} events={events} canMove={admin} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />
       ) : <div className="shell page"><p className="empty">Loading…</p></div>)}
       {route.name === 'activity' && <ActivityPage category={route.category} events={events} covers={allCovers} today={today} onAdd={onAdd} onSuggest={() => setSuggesting(true)} />}
