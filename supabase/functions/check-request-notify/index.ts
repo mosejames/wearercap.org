@@ -1,3 +1,4 @@
+import { requesterRecap } from "./recap.ts";
 import { deliverArchive } from "./archive.ts";
 import { sendNotice } from "./send.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
@@ -34,7 +35,13 @@ Deno.serve(async (req) => {
   for (const job of jobs || []) {
     try {
       if (job.archive_snapshot) await deliverArchive(job, db, config);
-      else await sendNotice(job, config);
+      else
+        await sendNotice(
+          job.notice_snapshot
+            ? { ...job, body: requesterRecap(job.notice_snapshot, false) }
+            : job,
+          config,
+        );
       const { error: saveError } = await db
         .from("cr_notifications")
         .update({

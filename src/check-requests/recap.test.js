@@ -68,3 +68,12 @@ it("includes payment reference and date in the paid recap", () => {
   expect(body).toContain("Check pickup at school");
   expect(body).toContain("CHECK-123");
 });
+it("does not claim an attachment when sending a status-only email", () => {
+  const body = requesterRecap(
+    { ...snapshot, event: { action: "assigned" } },
+    false,
+  );
+  expect(body).toContain("assigned to a board member");
+  expect(body).not.toContain("receipts are attached");
+  expect(body).toContain("notification preference");
+});

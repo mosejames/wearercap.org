@@ -43,6 +43,7 @@ import {
   archiveUrl,
 } from "./api.js";
 import "./requests.css";
+import NotificationPreferences from "./NotificationPreferences.jsx";
 import Account from "./Account.jsx";
 import PdfDownloads from "./PdfDownloads.jsx";
 
@@ -1594,7 +1595,12 @@ function App() {
             </button>
           )}
         </nav>
-        {user && tab === "mine" && <Account user={user} onError={setError} />}
+        {user && !selected && (tab === "mine" || tab === "board") && (
+          <>
+            <Account user={user} onError={setError} />
+            <NotificationPreferences user={user} onError={setError} />
+          </>
+        )}
         {error && (
           <div ref={errorRef} className="notice error" role="alert">
             {error}

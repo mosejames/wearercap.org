@@ -76,3 +76,15 @@ signed-in parent verify an email on the same auth user. Google uses the existing
 Supabase Google provider and automatic matching of verified email identities.
 Phone-first users must add/verify their Google email first to avoid creating a
 separate account. The optional PDF delivery email is not a verified login email.
+
+## Status notification preferences
+
+Past requests and Board review include a Request notifications selector for text,
+email, or both. Preferences are stored against the auth user, and both requester
+and staff destinations resolve to verified contacts. Cellphone users default to
+text. Email/both require a verified backup email; users cannot set preferences
+for another account. Preferences affect future events on current and new requests.
+Assignment, approval, decline, requested changes, and payment each produce clear
+status wording. Email updates to the owner include the request recap. Optional PDF
+emails remain separate; an identical destination's PDF recap replaces a duplicate
+status email. Login verification codes are unaffected by these preferences.

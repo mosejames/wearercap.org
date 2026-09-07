@@ -1,4 +1,4 @@
-export function requesterRecap(snapshot: any) {
+export function requesterRecap(snapshot: any, attached = true) {
   const r = snapshot.request;
   const event = snapshot.event;
   const money = (n: number) => "$" + (Number(n) / 100).toFixed(2);
@@ -7,6 +7,8 @@ export function requesterRecap(snapshot: any) {
       "Thank you for submitting your reimbursement request. The finance team will review your expenses and receipts and coordinate the required board approval.",
     resubmitted:
       "Thank you for updating your reimbursement request. The finance team will review your revised details and receipts.",
+    assigned:
+      "Your request has been assigned to a board member for review. No approval decision has been made yet.",
     approved:
       "Your reimbursement request has been approved. Thank you for providing your receipts. Payment has not yet been recorded; the finance team will coordinate the next step.",
     declined:
@@ -47,10 +49,12 @@ export function requesterRecap(snapshot: any) {
       : []),
     ...(r.payment_date ? [`Payment date: ${r.payment_date}`] : []),
     "",
-    "Your PDF record and receipts are attached. Larger requests may arrive in numbered parts. You can also download your PDF and follow its status under Past requests:",
+    attached
+      ? "Your PDF record and receipts are attached. Larger requests may arrive in numbered parts. You can also download your PDF and follow its status under Past requests:"
+      : "You can download your PDF record and follow its status under Past requests:",
     `https://wearercap.org/check-requests/#request/${r.id}`,
     "",
-    "If your account uses a cellphone, status updates will also be sent by text.",
+    "Status updates follow the notification preference in your dashboard.",
     "",
     "Thank you for helping make RCAP events and activities possible.",
     "RCAP Finance Team",
