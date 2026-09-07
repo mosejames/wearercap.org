@@ -182,26 +182,3 @@
     font-size: 18px;
   }
 }
-
-/* House chips. Colours match the Recap board and the Uniform Exchange, so a
-   parent who has seen Amistad red on one page reads it the same here. Two
-   chips on one card is not a mistake: it means children in different houses. */
-.bd-houses {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin: 8px 0 0;
-}
-
-.bd-house {
-  display: inline-block;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.5;
-  /* Altruismo is near-black; on the dark advisory band it needs an edge. */
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
