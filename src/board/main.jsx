@@ -20,9 +20,44 @@ const contactEmail = 'hello@wearercap.org';
 //
 // Grades, never ages. Anything still in brackets is waiting on that officer to
 // fill in her own; nobody's bio should go public before she has read it.
+// House colours, same values the Recap board and the Uniform Exchange already
+// use. Kept as a local table rather than an import so the board page does not
+// pull in either of those configs for four hex codes.
+const HOUSE = {
+  amistad:   { name: 'Amistad',   color: '#D8202D', fg: '#FFF2F1' },
+  // Isibindi's brand green is #1F9D57, which is only 3.3:1 against its own
+  // light text. These chips are 11px, so it is darkened here to clear AA. Same
+  // hue, and the difference is invisible unless the two sit side by side.
+  isibindi:  { name: 'Isibindi',  color: '#15773E', fg: '#F0FCF5' },
+  altruismo: { name: 'Altruismo', color: '#14110F', fg: '#FFFFFF' },
+  reveur:    { name: 'Rêveur',    color: '#1F55C0', fg: '#F0F5FF' },
+};
+
+function Houses({ ids }) {
+  if (!ids || !ids.length) return null;
+  return (
+    <p className="bd-houses">
+      {ids.map((id) => {
+        const h = HOUSE[id];
+        if (!h) return null;
+        return (
+          <span
+            className="bd-house"
+            key={id}
+            style={{ background: h.color, color: h.fg }}
+          >
+            {h.name}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
 const officers = [
   {
     key: 'mose',
+    houses: ['amistad'],
     name: 'Mose James IV',
     role: 'Chairperson',
     // Drop the file at public/images/board/mose.jpg and this turns on.
@@ -36,6 +71,7 @@ const officers = [
   },
   {
     key: 'crystal',
+    houses: ['isibindi'],
     name: 'Crystal Claybrooks Jones',
     role: 'Co-Chairperson',
     photo: '/images/board/crystal.jpg',
@@ -48,6 +84,7 @@ const officers = [
   },
   {
     key: 'latasha',
+    houses: ['isibindi'],
     name: 'Latasha Emeri',
     role: 'Treasurer',
     photo: '/images/board/latasha.jpg',
@@ -59,6 +96,7 @@ const officers = [
   },
   {
     key: 'farren',
+    houses: ['isibindi'],
     name: 'Farren Salter',
     role: 'Secretary',
     photo: '/images/board/farren.jpg',
@@ -75,11 +113,11 @@ const officers = [
 const advisors = [
   // One per grade. A name goes up only once we have it right, and a photo only
   // once we are certain whose face it is.
-  { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg' },
-  { key: 'g5', grade: '5th grade', name: 'Sidonie Holloman', photo: '/images/board/sidonie.jpg' },
-  { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg' },
-  { key: 'g7', grade: '7th grade', name: 'Sara White', photo: null },
-  { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg' },
+  { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg', houses: ['amistad', 'altruismo'] },
+  { key: 'g5', grade: '5th grade', name: 'Sidonie Holloman', photo: '/images/board/sidonie.jpg', houses: ['amistad'] },
+  { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg', houses: ['amistad'] },
+  { key: 'g7', grade: '7th grade', name: 'Sara White', photo: null, houses: ['amistad'] },
+  { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg', houses: ['altruismo'] },
 ];
 
 function initials(name) {
@@ -135,6 +173,7 @@ function App() {
               <div className="bd-body">
                 <p className="bd-role">{o.role}</p>
                 <h3 className="bd-name">{o.name}</h3>
+                <Houses ids={o.houses} />
                 <p className="bd-bio">{o.bio}</p>
                 <a className="text-link" href={`mailto:${o.email}`}>
                   <Mail size={15} aria-hidden="true" />
@@ -163,6 +202,7 @@ function App() {
               <div className="bd-body">
                 <p className="bd-role">{a.grade}</p>
                 <h3 className="bd-name">{a.name}</h3>
+                <Houses ids={a.houses} />
               </div>
             </li>
           ))}
