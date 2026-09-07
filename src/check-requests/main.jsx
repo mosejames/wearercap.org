@@ -61,11 +61,7 @@ function Guide() {
     <aside>
       <div className="summary-card">
         <p className="eyebrow">BEFORE YOU SUBMIT</p>
-        <h2>
-          A complete request
-          <br />
-          moves things along.
-        </h2>
+        <h2>A complete request moves things along.</h2>
         <ul>
           <li>
             <ReceiptText />

@@ -585,9 +585,6 @@ p {
   .summary-card ul {
     margin: 22px 0;
   }
-  .summary-card h2 br {
-    display: none;
-  }
   .cr main {
     padding: 30px 20px 45px;
   }
