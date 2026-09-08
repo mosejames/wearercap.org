@@ -331,7 +331,7 @@ textarea:focus-visible {
   overflow: hidden;
   background: #151820;
   box-shadow: 0 25px 70px #0005;
-  transform: rotate(1deg);
+  transform: none;
   text-decoration: none;
 }
 .showcase-main > img,
