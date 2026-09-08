@@ -92,7 +92,7 @@ textarea:focus-visible {
 .dir-shell {
   overflow: clip;
   background:
-    radial-gradient(ellipse at 98% 4%, #3e0c18 0, transparent 27%),
+    radial-gradient(ellipse at 98% 4%, #102b50 0, transparent 27%),
     var(--collective-bg);
 }
 .collective-skip {
@@ -319,7 +319,7 @@ textarea:focus-visible {
   content: "";
   position: absolute;
   inset: -50px -100px -20px -10px;
-  background: radial-gradient(ellipse, #90192a50, transparent 70%);
+  background: radial-gradient(ellipse, #214d8450, transparent 70%);
   pointer-events: none;
 }
 .showcase-main {
@@ -585,8 +585,8 @@ textarea:focus-visible {
   border-radius: 10px;
   padding: 34px 36px 0;
   background:
-    radial-gradient(ellipse at 95% 20%, #653f314a, transparent 55%),
-    linear-gradient(120deg, #171722, #23151d);
+    radial-gradient(ellipse at 95% 20%, #254e784a, transparent 55%),
+    linear-gradient(120deg, #171722, #14243b);
   min-height: 265px;
 }
 .student-invitation h3 {
@@ -872,7 +872,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: radial-gradient(ellipse at 100% 0%, #5b343b, #1b2230 65%);
+  background: radial-gradient(ellipse at 100% 0%, #203e62, #1b2230 65%);
   color: var(--collective-gold);
 }
 .dir-placeholder > span {
@@ -987,7 +987,7 @@ textarea:focus-visible {
   padding: 38px;
   border: 1px solid #38303b;
   border-radius: 8px;
-  background: linear-gradient(110deg, #171721, #18131b);
+  background: linear-gradient(110deg, #171721, #131e30);
 }
 .collective-empty-icon {
   width: 58px;
@@ -1117,7 +1117,7 @@ textarea:focus-visible {
   isolation: isolate;
   border-top: 1px solid #38272e;
   border-bottom: 1px solid #44302e;
-  background: radial-gradient(ellipse at 50% 120%, #5e162455, transparent 70%);
+  background: radial-gradient(ellipse at 50% 120%, #173f7055, transparent 70%);
   overflow: hidden;
 }
 .collective-join > .dir-eyebrow {
@@ -1245,7 +1245,7 @@ textarea:focus-visible {
   padding: 35px;
   border: 1px solid #594434;
   background:
-    radial-gradient(ellipse at 100% 0%, #4e172f55, transparent 65%), #10131c;
+    radial-gradient(ellipse at 100% 0%, #193e7055, transparent 65%), #10131c;
   border-radius: 12px;
 }
 .dir-signin h1 {
