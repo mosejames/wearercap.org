@@ -131,16 +131,6 @@ function Showcase({ items, studentMode }) {
           </div>
         </>
       )}
-      <div className="showcase-mini">
-        <span className="showcase-mini-icon">
-          <Sparkles size={25} />
-        </span>
-        <div>
-          <small>Big ideas belong here</small>
-          <strong>Parents. Students. Possibility.</strong>
-        </div>
-        <ArrowUpRight size={22} />
-      </div>
     </div>
   );
 }
