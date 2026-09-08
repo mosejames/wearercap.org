@@ -20,6 +20,7 @@ import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } fr
 import { rewardCall, saveAvatar } from './rewards.js';
 import { followSheetViewport } from './sheetViewport.js';
 import { isVideo } from './videos.js';
+import { droppable, useDropGuard, useDropTarget } from './dnd.js';
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
@@ -290,8 +291,8 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
 
 /* -------------------------------------------------------------- upload */
 
-function UploadSheet({ event, profile, onClose, onDone }) {
-  const [files, setFiles] = useState([]);
+function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
+  const [files, setFiles] = useState(initialFiles || []);
   const [state, setState] = useState(null);
   const [err, setErr] = useState('');
   const abort = useRef(null);
@@ -330,13 +331,29 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   };
   const uploadFiles = quality === 'smaller' && optimized ? optimized : files;
 
-  const pick = (e) => {
-    const list = Array.from(e.target.files || []).filter((f) => /^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name) || isVideo(f));
-    if (!list.length) { setErr('Choose photos or MP4, MOV, or WebM videos.'); return; }
-    setErr(list.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
-    setFiles(list.slice(0, MAX_BATCH));
+  // One funnel for all three ways in: the picker, a drop, a paste.
+  const take = useCallback((list) => {
+    const ok = (list || []).filter(droppable);
+    if (!ok.length) { setErr('Choose photos or MP4, MOV, or WebM videos.'); return; }
+    setErr(ok.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
+    setFiles(ok.slice(0, MAX_BATCH));
     setOptimized(null); setOptimizationNotes([]);
-  };
+  }, []);
+
+  const pick = (e) => take(Array.from(e.target.files || []));
+
+  const drop = useDropTarget(take);
+
+  // Copy in the Finder, paste here. Costs almost nothing and people try it.
+  useEffect(() => {
+    if (state) return undefined;
+    const onPaste = (e) => {
+      const list = Array.from(e.clipboardData?.files || []);
+      if (list.length) { e.preventDefault(); take(list); }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [state, take]);
 
   const start = async () => {
     setErr('');
@@ -356,11 +373,14 @@ function UploadSheet({ event, profile, onClose, onDone }) {
   return (
     <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
       {!state ? (
-        <div className="stack">
+        <div className={`stack dz-wrap${drop.over ? ' over' : ''}`} {...drop.handlers}>
           <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. Photos keep their originals. Videos use the quality you choose below.</p>
           <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
-          <button className="btn ghost big" disabled={optimizing} onClick={() => inputRef.current?.click()}>
-            {files.length ? `${plural(files.length, 'file')} picked · change` : 'Choose photos or videos'}
+          <button className="dz" disabled={optimizing} onClick={() => inputRef.current?.click()}>
+            <span className="dz-icon">{I.plus}</span>
+            <b>{files.length ? `${plural(files.length, 'file')} ready · change` : 'Choose photos or videos'}</b>
+            <span className="dz-sub desk">or drag them here. A whole folder works.</span>
+            <span className="dz-sub touch">Straight from your camera roll.</span>
           </button>
           {files.length > 0 && (
             <div className="pick-preview">
@@ -1010,6 +1030,8 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 
 function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
+  // Drop anywhere on the page and the sheet opens already holding the files.
+  const drop = useDropTarget((list) => { if (event?.open && list.length) onAdd(event, list); });
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
   const [counts, setCounts] = useState(new Map());
@@ -1066,7 +1088,15 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
   const visible = sorted.filter((p) => !p.hidden);
 
   return (
-    <div className="event">
+    <div className="event" {...drop.handlers}>
+      {drop.over && event.open && (
+        <div className="page-drop">
+          <div>
+            <b>Drop them here</b>
+            <span>Straight into {event.title}</span>
+          </div>
+        </div>
+      )}
       <div className="ev-head">
         <div className="shell">
           <a href="#/" className="crumb">← The year</a>
@@ -1588,11 +1618,17 @@ export default function App() {
   };
   const currentEvent = route.name === 'event' ? events.find((e) => e.slug === route.slug) : null;
 
-  const onAdd = async (ev) => {
+  const [dropped, setDropped] = useState(null);
+
+  useDropGuard();
+
+  // files is optional: a drag and drop arrives with the batch already chosen.
+  const onAdd = async (ev, files) => {
     if (!ev) return;
     if (route.name !== 'event' || route.slug !== ev.slug) go(`/e/${ev.slug}`);
+    setDropped(files && files.length ? files : null);
     if (!owner || !profile) { needName(`Add your name so your ${ev.title} uploads have it.`, () => setUpload(ev)); return; }
-    try { await requireContributor(); setUpload(ev); } catch (e) { showToast(e.message); }
+    try { await requireContributor(); setUpload(ev); } catch (e) { setDropped(null); showToast(e.message); }
   };
 
   return (
@@ -1641,8 +1677,8 @@ export default function App() {
           onClose={() => { setNameAsk(null); setProfileOpen(false); }} />
       )}
       {upload && profile && !nameAsk && (
-        <UploadSheet event={upload} profile={profile}
-          onClose={() => setUpload(null)}
+        <UploadSheet event={upload} profile={profile} initialFiles={dropped}
+          onClose={() => { setUpload(null); setDropped(null); }}
           onDone={() => { refresh(); claimBadges(); showToast('Added to the vault.'); }} />
       )}
       {invite && <InviteSheet event={invite} onClose={() => setInvite(null)} />}

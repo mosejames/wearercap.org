@@ -1,0 +1,108 @@
+import { useEffect, useRef, useState } from 'react';
+import { isVideo } from './videos.js';
+import { MAX_BATCH } from './config.js';
+
+/* ---------------------------------------------------------------------------
+   Drag and drop.
+
+   Desktop is where the big batches come from: somebody imports a card into a
+   folder and wants to hand over the folder, not click through a picker. A drop
+   carries three cases and all three end at one list of Files.
+
+     dataTransfer.files          a plain multi-select drag
+     webkitGetAsEntry() file     the same, through the entry API
+     webkitGetAsEntry() dir      a dropped folder, read recursively
+
+   Two things here are easy to get wrong and both fail quietly:
+
+   1. dataTransfer.items is only alive during the drop event itself. Every
+      entry has to be collected synchronously before anything is awaited, or
+      Chrome hands back an empty list and folders look like they contained
+      nothing.
+   2. readEntries returns about a hundred entries per call and signals the end
+      with an empty batch. Call it once and a folder of 300 photos silently
+      becomes a folder of 100.
+--------------------------------------------------------------------------- */
+
+// Dotfiles are skipped, which is what keeps .DS_Store out of the vault.
+export const droppable = (f) =>
+  !!f && !f.name.startsWith('.') &&
+  (/^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp|gif)$/i.test(f.name) || isVideo(f));
+
+// Stop walking rather than crawl someone's whole Pictures library. The sheet
+// keeps MAX_BATCH of whatever comes back and says so.
+export const DROP_CAP = MAX_BATCH * 4;
+
+const entryFile = (entry) => new Promise((res) => entry.file(res, () => res(null)));
+const readDir = (reader) => new Promise((res) => reader.readEntries(res, () => res([])));
+
+async function walkEntry(entry, out) {
+  if (out.length >= DROP_CAP) return;
+  if (entry.isFile) {
+    const f = await entryFile(entry);
+    if (droppable(f)) out.push(f);
+    return;
+  }
+  if (!entry.isDirectory) return;
+  const reader = entry.createReader();
+  for (;;) {
+    const batch = await readDir(reader);
+    if (!batch.length) return;
+    for (const e of batch) {
+      await walkEntry(e, out);
+      if (out.length >= DROP_CAP) return;
+    }
+  }
+}
+
+export async function filesFromDrop(dt) {
+  const entries = [];
+  for (const item of Array.from(dt?.items || [])) {
+    if (item.kind !== 'file') continue;
+    const e = item.webkitGetAsEntry?.();
+    if (e) entries.push(e);
+  }
+  if (entries.length) {
+    const out = [];
+    for (const e of entries) await walkEntry(e, out);
+    if (out.length) return out;
+  }
+  return Array.from(dt?.files || []).filter(droppable);
+}
+
+export const hasFiles = (e) => Array.from(e?.dataTransfer?.types || []).includes('Files');
+
+// A photo dropped anywhere the app is not listening would otherwise replace
+// the page with the image itself, which looks exactly like a crash.
+export function useDropGuard() {
+  useEffect(() => {
+    const stop = (e) => { if (hasFiles(e)) e.preventDefault(); };
+    window.addEventListener('dragover', stop);
+    window.addEventListener('drop', stop);
+    return () => {
+      window.removeEventListener('dragover', stop);
+      window.removeEventListener('drop', stop);
+    };
+  }, []);
+}
+
+// Shared by the upload sheet and the event page. Enter and leave are counted
+// so that dragging across a child element does not flicker the highlight off.
+export function useDropTarget(onFiles) {
+  const [over, setOver] = useState(false);
+  const depth = useRef(0);
+  return {
+    over,
+    handlers: {
+      onDragEnter: (e) => { if (!hasFiles(e)) return; e.preventDefault(); depth.current += 1; setOver(true); },
+      onDragOver: (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; },
+      onDragLeave: (e) => { if (!hasFiles(e)) return; depth.current -= 1; if (depth.current <= 0) { depth.current = 0; setOver(false); } },
+      onDrop: async (e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        depth.current = 0; setOver(false);
+        onFiles(await filesFromDrop(e.dataTransfer));
+      },
+    },
+  };
+}
