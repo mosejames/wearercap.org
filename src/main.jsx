@@ -121,8 +121,7 @@ const contactHref = `mailto:${contactEmail}`;
 const socials = [
   { icon: Instagram, label: '@rcaparents', href: 'https://www.instagram.com/rcaparents/' },
 ];
-// The RCA calendar PDF as released. It predates the July 31 and Aug 30
-// reconciliations, so the Google Calendar is the fresher source.
+// The RCA calendar PDF as released, all-school edition dated 08/12/2026.
 const calendarHref = '/rca-calendar-2026-2027.pdf';
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
@@ -156,7 +155,7 @@ const navLinks = [
 // range ("24 & 25"), which the card detects and sizes down for.
 const upcomingEvents = [
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day', time: '8am to 3pm', description: 'A new year. Familiar faces. A whole community to meet.', image: '/images/rcap-community-table.jpg' },
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, games at 5:30pm' },
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
