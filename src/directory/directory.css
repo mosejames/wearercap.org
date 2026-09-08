@@ -2198,3 +2198,9 @@ textarea:focus-visible {
 .collective-hero-actions .collective-small-join { font-size: 12px; padding: 8px 0; min-height: 44px; gap: 6px; }
 
 .dir-listing-video { margin:20px 0; } .dir-listing-video video { display:block; width:100%; max-height:520px; background:#000; border-radius:12px; }
+
+.dir-swipe-photo { touch-action:pan-y pinch-zoom; } .dir-swipe-photo:focus-visible { outline:2px solid #e8c578; outline-offset:4px; }
+.dir-gallery-controls { display:flex; justify-content:space-between; align-items:center; margin:10px 0; }
+.dir-gallery-controls button { width:44px; height:44px; border:1px solid #ffffff30; border-radius:50%; color:#e8c578; background:#12151f; font-size:28px; cursor:pointer; }
+.dir-gallery-controls span { text-align:center; color:#e8c578; font-size:13px; } .dir-gallery-controls small { display:block; color:#aaa8b3; font-size:11px; }
+.dir-gallery button[aria-pressed="true"] { outline:2px solid #e8c578; outline-offset:2px; }

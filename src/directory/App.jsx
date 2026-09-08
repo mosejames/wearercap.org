@@ -31,6 +31,7 @@ import {
 } from "./api.js";
 
 import Visibility, { DEFAULT_VISIBILITY } from "./Visibility.jsx";
+import Gallery from "./Gallery.jsx";
 import SocialIcon from "./SocialIcon.jsx";
 import Collective from "./Collective.jsx";
 import { Card, Photo, SafeLink, HouseBadge, ListingVideo } from "./ListingUI.jsx";
@@ -594,7 +595,7 @@ export function Editor({
 }
 
 function Details({ item, preview = false }) {
-  const [activePhoto, setActivePhoto] = useState(null);
+
   return (
     <article className="dir-detail">
       {!preview && (
@@ -604,25 +605,7 @@ function Details({ item, preview = false }) {
       )}
       <div className="dir-detail-grid">
         <div>
-          <Photo
-            className="dir-main-photo"
-            path={
-              item.photos.includes(activePhoto) ? activePhoto : item.photos[0]
-            }
-            name={item.name}
-          />
-          <div className="dir-gallery">
-            {item.photos.map((path, i) => (
-              <button
-                type="button"
-                key={path}
-                aria-label={`View photo ${i + 1}`}
-                onClick={() => setActivePhoto(path)}
-              >
-                <Photo path={path} name={`${item.name}, photo ${i + 1}`} />
-              </button>
-            ))}
-          </div>
+          <Gallery photos={item.photos} name={item.name}/>
         </div>
         <div>
           <span className="dir-eyebrow">{item.category}</span>
