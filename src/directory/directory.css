@@ -2194,3 +2194,5 @@ textarea:focus-visible {
 .collective-student-prompt p { margin:5px 0 0; font-size:14px; color:#aaa8b3; }
 .collective-student-prompt .dir-button { font-size:13px; min-height:44px; }
 @media(max-width:600px) { .collective-student-prompt { align-items:flex-start; flex-direction:column; gap:12px; padding:18px; } }
+
+.collective-hero-actions .collective-small-join { font-size: 12px; padding: 8px 0; min-height: 44px; gap: 6px; }

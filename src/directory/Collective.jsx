@@ -335,10 +335,10 @@ export default function Collective({
               <ArrowRight size={18} />
             </button>
             <button
-              className="dir-text-button"
+              className="dir-text-button collective-small-join"
               onClick={() => go(studentMode ? "new-student" : "new")}
             >
-              Share what you do
+              Add your listing
               <ArrowUpRight size={17} />
             </button>
           </div>
@@ -361,13 +361,7 @@ export default function Collective({
               {studentMode ? "Meet our young makers." : settings.partner_heading ? "Find your future partners." : "The RCAP Collective"}
             </h2>
           </div>
-          <button
-            className="dir-text-button"
-            onClick={() => go(studentMode ? "new-student" : "new")}
-          >
-            <Plus size={17} />
-            Add your listing
-          </button>
+
         </div>
         <div className="collective-discovery">
           <div className="collective-discovery-tabs">
