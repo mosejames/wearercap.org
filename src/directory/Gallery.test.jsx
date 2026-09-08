@@ -1,7 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {it,expect,vi} from 'vitest';
-vi.mock('./ListingUI.jsx',()=>({Photo:({path,name})=><img src={path} alt={name}/>}));
+vi.mock('./ListingUI.jsx',()=>({Photo:({path,name})=><img src={path} alt={name}/>,ListingVideo:({path})=><video src={path}/>}));
 import Gallery from './Gallery.jsx';
 it('swipes through photos, wraps around, and leaves vertical scrolling alone',async()=>{
  globalThis.IS_REACT_ACT_ENVIRONMENT=true;const host=document.createElement('div'),root=createRoot(host);
@@ -13,5 +13,17 @@ it('swipes through photos, wraps around, and leaves vertical scrolling alone',as
  await swipe(110,220);expect(surface.querySelector('img').getAttribute('src')).toBe('two');
  await swipe(10,105);await swipe(10,105);expect(surface.querySelector('img').getAttribute('src')).toBe('one');
  await swipe(200,105);expect(surface.querySelector('img').getAttribute('src')).toBe('three');
+ }finally{await act(async()=>root.unmount());}
+});
+
+it('includes video in the same gallery and stops playback by unmounting it when navigating away',async()=>{
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;const host=document.createElement('div'),root=createRoot(host);
+ try{
+ await act(async()=>root.render(<Gallery photos={['one']} video="clip.mp4" name="Business"/>));
+ await act(async()=>host.querySelector('[aria-label="View video"]').click());
+ expect(host.querySelector('video').getAttribute('src')).toBe('clip.mp4');
+ await act(async()=>host.querySelector('[aria-label="Next image or video"]').click());
+ expect(host.querySelector('video')).toBeNull();
+ expect(host.querySelector('[role=group] img').getAttribute('src')).toBe('one');
  }finally{await act(async()=>root.unmount());}
 });

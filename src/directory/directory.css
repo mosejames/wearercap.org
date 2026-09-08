@@ -2204,3 +2204,5 @@ textarea:focus-visible {
 .dir-gallery-controls button { width:44px; height:44px; border:1px solid #ffffff30; border-radius:50%; color:#e8c578; background:#12151f; font-size:28px; cursor:pointer; }
 .dir-gallery-controls span { text-align:center; color:#e8c578; font-size:13px; } .dir-gallery-controls small { display:block; color:#aaa8b3; font-size:11px; }
 .dir-gallery button[aria-pressed="true"] { outline:2px solid #e8c578; outline-offset:2px; }
+
+.dir-video-thumbnail { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#141720; color:#e8c578; min-height:70px; } .dir-upload-video .dir-listing-video {margin:0;} .dir-upload-video video {height:120px; object-fit:contain;}

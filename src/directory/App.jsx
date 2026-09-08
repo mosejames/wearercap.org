@@ -190,17 +190,21 @@ export function Editor({
     const files = [...e.target.files];
     e.target.value = "";
     onError("");
-    if (files.length + form.photos.length > 5) {
+    if (files.filter(file => !file.type.startsWith("video/")).length + form.photos.length > 5) {
       onError(
         "You can have one main photo and four additional photos. Remove a photo first to make room.",
       );
       return;
     }
+    if (files.filter(file => file.type.startsWith("video/")).length + (form.video ? 1 : 0) > 1) {
+      onError("You can add one video. Remove the current video first to replace it."); return;
+    }
     setBusy(true);
     try {
       for (const file of files) {
-        const path = await uploadPhoto(file, user, form.id);
-        setForm((f) => ({ ...f, photos: [...f.photos, path] }));
+        const isVideo = file.type.startsWith("video/");
+        const path = await (isVideo ? uploadVideo : uploadPhoto)(file, user, form.id);
+        setForm((f) => isVideo ? { ...f, video: path } : { ...f, photos: [...f.photos, path] });
         setAdded((a) => [...a, path]);
         setDirty(true);
       }
@@ -209,12 +213,6 @@ export function Editor({
     } finally {
       setBusy(false);
     }
-  }
-  async function addVideo(e) {
-    const file=e.target.files?.[0];e.target.value="";if(!file)return;
-    setBusy(true);onError("");
-    try {const path=await uploadVideo(file,user,form.id);if(form.video)setRemoved(r=>[...r,form.video]);update("video",path);setAdded(a=>[...a,path]);}
-    catch(e){onError(e.message);}finally{setBusy(false);}
   }
   async function save(publish) {
     onError("");
@@ -388,7 +386,7 @@ export function Editor({
                   Your first image is the main photo. Add a logo, book covers,
                   artwork, or a glimpse of your setup.
                 </p>
-                <small>Up to 5 photos. JPG, PNG, WebP, or HEIC. Up to 30 MB each. Photos are automatically resized and compressed.</small>
+                <small>Up to 5 photos. JPG, PNG, WebP, or HEIC. Up to 30 MB each. Photos are automatically resized and compressed. You can also add one MP4 or WebM video, up to 50 MB.</small>
               </div>
               <div className="dir-fields">
                 <div className="dir-upload-grid">
@@ -430,14 +428,15 @@ export function Editor({
                       </div>
                     </div>
                   ))}
+                  {form.video && <div className="dir-upload-photo dir-upload-video"><ListingVideo path={form.video}/><span>Video</span><div><button type="button" onClick={()=>{setRemoved(r=>[...r,form.video]);update("video","");}}>Remove video</button></div></div>}
                 </div>
-                {form.photos.length < 5 && (
+                {(form.photos.length < 5 || !form.video) && (
                   <label className="dir-upload">
-                    <Plus size={22} /> Add photos
+                    <Plus size={22} /> Add photos or video
                     <input
-                      aria-label="Add photos"
+                      aria-label="Add photos or video"
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,video/mp4,video/webm"
                       multiple
                       onChange={upload}
                     />
@@ -445,7 +444,7 @@ export function Editor({
                 )}
               </div>
             </div>
-            <div className="dir-form-section"><div><h2>Bring your listing to life.</h2><p>Optional: add one video introducing your business or showing your work. MP4 or WebM, up to 50 MB. Video plays only when a visitor chooses.</p></div><div className="dir-fields"><ListingVideo path={form.video}/><label className="dir-upload">{form.video ? "Replace video" : "Add video"}<input type="file" accept="video/mp4,video/webm" aria-label="Upload listing video" onChange={addVideo}/></label>{form.video && <button type="button" className="dir-text-button" onClick={()=>{setRemoved(r=>[...r,form.video]);update("video","");}}>Remove video</button>}</div></div>
+
             <div className="dir-form-section">
               <div><span className="dir-eyebrow">For authors & makers</span><h2>Spotlight something you created.</h2><p>Feature a book, artwork, handmade piece, or other product. Tell its story and invite visitors to learn more. This is an introduction, with no checkout or sales handled here.</p></div>
               <div className="dir-fields">
@@ -605,7 +604,7 @@ function Details({ item, preview = false }) {
       )}
       <div className="dir-detail-grid">
         <div>
-          <Gallery photos={item.photos} name={item.name}/>
+          <Gallery photos={item.photos} video={item.video} name={item.name}/>
         </div>
         <div>
           <span className="dir-eyebrow">{item.category}</span>
@@ -655,7 +654,6 @@ function Details({ item, preview = false }) {
             {(item.product_photo || item.photos?.[0]) && <Photo path={item.photos?.includes(item.product_photo) ? item.product_photo : item.photos?.[0]} name={item.product_name} />}
             <div><span className="dir-eyebrow">Creation spotlight</span><h2>{item.product_name}</h2>{item.product_description && <p>{item.product_description}</p>}<SafeLink href={item.product_url}>Learn more <ArrowUpRight size={16} /></SafeLink></div>
           </section>}
-          <ListingVideo path={item.video}/>
           <div className="dir-contact">
             <h2>Let’s connect.</h2>
             {item.email && (
