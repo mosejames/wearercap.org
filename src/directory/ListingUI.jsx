@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ArrowUpRight,
   Store,
@@ -162,8 +162,10 @@ export function Card({ item, manage = false }) {
 }
 
 export function ListingVideo({path}) {
- const [url,setUrl]=useState(""),[error,setError]=useState("");
- useEffect(()=>{let active=true;setUrl("");setError("");if(path) photoUrl(path).then(value=>{if(active)setUrl(value);}).catch(()=>{if(active)setError("Video could not load. Refresh to try again.");});return ()=>{active=false;};},[path]);
+ const [url,setUrl]=useState(""),[error,setError]=useState(""),[started,setStarted]=useState(false);
+ const player=useRef(null);
+ useEffect(()=>{let active=true;setUrl("");setError("");setStarted(false);if(path) photoUrl(path).then(value=>{if(active)setUrl(value);}).catch(()=>{if(active)setError("Video could not load. Refresh to try again.");});return ()=>{active=false;};},[path]);
  if(!path)return null;
- return <div className="dir-listing-video">{error ? <p role="status">{error}</p> : url ? <video src={url} controls playsInline preload="none" aria-label="Business introduction video" onError={()=>setError("This browser cannot play this video. Try another browser or ask the owner for an MP4 version.")} /> : <p>Loading video…</p>}</div>;
+ async function play(){try{setError("");await player.current.play();setStarted(true);}catch{setError("Playback could not start. Try Play video again.");}}
+ return <div className="dir-listing-video">{url ? <><video ref={player} key={url} src={url} controls playsInline preload="metadata" aria-label="Business introduction video" onPlay={()=>setStarted(true)} onEnded={()=>setStarted(false)} onError={()=>setError("This browser cannot play this video. Try another browser or ask the owner for an MP4 version.")} />{!started && <button type="button" className="dir-button dir-secondary" onClick={play}>Play video</button>}</> : !error && <p>Loading video…</p>}{error && <p role="status">{error}</p>}</div>;
 }

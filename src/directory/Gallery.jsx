@@ -7,7 +7,7 @@ export default function Gallery({photos=[],video="",name}) {
  const move=direction=>setSelected(media[(index+direction+media.length)%media.length]);
  return <div>
   <div className="dir-swipe-photo" role="group" aria-label="Listing photos and video" tabIndex={media.length>1?0:undefined}
-   onKeyDown={e=>{if(media.length<2)return;if(e.key==='ArrowRight'){e.preventDefault();move(1);}if(e.key==='ArrowLeft'){e.preventDefault();move(-1);}}}
+   onKeyDown={e=>{if(e.target !== e.currentTarget || media.length<2)return;if(e.key==='ArrowRight'){e.preventDefault();move(1);}if(e.key==='ArrowLeft'){e.preventDefault();move(-1);}}}
    onTouchStart={e=>{start.current=e.touches.length===1?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null;}}
    onTouchCancel={()=>{start.current=null;}}
    onTouchEnd={e=>{const point=start.current;start.current=null;if(!point || media.length<2 || !e.changedTouches.length)return;const dx=e.changedTouches[0].clientX-point.x,dy=e.changedTouches[0].clientY-point.y;if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5)move(dx<0?1:-1);}}>
