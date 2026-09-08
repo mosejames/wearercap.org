@@ -86,23 +86,73 @@ export function useDropGuard() {
   }, []);
 }
 
-// Shared by the upload sheet and the event page. Enter and leave are counted
-// so that dragging across a child element does not flicker the highlight off.
+// For an element that is its own target: the upload sheet. Enter and leave are
+// counted so that dragging across a child does not flicker the highlight off.
+// stopPropagation keeps the window-level target below from firing too, so the
+// sheet wins whenever it is open.
 export function useDropTarget(onFiles) {
   const [over, setOver] = useState(false);
   const depth = useRef(0);
   return {
     over,
     handlers: {
-      onDragEnter: (e) => { if (!hasFiles(e)) return; e.preventDefault(); depth.current += 1; setOver(true); },
-      onDragOver: (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; },
-      onDragLeave: (e) => { if (!hasFiles(e)) return; depth.current -= 1; if (depth.current <= 0) { depth.current = 0; setOver(false); } },
+      onDragEnter: (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.stopPropagation(); depth.current += 1; setOver(true); },
+      onDragOver: (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; },
+      onDragLeave: (e) => { if (!hasFiles(e)) return; e.stopPropagation(); depth.current -= 1; if (depth.current <= 0) { depth.current = 0; setOver(false); } },
       onDrop: async (e) => {
         if (!hasFiles(e)) return;
-        e.preventDefault();
+        e.preventDefault(); e.stopPropagation();
         depth.current = 0; setOver(false);
         onFiles(await filesFromDrop(e.dataTransfer));
       },
     },
   };
+}
+
+/* For the event page, where the target has to be the whole window rather than
+   the page element.
+
+   The first version bound to the event's own div, and that div is only as tall
+   as its contents. On an event with no photos yet it is a few hundred pixels,
+   so a drop aimed at the empty space below it landed on nothing. Worse, the
+   guard above swallows those drops, so a miss did nothing at all rather than
+   navigating away: indistinguishable from broken.
+
+   onFiles goes through a ref so that passing a fresh arrow function every
+   render does not tear down and rebuild the listeners mid-drag, which loses
+   the enter and leave count and leaves the overlay stuck on. */
+export function useWindowDropTarget(onFiles, enabled = true) {
+  const [over, setOver] = useState(false);
+  const depth = useRef(0);
+  const cb = useRef(onFiles);
+  cb.current = onFiles;
+
+  useEffect(() => {
+    if (!enabled) { depth.current = 0; setOver(false); return undefined; }
+    const enter = (e) => { if (!hasFiles(e)) return; e.preventDefault(); depth.current += 1; setOver(true); };
+    const over_ = (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; };
+    const leave = (e) => {
+      if (!hasFiles(e)) return;
+      depth.current -= 1;
+      if (depth.current <= 0) { depth.current = 0; setOver(false); }
+    };
+    const drop = async (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth.current = 0; setOver(false);
+      cb.current(await filesFromDrop(e.dataTransfer));
+    };
+    window.addEventListener('dragenter', enter);
+    window.addEventListener('dragover', over_);
+    window.addEventListener('dragleave', leave);
+    window.addEventListener('drop', drop);
+    return () => {
+      window.removeEventListener('dragenter', enter);
+      window.removeEventListener('dragover', over_);
+      window.removeEventListener('dragleave', leave);
+      window.removeEventListener('drop', drop);
+    };
+  }, [enabled]);
+
+  return over;
 }

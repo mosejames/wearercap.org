@@ -20,7 +20,7 @@ import { Avatar, AvatarContext, CommunityPage, BadgeShelf, BadgeCelebration } fr
 import { rewardCall, saveAvatar } from './rewards.js';
 import { followSheetViewport } from './sheetViewport.js';
 import { isVideo } from './videos.js';
-import { droppable, useDropGuard, useDropTarget } from './dnd.js';
+import { droppable, useDropGuard, useDropTarget, useWindowDropTarget } from './dnd.js';
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
@@ -1031,7 +1031,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
   // Drop anywhere on the page and the sheet opens already holding the files.
-  const drop = useDropTarget((list) => { if (event?.open && list.length) onAdd(event, list); });
+  const dropOver = useWindowDropTarget((list) => { if (list.length) onAdd(event, list); }, !!event?.open);
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
   const [counts, setCounts] = useState(new Map());
@@ -1088,8 +1088,8 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
   const visible = sorted.filter((p) => !p.hidden);
 
   return (
-    <div className="event" {...drop.handlers}>
-      {drop.over && event.open && (
+    <div className="event">
+      {dropOver && (
         <div className="page-drop">
           <div>
             <b>Drop them here</b>
