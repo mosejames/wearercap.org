@@ -6,6 +6,7 @@ const api = vi.hoisted(() => ({
   saveBusiness: vi.fn(),
   removePhotos: vi.fn(),
   uploadPhoto: vi.fn(),
+  uploadVideo: vi.fn(),
 }));
 vi.mock("./api.js", () => ({
   ...api,
@@ -153,4 +154,14 @@ it("starts a student listing with the parent-management guidance visible", async
       el.parentElement.textContent.includes("Who runs"),
     ).value,
   ).toBe("student");
+});
+
+it("removes a listing video only after saving the updated listing", async () => {
+ const saved=vi.fn();
+ await act(async()=>root.render(<Editor initial={{...initial,video:"owner/listing/demo.mp4"}} user={{id:"owner"}} onSaved={saved} onError={vi.fn()}/>));
+ await act(async()=>button("Remove video").click());
+ expect(api.removePhotos).not.toHaveBeenCalled();
+ await act(async()=>button("Save as draft").click());
+ expect(api.saveBusiness).toHaveBeenCalledWith(expect.objectContaining({video:""}),{id:"owner"});
+ expect(api.removePhotos).toHaveBeenCalledWith(["owner/listing/demo.mp4"]);
 });

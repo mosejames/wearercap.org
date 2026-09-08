@@ -2196,3 +2196,5 @@ textarea:focus-visible {
 @media(max-width:600px) { .collective-student-prompt { align-items:flex-start; flex-direction:column; gap:12px; padding:18px; } }
 
 .collective-hero-actions .collective-small-join { font-size: 12px; padding: 8px 0; min-height: 44px; gap: 6px; }
+
+.dir-listing-video { margin:20px 0; } .dir-listing-video video { display:block; width:100%; max-height:520px; background:#000; border-radius:12px; }

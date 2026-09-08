@@ -160,3 +160,10 @@ export function Card({ item, manage = false }) {
     </article>
   );
 }
+
+export function ListingVideo({path}) {
+ const [url,setUrl]=useState(""),[error,setError]=useState("");
+ useEffect(()=>{let active=true;setUrl("");setError("");if(path) photoUrl(path).then(value=>{if(active)setUrl(value);}).catch(()=>{if(active)setError("Video could not load. Refresh to try again.");});return ()=>{active=false;};},[path]);
+ if(!path)return null;
+ return <div className="dir-listing-video">{error ? <p role="status">{error}</p> : url ? <video src={url} controls playsInline preload="none" aria-label="Business introduction video" onError={()=>setError("This browser cannot play this video. Try another browser or ask the owner for an MP4 version.")} /> : <p>Loading video…</p>}</div>;
+}

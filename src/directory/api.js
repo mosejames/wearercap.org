@@ -1,3 +1,4 @@
+import { optimizePhoto, validateVideo } from "./media.js";
 import { supabase } from "../carpool/supabaseClient.js";
 export { supabase };
 export const BUCKET = "directory-photos";
@@ -29,6 +30,7 @@ export async function saveBusiness(listing, user) {
     connect_url,
     location,
     photos,
+    video = "",
     published,
     house = "",
     reach = "local",
@@ -56,6 +58,7 @@ export async function saveBusiness(listing, user) {
       connect_url,
       location,
       photos,
+      video,
       published,
       house,
       reach,
@@ -74,19 +77,12 @@ export async function saveBusiness(listing, user) {
   return data;
 }
 export async function uploadPhoto(file, user, listingId) {
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
-    throw new Error("Choose a JPG, PNG, or WebP image.");
-  if (file.size > 5 * 1024 * 1024)
-    throw new Error("Each photo must be 5 MB or smaller.");
-  const extension = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-  }[file.type];
+  const optimized = await optimizePhoto(file);
+  const extension = optimized.type === "image/webp" ? "webp" : "png";
   const path = `${user.id}/${listingId}/${crypto.randomUUID()}.${extension}`;
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(path, optimized, { contentType: optimized.type, upsert: false });
   if (error) throw error;
   return path;
 }
@@ -94,4 +90,12 @@ export async function removePhotos(paths) {
   if (!paths.length) return;
   const { error } = await supabase.storage.from(BUCKET).remove(paths);
   if (error) throw error;
+}
+
+export async function uploadVideo(file,user,listingId) {
+ validateVideo(file);
+ const path = `${user.id}/${listingId}/${crypto.randomUUID()}.${file.type === "video/mp4" ? "mp4" : "webm"}`;
+ const {error}=await supabase.storage.from(BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+ if(error) throw error;
+ return path;
 }

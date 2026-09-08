@@ -82,6 +82,7 @@ export const emptyListing = () => ({
   connect_url: "",
   location: "",
   photos: [],
+  video: "",
   social_profiles: [],
   house: "",
   reach: "local",
