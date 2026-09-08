@@ -1,0 +1,108 @@
+<!doctype html>
+<!--
+  Source for the RCAP Collective OG card (1200×630).
+
+    public/directory/collective-og.png
+
+  Follows the Carpool card rather than the Recap's night one, because the
+  Collective is an invitation to look, not an announcement: paper ground,
+  a "WE ARE RCAP" eyebrow, a two-word Archivo Black headline with the second
+  word in the flame, and the black strap carrying the URL. Two RCAP tools in a
+  row should preview as two RCAP tools.
+
+  Geometry is lifted off carpool-og.png so the pair sit together: 80px left
+  margin, eyebrow cap top at 77, headline lines at 138 and 258, strap at 405,
+  and a 100px bar across the bottom.
+
+  Regenerate:  node docs/og-render.mjs collective
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #faf4ea;
+        --ink: #1a1613;
+        --gold: #e8a516;
+        --orange: #f26a1b;
+        --red: #d8202d;
+        --magenta: #e0218a;
+        --flame: linear-gradient(96deg, var(--gold) 0%, var(--orange) 34%, var(--red) 68%, var(--magenta) 100%);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 1200px; height: 630px; overflow: hidden;
+        background: var(--paper); color: var(--ink);
+        font-family: 'Archivo', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        position: relative;
+      }
+
+      /* eyebrow: a short flame-orange rule, then the family name */
+      .eyebrow {
+        position: absolute; left: 80px; top: 73px;
+        display: flex; align-items: center; gap: 14px;
+        font-size: 22px; font-weight: 800; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--orange);
+      }
+      .eyebrow::before {
+        content: ''; width: 30px; height: 4px; background: var(--orange);
+      }
+
+      .headline {
+        position: absolute; left: 78px; top: 126px;
+        font-size: 128px; font-weight: 900; line-height: 0.94;
+        letter-spacing: -0.045em; text-transform: uppercase;
+      }
+      /* Blocks that refuse to wrap, so the break lands where it is meant to
+         rather than wherever the box happens to run out. */
+      .headline span, .headline b { display: block; white-space: nowrap; }
+      .headline b {
+        font-weight: 900;
+        background: var(--flame);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+
+      .strap {
+        position: absolute; left: 80px; top: 396px;
+        font-size: 32px; font-weight: 500; line-height: 1.37;
+        letter-spacing: -0.01em; color: #5a4f47;
+      }
+      .strap span { display: block; white-space: nowrap; }
+
+      .bar {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 100px;
+        background: var(--ink); color: var(--paper);
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 80px;
+      }
+      .bar .url { font-size: 30px; font-weight: 800; letter-spacing: -0.01em; }
+      .bar .by {
+        text-align: right; font-size: 17px; font-weight: 800;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        line-height: 1.5; color: rgba(250, 244, 234, 0.72);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="eyebrow">We are RCAP</div>
+    <div class="headline">
+      <span>Support</span>
+      <b>our own.</b>
+    </div>
+    <p class="strap">
+      <span>Businesses, books, and creations from</span>
+      <span>Ron Clark Academy families.</span>
+    </p>
+    <div class="bar">
+      <div class="url">wearercap.org/directory</div>
+      <div class="by">Organized by<br />parent volunteers</div>
+    </div>
+  </body>
+</html>
