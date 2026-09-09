@@ -811,7 +811,7 @@ function App() {
           action points somewhere else. */}
       <section id="tools" className="content-section">
         <div className="section-heading">
-          <p className="section-label">We Are The Builders</p>
+          <p className="section-label">We Are The Connection</p>
           <h2>Built for RCA families. Pick what you need.</h2>
           <p>
             Things to make our community stronger and, hopefully, your life a
