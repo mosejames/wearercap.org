@@ -2189,11 +2189,34 @@ textarea:focus-visible {
 .dir-product-spotlight p { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media(max-width: 500px) { .dir-product-spotlight { grid-template-columns: 1fr; } .dir-product-spotlight img { max-width: 200px; } }
 
-.collective-student-prompt { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 24px; margin:24px 0; border:1px solid #ffffff20; border-radius:12px; }
+.collective-student-prompt {
+  /* This bar ran the full viewport, so it was the one element on the page that
+     did not line up with the copy above and below it.
+     --hero-inset mirrors the horizontal padding on the hero and browse
+     sections, which steps 56 -> 32 -> 20. Subtracting it from both the cap and
+     the width reproduces exactly where their content starts at any viewport,
+     rather than hardcoding an offset that only holds at one size. */
+  --hero-inset: 56px;
+  max-width: calc(1380px - var(--hero-inset) * 2);
+  width: calc(100% - var(--hero-inset) * 2);
+  margin: 24px auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid #ffffff20;
+  border-radius: 12px;
+}
 .collective-student-prompt strong { font-size:16px; }
 .collective-student-prompt p { margin:5px 0 0; font-size:14px; color:#aaa8b3; }
 .collective-student-prompt .dir-button { font-size:13px; min-height:44px; }
 @media(max-width:600px) { .collective-student-prompt { align-items:flex-start; flex-direction:column; gap:12px; padding:18px; } }
+/* These two must sit after the base rule above: the stylesheet defines the
+   1050px block earlier in the file, so an override placed there is undone by
+   the base declaration further down. */
+@media(max-width:1050px) { .collective-student-prompt { --hero-inset: 32px; } }
+@media(max-width:560px) { .collective-student-prompt { --hero-inset: 20px; } }
 
 .collective-hero-actions .collective-small-join { font-size: 12px; padding: 8px 0; min-height: 44px; gap: 6px; }
 
