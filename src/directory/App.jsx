@@ -504,9 +504,21 @@ export function Editor({
               </div>
               <div className="dir-fields">
                 <div className="dir-two">
-                  {field("email", "Business email", "email", 254)}
-                  {field("phone", "Business phone", "tel", 40)}
+                  {field("email", "Business email *", "email", 254)}
+                  {field("phone", "Phone number *", "tel", 40)}
                 </div>
+                <label className="dir-check">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form.phone_public)}
+                    onChange={(e) => update("phone_public", e.target.checked)}
+                  />
+                  <span>
+                    Show my phone number on the listing. Leave this off and only
+                    RCAP can see it. Your email is always shown so families have
+                    a way to reach you.
+                  </span>
+                </label>
                 {field("website", "Website", "text", 500)}
                 <fieldset className="dir-social-editor">
                   <legend>Social profiles</legend>
@@ -711,7 +723,9 @@ function Details({ item, preview = false }) {
                 {item.email}
               </a>
             )}
-            {item.phone && (
+            {/* Private unless the lister opted in. Email is always shown, so
+                hiding this never leaves a listing with no way to be reached. */}
+            {item.phone && item.phone_public && (
               <a href={`tel:${item.phone.replace(/[^+\d]/g, "")}`}>
                 <Phone size={18} />
                 {item.phone}

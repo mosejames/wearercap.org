@@ -10,12 +10,16 @@ describe("directory publishing", () => {
     const listing = { ...emptyListing(), name: "A new venture" };
     expect(validateListing(listing).published).toBe(false);
     expect(() => validateListing(listing, true)).toThrow("short bio");
-    expect(
-      validateListing(
-        { ...listing, bio: "Handmade art", email: "art@example.com" },
-        true,
-      ).published,
-    ).toBe(true);
+    // Email and phone are both required to publish; phone stays private unless
+    // the lister opts in, so every listing has one contact route that shows.
+    const withBio = { ...listing, bio: "Handmade art" };
+    expect(() => validateListing(withBio, true)).toThrow("business email");
+    expect(() =>
+      validateListing({ ...withBio, email: "art@example.com" }, true),
+    ).toThrow("phone number");
+    const full = { ...withBio, email: "art@example.com", phone: "404 555 0100" };
+    expect(validateListing(full, true).published).toBe(true);
+    expect(validateListing(full, true).phone_public).toBe(false);
   });
   it("rejects unsafe links and accepts websites without a scheme", () => {
     for (const url of [

@@ -78,6 +78,7 @@ export const emptyListing = () => ({
   venture: "parent",
   email: "",
   phone: "",
+  phone_public: false,
   website: "",
   connect_url: "",
   location: "",
@@ -138,14 +139,16 @@ export function validateListing(listing, publish = false) {
   if (social_profiles.some(p => p.url.length > 500)) throw new Error("Keep social profile links under 501 characters.");
   const website = webUrl(listing.website),
     connect_url = webUrl(listing.connect_url);
-  if (
-    publish &&
-    (!listing.bio.trim() ||
-      !(listing.email || listing.phone || website || connect_url || social_profiles.length))
-  )
-    throw new Error(
-      "Add a short bio and at least one way to connect before publishing.",
-    );
+  // Email and phone are both required to publish. Email is the channel families
+  // use, phone is how RCAP reaches the lister, and it stays private unless
+  // phone_public is set. That guarantees every published listing has exactly one
+  // contact route that is always visible.
+  if (publish && !listing.bio.trim())
+    throw new Error("Add a short bio before publishing.");
+  if (publish && !String(listing.email || "").trim())
+    throw new Error("Add a business email before publishing.");
+  if (publish && !String(listing.phone || "").trim())
+    throw new Error("Add a phone number before publishing. You can keep it private.");
   return {
     ...listing,
     name: listing.name.trim(),

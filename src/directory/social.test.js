@@ -6,8 +6,8 @@ it('turns handles into links and preserves full company URLs', () => {
   expect(socialUrl({platform:'LinkedIn',url:'https://www.linkedin.com/company/omg/'})).toBe('https://www.linkedin.com/company/omg/');
   expect(() => socialUrl({platform:'Other',url:'javascript:alert(1)'})).toThrow();
 });
-it('publishes with social contact alone and ignores unused extra rows', () => {
-  const result=validateListing({...emptyListing(),name:'OMG',bio:'Photo booths',social_profiles:[{platform:'Instagram',url:'@omgbooth'},{platform:'Instagram',url:''}]},true);
+it('keeps social profiles and ignores unused extra rows', () => {
+  const result=validateListing({...emptyListing(),name:'OMG',bio:'Photo booths',email:'hi@omgbooth.com',phone:'404 555 0100',social_profiles:[{platform:'Instagram',url:'@omgbooth'},{platform:'Instagram',url:''}]},true);
   expect(result.social_profiles).toEqual([{platform:'Instagram',url:'https://www.instagram.com/omgbooth'}]);
 });
 it('keeps a creation spotlight and safely falls back after its photo is removed', () => {

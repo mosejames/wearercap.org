@@ -21,6 +21,10 @@ const initial = {
   id: "listing",
   name: "Family Books",
   bio: "Stories for young readers",
+  // Email and phone are required to publish, so the fixture carries both.
+  // Without them this test trips on contact validation instead of consent.
+  email: "hello@example.com",
+  phone: "404 555 0100",
   website: "https://example.com",
   published: true,
   photos: ["owner/listing/cover.jpg"],
