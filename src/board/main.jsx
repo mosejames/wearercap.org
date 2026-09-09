@@ -186,7 +186,7 @@ function App() {
       <section className="content-section" aria-labelledby="meetings-h">
         <div className="section-heading">
           <p className="section-label">Meeting calendar</p>
-          <h2 id="meetings-h">Four Mondays this year.</h2>
+          <h2 id="meetings-h">Join us at the next RCAP meeting.</h2>
           <p>
             Every RCA parent is a member, so every one of these is yours. Please
             come. This is where the decisions get made, and the parents in the
