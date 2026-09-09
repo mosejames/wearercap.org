@@ -2249,3 +2249,13 @@ textarea:focus-visible {
 .dir-optional.is-closed .dir-fields { display:none; }
 .dir-optional-toggle { margin-top:12px; padding:9px 15px; border:1px solid #ffffff24; border-radius:999px; background:transparent; color:#e8c578; font-size:13px; font-weight:700; cursor:pointer; }
 .dir-optional-toggle:hover { border-color:#e8c578; }
+
+/* Spotlight timer. Sits under the showcase image and drains across as the slide
+   runs, so the rotation is legible rather than surprising. It restarts on every
+   slide because the span is keyed on the index, and it holds still whenever the
+   rotation is paused. */
+.showcase-timer { height:3px; margin-top:10px; background:#ffffff14; border-radius:999px; overflow:hidden; }
+.showcase-timer span { display:block; height:100%; width:100%; background:#e8c578; transform:scaleX(0); transform-origin:left center; }
+.showcase-timer span.is-running { animation:showcase-drain linear forwards; }
+@keyframes showcase-drain { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .showcase-timer { display:none; } }

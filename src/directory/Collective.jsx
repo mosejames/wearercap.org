@@ -26,16 +26,43 @@ function scrollToBrowse() {
       : "smooth",
   });
 }
+const SPOTLIGHT_MS = 7000;
+
 function Showcase({ items, studentMode }) {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const candidates = items
     .filter((item) => !studentMode || item.venture === "student")
     .slice()
     .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
     .slice(0, 5);
   const selected = candidates[index % (candidates.length || 1)];
+
+  // Rotates on its own so every listed family gets the front of the page, not
+  // just whoever posted last. Pauses on hover and while a control has focus, so
+  // it never moves out from under someone reading or tabbing through. Held
+  // still entirely for anyone who asks for reduced motion.
+  const still =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const rotating = candidates.length > 1 && !paused && !still;
+
+  useEffect(() => {
+    if (!rotating) return undefined;
+    const id = window.setTimeout(
+      () => setIndex((i) => (i + 1) % candidates.length),
+      SPOTLIGHT_MS,
+    );
+    return () => window.clearTimeout(id);
+  }, [rotating, index, candidates.length]);
   return (
-    <div className="collective-showcase">
+    <div
+      className="collective-showcase"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+    >
       {selected ? (
         <>
           <a
@@ -63,6 +90,15 @@ function Showcase({ items, studentMode }) {
               </div>
             </div>
           </a>
+          {candidates.length > 1 && (
+            <div className="showcase-timer" aria-hidden="true">
+              <span
+                key={`${index}-${rotating}`}
+                className={rotating ? "is-running" : ""}
+                style={{ animationDuration: `${SPOTLIGHT_MS}ms` }}
+              />
+            </div>
+          )}
           <div className="showcase-caption">
             <span>
               {selected.venture === "student"
