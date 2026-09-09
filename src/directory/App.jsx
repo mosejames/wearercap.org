@@ -545,12 +545,26 @@ export function Editor({
                   ))}
                   <button type="button" className="dir-button dir-secondary" onClick={() => update("social_profiles", [...(form.social_profiles || []), { platform: "Instagram", url: "" }])}><Plus size={18} /> Add another social profile</button>
                 </fieldset>
-                {field(
-                  "connect_url",
-                  "Booking, shop, or social profile link",
-                  "text",
-                  500,
-                )}
+                {/* This drives the Connect button on the browse card, and falls
+                    back to the website when empty. The old label listed three
+                    destinations without saying what the field was for, and its
+                    mention of a social link overlapped the repeater directly
+                    above it. Named for the button it controls instead. */}
+                <label>
+                  Where should the Connect button take people?
+                  <input
+                    type="text"
+                    maxLength={500}
+                    value={form.connect_url}
+                    onChange={(e) => update("connect_url", e.target.value)}
+                    placeholder="calendly.com/yourname"
+                  />
+                  <small>
+                    Your booking page, shop, or wherever someone goes to take
+                    the next step. An author might link their book, a realtor
+                    their calendar. Leave it blank and Connect uses your website.
+                  </small>
+                </label>
               </div>
             </div>
             {/* Entirely optional and the least likely thing a first-time lister
