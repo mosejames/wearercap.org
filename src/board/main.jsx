@@ -77,7 +77,7 @@ const officers = [
 // May 10 is its backup. Same shape as the homepage tiles so they render through
 // the same markup and stylesheet; nothing here is styled twice.
 const meetings = [
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00 to 7:45pm, virtual' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual' },
   { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
   { month: 'Jan', year: '2027', weekday: 'Mon', day: '25', label: '7:00pm, virtual' },
   { month: 'Apr', year: '2027', weekday: 'Mon', day: '26', label: '7:00pm, in person' },
