@@ -77,7 +77,7 @@ const advisors = [
   // once we are certain whose face it is.
   { key: 'g4', grade: '4th grade', name: 'Will Wesley', photo: '/images/board/will.jpg' },
   { key: 'g5', grade: '5th grade', name: 'Sidonie Holloman', photo: '/images/board/sidonie.jpg' },
-  { key: 'g6', grade: '6th grade', name: 'Adrianne Simpson', photo: '/images/board/adriane.jpg' },
+  { key: 'g6', grade: '6th grade', name: 'Adriane Simpson', photo: '/images/board/adriane.jpg' },
   { key: 'g7', grade: '7th grade', name: 'Sara White', photo: '/images/board/sara.jpg' },
   { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg' },
 ];
