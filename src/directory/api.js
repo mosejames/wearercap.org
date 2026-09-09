@@ -2,13 +2,14 @@ import { optimizePhoto, validateVideo } from "./media.js";
 import { supabase } from "../carpool/supabaseClient.js";
 export { supabase };
 export const BUCKET = "directory-photos";
-export async function photoUrl(path) {
+// The bucket is public, so the URL is known without asking the server. It used
+// to mint a signed URL first, which meant every thumbnail was two sequential
+// requests: one for permission, then one for the picture. On a grid of listings
+// that is a signing request per photo before any of them can start loading,
+// which is why the initials placeholder sat there so long.
+export function photoUrl(path) {
   if (!path) return "";
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 3600);
-  if (error) throw error;
-  return data.signedUrl;
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 export async function listBusinesses(owner) {
   let query = supabase.from("directory_listings").select("*").order("name");

@@ -36,27 +36,19 @@ export function HouseBadge({ house, large = false }) {
   );
 }
 export function Photo({ path, name, className = "" }) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    let active = true;
-    setUrl("");
-    if (path)
-      photoUrl(path)
-        .then((value) => {
-          if (active) setUrl(value);
-        })
-        .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [path]);
+  // Resolved during render rather than in an effect: the URL is known from the
+  // path, so there is nothing to wait for. The state is only here to fall back
+  // to initials if the image itself fails.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [path]);
+  const url = failed ? "" : photoUrl(path);
   return url ? (
     <img
       className={className}
       src={url}
       alt={name}
       loading="lazy"
-      onError={() => setUrl("")}
+      onError={() => setFailed(true)}
     />
   ) : (
     <div className={`dir-placeholder ${className}`}>
@@ -164,7 +156,7 @@ export function Card({ item, manage = false }) {
 export function ListingVideo({path}) {
  const [url,setUrl]=useState(""),[error,setError]=useState(""),[started,setStarted]=useState(false);
  const player=useRef(null);
- useEffect(()=>{let active=true;setUrl("");setError("");setStarted(false);if(path) photoUrl(path).then(value=>{if(active)setUrl(value);}).catch(()=>{if(active)setError("Video could not load. Refresh to try again.");});return ()=>{active=false;};},[path]);
+ useEffect(()=>{let active=true;setUrl("");setError("");setStarted(false);if(path) setUrl(photoUrl(path));return ()=>{active=false;};},[path]);
  if(!path)return null;
  async function play(){try{setError("");await player.current.play();setStarted(true);}catch{setError("Playback could not start. Try Play video again.");}}
  return <div className="dir-listing-video">{url ? <><video ref={player} key={url} src={url} controls playsInline preload="metadata" aria-label="Business introduction video" onPlay={()=>setStarted(true)} onEnded={()=>setStarted(false)} onError={()=>setError("This browser cannot play this video. Try another browser or ask the owner for an MP4 version.")} />{!started && <button type="button" className="dir-button dir-secondary" onClick={play}>Play video</button>}</> : !error && <p>Loading video…</p>}{error && <p role="status">{error}</p>}</div>;
