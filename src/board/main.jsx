@@ -163,7 +163,7 @@ function App() {
       <section className="content-section band story-section" aria-labelledby="advisory-h">
         <div className="section-heading">
           <p className="section-label">Advisory board</p>
-          <h2 id="advisory-h">One voice from every grade.</h2>
+          <h2 id="advisory-h">Someone from your child&rsquo;s grade, at the table.</h2>
           <p>
             Each officer nominated a parent from a different grade level, so
             every hallway in the building has someone at the table. They are

@@ -280,7 +280,7 @@ const expActions = [
     image: '/images/rcap-exp-schedule.jpg',
     alt: 'Two RCAP dads walking the courtyard during EXP',
     title: 'The whole schedule',
-    body: 'All ten sessions, what each post involves, and the other weeks the building fills up.',
+    body: 'Every session this year, what each post involves, and the other weeks the building fills up.',
     href: '/invite/',
     label: 'See the year',
     external: false,
@@ -735,8 +735,8 @@ function App() {
           <span className="board-bar-text">
             <strong>Meet the 2026-27 RCAP board</strong>
             <span>
-              Four officers, one parent from every grade, and how to reach any
-              of them.
+              These are the parents working alongside you this year. If you have
+              a question, say something. We are eager to meet you.
             </span>
           </span>
           <span className="board-bar-go" aria-hidden="true">
@@ -785,7 +785,7 @@ function App() {
       <section id="exp" className="content-section band exp-band">
         <div className="section-heading">
           <p className="section-label">We Are The Welcome</p>
-          <h2>Ten times a year, the world comes to RCA.</h2>
+          <h2>The world comes to RCA, and we are the ones who greet it.</h2>
           <p>
             EXP is the Ron Clark Academy Experience. Educators fly in from all
             over to watch our teachers and our kids work, and parents are the
