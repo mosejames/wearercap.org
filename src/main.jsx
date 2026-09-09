@@ -726,6 +726,23 @@ function App() {
             </span>
           </button>
         </div>
+
+        {/* The board page is in the nav and the footer, which means most people
+            never see it. This sits at the foot of the section about who does
+            the supporting, which is the one place on the page where naming the
+            people doing it is the obvious next thing to read. */}
+        <a className="board-bar" href="/board/">
+          <span className="board-bar-text">
+            <strong>Meet the 2026-27 RCAP board</strong>
+            <span>
+              Four officers, one parent from every grade, and how to reach any
+              of them.
+            </span>
+          </span>
+          <span className="board-bar-go" aria-hidden="true">
+            <ArrowRight size={20} />
+          </span>
+        </a>
       </section>
 
       {/* Serve — full width, no card. Three actions across, hairlines between. */}

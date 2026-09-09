@@ -2306,3 +2306,74 @@ button {
   .homepage-refresh .events-section { padding: 44px 0; }
 }
 @media (prefers-reduced-motion: reduce) { .homepage-refresh *, .homepage-refresh *::before, .homepage-refresh *::after { scroll-behavior: auto; transition: none; animation: none; } }
+
+/* ---------------------------------------------------------------------------
+   Board bar. Sits on the gold band at the foot of We Are The Support: ink so it
+   reads as a distinct object on that ground, full width so it works as a
+   closing rule rather than a button someone has to spot.
+   ------------------------------------------------------------------------ */
+
+.board-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 40px;
+  padding: 22px 26px;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: 10px;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.board-bar:hover {
+  background: #241f1a;
+}
+
+.board-bar-text {
+  display: block;
+  min-width: 0;
+}
+
+.board-bar-text strong {
+  display: block;
+  font-size: clamp(17px, 2vw, 21px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.board-bar-text span {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.board-bar-go {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  transition: transform 0.16s ease;
+}
+
+.board-bar:hover .board-bar-go {
+  transform: translateX(4px);
+}
+
+@media (max-width: 560px) {
+  .board-bar {
+    padding: 18px 18px;
+    gap: 14px;
+  }
+
+  .board-bar-go {
+    width: 36px;
+    height: 36px;
+  }
+}
