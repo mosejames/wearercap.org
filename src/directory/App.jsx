@@ -169,7 +169,15 @@ export function Editor({
   const [busy, setBusy] = useState(false),
     [consent, setConsent] = useState(Boolean(initial?.published)),
     [dirty, setDirty] = useState(false),
-    [preview, setPreview] = useState(false);
+    [preview, setPreview] = useState(false),
+    // Which kind of listing this is. Derived from the saved row so an existing
+    // product listing opens with its spotlight already showing.
+    [showSpotlight, setShowSpotlight] = useState(Boolean(initial?.product_name)),
+    // Opens if this listing already uses any of it, so nothing is ever hidden
+    // from someone who has filled it in.
+    [showExtras, setShowExtras] = useState(
+      Boolean(initial?.offers?.length || initial?.community_perk || initial?.collaboration_note),
+    );
   const [added, setAdded] = useState([]),
     [removed, setRemoved] = useState([]);
   useEffect(() => {
@@ -292,6 +300,36 @@ export function Editor({
           }}
         >
           <fieldset disabled={busy}>
+            {/* The spotlight block used to show for everyone, which implied every
+                business has a product to feature. It is a different kind of
+                listing, so it is a choice made once, here, rather than four
+                fields a realtor scrolls past wondering if they apply. Derived
+                from the saved data so an existing product listing opens on the
+                right setting without a schema change. */}
+            <div className="dir-kind" role="group" aria-label="What are you sharing?">
+              <span className="dir-kind-label">What are you sharing?</span>
+              <div className="dir-kind-options">
+                <button
+                  type="button"
+                  className={`dir-kind-option${showSpotlight ? "" : " is-on"}`}
+                  aria-pressed={!showSpotlight}
+                  onClick={() => setShowSpotlight(false)}
+                >
+                  <strong>A business or service</strong>
+                  <small>What you do, and how families reach you.</small>
+                </button>
+                <button
+                  type="button"
+                  className={`dir-kind-option${showSpotlight ? " is-on" : ""}`}
+                  aria-pressed={showSpotlight}
+                  onClick={() => setShowSpotlight(true)}
+                >
+                  <strong>A product or creation</strong>
+                  <small>A book, artwork, or a piece you made. Links out to where it lives.</small>
+                </button>
+              </div>
+            </div>
+
             <div className="dir-form-section">
               <div>
                 <span className="dir-step">01</span>
@@ -445,7 +483,7 @@ export function Editor({
               </div>
             </div>
 
-            <div className="dir-form-section">
+            {showSpotlight && <div className="dir-form-section">
               <div><span className="dir-eyebrow">For authors & makers</span><h2>Spotlight something you created.</h2><p>Feature a book, artwork, handmade piece, or other product. Tell its story and invite visitors to learn more. This is an introduction, with no checkout or sales handled here.</p></div>
               <div className="dir-fields">
                 {field("product_name", "Featured creation (optional)", "text", 100)}
@@ -454,7 +492,7 @@ export function Editor({
                 <label>Spotlight photo<select value={form.product_photo || ""} onChange={e => update("product_photo", e.target.value)}><option value="">Use main listing photo</option>{form.photos.map((photo, index) => <option key={photo} value={photo}>Photo {index + 1}{index === 0 ? " (main)" : ""}</option>)}</select></label>
                 <small>Upload a book cover or product image in Show your work above, then choose it here. Clear the creation name to remove the spotlight.</small>
               </div>
-            </div>
+            </div>}
             <div className="dir-form-section">
               <div>
                 <span className="dir-step">03</span>
@@ -497,7 +535,9 @@ export function Editor({
                 )}
               </div>
             </div>
-            <div className="dir-form-section">
+            {/* Entirely optional and the least likely thing a first-time lister
+                fills in, so it opens only if asked for. */}
+            <div className={`dir-form-section dir-optional${showExtras ? "" : " is-closed"}`}>
               <div>
                 <span className="dir-step">04</span>
                 <h2>Build something together.</h2>
@@ -505,6 +545,15 @@ export function Editor({
                   Optional ways to support the community. Visitors will reach
                   out through your business contact details.
                 </p>
+                {!showExtras && (
+                  <button
+                    type="button"
+                    className="dir-optional-toggle"
+                    onClick={() => setShowExtras(true)}
+                  >
+                    Add these details
+                  </button>
+                )}
               </div>
               <div className="dir-fields">
                 <fieldset className="collective-offer-choices">
@@ -573,7 +622,7 @@ export function Editor({
               <span>
                 {busy
                   ? "Saving or uploading…"
-                  : "You can return and make changes anytime."}
+                  : "Publish as soon as you have the basics. You can come back and add photos, links and more detail anytime."}
               </span>
               <button
                 className="dir-button dir-secondary"

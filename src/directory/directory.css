@@ -2229,3 +2229,23 @@ textarea:focus-visible {
 .dir-gallery button[aria-pressed="true"] { outline:2px solid #e8c578; outline-offset:2px; }
 
 .dir-video-thumbnail { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:#141720; color:#e8c578; min-height:70px; } .dir-upload-video .dir-listing-video {margin:0;} .dir-upload-video video {height:120px; object-fit:contain;}
+
+/* What are you sharing. A choice made once at the top, so the spotlight block
+   only appears for the people it is for. */
+.dir-kind { margin: 0 0 34px; padding: 0 0 28px; border-bottom: 1px solid #ffffff14; }
+.dir-kind-label { display:block; margin-bottom:12px; font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#e8c578; }
+.dir-kind-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.dir-kind-option { display:block; text-align:left; padding:16px 18px; border:1px solid #ffffff24; border-radius:12px; background:transparent; color:#f4f2ef; cursor:pointer; transition:border-color .16s ease, background .16s ease; }
+.dir-kind-option strong { display:block; font-size:15px; font-weight:800; }
+.dir-kind-option small { display:block; margin-top:5px; color:#aaa8b3; font-size:13px; line-height:1.45; }
+.dir-kind-option:hover { border-color:#ffffff44; }
+.dir-kind-option.is-on { border-color:#e8c578; background:#e8c5780f; }
+.dir-kind-option.is-on strong { color:#e8c578; }
+@media(max-width:600px){ .dir-kind-options { grid-template-columns:1fr; } }
+
+/* Optional sections start folded. Nothing is removed, it just stops standing
+   between a parent and a published listing. */
+.dir-optional > div:first-child { position:relative; }
+.dir-optional.is-closed .dir-fields { display:none; }
+.dir-optional-toggle { margin-top:12px; padding:9px 15px; border:1px solid #ffffff24; border-radius:999px; background:transparent; color:#e8c578; font-size:13px; font-weight:700; cursor:pointer; }
+.dir-optional-toggle:hover { border-color:#e8c578; }
