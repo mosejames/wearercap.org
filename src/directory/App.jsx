@@ -25,6 +25,8 @@ import {
   supabase,
   listBusinesses,
   saveBusiness,
+  sendWelcomeEmail,
+  exportActiveListings,
   uploadPhoto,
   uploadVideo,
   removePhotos,
@@ -231,8 +233,12 @@ export function Editor({
         throw new Error(
           "Confirm that you have permission to share this listing.",
         );
+      const wasPublished = Boolean(initial?.published);
       const saved = await saveBusiness(valid, user);
       setDirty(false);
+      // Only on the transition into public. The function checks again on its
+      // side, so a double call cannot produce a second email.
+      if (publish && !wasPublished) sendWelcomeEmail(saved?.id || valid.id);
       try {
         await removePhotos(removed);
       } catch {

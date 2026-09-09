@@ -17,6 +17,34 @@ export async function listBusinesses(owner) {
   if (error) throw error;
   return data;
 }
+// Fired once, after a listing first goes public. The edge function does the
+// work: it reads the account email from auth.users, which the anon key cannot
+// see, and holds the Resend key. It is idempotent on its side, so calling it
+// twice is harmless, and a failure here must never make a successful publish
+// look broken.
+export async function sendWelcomeEmail(listingId) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) return { sent: false };
+    const { data: result } = await supabase.functions.invoke("directory-welcome", {
+      body: { listing_id: listingId },
+    });
+    return result || { sent: false };
+  } catch {
+    return { sent: false };
+  }
+}
+
+// Published listings with the account email each owner signed up with. The
+// query lives in a security-definer function because auth.users is not readable
+// with the anon key, and it checks directory_admins before returning a row.
+export async function exportActiveListings() {
+  const { data, error } = await supabase.rpc("directory_admin_export");
+  if (error) throw error;
+  return data || [];
+}
+
 export async function saveBusiness(listing, user) {
   const {
     id,
