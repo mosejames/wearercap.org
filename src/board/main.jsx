@@ -72,6 +72,42 @@ const officers = [
 ];
 
 // One parent per grade level, nominated by the officers. Names to come.
+// General membership meetings, set by the board at its third meeting. Quarterly,
+// Mondays at 7pm. Only the April one is in person, because that is the election:
+// candidates present themselves and the vote follows. May 10 is the backup for
+// it. The exec board's own cadence and the Advisory Board's are set separately
+// and are not these.
+const meetings = [
+  {
+    key: 'sep14',
+    date: 'Monday, September 14',
+    time: '7:00 to 7:45 PM',
+    where: 'Virtual',
+    what: 'Kickoff, dues, and committee sign-ups. Held between Orientation and Bingo Night, on a no-school Monday.',
+  },
+  {
+    key: 'nov16',
+    date: 'Monday, November 16',
+    time: '7:00 PM',
+    where: 'Virtual',
+    what: 'The raffle drawing, leading into holiday decorating that weekend and 4 Days of Christmas sign-ups.',
+  },
+  {
+    key: 'jan25',
+    date: 'Monday, January 25',
+    time: '7:00 PM',
+    where: 'Virtual',
+    what: 'Mid-year check-in.',
+  },
+  {
+    key: 'apr26',
+    date: 'Monday, April 26',
+    time: '7:00 PM',
+    where: 'In person',
+    what: 'Election meeting. Candidates present themselves in person and the vote is held afterward.',
+  },
+];
+
 const advisors = [
   // One per grade. A name goes up only once we have it right, and a photo only
   // once we are certain whose face it is.
@@ -169,6 +205,36 @@ function App() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="content-section" aria-labelledby="meetings-h">
+        <div className="section-heading">
+          <p className="section-label">Meeting calendar</p>
+          <h2 id="meetings-h">Four Mondays, and one of them decides next year.</h2>
+          <p>
+            General membership meetings are quarterly, Mondays at 7pm. Every
+            parent is a member, so every one of these is yours to come to.
+          </p>
+        </div>
+
+        <ol className="bd-meetings">
+          {meetings.map((m) => (
+            <li className="bd-meeting" key={m.key}>
+              <div className="bd-when">
+                <p className="bd-date">{m.date}</p>
+                <p className="bd-time">
+                  {m.time}
+                  <span className="bd-where">{m.where}</span>
+                </p>
+              </div>
+              <p className="bd-what">{m.what}</p>
+            </li>
+          ))}
+        </ol>
+
+        <p className="bd-social">
+          The parents&rsquo; social is Sunday, September 27, in person.
+        </p>
       </section>
 
       <section className="content-section bd-letter" aria-labelledby="letter-h">

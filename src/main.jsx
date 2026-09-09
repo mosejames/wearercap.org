@@ -155,6 +155,7 @@ const navLinks = [
 // range ("24 & 25"), which the card detects and sizes down for.
 const upcomingEvents = [
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day', time: '8am to 3pm', description: 'A new year. Familiar faces. A whole community to meet.', image: '/images/rcap-community-table.jpg' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP general meeting, 7pm, virtual' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
