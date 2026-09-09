@@ -186,10 +186,12 @@ function App() {
       <section className="content-section" aria-labelledby="meetings-h">
         <div className="section-heading">
           <p className="section-label">Meeting calendar</p>
-          <h2 id="meetings-h">Four Mondays, and one of them decides next year.</h2>
+          <h2 id="meetings-h">Four Mondays this year.</h2>
           <p>
-            General membership meetings are quarterly, Mondays at 7pm. Every
-            parent is a member, so every one of these is yours to come to.
+            Every RCA parent is a member, so every one of these is yours. Please
+            come. This is where the decisions get made, and the parents in the
+            room are the ones who make them. Bring a question, bring an idea, or
+            bring a friend who has been meaning to get involved.
           </p>
         </div>
 
