@@ -237,66 +237,9 @@
   }
 }
 
-/* Meeting calendar. A row per meeting: when on the left, what on the right,
-   with a hairline between. The in-person one is marked because it is the only
-   one that is, and it is the election. */
-.bd-meetings {
-  margin: 26px 0 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--line);
-}
-
-.bd-meeting {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 6px 34px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.bd-date {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-}
-
-.bd-time {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.bd-where {
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gold-deep);
-}
-
-.bd-what {
-  margin: 0;
-  color: var(--muted);
-  font-size: 15px;
-  line-height: 1.55;
-}
-
+/* The one line under the meeting tiles. */
 .bd-social {
-  margin: 20px 0 0;
+  margin: 18px 0 0;
   font-size: 15px;
   font-weight: 700;
-}
-
-@media (max-width: 620px) {
-  .bd-meeting {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 18px 0;
-  }
 }

@@ -73,40 +73,16 @@ const officers = [
 
 // One parent per grade level, nominated by the officers. Names to come.
 // General membership meetings, set by the board at its third meeting. Quarterly,
-// Mondays at 7pm. Only the April one is in person, because that is the election:
-// candidates present themselves and the vote follows. May 10 is the backup for
-// it. The exec board's own cadence and the Advisory Board's are set separately
-// and are not these.
+// Mondays at 7pm. Only April is in person, because that is the election.
+// May 10 is its backup. Same shape as the homepage tiles so they render through
+// the same markup and stylesheet; nothing here is styled twice.
 const meetings = [
-  {
-    key: 'sep14',
-    date: 'Monday, September 14',
-    time: '7:00 to 7:45 PM',
-    where: 'Virtual',
-    what: 'Kickoff, dues, and committee sign-ups. Held between Orientation and Bingo Night, on a no-school Monday.',
-  },
-  {
-    key: 'nov16',
-    date: 'Monday, November 16',
-    time: '7:00 PM',
-    where: 'Virtual',
-    what: 'The raffle drawing, leading into holiday decorating that weekend and 4 Days of Christmas sign-ups.',
-  },
-  {
-    key: 'jan25',
-    date: 'Monday, January 25',
-    time: '7:00 PM',
-    where: 'Virtual',
-    what: 'Mid-year check-in.',
-  },
-  {
-    key: 'apr26',
-    date: 'Monday, April 26',
-    time: '7:00 PM',
-    where: 'In person',
-    what: 'Election meeting. Candidates present themselves in person and the vote is held afterward.',
-  },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00 to 7:45pm, virtual' },
+  { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
+  { month: 'Jan', year: '2027', weekday: 'Mon', day: '25', label: '7:00pm, virtual' },
+  { month: 'Apr', year: '2027', weekday: 'Mon', day: '26', label: '7:00pm, in person' },
 ];
+
 
 const advisors = [
   // One per grade. A name goes up only once we have it right, and a photo only
@@ -217,20 +193,20 @@ function App() {
           </p>
         </div>
 
-        <ol className="bd-meetings">
-          {meetings.map((m) => (
-            <li className="bd-meeting" key={m.key}>
-              <div className="bd-when">
-                <p className="bd-date">{m.date}</p>
-                <p className="bd-time">
-                  {m.time}
-                  <span className="bd-where">{m.where}</span>
-                </p>
-              </div>
-              <p className="bd-what">{m.what}</p>
-            </li>
+        <div className="event-grid">
+          {meetings.map(({ month, year, weekday, day, label }) => (
+            <article className="event-card" key={`${month}-${day}`}>
+              <header className="event-banner">
+                <span>
+                  {month} {year}
+                </span>
+                <span>{weekday}</span>
+              </header>
+              <p className="event-day">{day}</p>
+              <p className="event-what">{label}</p>
+            </article>
           ))}
-        </ol>
+        </div>
 
         <p className="bd-social">
           The parents&rsquo; social is Sunday, September 27, in person.
