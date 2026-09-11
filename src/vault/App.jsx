@@ -1,7 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT,
-  fmtDate, fmtRange, monthKey, monthLabel, todayISO, plural,
+  fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
   bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
@@ -551,7 +551,7 @@ function InviteSheet({ event, onClose }) {
         </label>
         <p className="fine">
           The shared preview includes an AMI Vault image with this event’s name, so everyone knows where to add their photos.
-          {!event.open && ' Heads up: this event is closed to new photos, so the link will not let anyone add.'}
+          {event.startsOn > todayISO() && ` Heads up: this album opens at 12:01am on ${fmtDate(event.startsOn, { weekday: 'long' })}, so the link is a save-the-date until then.`}
         </p>
       </div>
     </Sheet>
@@ -923,11 +923,11 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
   const [soon, setSoon] = useState(false);
   // Feature the newest event that has started and still accepts photos.
   // Future events and closed albums must never become a dead-end upload CTA.
-  const latestEvent = dated.filter((e) => e.open && e.startsOn <= today)
+  const latestEvent = dated.filter((e) => acceptsUploads(e, today))
     .sort((a, b) => b.startsOn.localeCompare(a.startsOn))[0];
   const [choosing, setChoosing] = useState(false);
   const [eventSearch, setEventSearch] = useState('');
-  const uploadEvents = events.filter((e) => e.open && !e.hidden && (e.ongoing || e.kind === 'everyday' || (e.endsOn || e.startsOn) < today))
+  const uploadEvents = events.filter((e) => acceptsUploads(e, today))
     .sort((a, b) => {
       if (a.kind === 'everyday') return -1;
       if (b.kind === 'everyday') return 1;
@@ -1002,7 +1002,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
             <summary><span><b>Have photos from another event?</b><small>{plural(emptyEvents.length, 'event')} waiting for a first photo</small></span><span className="missing-toggle">Show events</span></summary>
             <div className="missing-list">{emptyEvents.map((e) => <div className="missing-row" key={e.id}>
               <a href={`#/e/${e.slug}`}><span>{fmtRange(e.startsOn, e.endsOn)}</span><b>{e.title}</b></a>
-              {e.open ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos / videos</button> : <span className="fine">Uploads closed</span>}
+              {acceptsUploads(e, today) ? <button className="btn small ghost" onClick={() => onAdd(e)}>Add photos / videos</button> : <span className="fine">Opens {fmtDate(e.startsOn, { weekday: 'long' })}</span>}
             </div>)}</div>
           </details>}
           {upcoming.length > 0 && (
@@ -1031,7 +1031,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
   // Drop anywhere on the page and the sheet opens already holding the files.
-  const dropOver = useWindowDropTarget((list) => { if (list.length) onAdd(event, list); }, !!event?.open);
+  const dropOver = useWindowDropTarget((list) => { if (list.length) onAdd(event, list); }, acceptsUploads(event, todayISO()));
   const [photos, setPhotos] = useState(null);
   const [liked, setLiked] = useState(new Set());
   const [counts, setCounts] = useState(new Map());
@@ -1108,9 +1108,9 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
           </p>
           <div className="ev-actions">
             <div className="ev-share-actions">
-            {event.open
+            {acceptsUploads(event, today)
               ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus}<span>Add photos<span className="ev-video-label"> / videos</span></span></button>
-              : <span className="closed">Closed to new photos</span>}
+              : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })}</span>}
             <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
             </div>
             {/* Admins only. A whole event as one zip is both the most expensive
@@ -1140,7 +1140,7 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
           />
         )}
       </div>
-      {event.open && photos && photos.length > 0 && (
+      {acceptsUploads(event, today) && photos && photos.length > 0 && (
         <div className="fab-wrap"><button className="fab" onClick={() => onAdd(event)}>{I.plus} Add photos / videos</button></div>
       )}
       {open !== null && sorted[open] && (
@@ -1250,7 +1250,7 @@ function ActivityPage({category,events,covers,onAdd,onSuggest,today}) {
   useDocTitle(c?.title||'Around the House');
   if(!c||!events.some(e=>e.category===category&&e.ongoing&&!e.hidden))return <main className="shell page"><h1>This gallery isn’t available right now</h1><a href="#/">Back to the Vault</a></main>;
   const albums=events.filter(e=>e.category===category&&!e.hidden&&(e.ongoing||e.startsOn<=today)).sort((a,b)=>Number(b.ongoing)-Number(a.ongoing)||b.startsOn.localeCompare(a.startsOn));
-  const main=albums.find(e=>e.ongoing&&e.open);
+  const main=albums.find(e=>e.ongoing);
   return <main className="shell page"><a href="#/" className="crumb">← Around the House</a><h1>{c.title}</h1><p>{c.description}</p><div className="row">{main&&<button className="btn primary" onClick={()=>onAdd(main)}>{I.plus} Add photos / videos</button>}<button className="link" onClick={onSuggest}>Suggest an event →</button></div><div className="populated-albums activity-albums">{albums.map(e=><EventCard key={e.id} e={e} covers={covers} today={today} admin={false}/>)}</div></main>;
 }
 
@@ -1260,7 +1260,7 @@ function DashboardShare({ events, onAdd, hasUploads, onSuggest }) {
   const [choosing, setChoosing] = useState(false);
   const [search, setSearch] = useState('');
   const today = todayISO();
-  const available = events.filter(e => e.open && !e.hidden && (e.ongoing || e.kind === 'everyday' || e.startsOn <= today))
+  const available = events.filter(e => acceptsUploads(e, today))
     .sort((a, b) => (b.kind === 'everyday') - (a.kind === 'everyday') || b.startsOn.localeCompare(a.startsOn));
   const latest = available.find(e => !e.ongoing && e.kind !== 'everyday');
   const choices = available.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
@@ -1476,8 +1476,11 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
                 </select>
               </label>
             </div>
+            {/* No "accepting photos" switch. An album opens on its day and stays
+                open for the rest of the year; hiding it is the reversible way to
+                deal with a problem. */}
             <div className="row checks">
-              {[['open', 'Accepting photos'], ['featured', 'Featured'], ['hidden', 'Hidden']].map(([k, l]) => (
+              {[['featured', 'Featured'], ['hidden', 'Hidden']].map(([k, l]) => (
                 <label key={k}><input type="checkbox" checked={!!editing.form[k]} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, [k]: e.target.checked } }))} /> {l}</label>
               ))}
             </div>
@@ -1512,7 +1515,13 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
 export default function App() {
   const hash = useHash();
   const route = useMemo(() => parseRoute(hash), [hash]);
-  const today = todayISO();
+  // Eastern, and it rolls on its own: an album opens at 12:01am on its day,
+  // and a phone left on the vault overnight should not still show yesterday.
+  const [today, setToday] = useState(todayISO);
+  useEffect(() => {
+    const t = setTimeout(() => setToday(todayISO()), msUntilNextDay());
+    return () => clearTimeout(t);
+  }, [today]);
 
   const [owner, setOwner] = useState(null);
   const [avatars, setAvatars] = useState({ keys:{}, version:Date.now() });

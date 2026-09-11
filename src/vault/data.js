@@ -177,7 +177,10 @@ export async function saveEvent(form, id = null, pass = '') {
     ongoing: !!form.ongoing,
     starts_on: form.startsOn,
     ends_on: form.endsOn || null,
-    open: !!form.open,
+    // Albums do not close. The column stays for old rows and for the API's
+    // shape, but nothing in the app can set it false any more: a photo found
+    // in March from an October trip still belongs in the October album.
+    open: true,
     featured: !!form.featured,
     hidden: !!form.hidden,
   };

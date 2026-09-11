@@ -88,10 +88,45 @@ export const monthKey = (iso) => iso.slice(0, 7);
 export const monthLabel = (key) =>
   new Date(`${key}-15T12:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-export const todayISO = () => {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+/* The vault runs on school time, not device time.
+
+   This used to read the browser's local date, which is fine in Atlanta and
+   wrong everywhere else. A parent on the 7th Grade London trip is five hours
+   ahead, so their vault would roll over to the next day at 7pm Eastern and
+   an album would open early. Eastern is the only clock the whole house
+   shares, so every date question in the app asks this one. */
+export const todayISO = (now = new Date()) =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: DATE_TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now);
+
+// Milliseconds until 12:01am Eastern tomorrow, so a page left open overnight
+// rolls over on its own instead of showing yesterday until someone reloads.
+// The extra minute keeps it off the boundary, where a second of clock drift
+// would land it back on the previous day.
+export const msUntilNextDay = (now = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: DATE_TZ, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(now).reduce((a, x) => ({ ...a, [x.type]: Number(x.value) }), {});
+  const h = parts.hour === 24 ? 0 : parts.hour;   // some engines report hour 24
+  const sinceMidnight = ((h * 60 + parts.minute) * 60 + parts.second) * 1000;
+  return 86_400_000 - sinceMidnight + 60_000;
 };
+
+/* One rule for whether an album takes uploads, so the button, the chooser and
+   the floating action button can never disagree.
+
+   An album opens at 12:01am Eastern on the day it happens, and then it never
+   closes. Somebody finding October photos on their old phone in March is the
+   vault working, not a late submission, and a time capsule that stops
+   accepting the past is just an archive. Before the day it is readable but
+   not writable: photos of an event that has not happened yet are either a
+   mistake or somebody in the wrong album.
+
+   There is deliberately no admin "close" here. Hiding an album, hiding a
+   single upload, or moving uploads to the right album cover every real
+   problem, and each of those is reversible. A closed door is not. */
+export const acceptsUploads = (e, today) =>
+  !!e && !e.hidden && (e.ongoing || e.kind === 'everyday' || e.startsOn <= today);
 
 export const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
