@@ -202,10 +202,14 @@ const photoFromRow = (r) => ({
   contentType: r.content_type,
   takenAt: r.taken_at,
   caption: r.caption || '',
+  team: r.team || '',
   hidden: r.hidden,
   createdAt: r.created_at,
   likes: 0,
 });
+
+// The team a photo belongs to: stamped on the row, else the chaperone's current team.
+export const teamOf = (p, people) => p.team || people?.get(p.owner)?.team || '';
 
 export const isVideoPhoto = (p) => p.kind === 'video' || /^video\//.test(p.contentType || '');
 
@@ -293,8 +297,14 @@ export async function updatePhoto(id, patch, pass = '') {
   if (error) throw error;
 }
 
-export async function moveUploads(ids, toEventId, pass) {
-  const { data, error } = await supabase.rpc('m3_move_uploads', { p_pass: pass, p_photos: ids, p_to: toEventId });
+export async function moveUploads(ids, toEventId, pass = '') {
+  const { data, error } = await supabase.rpc('m3_move_uploads', { p_pass: pass, p_photos: ids, p_to: toEventId, p_token: getToken() });
+  if (error) throw error;
+  return data;
+}
+
+export async function setPhotoTeam(ids, team, pass = '') {
+  const { data, error } = await supabase.rpc('m3_set_team', { p_photos: ids, p_team: team, p_token: getToken(), p_pass: pass });
   if (error) throw error;
   return data;
 }

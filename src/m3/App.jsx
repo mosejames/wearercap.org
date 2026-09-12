@@ -206,7 +206,7 @@ function Home({ ctx }) {
             {recent.map((p) => (
               <a key={p.id} className="strip-item" href={`#/e/${byId.get(p.eventId)?.slug || ''}?p=${p.id}`}>
                 <Thumb p={p} />
-                <span>{p.uploaderName || 'Someone'}{ctx.people.get(p.owner)?.team ? ` · ${ctx.people.get(p.owner).team}` : ''}</span>
+                <span>{p.uploaderName || 'Someone'}{db.teamOf(p, ctx.people) ? ` · ${db.teamOf(p, ctx.people)}` : ''}</span>
               </a>
             ))}
           </div>
@@ -324,6 +324,11 @@ function EventPage({ ctx, slug }) {
   const [liked, setLiked] = useState(new Set());
   const [ccount, setCcount] = useState(new Map());
   const [open, setOpen] = useState(null);   // photo id in lightbox
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState(new Set());
+  const [move, setMove] = useState(null);   // 'team' | 'album'
+  const [owner, setOwner] = useState(null);
+  useEffect(() => { db.getOwner().then(setOwner); }, []);
 
   const load = useCallback(async () => {
     if (!event) return;
@@ -350,12 +355,12 @@ function EventPage({ ctx, slug }) {
 
   const teams = useMemo(() => {
     const s = new Set();
-    for (const p of photos) { const t = ctx.people.get(p.owner)?.team; if (t) s.add(t); }
+    for (const p of photos) { const t = db.teamOf(p, ctx.people); if (t) s.add(t); }
     return Array.from(s).sort();
   }, [photos, ctx.people]);
 
   const shown = useMemo(() => {
-    let list = photos.filter((p) => !team || ctx.people.get(p.owner)?.team === team);
+    let list = photos.filter((p) => !team || db.teamOf(p, ctx.people) === team);
     if (sort === 'loved') list = [...list].sort((a, b) => b.likes - a.likes || (a.createdAt < b.createdAt ? 1 : -1));
     else if (sort === 'newest') list = [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     return list;
@@ -384,6 +389,9 @@ function EventPage({ ctx, slug }) {
             {can ? <button className="btn primary" onClick={() => ctx.startUpload(event)}><I.plus width="16" height="16" /> Add photos</button>
                  : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })} at 12:01am.</span>}
             {admin && photos.length > 0 && <button className="btn ghost" onClick={() => ctx.setSheet({ kind: 'download', event, photos: shown })}><I.down width="16" height="16" /> Download all</button>}
+            {photos.length > 0 && (admin || photos.some((p) => p.owner === owner)) && (
+              <button className={`btn ghost ${selecting ? 'on' : ''}`} onClick={() => { setSelecting(!selecting); setPicked(new Set()); }}>{selecting ? 'Done' : 'Select'}</button>
+            )}
             <div className="sort">
               {[['order', 'In order'], ['loved', 'Most loved'], ['newest', 'Newest']].map(([k, l]) => (
                 <button key={k} className={sort === k ? 'on' : ''} onClick={() => setSort(k)}>{l}</button>
@@ -406,20 +414,33 @@ function EventPage({ ctx, slug }) {
             <div className="grid">
               {shown.map((p) => (
                 <div className="tile-wrap" key={p.id}>
-                  <Thumb p={p} onClick={() => setOpen(p.id)} meta={
+                  <Thumb p={p} onClick={() => { if (!selecting) { setOpen(p.id); return; } if (!(admin || p.owner === owner)) { ctx.toast('Not your upload'); return; } setPicked((s) => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; }); }} meta={<>
+                    {selecting && <span className={`pick-mark ${picked.has(p.id) ? 'on' : ''}`} />}
                     <span className="tile-meta">
                       <em className={liked.has(p.id) ? 'on' : ''}><I.heart on={liked.has(p.id)} />{p.likes || ''}</em>
                       {ccount.get(p.id) ? <em><I.chat />{ccount.get(p.id)}</em> : null}
                     </span>
-                  } />
+                  </>} />
                 </div>
               ))}
             </div>
           )}
       </div>
 
+      {selecting && (
+        <div className="select-bar">
+          <span>{picked.size ? plural(picked.size, 'photo') + ' picked' : 'Tap photos to pick them'}</span>
+          <button className="btn small primary" disabled={!picked.size} onClick={() => setMove('team')}>Move to team</button>
+          <button className="btn small ghost" disabled={!picked.size} onClick={() => setMove('album')}>Move to album</button>
+        </div>
+      )}
+      {move && (
+        <MoveSheet ctx={ctx} kind={move} ids={Array.from(picked)} event={event}
+          onClose={() => setMove(null)}
+          onDone={async () => { setMove(null); setSelecting(false); setPicked(new Set()); ctx.bump(); await load().catch(() => {}); }} />
+      )}
       {drop.over && <div className="drop-veil"><b>Drop to add to {event.title}</b></div>}
-      {can && (
+      {can && !selecting && (
         <div className="fab-wrap">
           <button className="fab" onClick={() => ctx.startUpload(event)}><I.plus width="18" height="18" /> Add photos</button>
         </div>
@@ -471,7 +492,7 @@ function Lightbox({ ctx, photos, startId, liked, onLike, onClose, onHidden, onCo
 
   if (!p) return null;
   const video = db.isVideoPhoto(p);
-  const who = ctx.people.get(p.owner);
+  const teamName = db.teamOf(p, ctx.people);
   const mine = owner.current && p.owner === owner.current;
   const onTouchStart = (e) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() }; };
   const onTouchEnd = (e) => {
@@ -527,7 +548,7 @@ function Lightbox({ ctx, photos, startId, liked, onLike, onClose, onHidden, onCo
         <div className="lb-meta">
           <span className="avatar sm">{(p.uploaderName || '?').slice(0, 2).toUpperCase()}</span>
           <div>
-            <b>{p.uploaderName || 'Someone'}{who?.team ? ` · ${who.team}` : ''}</b>
+            <b>{p.uploaderName || 'Someone'}{teamName ? ` · ${teamName}` : ''}</b>
             <small>{p.takenAt ? `Taken ${fmtWhen(p.takenAt)}` : `Added ${fmtWhen(p.createdAt)}`}{p.bytes ? ` · ${fmtBytes(p.bytes)}` : ''}</small>
           </div>
         </div>
@@ -575,10 +596,21 @@ function NameSheet({ ctx, onDone, onClose }) {
   const p = ctx.profile || {};
   const [name, setName] = useState(p.displayName || '');
   const [team, setTeam] = useState(p.team || '');
+  const [teams, setTeams] = useState([]);
+  const [newTeam, setNewTeam] = useState(false);
   const [students, setStudents] = useState((p.students || []).join(', '));
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  useEffect(() => {
+    db.listTeams().then((t) => {
+      const names = t.map((x) => x.team);
+      setTeams(names);
+      // A team nobody else has yet, or no teams at all: open the field.
+      if (!names.length || (p.team && !names.includes(p.team))) setNewTeam(true);
+    }).catch(() => setNewTeam(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const submit = async (e) => {
     e.preventDefault();
     if (!name.trim()) { setErr('Your name, please.'); return; }
@@ -593,7 +625,17 @@ function NameSheet({ ctx, onDone, onClose }) {
       <form className="stack" onSubmit={submit}>
         <p className="lede">Once, on this phone. Your photos carry your name and your team.</p>
         <label className="field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Keisha J." autoFocus /></label>
-        <label className="field"><span>Team name</span><input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Team Sharks" /><small>Whatever your group calls itself today. Spell it the same as your co-chaperone.</small></label>
+        <div className="field">
+          <span>Your team</span>
+          {teams.length > 0 && (
+            <div className="chips wrap">
+              {teams.map((t) => <button key={t} type="button" className={team === t && !newTeam ? 'on' : ''} onClick={() => { setTeam(t); setNewTeam(false); }}>{t}</button>)}
+              <button type="button" className={`add ${newTeam ? 'on' : ''}`} onClick={() => { setNewTeam(true); if (teams.includes(team)) setTeam(''); }}>+ New team</button>
+            </div>
+          )}
+          {newTeam && <input value={team} onChange={(e) => setTeam(e.target.value)} placeholder={teams.length ? 'Team name' : 'Team Sharks'} autoFocus={teams.length > 0} />}
+          <small>{teams.length ? 'Tap yours. Only add a new one if it is not here yet.' : 'You are the first. Whatever your group calls itself today.'}</small>
+        </div>
         <label className="field"><span>Students in your group <i>optional</i></span><input value={students} onChange={(e) => setStudents(e.target.value)} placeholder="Amari, Zoe, Malik" /><small>First names, separated by commas.</small></label>
         <label className="field"><span>Mobile <i>optional</i></span><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="404 555 0101" /><small>Only {VAULT.host} and the RCAP admin see this. It is for the "photos wanted" text and nothing else.</small></label>
         {err && <p className="err">{err}</p>}
@@ -686,6 +728,48 @@ function PickThumb({ file }) {
   const [url, setUrl] = useState('');
   useEffect(() => { const u = URL.createObjectURL(file); setUrl(u); return () => URL.revokeObjectURL(u); }, [file]);
   return <span className="pick-thumb">{url && (isVideo(file) ? <span className="picked-video">▶</span> : <img src={url} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />)}</span>;
+}
+
+function MoveSheet({ ctx, kind, ids, event, onClose, onDone }) {
+  const [teams, setTeams] = useState([]);
+  const [choice, setChoice] = useState('');
+  const [custom, setCustom] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  useEffect(() => { if (kind === 'team') db.listTeams().then((t) => setTeams(t.map((x) => x.team))).catch(() => {}); }, [kind]);
+  const albums = ctx.events.filter((e) => e.id !== event.id && !e.hidden);
+  const target = kind === 'team' ? (choice === '__new' ? custom.trim() : choice) : choice;
+  const go = async () => {
+    if (!target) return;
+    setBusy(true); setErr('');
+    try {
+      const n = kind === 'team' ? await db.setPhotoTeam(ids, target, ctx.admin) : await db.moveUploads(ids, target, ctx.admin);
+      if (!n) throw new Error('Nothing moved. You can only move your own uploads.');
+      ctx.toast(`${plural(n, 'photo')} moved`);
+      onDone();
+    } catch (ex) { setErr(ex.message || 'Could not move.'); setBusy(false); }
+  };
+  return (
+    <Sheet title={kind === 'team' ? `Move ${plural(ids.length, 'photo')} to a team` : `Move ${plural(ids.length, 'photo')} to an album`} onClose={onClose}>
+      <div className="stack">
+        {kind === 'team' ? (
+          <div className="field"><span>Team</span>
+            <div className="chips wrap">
+              {teams.map((t) => <button key={t} type="button" className={choice === t ? 'on' : ''} onClick={() => setChoice(t)}>{t}</button>)}
+              <button type="button" className={`add ${choice === '__new' ? 'on' : ''}`} onClick={() => setChoice('__new')}>+ New team</button>
+            </div>
+            {choice === '__new' && <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Team name" autoFocus />}
+          </div>
+        ) : (
+          <div className="choice">
+            {albums.map((e) => <button key={e.id} className={choice === e.id ? 'on' : ''} onClick={() => setChoice(e.id)}><b>{e.title}</b><span>{e.startsAt ? fmtTime(e.startsAt) : 'Any time'}</span></button>)}
+          </div>
+        )}
+        {err && <p className="err">{err}</p>}
+        <button className="btn primary" disabled={busy || !target} onClick={go}>{busy ? 'Moving' : 'Move'}</button>
+      </div>
+    </Sheet>
+  );
 }
 
 function DownloadSheet({ event, photos, onClose }) {

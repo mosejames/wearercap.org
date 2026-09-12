@@ -120,6 +120,7 @@ export async function uploadBatch(files, { event, profile, caption = '', onProgr
             content_type: p.contentType,
             taken_at: p.takenAt ? p.takenAt.toISOString() : null,
             caption: caption.slice(0, 280),
+            team: profile?.team || '',
           }]);
           state.done.push(row);
         } catch (e) {
