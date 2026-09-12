@@ -596,23 +596,35 @@ function NameSheet({ ctx, onDone, onClose }) {
   const p = ctx.profile || {};
   const [name, setName] = useState(p.displayName || '');
   const [team, setTeam] = useState(p.team || '');
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState([]);       // [{team, chaperones, students}]
   const [newTeam, setNewTeam] = useState(false);
   const [students, setStudents] = useState((p.students || []).join(', '));
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  // What the last tapped team filled in, so a tap on another team replaces it
+  // but a name somebody typed themselves is left alone.
+  const auto = useRef({ name: '', students: '' });
   useEffect(() => {
     db.listTeams().then((t) => {
-      const names = t.map((x) => x.team);
-      setTeams(names);
-      // A team nobody else has yet, or no teams at all: open the field.
-      if (!names.length || (p.team && !names.includes(p.team))) setNewTeam(true);
+      setTeams(t);
+      if (!t.length || (p.team && !t.some((x) => x.team === p.team))) setNewTeam(true);
     }).catch(() => setNewTeam(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Tapping a team is how a chaperone says "that is me": one chaperone per
+  // team, so the name and students registered with it come back with it.
+  const pickTeam = (t) => {
+    setTeam(t.team); setNewTeam(false);
+    const who = t.chaperones[0] || '';
+    const kids = t.students.join(', ');
+    if (who && (!name || name === auto.current.name)) setName(who);
+    if (kids && (!students || students === auto.current.students)) setStudents(kids);
+    auto.current = { name: who, students: kids };
+  };
   const submit = async (e) => {
     e.preventDefault();
+    if (!team.trim()) { setErr('Pick your team, or add it.'); return; }
     if (!name.trim()) { setErr('Your name, please.'); return; }
     setBusy(true); setErr('');
     try {
@@ -620,26 +632,29 @@ function NameSheet({ ctx, onDone, onClose }) {
       onDone(saved);
     } catch (ex) { setErr(ex.message || 'Could not save.'); } finally { setBusy(false); }
   };
+  const known = teams.find((t) => t.team === team && !newTeam);
   return (
     <Sheet title={p.displayName ? 'Your details' : 'Who is this?'} onClose={onClose}>
       <form className="stack" onSubmit={submit}>
-        <p className="lede">Once, on this phone. Your photos carry your name and your team.</p>
-        <label className="field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Keisha J." autoFocus /></label>
+        <p className="lede">Tap your team and you are in. Once, on this phone.</p>
         <div className="field">
           <span>Your team</span>
           {teams.length > 0 && (
             <div className="chips wrap">
-              {teams.map((t) => <button key={t} type="button" className={team === t && !newTeam ? 'on' : ''} onClick={() => { setTeam(t); setNewTeam(false); }}>{t}</button>)}
-              <button type="button" className={`add ${newTeam ? 'on' : ''}`} onClick={() => { setNewTeam(true); if (teams.includes(team)) setTeam(''); }}>+ New team</button>
+              {teams.map((t) => <button key={t.team} type="button" className={team === t.team && !newTeam ? 'on' : ''} onClick={() => pickTeam(t)}>{t.team}</button>)}
+              <button type="button" className={`add ${newTeam ? 'on' : ''}`} onClick={() => { setNewTeam(true); if (teams.some((t) => t.team === team)) setTeam(''); }}>+ New team</button>
             </div>
           )}
           {newTeam && <input value={team} onChange={(e) => setTeam(e.target.value)} placeholder={teams.length ? 'Team name' : 'Team Sharks'} autoFocus={teams.length > 0} />}
-          <small>{teams.length ? 'Tap yours. Only add a new one if it is not here yet.' : 'You are the first. Whatever your group calls itself today.'}</small>
+          <small>{teams.length ? 'Not here yet? Add it once and it is on the list for everyone.' : 'You are the first. Whatever your group calls itself today.'}</small>
         </div>
+        <label className="field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Keisha J." autoFocus={!teams.length} />
+          {known && known.chaperones[0] && name === known.chaperones[0] && <small>Registered with {known.team}. Change it if that is not you.</small>}
+        </label>
         <label className="field"><span>Students in your group <i>optional</i></span><input value={students} onChange={(e) => setStudents(e.target.value)} placeholder="Amari, Zoe, Malik" /><small>First names, separated by commas.</small></label>
         <label className="field"><span>Mobile <i>optional</i></span><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="404 555 0101" /><small>Only {VAULT.host} and the RCAP admin see this. It is for the "photos wanted" text and nothing else.</small></label>
         {err && <p className="err">{err}</p>}
-        <button className="btn primary big" disabled={busy}>{busy ? 'Saving' : 'Save and continue'}</button>
+        <button className="btn primary big" disabled={busy}>{busy ? 'Saving' : known ? "That's me, continue" : 'Save and continue'}</button>
       </form>
     </Sheet>
   );
