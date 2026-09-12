@@ -62,17 +62,15 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [sheet, setSheet] = useState(null);   // {kind, ...}
   const [tick, setTick] = useState(0);
-  const [vis, setVis] = useState({ team: '', seeAll: false, revealAt: null });
 
   const refresh = useCallback(async () => {
     try {
       const [ev, rq, tt, pp] = await Promise.all([db.listEvents(), db.listRequests(), db.fetchTotals(), db.listPeople()]);
       setEvents(ev); setRequests(rq); setTotals(tt); setPeople(pp);
-      db.fetchVisibility(db.localPass()).then(setVis).catch(() => {});
       setErr('');
     } catch (e) { setErr(e.message || 'Could not load the vault.'); }
   }, []);
-  useEffect(() => { refresh(); }, [refresh, tick, profile?.team, admin]);
+  useEffect(() => { refresh(); }, [refresh, tick]);
   useEffect(() => { db.fetchProfile().then((p) => { if (p) setProfile(p); }).catch(() => {}); }, []);
   useEffect(() => {
     if (!admin) return;
@@ -82,7 +80,7 @@ export default function App() {
   const bump = () => setTick((n) => n + 1);
 
   const ctx = {
-    events, requests, totals, people, profile, setProfile, admin, setAdmin, today, vis,
+    events, requests, totals, people, profile, setProfile, admin, setAdmin, today,
     sheet, setSheet, toast: setToast, bump,
     // Every upload starts here so the name sheet is never skipped.
     startUpload: (event, files = null) => {
@@ -159,7 +157,7 @@ function Home({ ctx }) {
   // The live strip. Polls while the day is on so Dr. J can watch it fill.
   useEffect(() => {
     let alive = true;
-    const load = () => db.listRecentPhotos(18, ctx.admin).then((p) => alive && setRecent(p)).catch(() => {});
+    const load = () => db.listRecentPhotos(18).then((p) => alive && setRecent(p)).catch(() => {});
     load();
     const t = isDay ? setInterval(() => { load(); ctx.bump(); }, 45_000) : null;
     return () => { alive = false; if (t) clearInterval(t); };
@@ -221,7 +219,6 @@ function Home({ ctx }) {
             <span className="eyebrow">The day</span>
             <h2 className="page-title">{DAY.label}</h2>
             <p>Every moment opens at 12:01am on the day and never closes. Missed one? Add it later; it lands in order by when it was taken.</p>
-            <VisNote ctx={ctx} />
           </div>
           <div className="ev-list">
             {moments.map((e) => <EventCard key={e.id} e={e} ctx={ctx} />)}
@@ -261,16 +258,9 @@ function AskCard({ r, ev, ctx }) {
   );
 }
 
-function VisNote({ ctx }) {
-  const { vis, admin, profile } = ctx;
-  if (admin || vis.seeAll) return null;
-  const when = vis.revealAt ? ` Everyone's photos open up ${fmtDate(vis.revealAt, { weekday: 'long' })} at ${fmtWhen(vis.revealAt)}.` : '';
-  return <p className="vis-note">{profile?.team ? `You see photos from ${profile.team} while the marathon is on.${when}` : `Add your name and team to see your team's photos.${when}`} No peeking at other teams' missions.</p>;
-}
-
 function EventCard({ e, ctx }) {
   const [cover, setCover] = useState([]);
-  useEffect(() => { if (e.photoCount) db.listCoverPhotos(e.id, 4, ctx.admin).then(setCover).catch(() => {}); }, [e.id, e.photoCount, ctx.admin, ctx.vis.team]);
+  useEffect(() => { if (e.photoCount) db.listCoverPhotos(e.id).then(setCover).catch(() => {}); }, [e.id, e.photoCount]);
   const open = acceptsUploads(e, ctx.today);
   return (
     <div className="ev-wrap">
@@ -342,13 +332,13 @@ function EventPage({ ctx, slug }) {
 
   const load = useCallback(async () => {
     if (!event) return;
-    const ps = await db.listPhotos(event.id, admin);
+    const ps = await db.listPhotos(event.id);
     setPhotos(ps); setLoaded(true);
     const ids = ps.map((p) => p.id);
-    const [l, c] = await Promise.all([db.myLikes(ids), db.commentCounts(ids, admin)]);
+    const [l, c] = await Promise.all([db.myLikes(ids), db.commentCounts(ids)]);
     setLiked(l); setCcount(c);
-  }, [event?.id, admin]);
-  useEffect(() => { load().catch(() => setLoaded(true)); }, [load, ctx.totals.photos, ctx.vis.team]);
+  }, [event?.id]);
+  useEffect(() => { load().catch(() => setLoaded(true)); }, [load, ctx.totals.photos]);
 
   // Deep link from the Just added strip: #/e/slug?p=<id>
   useEffect(() => {
@@ -395,7 +385,6 @@ function EventPage({ ctx, slug }) {
           <h1>{event.title}</h1>
           {event.blurb && <p className="ev-blurb">{event.blurb}</p>}
           <p className="ev-counts">{plural(event.photoCount, 'photo')} · {plural(event.contributorCount, 'chaperone')} · {plural(event.likeCount, 'love')}</p>
-          <VisNote ctx={ctx} />
           <div className="ev-actions">
             {can ? <button className="btn primary" onClick={() => ctx.startUpload(event)}><I.plus width="16" height="16" /> Add photos</button>
                  : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })} at 12:01am.</span>}
@@ -483,7 +472,7 @@ function Lightbox({ ctx, photos, startId, liked, onLike, onClose, onHidden, onCo
   useEffect(() => {
     if (!p) return;
     setComments([]);
-    db.listComments(p.id, ctx.admin).then(setComments).catch(() => {});
+    db.listComments(p.id).then(setComments).catch(() => {});
   }, [p?.id]);
 
   useEffect(() => {
@@ -607,35 +596,23 @@ function NameSheet({ ctx, onDone, onClose }) {
   const p = ctx.profile || {};
   const [name, setName] = useState(p.displayName || '');
   const [team, setTeam] = useState(p.team || '');
-  const [teams, setTeams] = useState([]);       // [{team, chaperones, students}]
+  const [teams, setTeams] = useState([]);
   const [newTeam, setNewTeam] = useState(false);
   const [students, setStudents] = useState((p.students || []).join(', '));
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  // What the last tapped team filled in, so a tap on another team replaces it
-  // but a name somebody typed themselves is left alone.
-  const auto = useRef({ name: '', students: '' });
   useEffect(() => {
     db.listTeams().then((t) => {
-      setTeams(t);
-      if (!t.length || (p.team && !t.some((x) => x.team === p.team))) setNewTeam(true);
+      const names = t.map((x) => x.team);
+      setTeams(names);
+      // A team nobody else has yet, or no teams at all: open the field.
+      if (!names.length || (p.team && !names.includes(p.team))) setNewTeam(true);
     }).catch(() => setNewTeam(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Tapping a team is how a chaperone says "that is me": one chaperone per
-  // team, so the name and students registered with it come back with it.
-  const pickTeam = (t) => {
-    setTeam(t.team); setNewTeam(false);
-    const who = t.chaperones[0] || '';
-    const kids = t.students.join(', ');
-    if (who && (!name || name === auto.current.name)) setName(who);
-    if (kids && (!students || students === auto.current.students)) setStudents(kids);
-    auto.current = { name: who, students: kids };
-  };
   const submit = async (e) => {
     e.preventDefault();
-    if (!team.trim()) { setErr('Pick your team, or add it.'); return; }
     if (!name.trim()) { setErr('Your name, please.'); return; }
     setBusy(true); setErr('');
     try {
@@ -643,29 +620,26 @@ function NameSheet({ ctx, onDone, onClose }) {
       onDone(saved);
     } catch (ex) { setErr(ex.message || 'Could not save.'); } finally { setBusy(false); }
   };
-  const known = teams.find((t) => t.team === team && !newTeam);
   return (
     <Sheet title={p.displayName ? 'Your details' : 'Who is this?'} onClose={onClose}>
       <form className="stack" onSubmit={submit}>
-        <p className="lede">Tap your team and you are in. Once, on this phone.</p>
+        <p className="lede">Once, on this phone. Your photos carry your name and your team.</p>
+        <label className="field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Keisha J." autoFocus /></label>
         <div className="field">
           <span>Your team</span>
           {teams.length > 0 && (
             <div className="chips wrap">
-              {teams.map((t) => <button key={t.team} type="button" className={team === t.team && !newTeam ? 'on' : ''} onClick={() => pickTeam(t)}>{t.team}</button>)}
-              <button type="button" className={`add ${newTeam ? 'on' : ''}`} onClick={() => { setNewTeam(true); if (teams.some((t) => t.team === team)) setTeam(''); }}>+ New team</button>
+              {teams.map((t) => <button key={t} type="button" className={team === t && !newTeam ? 'on' : ''} onClick={() => { setTeam(t); setNewTeam(false); }}>{t}</button>)}
+              <button type="button" className={`add ${newTeam ? 'on' : ''}`} onClick={() => { setNewTeam(true); if (teams.includes(team)) setTeam(''); }}>+ New team</button>
             </div>
           )}
           {newTeam && <input value={team} onChange={(e) => setTeam(e.target.value)} placeholder={teams.length ? 'Team name' : 'Team Sharks'} autoFocus={teams.length > 0} />}
-          <small>{teams.length ? 'Not here yet? Add it once and it is on the list for everyone.' : 'You are the first. Whatever your group calls itself today.'}</small>
+          <small>{teams.length ? 'Tap yours. Only add a new one if it is not here yet.' : 'You are the first. Whatever your group calls itself today.'}</small>
         </div>
-        <label className="field"><span>Your name</span><input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Keisha J." autoFocus={!teams.length} />
-          {known && known.chaperones[0] && name === known.chaperones[0] && <small>Registered with {known.team}. Change it if that is not you.</small>}
-        </label>
         <label className="field"><span>Students in your group <i>optional</i></span><input value={students} onChange={(e) => setStudents(e.target.value)} placeholder="Amari, Zoe, Malik" /><small>First names, separated by commas.</small></label>
         <label className="field"><span>Mobile <i>optional</i></span><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="404 555 0101" /><small>Only {VAULT.host} and the RCAP admin see this. It is for the "photos wanted" text and nothing else.</small></label>
         {err && <p className="err">{err}</p>}
-        <button className="btn primary big" disabled={busy}>{busy ? 'Saving' : known ? "That's me, continue" : 'Save and continue'}</button>
+        <button className="btn primary big" disabled={busy}>{busy ? 'Saving' : 'Save and continue'}</button>
       </form>
     </Sheet>
   );
@@ -852,7 +826,7 @@ function TopPage({ ctx }) {
   const [photos, setPhotos] = useState([]);
   const [open, setOpen] = useState(null);
   const [liked, setLiked] = useState(new Set());
-  useEffect(() => { db.listTopPhotos(60, ctx.admin).then(async (ps) => { setPhotos(ps); setLiked(await db.myLikes(ps.map((p) => p.id))); }).catch(() => {}); }, []);
+  useEffect(() => { db.listTopPhotos().then(async (ps) => { setPhotos(ps); setLiked(await db.myLikes(ps.map((p) => p.id))); }).catch(() => {}); }, []);
   const toggleLike = async (p) => {
     const on = liked.has(p.id);
     setLiked((s) => { const n = new Set(s); on ? n.delete(p.id) : n.add(p.id); return n; });

@@ -57,6 +57,15 @@ export async function checkPass(pass) {
   return !error && !!data;
 }
 
+/* ------------------------------------------------------------ visibility */
+// Teams see their own photos until reveal_at; admin sees everything.
+export async function fetchVisibility(pass = '') {
+  const { data, error } = await supabase.rpc('m3_visibility', { p_token: getToken(), p_pass: pass, p_vault: VAULT.id });
+  if (error) throw error;
+  const v = Array.isArray(data) ? data[0] : data;
+  return { team: v?.team || '', seeAll: !!v?.see_all, revealAt: v?.reveal_at || null };
+}
+
 /* --------------------------------------------------------------- profile */
 
 const personFromRow = (r) => ({
@@ -213,79 +222,26 @@ export const teamOf = (p, people) => p.team || people?.get(p.owner)?.team || '';
 
 export const isVideoPhoto = (p) => p.kind === 'video' || /^video\//.test(p.contentType || '');
 
-// Order by capture time so a day reads as a day even when photos arrive late.
-export async function listPhotos(eventId) {
-  const { data, error } = await supabase
-    .from('m3_photos').select('*').eq('event_id', eventId)
-    .order('taken_at', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: true });
+// Every photo read goes through one database function that applies the
+// team rule; the table itself is not readable. Likes ride along.
+async function listVia(mode, eventId = null, limit = 2000, pass = '') {
+  const { data, error } = await supabase.rpc('m3_list_photos', {
+    p_token: getToken(), p_pass: pass, p_event: eventId, p_mode: mode, p_limit: limit, p_vault: VAULT.id,
+  });
   if (error) throw error;
-  const photos = (data || []).map(photoFromRow);
-  await attachLikes(photos);
-  return photos;
+  return (data || []).map((r) => ({ ...photoFromRow(r.photo), likes: Number(r.likes || 0) }));
 }
-
-export async function listAllPhotos() {
-  const { data, error } = await supabase
-    .from('m3_photos').select('*').eq('vault', VAULT.id)
-    .order('taken_at', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  const photos = (data || []).map(photoFromRow);
-  await attachLikes(photos);
-  return photos;
-}
-
-export async function listTopPhotos(limit = 60) {
-  const { data: likes, error } = await supabase
-    .from('m3_photo_likes').select('photo_id, likes').order('likes', { ascending: false }).limit(limit);
-  if (error) throw error;
-  const ids = (likes || []).map((l) => l.photo_id);
-  if (!ids.length) return [];
-  const { data, error: e2 } = await supabase.from('m3_photos').select('*').in('id', ids);
-  if (e2) throw e2;
-  const n = new Map(likes.map((l) => [l.photo_id, l.likes]));
-  return (data || []).map(photoFromRow).map((p) => ({ ...p, likes: n.get(p.id) || 0 }))
-    .sort((a, b) => b.likes - a.likes || (a.createdAt < b.createdAt ? 1 : -1));
-}
-
-export async function listRecentPhotos(limit = 24) {
-  const { data, error } = await supabase
-    .from('m3_photos').select('*').eq('vault', VAULT.id)
-    .order('created_at', { ascending: false }).limit(limit);
-  if (error) throw error;
-  const photos = (data || []).map(photoFromRow);
-  await attachLikes(photos);
-  return photos;
-}
-
-export async function listMyPhotos() {
-  const owner = await getOwner();
-  const { data, error } = await supabase
-    .from('m3_photos').select('*').eq('owner', owner).order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map(photoFromRow);
-}
-
-export async function listCoverPhotos(eventId, n = 4) {
-  const { data, error } = await supabase.from('m3_photos').select('*').eq('event_id', eventId)
-    .order('created_at', { ascending: false }).limit(n);
-  if (error) throw error;
-  return (data || []).map(photoFromRow);
-}
-
-async function attachLikes(photos) {
-  if (!photos.length) return;
-  const ids = photos.map((p) => p.id);
-  const { data } = await supabase.from('m3_photo_likes').select('photo_id, likes').in('photo_id', ids);
-  const n = new Map((data || []).map((l) => [l.photo_id, l.likes]));
-  for (const p of photos) p.likes = n.get(p.id) || 0;
-}
+export const listPhotos = (eventId, pass = '') => listVia('order', eventId, 2000, pass);
+export const listAllPhotos = (pass = '') => listVia('order', null, 5000, pass);
+export const listTopPhotos = (limit = 60, pass = '') => listVia('top', null, limit, pass).then((ps) => ps.filter((p) => p.likes > 0));
+export const listRecentPhotos = (limit = 24, pass = '') => listVia('recent', null, limit, pass);
+export const listMyPhotos = () => listVia('mine', null, 2000);
+export const listCoverPhotos = (eventId, n = 4, pass = '') => listVia('recent', eventId, n, pass);
 
 export async function insertPhotos(rows) {
-  const { data, error } = await supabase.from('m3_photos').insert(rows).select();
+  const { error } = await supabase.from('m3_photos').insert(rows);
   if (error) throw error;
-  return (data || []).map(photoFromRow);
+  return rows.map((r) => photoFromRow({ ...r, created_at: new Date().toISOString() }));
 }
 
 export async function updatePhoto(id, patch, pass = '') {
@@ -331,9 +287,8 @@ export async function unlike(photoId) {
 
 /* -------------------------------------------------------------- comments */
 
-export async function listComments(photoId) {
-  const { data, error } = await supabase
-    .from('m3_comments').select('*').eq('photo_id', photoId).order('created_at');
+export async function listComments(photoId, pass = '') {
+  const { data, error } = await supabase.rpc('m3_list_comments', { p_photo: photoId, p_token: getToken(), p_pass: pass });
   if (error) throw error;
   return (data || []).map((c) => ({
     id: c.id, photoId: c.photo_id, owner: c.owner, author: c.author_name,
@@ -341,21 +296,19 @@ export async function listComments(photoId) {
   }));
 }
 
-export async function commentCounts(photoIds) {
+export async function commentCounts(photoIds, pass = '') {
   if (!photoIds.length) return new Map();
-  const { data } = await supabase.from('m3_comments').select('photo_id').in('photo_id', photoIds);
-  const m = new Map();
-  for (const c of data || []) m.set(c.photo_id, (m.get(c.photo_id) || 0) + 1);
-  return m;
+  const { data } = await supabase.rpc('m3_comment_counts', { p_photos: photoIds, p_token: getToken(), p_pass: pass });
+  return new Map((data || []).map((c) => [c.photo_id, Number(c.n)]));
 }
 
 export async function addComment(photoId, author, body) {
   const owner = await getOwner();
-  const { data, error } = await supabase.from('m3_comments')
-    .insert({ photo_id: photoId, owner, author_name: author, body: body.trim() })
-    .select().single();
+  const id = crypto.randomUUID();
+  const { error } = await supabase.from('m3_comments')
+    .insert({ id, photo_id: photoId, owner, author_name: author, body: body.trim() });
   if (error) throw error;
-  return { id: data.id, photoId, owner, author, body: data.body, hidden: false, createdAt: data.created_at };
+  return { id, photoId, owner, author, body: body.trim(), hidden: false, createdAt: new Date().toISOString() };
 }
 
 export async function hideComment(id, pass = '') {
