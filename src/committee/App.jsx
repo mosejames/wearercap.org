@@ -38,6 +38,8 @@ export default function App() {
   const [leadRole, setLeadRole] = useState({});
   const [leadFor, setLeadFor] = useState([]);
   const [leadPrior, setLeadPrior] = useState({});
+  // The middle answer: would consider chairing, not committing on a form.
+  const [openToLead, setOpenToLead] = useState(false);
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -83,6 +85,7 @@ export default function App() {
     personality: traits,
     committees: picks,
     wants_to_lead: wantsLead === true,
+    open_to_lead: openToLead === true,
     chair_picks: leadFor.map((id) => ({
       committee: id,
       role: leadRole[id] || 'Either is fine',
@@ -394,19 +397,33 @@ export default function App() {
         })}
       </ul>
       <p className="sub anim" style={{ animationDelay: '.12s', marginTop: 26 }}>
-        If you're ready to lean in a little more, some of these need a parent willing to take
-        the lead.
+        Every one of these needs a parent willing to take the lead. You do not have to decide
+        that today.
       </p>
-      <div className="row anim" style={{ animationDelay: '.16s' }}>
+      {/* Three answers, not two. The first pass offered only "lead it" or "just
+          help", and all 24 parents took the second. Leading a committee is a
+          large thing to agree to on a form in your first week, so the middle
+          option lets someone say yes to being asked without saying yes to the
+          job. It gives the board a list of people worth a real conversation. */}
+      <div className="stack anim" style={{ animationDelay: '.16s' }}>
         <button className="btn solid" onClick={() => {
           setWantsLead(true);
-          saveQuiet(token, { wants_to_lead: true });
+          setOpenToLead(true);
+          saveQuiet(token, { wants_to_lead: true, open_to_lead: true });
           go('leadPick');
-        }}>I'm interested in leading</button>
+        }}>I'm interested in leading one</button>
         <button className="btn ghost" onClick={() => {
           setWantsLead(false);
+          setOpenToLead(true);
           setLeadFor([]);
-          saveQuiet(token, { wants_to_lead: false });
+          saveQuiet(token, { wants_to_lead: false, open_to_lead: true });
+          go('phone');
+        }}>Not yet, but you can ask me</button>
+        <button className="btn ghost" onClick={() => {
+          setWantsLead(false);
+          setOpenToLead(false);
+          setLeadFor([]);
+          saveQuiet(token, { wants_to_lead: false, open_to_lead: false });
           go('phone');
         }}>I'd rather just help</button>
       </div>

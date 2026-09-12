@@ -25,7 +25,7 @@ function cell(v) {
 function toCsv(rows) {
   const head = [
     'Submitted', 'Status', 'Name', 'Email', 'Phone', 'House', 'Students',
-    'Committees', 'Wants to lead', 'Chair applications', 'Confirmation email', 'Personality',
+    'Committees', 'Wants to lead', 'Open to lead', 'Chair applications', 'Confirmation email', 'Personality',
   ];
   const body = rows.map((r) => [
     fmt(r.created_at),
@@ -37,6 +37,7 @@ function toCsv(rows) {
     (r.students || []).map((s) => [s.name, s.year].filter(Boolean).join(' ')).join('; '),
     (r.committees || []).map(cname).join('; '),
     r.wants_to_lead ? 'yes' : '',
+    r.open_to_lead && !r.wants_to_lead ? 'ask me' : '',
     (r.chair_picks || [])
       .map((c) => `${cname(c.committee)} (${c.role}${c.chaired_before ? ', chaired before' : ''}): ${c.why || ''}`)
       .join(' | '),
