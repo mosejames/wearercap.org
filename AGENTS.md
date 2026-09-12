@@ -81,6 +81,7 @@ registered in `vite.config.js`, and each has its React source under `src/`.
 ```
 index.html            main site          src/main.jsx
 ami-vault/            Amistad Vault      src/vault/
+m3-vault/             M³ Vault           src/m3/
 carpool/              carpool            src/carpool/
 uniform-exchange/     uniform exchange   src/exchange/
 rcap-recap/           recap              src/recap/
@@ -108,6 +109,18 @@ A photo vault for one RCA house at `/ami-vault/`. Key facts:
   `api/vault-link.js`, which renders per-event Open Graph tags and then bounces
   a real visitor into the hash route. This exists so a texted invite previews as
   that one event instead of the generic vault.
+
+### The M³ Vault, in brief
+
+A one-day photo vault for the Class of 2028 Mall Math Marathon at `/m3-vault/`,
+built from `claude/photo-vault-build-recipe.md` in the RCAP project. Same shape
+as the Amistad Vault but its own `m3_` schema and `src/m3/`, because the
+`vault_*` schema has since grown SMS accounts and this one has none: identity
+is a browser token plus a name, team and students typed once. It reuses the
+Amistad pipeline modules (`src/vault/images.js`, `videos.js`, `dnd.js`,
+`zipstream.js`) and its base stylesheet; `src/m3/m3.css` says only what
+differs. Share cards: `/m3-vault/e/<slug>` → `api/m3-link.js`. Uploads:
+`api/m3-sign.js`, bucket `m3-media`, R2 via `M3_R2_*` env vars.
 
 ## 4. House rules
 

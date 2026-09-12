@@ -22,6 +22,10 @@
       "destination": "/api/vault-link?slug=:slug"
     },
     {
+      "source": "/m3-vault/e/:slug",
+      "destination": "/api/m3-link?slug=:slug"
+    },
+    {
       "source": "/e/:slug",
       "destination": "/api/vault-link?slug=:slug"
     },
