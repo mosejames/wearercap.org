@@ -105,7 +105,6 @@ export default function App() {
       <Foot />
       {sheet?.kind === 'name' && <NameSheet ctx={ctx} onDone={(p) => { setProfile(p); setSheet(sheet.then || null); }} onClose={() => setSheet(null)} />}
       {sheet?.kind === 'upload' && <UploadSheet ctx={ctx} event={sheet.event} initialFiles={sheet.files} onClose={() => setSheet(null)} />}
-      {sheet?.kind === 'invite' && <InviteSheet ctx={ctx} event={sheet.event} onClose={() => setSheet(null)} />}
       {sheet?.kind === 'download' && <DownloadSheet event={sheet.event} photos={sheet.photos} onClose={() => setSheet(null)} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </>
@@ -275,7 +274,6 @@ function EventCard({ e, ctx }) {
           <p className="ev-stat">{e.photoCount ? <>{plural(e.photoCount, 'photo')} <span>from {plural(e.contributorCount, 'chaperone')}</span></> : <span>{open ? 'No photos yet. Be the first.' : 'Opens on the day'}</span>}</p>
         </div>
       </a>
-      <button className="ev-invite" onClick={() => ctx.setSheet({ kind: 'invite', event: e })}><I.share width="15" height="15" /> Invite to upload</button>
     </div>
   );
 }
@@ -385,7 +383,6 @@ function EventPage({ ctx, slug }) {
           <div className="ev-actions">
             {can ? <button className="btn primary" onClick={() => ctx.startUpload(event)}><I.plus width="16" height="16" /> Add photos</button>
                  : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })} at 12:01am.</span>}
-            <button className="btn ghost" onClick={() => ctx.setSheet({ kind: 'invite', event })}><I.share width="16" height="16" /> Invite</button>
             {admin && photos.length > 0 && <button className="btn ghost" onClick={() => ctx.setSheet({ kind: 'download', event, photos: shown })}><I.down width="16" height="16" /> Download all</button>}
             <div className="sort">
               {[['order', 'In order'], ['loved', 'Most loved'], ['newest', 'Newest']].map(([k, l]) => (
@@ -691,25 +688,6 @@ function PickThumb({ file }) {
   return <span className="pick-thumb">{url && (isVideo(file) ? <span className="picked-video">▶</span> : <img src={url} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />)}</span>;
 }
 
-function InviteSheet({ ctx, event, onClose }) {
-  const link = `${SITE.origin}${SITE.base}e/${event.slug}`;
-  const count = event.photoCount ? `${event.photoCount} in so far from ${plural(event.contributorCount, 'chaperone')}.` : 'Nothing in yet. Be the first.';
-  const msg = `M³ chaperones: ${event.title} photos and videos wanted. ${count} Add yours here: ${link}`;
-  const copy = async (t, what) => { await navigator.clipboard.writeText(t); ctx.toast(`${what} copied`); };
-  const share = async () => { if (navigator.share) { try { await navigator.share({ text: msg }); } catch { /* cancelled */ } } else copy(msg, 'Message'); };
-  return (
-    <Sheet title={`Invite to ${event.title}`} onClose={onClose}>
-      <div className="stack">
-        <div className="invite-card"><span className="eyebrow">Link</span><code>{link}</code><div className="row"><button className="btn small ghost" onClick={() => copy(link, 'Link')}>Copy link</button></div></div>
-        <div className="invite-card"><span className="eyebrow">Message</span><p className="lede" style={{ fontSize: 15 }}>{msg}</p>
-          <div className="row"><button className="btn small primary" onClick={share}>{navigator.share ? 'Share' : 'Copy message'}</button><button className="btn small ghost" onClick={() => copy(msg, 'Message')}>Copy</button></div>
-        </div>
-        <p className="fine">The link previews in iMessage as this album with its newest photo.</p>
-      </div>
-    </Sheet>
-  );
-}
-
 function DownloadSheet({ event, photos, onClose }) {
   const [which, setWhich] = useState('web');
   const [prog, setProg] = useState(null);
@@ -865,7 +843,7 @@ function AdminPage({ ctx }) {
               <td>{e.startsAt ? fmtTime(e.startsAt) : 'Any'}</td>
               <td><a href={`#/e/${e.slug}`}>{e.title}</a>{e.hidden ? ' (hidden)' : ''}</td>
               <td>{e.photoCount}</td>
-              <td className="acts"><button className="link" onClick={() => setEditing({ kind: 'event', row: e })}>Edit</button><button className="link" onClick={() => ctx.setSheet({ kind: 'invite', event: e })}>Invite</button></td>
+              <td className="acts"><button className="link" onClick={() => setEditing({ kind: 'event', row: e })}>Edit</button></td>
             </tr>
           ))}
         </tbody></table>
