@@ -18,8 +18,9 @@ const contactEmail = 'hello@wearercap.org';
 // completely ordinary. The joke is the mismatch between the grammar and the
 // content, so keep the sentences straight and let the detail be small.
 //
-// Grades, never ages. Anything still in brackets is waiting on that officer to
-// fill in her own; nobody's bio should go public before she has read it.
+// Grades, never ages. These were written from what the board has seen of each
+// other this year rather than from a questionnaire, so each officer should read
+// her own and change anything that does not sound like her.
 const officers = [
   {
     key: 'mose',
@@ -41,10 +42,11 @@ const officers = [
     photo: '/images/board/crystal.jpg',
     email: contactEmail,
     bio:
-      'Crystal Claybrooks Jones, mother of [name], a [grade] grader. She will say ' +
-      'the thing everyone in the room was already thinking. This is a feature, not ' +
-      'a bug, and it is most of why she is Co-Chair. In her free time, she enjoys ' +
-      '[something small], done properly.',
+      'Crystal Claybrooks Jones, mother of Dean, a sixth grader. She will say the ' +
+      'thing everyone else in the room was already thinking, and she is usually ' +
+      'right. She can run a meeting, cook dinner, and plan a party in the same ' +
+      'hour. If something good is happening this year, she is already three steps ' +
+      'into organizing it.',
   },
   {
     key: 'latasha',
@@ -53,9 +55,10 @@ const officers = [
     photo: '/images/board/latasha.jpg',
     email: contactEmail,
     bio:
-      'Latasha Emeri, mother of [name], a [grade] grader. She keeps the receipts. ' +
-      'All of them. She will ask you for a second quote, and she will be right. In ' +
-      'her free time, she enjoys [something small].',
+      'Latasha Emeri, mother of Braylen, a seventh grader. She keeps the receipts. ' +
+      'All of them. She will ask what something costs before you have finished ' +
+      'describing it, and she will be right to. On the rare occasion she cannot ' +
+      'make a meeting, her notes arrive beforehand so the work happens anyway.',
   },
   {
     key: 'farren',
@@ -64,10 +67,10 @@ const officers = [
     photo: '/images/board/farren.jpg',
     email: contactEmail,
     bio:
-      'Farren Salter, mother of [name], a [grade] grader. She has logged more ' +
-      'volunteer hours than she has ever mentioned, most of them in rooms you have ' +
-      'never been in. If it got folded, sorted, or written down this year, look for ' +
-      'her name on it. In her free time, she enjoys [something small].',
+      'Farren Salter, mother of Logan, a sixth grader, with two more at home keeping ' +
+      'her busy. She is the reason anything said in a meeting can be found again. ' +
+      'Quietly precise, and the first to check that we spelled a name right. ' +
+      'If it got written down, sorted, or followed up this year, her name is on it.',
   },
 ];
 
