@@ -126,6 +126,11 @@ const calendarHref = '/rca-calendar-2026-2027.pdf';
 const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
 const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
+// TEMPORARY. Replaces the hero with tonight's meeting so the join link is the
+// first thing on the page. Set this back to false to restore the normal hero;
+// nothing else needs touching, and nothing below the hero changes either way.
+const MEETING_TAKEOVER = true;
+
 const heroImage = '/images/rcap-hero-welcome.jpg';
 const videoPoster = '/images/rcap-video-hero.jpg';
 
@@ -625,13 +630,38 @@ function App() {
           </nav>
         </header>
 
-        <div className="hero-content">
-          <p className="kicker">Welcome to RCAP</p>
-          <h1>If your child is at RCA,<br /> you are already <span>RCAP.</span></h1>
-          <p className="hero-copy">
-            First year or fifth, an hour or a whole season. There is a place
-            here with your name on it.
-          </p>
+        {MEETING_TAKEOVER ? (
+          <div className="hero-content">
+            <p className="kicker kicker-live">Tonight</p>
+            <h1>The first RCAP meeting<br /> of the year is <span>tonight.</span></h1>
+            <p className="hero-copy">
+              Monday, September 14 at 7:00pm. Forty five minutes, virtual.
+              Meet the board, hear what is coming, and find where you fit.
+            </p>
+            <div className="hero-actions">
+              <a
+                className="button primary button-join"
+                href={upcomingEvents[0].join}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Join the meeting
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </a>
+              <a className="button ghost" href="#events">
+                <ArrowDown size={18} aria-hidden="true" />
+                Everything else
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="hero-content">
+            <p className="kicker">Welcome to RCAP</p>
+            <h1>If your child is at RCA,<br /> you are already <span>RCAP.</span></h1>
+            <p className="hero-copy">
+              First year or fifth, an hour or a whole season. There is a place
+              here with your name on it.
+            </p>
           {/* Both of these move you down the page rather than leaving it. The
               video opens from its own card in the story section, and Find Your
               Place is reached from Serve, so the hero introduces the page
@@ -645,8 +675,9 @@ function App() {
               <PlayCircle size={18} aria-hidden="true" />
               Watch the video
             </a>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Single diagonal into the paper below. */}
         <div className="hero-edge" aria-hidden="true">
