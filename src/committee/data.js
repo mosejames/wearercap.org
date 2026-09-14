@@ -179,6 +179,26 @@ const ALL_COMMITTEES = [
     ],
   },
   {
+    // Required by the bylaws, seated fresh each year. Three parents, unrelated
+    // to the account signers, review the Treasurer's books once the June 30
+    // finals land and report at a general meeting. A team of equals, so there
+    // is no chair application, and it does not compete for recommendation
+    // slots. Listed under Explore all like Men of RCAP.
+    id: 'audit',
+    name: 'Audit Team',
+    accent: 'blue',
+    tags: ['backstage', 'organizer', 'giveback'],
+    blurb: 'Three parents who check the books so every family can trust the numbers.',
+    what: 'A short review each fall after the year-end finals, then a report to membership.',
+    does: [
+      'Review the Treasurer\'s records and reconciliations',
+      'Confirm the year-end numbers add up',
+      'Report what you found at a general meeting',
+    ],
+    noChair: true,
+    noMatch: true,
+  },
+  {
     id: 'men',
     name: 'Men of RCAP',
     accent: 'ink',

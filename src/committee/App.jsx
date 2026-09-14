@@ -444,8 +444,9 @@ export default function App() {
         {!eligible.length ? (
           <>
             <p className="sub anim" style={{ marginTop: 22 }}>
-              Men of RCAP picks its own leadership, so there is no chair application for it.
-              Add another committee to your list if you want to lead one.
+              Men of RCAP picks its own leadership and the Audit Team is three equals, so
+              neither has a chair application. Add another committee to your list if you
+              want to lead one.
             </p>
             <div className="row"><button className="btn solid" onClick={() => go('phone')}>Continue</button></div>
           </>
