@@ -2385,6 +2385,20 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 14px;
+  gap: 18px;
   margin: 26px 0 0;
+}
+
+/* The vault clock's colours assume the cream page. On the dark hero its digits
+   came out near-black on near-black, so the numbers are set light here and the
+   unit labels are pushed to a legible grey. */
+.meeting-clock .vault-digits {
+  color: var(--white);
+  font-size: clamp(38px, 6vw, 54px);
+  line-height: 1;
+}
+
+.meeting-clock .vault-label {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
 }
