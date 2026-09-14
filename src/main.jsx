@@ -157,7 +157,7 @@ const navLinks = [
 // the tiles beneath it. Delete a row once its date has passed and the next one
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-meeting-night.jpg' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-meeting-night.jpg', join: 'https://us06web.zoom.us/j/81639745595?pwd=slHZjoasjw5rIkStFl3ftF7UN9J7EZ.1' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
@@ -679,7 +679,9 @@ function App() {
             <h3>{upcomingEvents[0].label}</h3>
             <p className="featured-event-time"><Clock size={18} aria-hidden="true" />{upcomingEvents[0].time}</p>
             <p>{upcomingEvents[0].description}</p>
-            <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
+            {upcomingEvents[0].join
+              ? <a className="button primary" href={upcomingEvents[0].join} target="_blank" rel="noopener noreferrer">Join the meeting <ArrowUpRight size={18} aria-hidden="true" /></a>
+              : <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>}
           </div>
         </article>
         <div className="event-grid" aria-label="More upcoming RCAP dates">
