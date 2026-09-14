@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tonight: the first RCAP meeting of the year</title>
+<meta name="description" content="Monday, September 14 at 7:00pm. Virtual. Join the first RCAP general meeting of the school year." />
+<meta property="og:title" content="Tonight, 7:00pm — The first RCAP meeting of the year" />
+<meta property="og:description" content="Monday, September 14. Virtual, 45 minutes. Meet the board, hear what is coming, and find where you fit." />
+<meta property="og:image" content="https://wearercap.org/images/rcap-tonight-og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://wearercap.org/tonight/" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;800;900&display=swap" rel="stylesheet" />
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root{--ink:#0d0a08;--gold:#f7a81c;--white:#fff;--paper:#faf4ea;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--white);
+    font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+    max-width:760px;margin:0 auto;padding:40px 20px;}
+  .eyebrow{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.18em;
+    text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;gap:9px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);}
+  h1{font-size:clamp(32px,7vw,60px);font-weight:900;letter-spacing:-.03em;line-height:1.02;margin:0 0 18px;}
+  h1 em{font-style:normal;color:var(--gold);}
+  .when{font-size:clamp(16px,2.4vw,19px);color:rgba(255,255,255,.76);margin:0 0 30px;max-width:44ch;}
+
+  /* clock */
+  .clock{display:flex;gap:18px;margin:0 0 34px;}
+  .unit{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .digits{font-size:clamp(40px,9vw,66px);font-weight:900;letter-spacing:-.04em;line-height:1;
+    font-variant-numeric:tabular-nums;}
+  .label{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(255,255,255,.6);}
+  .live{display:none;font-size:clamp(22px,4vw,32px);font-weight:900;color:var(--gold);margin:0 0 30px;}
+
+  /* buttons */
+  .actions{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 16px;}
+  a.btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    font-weight:900;font-size:16px;padding:16px 26px;border-radius:9px;}
+  .join{background:var(--gold);color:var(--ink);font-size:18px;}
+  .join:hover{background:#ffc247;}
+  .ghost{border:1.5px solid rgba(255,255,255,.3);color:var(--white);}
+  .ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+  .then{border-top:1px solid rgba(255,255,255,.14);margin-top:34px;padding-top:28px;}
+  .then h2{font-size:15px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;
+    color:rgba(255,255,255,.55);margin:0 0 16px;}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+  .card{display:block;padding:18px 20px;border:1px solid rgba(255,255,255,.18);border-radius:11px;
+    text-decoration:none;color:var(--white);transition:border-color .15s ease,transform .15s ease;}
+  .card:hover{border-color:var(--gold);transform:translateY(-2px);}
+  .card b{display:block;font-size:17px;font-weight:900;margin-bottom:3px;}
+  .card span{color:rgba(255,255,255,.62);font-size:14px;}
+
+  footer{margin-top:34px;font-size:13px;color:rgba(255,255,255,.45);}
+  footer a{color:rgba(255,255,255,.62);}
+  @media(max-width:520px){.clock{gap:14px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow"><span class="dot"></span>Tonight</p>
+  <h1>The first RCAP meeting of the year is <em>tonight.</em></h1>
+  <p class="when">Monday, September 14 at 7:00pm Eastern. Virtual, about forty five minutes. Meet the board, hear what is coming this year, and find where you fit.</p>
+
+  <div class="clock" id="clock">
+    <span class="unit"><span class="digits" id="h">00</span><span class="label">hrs</span></span>
+    <span class="unit"><span class="digits" id="m">00</span><span class="label">min</span></span>
+    <span class="unit"><span class="digits" id="s">00</span><span class="label">sec</span></span>
+  </div>
+  <p class="live" id="live">We are live. Come on in.</p>
+
+  <div class="actions">
+    <a class="btn join" href="https://us06web.zoom.us/j/81639745595?pwd=slHZjoasjw5rIkStFl3ftF7UN9J7EZ.1" target="_blank" rel="noopener noreferrer">Join the meeting &#8599;</a>
+    <a class="btn ghost" href="/">wearercap.org</a>
+  </div>
+
+  <div class="then">
+    <h2>Two minutes that help before you go</h2>
+    <div class="row">
+      <a class="card" href="/committee-interest/">
+        <b>Find your place</b>
+        <span>Tell us what you would like to help with this year.</span>
+      </a>
+      <a class="card" href="https://www.paypal.com/ncp/payment/EWP8R298MW83A" target="_blank" rel="noopener noreferrer">
+        <b>Pay your dues &#8599;</b>
+        <span>$25 for the year. Every family is a member.</span>
+      </a>
+      <a class="card" href="/board/">
+        <b>Meet the board</b>
+        <span>Who is on it, and how to reach any of us.</span>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    Can&rsquo;t make it? Everything from tonight goes out afterward.
+    Questions: <a href="mailto:hello@wearercap.org">hello@wearercap.org</a>
+  </footer>
+</div>
+
+<script>
+  // 7:00pm Eastern on Sept 14, 2026. Pinned to the offset so every parent sees
+  // the same clock wherever they are.
+  var START = new Date('2026-09-14T19:00:00-04:00').getTime();
+  var h = document.getElementById('h'), m = document.getElementById('m'),
+      s = document.getElementById('s'), clock = document.getElementById('clock'),
+      live = document.getElementById('live');
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function tick(){
+    var left = START - Date.now();
+    if (left <= 0) { clock.style.display = 'none'; live.style.display = 'block'; return; }
+    h.textContent = pad(Math.floor(left / 3600000));
+    m.textContent = pad(Math.floor((left % 3600000) / 60000));
+    s.textContent = pad(Math.floor((left % 60000) / 1000));
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
