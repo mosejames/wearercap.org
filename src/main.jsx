@@ -157,7 +157,7 @@ const navLinks = [
 // the tiles beneath it. Delete a row once its date has passed and the next one
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-community-table.jpg' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-meeting-night.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
