@@ -130,6 +130,7 @@ const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestb
 // first thing on the page. Set this back to false to restore the normal hero;
 // nothing else needs touching, and nothing below the hero changes either way.
 const MEETING_TAKEOVER = true;
+const MEETING_STARTS = new Date('2026-09-14T19:00:00-04:00');
 
 const heroImage = '/images/rcap-hero-welcome.jpg';
 const videoPoster = '/images/rcap-video-hero.jpg';
@@ -412,6 +413,37 @@ function lockScroll() {
   };
 }
 
+// Hours, minutes, seconds only. The meeting is tonight, so a days unit reading
+// zero would just be noise. Reuses RollPair so the digits roll the same way they
+// do on the vault clock. Returns null once the meeting starts, which means the
+// hero quietly stops counting rather than showing a stale or negative clock.
+function MeetingCountdown({ startsAt }) {
+  const [now, setNow] = React.useState(() => Date.now());
+
+  React.useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const left = startsAt.getTime() - now;
+  if (left <= 0) return null;
+
+  const hours = Math.floor(left / 3600000);
+  const mins = Math.floor((left % 3600000) / 60000);
+  const secs = Math.floor((left % 60000) / 1000);
+
+  return (
+    <p
+      className="meeting-clock"
+      aria-label={`${hours} hours, ${mins} minutes, ${secs} seconds until the meeting starts`}
+    >
+      <RollPair value={hours} label="hrs" />
+      <RollPair value={mins} label="min" />
+      <RollPair value={secs} label="sec" />
+    </p>
+  );
+}
+
 function VaultCountdown({ opensAt }) {
   const [now, setNow] = React.useState(() => Date.now());
 
@@ -638,6 +670,7 @@ function App() {
               Monday, September 14 at 7:00pm. Forty five minutes, virtual.
               Meet the board, hear what is coming, and find where you fit.
             </p>
+            <MeetingCountdown startsAt={MEETING_STARTS} />
             <div className="hero-actions">
               <a
                 className="button primary button-join"

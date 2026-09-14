@@ -2377,3 +2377,14 @@ button {
     height: 36px;
   }
 }
+
+/* TEMPORARY, with MEETING_TAKEOVER. Same rolling digits as the vault clock, set
+   on the dark hero and sized to sit under the copy without competing with the
+   join button below it. */
+.meeting-clock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin: 26px 0 0;
+}
