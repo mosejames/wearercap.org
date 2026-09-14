@@ -153,14 +153,18 @@ const navLinks = [
 // Split into month / day / weekday so each date can be set like a calendar
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
+// The first entry is the featured card at the top of the section; the rest are
+// the tiles beneath it. Delete a row once its date has passed and the next one
+// is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day', time: '8am to 3pm', description: 'A new year. Familiar faces. A whole community to meet.', image: '/images/rcap-community-table.jpg' },
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP general meeting, 7pm, virtual' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-community-table.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
+  { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
 ];
+
 
 // The single most time-sensitive ask. One item, not a list — if everything
 // is urgent, nothing is. Set to null to hide the banner entirely.
