@@ -560,3 +560,11 @@ a{color:inherit}
 
 /* The eyebrow on the night hero. Ink-soft is right on paper and invisible here. */
 .screen.night .eyebrow{color:rgba(255,255,255,.45)}
+
+/* Capped teams. The stage badge sits top right; a fulfilled card stays readable
+   but steps back, and its Add button says why it will not add. */
+.cc{position:relative}
+.cc-stage{position:absolute;top:14px;right:14px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--a);border:1px solid var(--a);border-radius:999px;padding:3px 8px;line-height:1}
+.cc.full{opacity:.72}
+.add:disabled{cursor:default;opacity:.6}
+.add:disabled:hover{background:transparent;color:inherit}

@@ -110,6 +110,20 @@ export default function Admin() {
     chairs: complete.filter((r) => (r.chair_picks || []).some((p) => p.committee === c.id)).length,
   })).sort((a, b) => b.n - a.n);
 
+  /* Capped teams seat in order of submission: the first `seats` are seats,
+     the next `alternates` are alternates, anything after is over. Keyed by
+     row id so the row list can say which a person is. */
+  const seatOf = {};
+  COMMITTEES.filter((c) => c.seats).forEach((c) => {
+    complete
+      .filter((r) => (r.committees || []).includes(c.id))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .forEach((r, i) => {
+        seatOf[r.id] = seatOf[r.id] || {};
+        seatOf[r.id][c.id] = i < c.seats ? 'seat' : i < c.seats + (c.alternates || 0) ? 'alternate' : 'over';
+      });
+  });
+
   return (
     <section className="screen wide">
       <div className="inner big">
@@ -139,6 +153,10 @@ export default function Admin() {
               <b>{n}</b>
               <span>{c.name}</span>
               {chairs > 0 && <i>{chairs} for chair</i>}
+              {c.seats > 0 && (
+                <i>{Math.min(n, c.seats)} of {c.seats} seats
+                  {n > c.seats ? `, ${Math.min(n - c.seats, c.alternates || 0)} alternate${Math.min(n - c.seats, c.alternates || 0) === 1 ? '' : 's'}` : ''}</i>
+              )}
             </div>
           ))}
         </div>
@@ -165,6 +183,7 @@ export default function Admin() {
                   <span className="ad-r-meta">
                     {(r.committees || []).length} picked
                     {(r.chair_picks || []).length ? ` · ${r.chair_picks.length} chair` : ''}
+                    {Object.entries(seatOf[r.id] || {}).map(([cid, k]) => ` · ${cname(cid)}: ${k}`).join('')}
                     {' · '}{fmt(r.created_at)}
                   </span>
                 </button>

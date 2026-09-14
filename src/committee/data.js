@@ -197,6 +197,10 @@ const ALL_COMMITTEES = [
     ],
     noChair: true,
     noMatch: true,
+    // Three seats, then three alternates, then done. Stage labels live here so
+    // the card, the lightbox and the admin tally all say the same thing.
+    seats: 3,
+    alternates: 3,
   },
   {
     id: 'men',
@@ -289,3 +293,16 @@ export function topMatches(traits) {
     .slice(0, 5)
     .map((x) => x.c);
 }
+
+/* Capped committees. `n` is the count of complete submissions that picked it.
+   open: seats still free. satisfied: seats taken, alternates open.
+   fulfilled: nothing left to give. Uncapped committees are always open. */
+export function stage(c, n) {
+  if (!c.seats) return 'open';
+  const k = n || 0;
+  if (k < c.seats) return 'open';
+  if (k < c.seats + (c.alternates || 0)) return 'satisfied';
+  return 'fulfilled';
+}
+
+export const STAGE_LABEL = { open: '', satisfied: 'Satisfied', fulfilled: 'Fulfilled' };

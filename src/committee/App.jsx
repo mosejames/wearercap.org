@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { COMMITTEES, TRAITS, HOUSES, CLASS_YEARS, byId, rank, topMatches } from './data.js';
-import { getToken, clearToken, saveQuiet, submit, sendConfirmation } from './api.js';
+import { COMMITTEES, TRAITS, HOUSES, CLASS_YEARS, byId, rank, topMatches, stage, STAGE_LABEL } from './data.js';
+import { getToken, clearToken, saveQuiet, submit, sendConfirmation, seatCounts } from './api.js';
 import Admin from './Admin.jsx';
 
 /* The flow, in order. `leadAsk` and `leadPick` are conditional: a parent who
@@ -42,6 +42,10 @@ export default function App() {
   const [openToLead, setOpenToLead] = useState(false);
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
+  /* Seat counts for capped teams, loaded once. Stale by a few minutes at worst,
+     which is fine: the board seats people in order of submission anyway. */
+  const [counts, setCounts] = useState({});
+  useEffect(() => { seatCounts().then(setCounts); }, []);
 
   const fn = firstName(name);
 
@@ -376,7 +380,7 @@ export default function App() {
 
   if (step === 'discover') return (
     <Discover
-      fn={fn} traits={traits} picks={picks} setPicks={setPicks} pct={pct} onBack={back}
+      fn={fn} traits={traits} picks={picks} setPicks={setPicks} pct={pct} onBack={back} counts={counts}
       onNext={() => {
         if (!picks.length) return setErr('Add at least one to your list.');
         saveQuiet(token, { committees: picks });
@@ -652,7 +656,7 @@ function Ask({ question, hint, value, onChange, placeholder, type = 'text', onNe
   );
 }
 
-function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
+function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct, counts }) {
   const matches = useMemo(() => topMatches(traits), [traits]);
   const [tab, setTab] = useState(matches.length ? 'fit' : 'all');
   const [open, setOpen] = useState(null);
@@ -723,13 +727,20 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
       <div className="grid anim" style={{ animationDelay: '.1s' }}>
         {shown.map((c) => {
           const on = picks.includes(c.id);
+          const st = stage(c, counts[c.id]);
+          const full = st === 'fulfilled';
           return (
-            <article className={'cc' + (on ? ' picked' : '')} data-a={c.accent} key={c.id}>
+            <article className={'cc' + (on ? ' picked' : '') + (full ? ' full' : '')} data-a={c.accent} key={c.id}>
+              {STAGE_LABEL[st] && <span className="cc-stage">{STAGE_LABEL[st]}</span>}
               <h3 className="cc-name">{c.name}</h3>
               <p className="cc-blurb">{c.blurb}</p>
               <div className="cc-acts">
-                <button className={'add' + (on ? ' on' : '')} onClick={() => toggle(c.id)}>
-                  {on ? 'Added' : 'Add to my list'}
+                <button
+                  className={'add' + (on ? ' on' : '')}
+                  onClick={() => toggle(c.id)}
+                  disabled={full && !on}
+                >
+                  {on ? 'Added' : full ? 'Fulfilled' : st === 'satisfied' ? 'Apply as alternate' : 'Add to my list'}
                 </button>
                 <button className="det" onClick={() => setOpen(c.id)}>Details</button>
               </div>
@@ -760,10 +771,18 @@ function Discover({ fn, traits, picks, setPicks, onNext, err, onBack, pct }) {
                 closes, an "Added" badge that quietly removed on tap would be a
                 trap, so the label says what the tap will actually do. */}
             <div className="lb-actions">
-              <button
-                className={'add lb-add' + (picks.includes(detail.id) ? ' on' : '')}
-                onClick={() => { toggle(detail.id); setOpen(null); }}
-              >{picks.includes(detail.id) ? 'Remove from my list' : 'Add to my list'}</button>
+              {(() => {
+                const st = stage(detail, counts[detail.id]);
+                const on = picks.includes(detail.id);
+                const full = st === 'fulfilled' && !on;
+                return (
+                  <button
+                    className={'add lb-add' + (on ? ' on' : '')}
+                    disabled={full}
+                    onClick={() => { toggle(detail.id); setOpen(null); }}
+                  >{on ? 'Remove from my list' : full ? 'Fulfilled' : st === 'satisfied' ? 'Apply as alternate' : 'Add to my list'}</button>
+                );
+              })()}
               <button className="lb-x" onClick={() => setOpen(null)} aria-label="Close">&times;</button>
             </div>
           </div>

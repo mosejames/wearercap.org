@@ -72,3 +72,16 @@ export async function adminList(pass) {
   if (error) throw error;
   return data || [];
 }
+
+/* Counts only, for capped teams. Keyed by committee id. Fails soft to an empty
+   map: a parent should never see a broken card because a count did not load. */
+export async function seatCounts() {
+  try {
+    const { data, error } = await supabase.rpc('committee_seat_counts');
+    if (error) throw error;
+    return Object.fromEntries((data || []).map((r) => [r.committee, r.n]));
+  } catch (e) {
+    console.warn('seat counts failed', e);
+    return {};
+  }
+}
