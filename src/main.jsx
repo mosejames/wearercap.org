@@ -1048,9 +1048,11 @@ function App() {
           href={DONATE_URL}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Make your membership donation"
         >
           <Heart size={17} aria-hidden="true" />
-          <span>Make your membership donation</span>
+          <span className="give-long">Make your membership donation</span>
+          <span className="give-short" aria-hidden="true">Donate</span>
         </a>
       ) : null}
 
