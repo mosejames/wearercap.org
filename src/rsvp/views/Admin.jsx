@@ -95,6 +95,7 @@ export default function Admin({ slug }) {
         {data.comments.map((c) => (
           <li key={c.id} className={c.hidden ? 'off' : ''}>
             <b>{c.full_name}</b> <small>{fmt(c.created_at)}</small>
+            {c.prompt && <p><i>{c.prompt}</i></p>}
             <p>{c.body}</p>
             <button className="rv-link" onClick={async () => { await adminHideComment(pass, c.id, !c.hidden); load(); }}>
               {c.hidden ? 'Unhide' : 'Hide'}

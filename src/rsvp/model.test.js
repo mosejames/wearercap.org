@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   wallName, initials, normalizePhone, formatPhoneInput, validate, toPayload, fromMine,
   friendlyError, countLine, eventWhen, eyebrowDate, slugFromPath, mergeWall, mergeThread,
-  houseColor, houseInk, squareCrop, relativeTime, HOUSES, NO_HOUSE_COLOR,
+  houseColor, houseInk, squareCrop, relativeTime, HOUSES, NO_HOUSE_COLOR, PROMPTS, nextPrompt,
 } from './model.js';
 
 const ev = { starts_at: '2026-09-27T21:00:00+00:00', ends_at: '2026-09-27T23:00:00+00:00', venue_name: 'Ron Clark Academy', venue_address: '228 Margaret St SE' };
@@ -97,6 +97,23 @@ describe('copy', () => {
     expect(relativeTime('2026-09-20T11:59:30Z', now)).toBe('just now');
     expect(relativeTime('2026-09-20T11:15:00Z', now)).toBe('45m');
     expect(relativeTime('2026-09-20T09:00:00Z', now)).toBe('3h');
+  });
+});
+
+describe('thread questions', () => {
+  it('never repeats the question on screen', () => {
+    for (let i = 0; i < 20; i++) {
+      const q = PROMPTS[i % PROMPTS.length];
+      expect(nextPrompt(q, () => 0.999)).not.toBe(q);
+      expect(nextPrompt(q, () => 0)).not.toBe(q);
+    }
+  });
+  it('keeps every question short, with no em dash or exclamation point', () => {
+    PROMPTS.forEach((p) => {
+      expect(p.length).toBeLessThanOrEqual(160);
+      expect(p).not.toMatch(/[\u2014!]/);
+      expect(p.endsWith('?')).toBe(true);
+    });
   });
 });
 

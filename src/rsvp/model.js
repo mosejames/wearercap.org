@@ -10,6 +10,26 @@ export const NO_HOUSE_COLOR = '#1a2a56';
 export const GRADES = [5, 6, 7, 8];
 export const COMMENT_MAX = 280;
 
+/* The thread is answers, not announcements. Reminiscent and a little cheeky,
+   never "what are you singing", since nobody wants to give that away early.
+   Every answer is stored with its question so the wall never reads random. */
+export const PROMPTS = [
+  "What song couldn't you wait to hear on prom night?",
+  'In middle school, what song did you plan to walk down the aisle to?',
+  'Whose poster was on your bedroom wall?',
+  'What song did you tape off the radio and play until the cassette wore out?',
+  'Which R&B group were you ready to join as the fifth member?',
+  'What song did you slow dance to at your first party?',
+  'What song gets you up at the cookout every time?',
+  'What song would your student be mortified to catch you singing?',
+];
+
+/** Next question, never the one on screen. `rand` is injectable for tests. */
+export function nextPrompt(current, rand = Math.random) {
+  const pool = PROMPTS.filter((p) => p !== current);
+  return pool[Math.floor(rand() * pool.length)] || PROMPTS[0];
+}
+
 export function houseColor(key) {
   const h = HOUSES.find((x) => x.key === key);
   return h ? h.color : NO_HOUSE_COLOR;

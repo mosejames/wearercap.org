@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
     if (!c || c.rsvp_id !== row.id) return json({ error: 'not found' }, 404);
     if (c.notified_at) return json({ skipped: 'already sent' });
     const ok = await telegram(
-      `💬 <b>${esc(row.wall_name)}</b> in the ${esc(ev.title)} thread:\n\n${esc(c.body)}\n\n<i>${esc(row.full_name)}. Public on the page. Hide it from the list if it needs to come down.</i>`,
+      `💬 <b>${esc(row.wall_name)}</b> in the ${esc(ev.title)} thread${c.prompt ? `\n<i>${esc(c.prompt)}</i>` : ''}\n\n${esc(c.body)}\n\n<i>${esc(row.full_name)}. Public on the page. Hide it from the list if it needs to come down.</i>`,
       null, ev.slug,
     );
     if (ok) await db.from('event_comments').update({ notified_at: new Date().toISOString() }).eq('id', c.id);

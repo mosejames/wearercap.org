@@ -86,8 +86,8 @@ describe('rpc calls', () => {
     supabase.rpc.mockResolvedValue({ data: null, error: null });
     await cancel(T);
     expect(supabase.rpc).toHaveBeenLastCalledWith('event_rsvp_cancel', { p_token: T });
-    await comment(T, 'hi');
-    expect(supabase.rpc).toHaveBeenLastCalledWith('event_comment_post', { p_token: T, p_body: 'hi' });
+    await comment(T, 'hi', 'Q?');
+    expect(supabase.rpc).toHaveBeenLastCalledWith('event_comment_post', { p_token: T, p_body: 'hi', p_prompt: 'Q?' });
   });
   it('passes the passcode to the back office', async () => {
     supabase.rpc.mockResolvedValueOnce({ data: { rsvps: [] }, error: null });

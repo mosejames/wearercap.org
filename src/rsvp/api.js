@@ -68,7 +68,7 @@ export async function rsvp(slug, token, payload) {
 }
 
 export const cancel = (token) => rpc('event_rsvp_cancel', { p_token: token });
-export const comment = (token, body) => rpc('event_comment_post', { p_token: token, p_body: body });
+export const comment = (token, body, prompt = null) => rpc('event_comment_post', { p_token: token, p_body: body, p_prompt: prompt });
 
 /* Fire and forget. The function reads the address off the row by token, so it
    cannot be pointed at anyone else, and it refuses to send twice. It also

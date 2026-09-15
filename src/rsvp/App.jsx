@@ -127,14 +127,13 @@ function EventPage({ slug }) {
     setSheet(null);
   }
 
-  async function post(body) {
-    const id = await api.comment(token, body);
+  async function post(body, prompt) {
+    const id = await api.comment(token, body, prompt);
     api.notifyComment(token, id);
     setThread(await api.loadThread(slug));
   }
 
   const openForm = () => setSheet('form');
-  const scrollToCount = () => document.getElementById('rv-count')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   if (missing) {
     return (
@@ -219,12 +218,13 @@ function EventPage({ slug }) {
 
         <section className="rv-section">
           <h2 className="rv-h">The thread</h2>
-          <ThreadList thread={thread} />
-          {going && event && event.comments_open ? null : (
-            <button className="rv-lock" onClick={going ? undefined : scrollToCount}>
-              {event && !event.comments_open ? 'The thread is closed.' : 'RSVP to join the thread.'}
-            </button>
+          <p className="rv-thread-sub">A few questions from back in the day. Answer one, then read the room.</p>
+          {event && event.comments_open ? (
+            <Composer locked={!going} onPost={post} onLockedClick={openForm} />
+          ) : (
+            event && <p className="rv-lock">The thread is closed.</p>
           )}
+          <ThreadList thread={[...thread].reverse()} />
         </section>
       </main>
 
@@ -235,10 +235,8 @@ function EventPage({ slug }) {
       </footer>
 
       <div className="rv-dock">
-        {going ? (
-          event && event.comments_open && <Composer onPost={post} />
-        ) : (
-          event && event.status === 'open' && <button className="rv-cta rv-cta-block" onClick={openForm}>I'm in</button>
+        {!going && event && event.status === 'open' && (
+          <button className="rv-cta rv-cta-block" onClick={openForm}>I'm in</button>
         )}
       </div>
 
