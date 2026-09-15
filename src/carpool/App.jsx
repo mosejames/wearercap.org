@@ -51,7 +51,10 @@ function Shell({ children }) {
       {children}
       <footer className="cp-footer">
         <p className="cp-fmark">RCA<span className="cp-hl">P</span></p>
-        <p>A parent-run carpool board for Ron Clark Academy families.</p>
+        <p>
+          Built by RCAP parents to help families connect. Every carpool is
+          arranged between the families themselves.
+        </p>
         {/* On EVERY screen, not just the sharing page. A disclaimer only a
             reader who goes looking will find is not much of a disclaimer, and
             this is the line that travels with a forwarded screenshot. */}

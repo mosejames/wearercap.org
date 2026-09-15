@@ -554,6 +554,8 @@ body {
   margin-bottom: 14px;
 }
 .cp-card:last-child { margin-bottom: 0; }
+.cp-card--word .cp-h4 { margin: 0 0 8px; }
+.cp-card--word p + p { margin-top: 10px; }
 
 .cp-note {
   background: var(--paper-2);

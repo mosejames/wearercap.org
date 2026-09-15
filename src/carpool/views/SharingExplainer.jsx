@@ -55,6 +55,13 @@ export default function SharingExplainer({ onBack }) {
         asked again each time, so joining a group means trusting its
         organizer with that call.
       </p>
+      <p>
+        Finding each other is our part. The rest is yours. Who drives, how
+        the week gets split, and how comfortable you get with another family
+        is worked out between the families in the group. Meet up before the
+        first ride and ask the questions you'd ask any parent you're trusting
+        with your kid.
+      </p>
 
       <h3 className="cp-h3 cp-h3--section">When you leave</h3>
       <p>

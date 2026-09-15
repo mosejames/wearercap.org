@@ -728,6 +728,11 @@ export default function Groups({ family, userId }) {
                   they accept.{' '}
                   <a href="#sharing">How sharing works</a>
                 </p>
+                <p>
+                  You'll work out the details directly with the families in
+                  this group. Take the time to get to know them. We're glad to
+                  make the introduction. The rest is yours.
+                </p>
               </div>
               <div className="cp-item-actions">
                 <button
@@ -834,6 +839,24 @@ export default function Groups({ family, userId }) {
         </div>
       ) : (
       <>
+      {/* Sets the expectation once, in a parent's voice: we do the
+          introduction, the families do everything after. Kept warm on
+          purpose. No "caution", "safety", or "risk" anywhere in it. */}
+      <div className="cp-card cp-card--word">
+        <p className="cp-h4">A quick word before you start</p>
+        <p>
+          We built this so RCA families who live near each other could find
+          each other. Finding each other is our part. Everything after that,
+          who drives, how you split the week, how you get comfortable with
+          another family, is yours to work out together.
+        </p>
+        <p>
+          Meet up before the first ride. Trade numbers. Ask the questions
+          you'd ask any parent you're trusting with your kid. You'd do this
+          anyway. We're just putting it in writing so everyone starts on the
+          same page.
+        </p>
+      </div>
       <p className="cp-fine">
         Your group uses the general area you already gave us, never your street address. You become
         its first member and you decide who joins.
