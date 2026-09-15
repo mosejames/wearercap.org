@@ -12,6 +12,22 @@
 // ---------------------------------------------------------------------------
 export const ROUNDS = [
   {
+    // Bingo Night, Sept 15 2026. Its own round, so its entries and photos are
+    // stored under this slug and never mix with the EXP vault. The copy fields
+    // below override SITE for this round only; a round without them falls back
+    // to the SITE defaults.
+    slug: 'bingo-2026',
+    name: 'Bingo Night',
+    label: 'BINGO NIGHT \u00b7 2026',
+    prompt: 'tonight',
+    closesAt: '2026-09-22T23:59:59-04:00',
+    goal: 100,
+    titleLead: 'DESCRIBE BINGO NIGHT',
+    titleGrad: 'IN ONE WORD.',
+    intro:
+      'A room full of RCA families, cards down, somebody about to shout. Tell us how it felt with one word, a quick note, or a photo. Takes about thirty seconds.',
+  },
+  {
     slug: 'esp-2026',
     name: 'Summer EXP',
     label: 'SUMMER EXP · 2026',

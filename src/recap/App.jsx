@@ -901,8 +901,8 @@ export default function App() {
       <header className="hero">
         <div className="shell">
           <p className="kicker">{SITE.kicker}</p>
-          <h1>{SITE.titleLead} <span className="flame">{SITE.titleGrad}</span></h1>
-          <p className="intro">{SITE.intro}</p>
+          <h1>{CURRENT.titleLead || SITE.titleLead} <span className="flame">{CURRENT.titleGrad || SITE.titleGrad}</span></h1>
+          <p className="intro">{CURRENT.intro || SITE.intro}</p>
           {!countdown.over && (
             <div className="hero-words">
               <p className="hero-words-lead">{SITE.wordLead}</p>

@@ -176,7 +176,7 @@ const navLinks = [
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
   // The first row is the featured card and needs time, description and image.
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/bingo.jpg' },
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/bingo.jpg', cta: { href: '/rcap-recap/', label: 'Add to the Bingo Night recap' } },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm', href: '/karaoke', cta: 'RSVP' },
@@ -757,9 +757,17 @@ function App() {
             <h3>{upcomingEvents[0].label}</h3>
             <p className="featured-event-time"><Clock size={18} aria-hidden="true" />{upcomingEvents[0].time}</p>
             <p>{upcomingEvents[0].description}</p>
-            {upcomingEvents[0].join
-              ? <a className="button primary" href={upcomingEvents[0].join} target="_blank" rel="noopener noreferrer">Join the meeting <ArrowUpRight size={18} aria-hidden="true" /></a>
-              : <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>}
+            {/* Three cases, in order: a live join link, an event that carries
+                its own call to action, and otherwise the school calendar. Each
+                lives on the event row, so the button follows whatever is
+                featured without anyone editing this markup. */}
+            {upcomingEvents[0].join ? (
+              <a className="button primary" href={upcomingEvents[0].join} target="_blank" rel="noopener noreferrer">Join the meeting <ArrowUpRight size={18} aria-hidden="true" /></a>
+            ) : upcomingEvents[0].cta ? (
+              <a className="button primary" href={upcomingEvents[0].cta.href}>{upcomingEvents[0].cta.label} <ArrowUpRight size={18} aria-hidden="true" /></a>
+            ) : (
+              <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
+            )}
           </div>
         </article>
         <div className="event-grid" aria-label="More upcoming RCAP dates">
