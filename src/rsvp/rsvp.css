@@ -282,8 +282,20 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.rv-share:hover { background: currentColor; }
-.rv-share:hover svg { color: #fff; }
+/* Explicit colours, not currentColor. With `color: inherit` on the button,
+   `background: currentColor` made the background identical to the label, so the
+   text vanished on hover and the icon only survived because it was set white
+   separately. Hover is also gated behind a real pointer: on a phone the tap
+   state sticks after the share sheet opens, which left the button looking
+   broken. */
+.rv-share { border-color: rgba(26, 22, 19, 0.32); color: #1a1613; }
+
+@media (hover: hover) {
+  .rv-share:hover { background: #1a1613; border-color: #1a1613; color: #fff; }
+}
+
+.rv-share:active { background: #1a1613; border-color: #1a1613; color: #fff; }
+
 @media (max-width: 560px) {
   .rv-share { width: 100%; }
 }
