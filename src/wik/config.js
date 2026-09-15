@@ -325,8 +325,8 @@ export const MEETING_FAQ = [
     asked: 'Sept 14 general meeting',
     topic: 'volunteer',
     q: 'When is the first EXP, and is there training?',
-    a: 'Show up, check in with Mr. Walker in the Great Hall, and you are set. Newcomer training usually happens right before Bingo Night. Dates and shifts are on the Serve at EXP page.',
-    link: { href: '/invite/', label: 'Serve at EXP' },
+    a: 'The first EXP of the year is Thursday and Friday, September 17 and 18, 8am to 4pm, and there are more on Sept 24 and 25, Nov 5 and 6, Nov 19 and 20, and Dec 10 and 11. Show up, check in with Mr. Walker in the Great Hall, and you are set. Shifts are on SignUpGenius.',
+    link: { href: 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/', label: 'Sign up for a shift' },
   },
   {
     asked: 'Sept 14 general meeting',

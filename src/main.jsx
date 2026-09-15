@@ -177,7 +177,7 @@ const navLinks = [
 const upcomingEvents = [
   // The first row is the featured card and needs time, description and image.
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/rcap-community-smiles.jpg' },
-  { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
+  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
@@ -283,7 +283,8 @@ const tools = [
 // second card points at, so the chips stay a short list of what is actually
 // close enough to plan around.
 const expDates = [
-  { label: 'Sept 24 & 25', next: true },
+  { label: 'Sept 17 & 18', next: true },
+  { label: 'Sept 24 & 25' },
   { label: 'Nov 5 & 6' },
   { label: 'Nov 19 & 20' },
   { label: 'Dec 10 & 11' },
