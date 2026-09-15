@@ -7,7 +7,7 @@ import { HOUSES as DIRECTORY_HOUSES } from '../directory/model.js';
 // Same four houses and colours as The Collective. Imported, not copied.
 export const HOUSES = DIRECTORY_HOUSES;
 export const NO_HOUSE_COLOR = '#1a2a56';
-export const GRADES = [5, 6, 7, 8];
+export const GRADES = [4, 5, 6, 7, 8];
 export const COMMENT_MAX = 280;
 
 /* The thread is answers, not announcements. Reminiscent and a little cheeky,
@@ -95,7 +95,7 @@ export function validate(form) {
   if (!normalizePhone(form.phone)) errors.phone = 'Use a 10 digit US number.';
   if (!validEmail(form.email)) errors.email = 'Check your email address.';
   if (!HOUSES.some((h) => h.key === form.house)) errors.house = 'Pick your house.';
-  if ((form.grades || []).some((g) => !GRADES.includes(Number(g)))) errors.grades = 'Grades are 5 through 8.';
+  if ((form.grades || []).some((g) => !GRADES.includes(Number(g)))) errors.grades = 'Grades are 4 through 8.';
   if (form.bringing && tidyName(form.plus_one_name).length < 2) errors.plus_one_name = 'Add their name, or turn this off.';
   return errors;
 }

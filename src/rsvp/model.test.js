@@ -46,7 +46,7 @@ describe('validate', () => {
     expect(validate(good)).toEqual({});
   });
   it('flags each field', () => {
-    const e = validate({ full_name: 'Jo', phone: '12', email: 'nope', house: 'gryffindor', grades: [4], bringing: true, plus_one_name: '' });
+    const e = validate({ full_name: 'Jo', phone: '12', email: 'nope', house: 'gryffindor', grades: [9], bringing: true, plus_one_name: '' });
     expect(Object.keys(e).sort()).toEqual(['email', 'full_name', 'grades', 'house', 'phone', 'plus_one_name']);
   });
   it('ignores the +1 name when not bringing anyone', () => {
