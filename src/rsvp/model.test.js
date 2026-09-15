@@ -13,6 +13,8 @@ describe('names', () => {
     expect(wallName('Jamelia Johnson')).toBe('Jamelia J.');
     expect(wallName('  mary  ann  smith ')).toBe('mary S.');
     expect(wallName('Cher')).toBe('Cher');
+    expect(wallName('Mose James IV')).toBe('Mose J.');
+    expect(wallName('Robert Smith Jr.')).toBe('Robert S.');
     expect(wallName('')).toBe('');
   });
   it('makes initials from the wall label', () => {

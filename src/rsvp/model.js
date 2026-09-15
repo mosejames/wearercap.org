@@ -47,12 +47,17 @@ export function houseName(key) {
 
 export const tidyName = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
-/** "Jamelia Johnson" -> "Jamelia J.". Mirrors public.event_wall_name. */
+const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v', 'vi', 'esq', 'phd', 'md']);
+
+/** "Jamelia Johnson" -> "Jamelia J.", and "Mose James IV" -> "Mose J.", since
+    a generational suffix is not the surname. Mirrors public.event_wall_name. */
 export function wallName(full) {
   const parts = tidyName(full).split(' ').filter(Boolean);
   if (!parts.length) return '';
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+  let n = parts.length;
+  while (n > 2 && SUFFIXES.has(parts[n - 1].toLowerCase().replace(/[.,]/g, ''))) n--;
+  if (n === 1) return parts[0];
+  return `${parts[0]} ${parts[n - 1][0].toUpperCase()}.`;
 }
 
 export function initials(label) {
