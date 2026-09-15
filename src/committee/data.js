@@ -27,7 +27,8 @@ export const TRAITS = [
 
 export const HOUSES = ['Altruismo', 'Amistad', 'Isibindi', 'Rêveur', 'Not sorted yet'];
 
-export const CLASS_YEARS = ['2027', '2028', '2029', '2030', '2031', '2032'];
+// 2027 through 2031 is who is enrolled this year. Add 2032 next August.
+export const CLASS_YEARS = ['2027', '2028', '2029', '2030', '2031'];
 
 const ALL_COMMITTEES = [
   {

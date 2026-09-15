@@ -115,7 +115,10 @@ export const MULTI = {
   meaning: 'Four houses, one family', color: '#E0218A', fg: '#FFFFFF', flame: true,
 };
 
-export const CLASSES = ['2027', '2028', '2029', '2030', '2031', '2032'];
+// The student body for 2026-27: 8th grade is the class of 2027, this year's
+// 4th graders are 2031. Add 2032 next August when they are actually in the
+// building, not before; an empty option only invites a wrong pick.
+export const CLASSES = ['2027', '2028', '2029', '2030', '2031'];
 export const FIRST_SUMMER_CLASS = '2031';
 export const RELATIONS = ['Mom', 'Dad', 'Grandparent', 'Auntie', 'Uncle', 'Bonus Parent', 'Guardian'];
 
