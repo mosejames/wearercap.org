@@ -50,8 +50,9 @@ describe('validate', () => {
   it('ignores the +1 name when not bringing anyone', () => {
     expect(validate({ ...good, bringing: false, plus_one_name: '' })).toEqual({});
   });
-  it('allows Not sure yet and no grades', () => {
-    expect(validate({ ...good, house: '', grades: [] })).toEqual({});
+  it('requires a house but not a grade', () => {
+    expect(validate({ ...good, house: '' })).toEqual({ house: 'Pick your house.' });
+    expect(validate({ ...good, grades: [] })).toEqual({});
   });
 });
 
@@ -66,8 +67,8 @@ describe('payload', () => {
     expect(toPayload({ ...good, bringing: false }).plus_one_name).toBeNull();
   });
   it('round trips a saved RSVP into the form', () => {
-    const f = fromMine({ full_name: 'Jamelia Johnson', phone: '+14045550199', email: 'j@x.com', house: null, grades: [5], plus_one_name: null });
-    expect(f).toMatchObject({ phone: '(404) 555-0199', house: '', bringing: false, grades: [5] });
+    const f = fromMine({ full_name: 'Jamelia Johnson', phone: '+14045550199', email: 'j@x.com', house: 'reveur', grades: [5], plus_one_name: null });
+    expect(f).toMatchObject({ phone: '(404) 555-0199', house: 'reveur', bringing: false, grades: [5] });
     expect(validate(f)).toEqual({});
   });
 });

@@ -69,7 +69,7 @@ export function validate(form) {
   else if (name.length > 80) errors.full_name = 'That name is too long.';
   if (!normalizePhone(form.phone)) errors.phone = 'Use a 10 digit US number.';
   if (!validEmail(form.email)) errors.email = 'Check your email address.';
-  if (form.house && !HOUSES.some((h) => h.key === form.house)) errors.house = 'Pick a house or Not sure yet.';
+  if (!HOUSES.some((h) => h.key === form.house)) errors.house = 'Pick your house.';
   if ((form.grades || []).some((g) => !GRADES.includes(Number(g)))) errors.grades = 'Grades are 5 through 8.';
   if (form.bringing && tidyName(form.plus_one_name).length < 2) errors.plus_one_name = 'Add their name, or turn this off.';
   return errors;
@@ -111,6 +111,7 @@ const MESSAGES = {
   invalid_phone: 'Use a 10 digit US number.',
   invalid_email: 'Check your email address.',
   invalid_name: 'Add your first and last name.',
+  invalid_house: 'Pick your house.',
   event_closed: 'RSVPs for this one are closed.',
   event_full: 'The room is full.',
   rsvp_required: 'RSVP to join the thread.',

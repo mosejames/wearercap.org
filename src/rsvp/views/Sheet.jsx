@@ -139,10 +139,8 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
                 <i style={{ background: h.color }} />{h.name}
               </button>
             ))}
-            <button type="button" className={`rv-pill${!form.house ? ' on' : ''}`} onClick={() => set('house', '')} aria-pressed={!form.house}>
-              Not sure yet
-            </button>
           </div>
+          {errors.house && <em>{errors.house}</em>}
         </fieldset>
 
         <fieldset className="rv-field">
@@ -165,12 +163,12 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
             <label className="rv-toggle">
               <input type="checkbox" checked={form.bringing} onChange={(e) => set('bringing', e.target.checked)} />
               <span className="rv-switch" aria-hidden="true" />
-              <span>Coming with your co-parent?</span>
+              <span>Coming as a pair?</span>
             </label>
-            <p className="rv-hint rv-hint-tight">Your student's other parent or guardian. Every other RCA parent gets their own spot on the wall, so send them the link.</p>
+            <p className="rv-hint rv-hint-tight">Your spouse or your student's other parent. Every other RCA parent gets their own spot on the wall, so send them the link.</p>
             {form.bringing && (
               <label className="rv-field rv-sub">
-                <span>Your co-parent's name</span>
+                <span>Their name</span>
                 <input
                   value={form.plus_one_name} onChange={(e) => set('plus_one_name', e.target.value)}
                   autoComplete="off" placeholder="First and last" aria-invalid={!!errors.plus_one_name}
