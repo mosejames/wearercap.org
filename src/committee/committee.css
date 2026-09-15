@@ -568,3 +568,13 @@ a{color:inherit}
 .cc.full{opacity:.72}
 .add:disabled{cursor:default;opacity:.6}
 .add:disabled:hover{background:transparent;color:inherit}
+
+/* The lead chips on the direct-pick review screen. */
+.leadpick { display: flex; flex-wrap: wrap; gap: 9px; }
+.leadpick .chip {
+  padding: 11px 17px; border-radius: 999px; border: 1.5px solid var(--line, #e4d6c0);
+  background: transparent; font: inherit; font-size: 14.5px; font-weight: 700;
+  color: inherit; cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+.leadpick .chip:hover { border-color: #1a1613; }
+.leadpick .chip.on { background: #1a1613; color: #fff; border-color: #1a1613; }

@@ -40,6 +40,8 @@ export default function App() {
   const [leadPrior, setLeadPrior] = useState({});
   // The middle answer: would consider chairing, not committing on a form.
   const [openToLead, setOpenToLead] = useState(false);
+  // The same question on the direct-pick path, as one of three chips.
+  const [leadChoice, setLeadChoice] = useState('');
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
   /* Seat counts for capped teams, loaded once. Stale by a few minutes at worst,
@@ -88,8 +90,8 @@ export default function App() {
     students: students.filter((s) => s.name.trim()),
     personality: traits,
     committees: picks,
-    wants_to_lead: wantsLead === true,
-    open_to_lead: openToLead === true,
+    wants_to_lead: wantsLead === true || leadChoice === 'yes',
+    open_to_lead: openToLead === true || leadChoice === 'yes' || leadChoice === 'ask',
     chair_picks: leadFor.map((id) => ({
       committee: id,
       role: leadRole[id] || 'Either is fine',
@@ -240,6 +242,37 @@ export default function App() {
         </ul>
         <button className="editbtn" onClick={() => go('choose')}>Change my list</button>
       </div>
+
+      {/* The lead question lives on the guided path too, but this screen is the
+          end of the direct-pick path, which never passes through it. Without
+          this, anyone who taps "Choose my committee" is never asked about
+          leading at all, which is why the first 24 submissions had nothing in
+          that column. Three answers, same as the guided flow. */}
+      <div className="anim" style={{ animationDelay: '.12s', marginTop: 26 }}>
+        <span className="lab">Would you lead one?</span>
+        <p className="sub" style={{ margin: '4px 0 12px' }}>
+          Every committee needs a parent willing to take the lead. You do not
+          have to decide that today.
+        </p>
+        <div className="leadpick">
+          {[
+            ['yes', 'Yes, I am interested'],
+            ['ask', 'Not yet, but you can ask me'],
+            ['no', "I'd rather just help"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`chip${leadChoice === value ? ' on' : ''}`}
+              aria-pressed={leadChoice === value}
+              onClick={() => setLeadChoice(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {err && <p className="err">{err}</p>}
       <div className="row anim" style={{ animationDelay: '.14s' }}>
         <button className="btn flame" disabled={sending} onClick={async () => {
