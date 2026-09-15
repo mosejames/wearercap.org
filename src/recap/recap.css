@@ -39,7 +39,10 @@ img{display:block;max-width:100%}
 
 /* ---------------- top bar ---------------- */
 .topbar{background:var(--night);color:#fff}
-.topbar-in{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:22px 0}
+/* padding-block, not the padding shorthand: .topbar-in sits after .shell in
+   this file, so `padding:22px 0` was replacing .shell's `padding:0 22px`
+   and the masthead ran into both edges of the screen. */
+.topbar-in{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-block:22px}
 .mark{font-size:26px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .mark span{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
 .mark small{display:block;font-size:10px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.55);margin-top:5px}
@@ -600,3 +603,11 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
 /* Sticky "Add yours" clearance. Must come last: the base .foot padding
    shorthand would otherwise override the padding-bottom set earlier. */
 @media(max-width:760px){.foot{padding-bottom:108px}}
+
+/* Back to the main site. The recap is a standalone page on its own dark theme,
+   so without this there is no way out except the browser's back button. */
+.backhome{display:inline-flex;align-items:center;gap:7px;margin-top:9px;
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.6);text-decoration:none}
+.backhome:hover{color:#fff}
+@media(max-width:560px){.backhome{letter-spacing:.1em;font-size:10px}}

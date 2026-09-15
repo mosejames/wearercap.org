@@ -899,7 +899,11 @@ export default function App() {
       <div className="topbar">
         <div className="shell topbar-in">
           <div className="mark">RCA<span>P</span><small>RON CLARK ACADEMY PARENTS</small></div>
-          <div className="topmeta">{SITE.meta.map((m) => <div key={m}>{m}</div>)}<div>{CURRENT.label}</div></div>
+          <div className="topmeta">
+            {SITE.meta.map((m) => <div key={m}>{m}</div>)}
+            <div>{CURRENT.label}</div>
+            <a className="backhome" href="/">&larr; wearercap.org</a>
+          </div>
         </div>
       </div>
 
