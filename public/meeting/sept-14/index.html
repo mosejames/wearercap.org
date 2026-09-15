@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The September 14 RCAP meeting, in one scroll</title>
+<meta name="description" content="Every slide from the first RCAP general meeting of 2026-27, what was said, and every link from the night. Recording included." />
+<meta property="og:title" content="The September 14 RCAP meeting, in one scroll" />
+<meta property="og:description" content="Missed it, or hit the room limit? Every slide, what was said, and every link from the night. Recording included." />
+<meta property="og:image" content="https://wearercap.org/images/rcap-meeting-sept14-og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://wearercap.org/meeting/sept-14/" />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="theme-color" content="#1a1613" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  /* Two palettes on one page, on purpose. The site's ink and flame frame the
+     page. Inside each slide frame, the deck's own navy, cream and orange are
+     used exactly as they were on screen that night, so a parent who was there
+     recognises the slide and a parent who was not gets the real one. */
+  :root{
+    --ink:#1a1613;--ink-2:#241f1b;--paper:#faf4ea;--gold:#f7a81c;--orange:#f26a1b;--red:#d8202d;--magenta:#e0218a;
+    --flame:linear-gradient(96deg,#e8a516 0%,#f26a1b 34%,#d8202d 68%,#e0218a 100%);
+    --navy:#1b3159;--navy-2:#142546;--cream:#fbf8f1;--deck-orange:#f26a1b;--deck-gold:#e8a516;
+    --line:rgba(255,255,255,.14);--muted:rgba(255,255,255,.66);
+    --gutter:20px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:#fff;font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  img{max-width:100%;display:block}
+  .shell{width:min(1080px,calc(100% - var(--gutter)*2));margin:0 auto}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+  .flame{background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* topbar */
+  .top{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+  .mark{text-decoration:none;font-weight:900;font-size:21px;letter-spacing:-.02em;line-height:1}
+  .mark small{display:block;font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.5);font-weight:600;margin-top:5px}
+  .top .mono{color:rgba(255,255,255,.5);text-align:right;line-height:1.7}
+
+  /* hero */
+  .hero{padding:34px 0 30px}
+  .eyebrow{display:flex;align-items:center;gap:9px;color:var(--gold);margin:0 0 16px}
+  .eyebrow i{width:9px;height:9px;border-radius:50%;background:var(--gold)}
+  h1{font-size:clamp(38px,7.4vw,84px);font-weight:900;letter-spacing:-.035em;line-height:.94;margin:0 0 20px;max-width:14ch}
+  .lede{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:56ch;margin:0 0 26px}
+  .lede b{color:#fff;font-weight:700}
+  .actions{display:flex;flex-wrap:wrap;gap:12px}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;font-weight:900;font-size:16px;padding:15px 24px;border-radius:9px;border:0;cursor:pointer;font-family:inherit}
+  .btn.gold{background:var(--gold);color:var(--ink)}
+  .btn.gold:hover{background:#ffc247}
+  .btn.ghost{border:1.5px solid rgba(255,255,255,.3);color:#fff}
+  .btn.ghost:hover{border-color:var(--gold);color:var(--gold)}
+
+  /* recording */
+  .video{margin:34px 0 0;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:16/9;position:relative;border:1px solid var(--line)}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .video-note{color:rgba(255,255,255,.5);font-size:13.5px;margin:12px 0 0}
+
+  /* agenda rail */
+  .agenda{margin:44px 0 0;padding:26px 0 0;border-top:1px solid var(--line)}
+  .agenda h2{margin:0 0 16px}
+  .agenda ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 22px}
+  .agenda li a{display:flex;gap:14px;align-items:baseline;padding:10px 0;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:16px}
+  .agenda li a:hover{color:var(--gold)}
+  .agenda li a .n{color:var(--gold);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700}
+
+  /* sticky chip nav, only useful while scrolling the long part */
+  .rail{position:sticky;top:0;z-index:5;background:rgba(26,22,19,.92);backdrop-filter:saturate(1.2) blur(8px);-webkit-backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);margin-top:36px}
+  .rail-in{display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:none;-ms-overflow-style:none}
+  .rail-in::-webkit-scrollbar{display:none}
+  .rail a{flex:0 0 auto;text-decoration:none;color:rgba(255,255,255,.62);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .rail a.on{color:#fff;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.06)}
+
+  /* a section = one slide frame + the notes under it */
+  .s{padding:56px 0 8px;scroll-margin-top:64px}
+  .s-head{display:flex;align-items:baseline;gap:14px;margin:0 0 18px}
+  .s-head .n{color:var(--gold);font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700}
+  .s-head h2{margin:0;font-size:clamp(24px,3.4vw,36px);font-weight:900;letter-spacing:-.03em;line-height:1.05}
+  .s-head .who{color:rgba(255,255,255,.5);font-size:13px;font-weight:600;margin-left:auto;white-space:nowrap}
+
+  .slide{position:relative;border-radius:14px;overflow:hidden;background:var(--cream);color:var(--navy);box-shadow:0 20px 60px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08)}
+  .slide-in{padding:clamp(22px,4vw,44px)}
+  .slide .kick{font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--deck-orange);margin:0 0 10px}
+  .slide .kick.on-navy{color:var(--deck-gold)}
+  .slide h3{font-size:clamp(28px,4.6vw,54px);font-weight:400;letter-spacing:-.01em;line-height:1;margin:0;text-transform:uppercase;color:var(--navy)}
+  .slide h3 b{font-weight:900}
+  .slide h3 .o{color:var(--deck-orange)}
+  .slide .brand{position:absolute;right:clamp(18px,3vw,32px);top:clamp(18px,3vw,32px);font-size:8.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;text-align:right;line-height:1.5;color:var(--navy);opacity:.85}
+  .slide .brand::after{content:'';display:block;width:26px;height:2px;background:var(--deck-orange);margin:6px 0 0 auto}
+  .slide.navy{background:var(--navy);color:#fff}
+  .slide.navy h3,.slide.navy .brand{color:#fff}
+  .slide.navy .brand::after{background:var(--deck-gold)}
+  .slide.orange{background:var(--deck-orange);color:var(--navy)}
+  .slide.orange h3{color:#fff}
+  .slide.orange .brand{color:#fff}
+  .slide.orange .brand::after{background:#fff}
+  .slide .band{position:absolute;left:0;right:0;bottom:0;height:22px;background:var(--deck-orange)}
+  .slide.orange .band{background:var(--navy)}
+  .slide .band.gold{background:var(--deck-gold)}
+  .slide .sub{font-size:clamp(15px,1.9vw,19px);color:var(--deck-orange);margin:18px 0 0;font-weight:500}
+  .slide.navy .sub{color:var(--deck-gold)}
+  .slide ul.bul{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:9px;font-size:clamp(14px,1.7vw,16.5px);font-weight:500}
+  .slide ul.bul li{padding-left:18px;position:relative}
+  .slide ul.bul li::before{content:'';position:absolute;left:0;top:.5em;width:8px;height:8px;background:var(--deck-orange)}
+  .slide.navy ul.bul li::before{background:var(--deck-gold)}
+  .slide .foot{position:absolute;left:clamp(22px,4vw,44px);bottom:34px;font-size:10px;font-weight:700;letter-spacing:.06em}
+  .slide .foot .o{color:var(--deck-orange)}
+  .pad-b{padding-bottom:64px}
+
+  /* people grids */
+  .people{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:26px 0 0}
+  .people.five{grid-template-columns:repeat(5,1fr)}
+  .person{text-align:center;text-decoration:none;color:inherit}
+  .person img{width:min(100%,128px);height:auto;aspect-ratio:1;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 10px;border:3px solid rgba(255,255,255,.9)}
+  .person b{display:block;font-size:clamp(10px,1.3vw,13px);font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.2}
+  .person span{display:block;font-size:clamp(9.5px,1.2vw,11.5px);color:var(--deck-gold);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+  .person span.plain{color:rgba(255,255,255,.7);text-transform:none;letter-spacing:0;font-weight:500;font-size:11.5px}
+  @media(max-width:640px){
+    .people{grid-template-columns:repeat(2,1fr);gap:16px 10px}
+    .people.five{grid-template-columns:repeat(3,1fr);gap:14px 8px}
+    .person img{width:min(100%,96px)}
+    /* Keep the headline clear of the brand mark in the corner. */
+    .slide .kick,.slide h3{padding-right:76px}
+  }
+
+  /* big number slide */
+  .big{font-size:clamp(64px,13vw,150px);font-weight:900;line-height:.9;letter-spacing:-.05em;color:var(--deck-orange);margin:6px 0 0}
+  .big-lab{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin:12px 0 0;color:var(--navy)}
+  .cols{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
+  @media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .qr{justify-self:end;text-align:center;text-decoration:none}
+  .qr img{width:min(100%,200px);border:6px solid #fff;box-shadow:0 8px 24px rgba(27,49,89,.18);margin:0 auto 8px}
+  .qr span{display:inline-block;background:var(--navy);color:#fff;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px}
+  @media(max-width:640px){.qr{justify-self:start}}
+
+  /* calendar tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px;margin:24px 0 0}
+  .tile{background:#fff;border:1px solid rgba(27,49,89,.14);box-shadow:4px 4px 0 var(--navy)}
+  .tile .m{background:var(--navy);color:#fff;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:7px 10px;text-align:center}
+  .tile.hot .m{background:var(--deck-orange)}
+  .tile .d{font-size:36px;font-weight:900;letter-spacing:-.03em;text-align:center;padding:10px 8px 0;line-height:1}
+  .tile .t{font-size:11.5px;font-weight:600;text-align:center;padding:6px 8px 12px;line-height:1.35;color:var(--navy)}
+  .tile .t b{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--deck-orange);margin-top:5px}
+  .tile.ev .d{font-size:14px;font-weight:800;padding:14px 10px 8px;text-transform:none;letter-spacing:0;min-height:56px}
+
+  /* money slide */
+  .money{display:grid;grid-template-columns:1.05fr 1fr;gap:26px;margin:22px 0 0;align-items:start}
+  @media(max-width:640px){.money{grid-template-columns:1fr}}
+  .cash{background:var(--navy);color:#fff;padding:20px 22px;box-shadow:6px 6px 0 var(--deck-orange)}
+  .cash .l{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--deck-gold)}
+  .cash .v{font-size:clamp(30px,4.5vw,44px);font-weight:900;letter-spacing:-.03em;color:var(--deck-orange);margin-top:6px}
+  .ledger{background:#fff;border:1px solid rgba(27,49,89,.14);margin-top:14px}
+  .ledger div{display:flex;justify-content:space-between;padding:12px 18px;font-size:15px;font-weight:600;border-top:1px solid rgba(27,49,89,.1)}
+  .ledger div:first-child{border-top:0}
+  .ledger b{color:var(--deck-orange);font-weight:900}
+
+  /* committee grid */
+  .cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0 0}
+  @media(max-width:640px){.cgrid{grid-template-columns:repeat(2,1fr)}}
+  .cgrid a{display:block;background:var(--cream);color:var(--navy);text-decoration:none;padding:14px 12px 16px;box-shadow:4px 4px 0 var(--navy);border:1px solid rgba(27,49,89,.12);min-height:92px;transition:transform .12s ease}
+  .cgrid a:hover{transform:translate(-2px,-2px)}
+  .cgrid b{display:block;font-size:12.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
+  .cgrid span{display:block;font-size:11px;color:rgba(27,49,89,.7);margin-top:6px}
+
+  /* tools slide */
+  .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0 0}
+  @media(max-width:640px){.tools{grid-template-columns:1fr}}
+  .tools a{display:block;text-decoration:none;color:#fff;background:var(--ink);padding:16px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.14);transition:border-color .15s ease,transform .15s ease}
+  .tools a:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .tools b{display:block;font-size:16px;font-weight:900;margin-bottom:4px}
+  .tools b .tag{display:inline-block;vertical-align:middle;margin-left:8px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--gold);padding:2px 6px;border-radius:3px}
+  .tools span{color:rgba(255,255,255,.66);font-size:13.5px;line-height:1.45}
+
+  /* the notes under a slide */
+  .notes{margin:22px 0 0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px 40px}
+  @media(max-width:760px){.notes{grid-template-columns:1fr}}
+  .notes h4{margin:0 0 8px;color:rgba(255,255,255,.5)}
+  .notes p{margin:0 0 12px;color:rgba(255,255,255,.82);font-size:16px;line-height:1.6;max-width:62ch}
+  .notes p:last-child{margin-bottom:0}
+  .said{font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:19px;line-height:1.5;color:#fff;border-left:3px solid var(--orange);padding-left:16px;margin:0 0 14px}
+  .said cite{display:block;font-style:normal;font-family:'Archivo',sans-serif;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:8px}
+  .links{display:grid;gap:8px}
+  .links a{display:flex;justify-content:space-between;align-items:center;gap:12px;text-decoration:none;padding:13px 16px;border:1px solid var(--line);border-radius:10px;font-weight:800;font-size:15px;transition:border-color .15s ease}
+  .links a:hover{border-color:var(--gold)}
+  .links a small{color:rgba(255,255,255,.5);font-weight:500;font-size:12.5px;display:block;margin-top:2px}
+  .links a .arr{color:var(--gold);flex:0 0 auto}
+  .links a.hot{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+  .links a.hot small{color:rgba(26,22,19,.65)}
+  .links a.hot .arr{color:var(--ink)}
+
+  /* Q and A */
+  .qa{display:grid;gap:14px;margin:22px 0 0}
+  .q{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--ink-2)}
+  .q b{display:block;font-size:17px;font-weight:900;letter-spacing:-.01em;margin-bottom:8px}
+  .q p{margin:0;color:rgba(255,255,255,.8);font-size:15.5px;line-height:1.55}
+  .q p a{color:var(--gold)}
+  .ask{margin:26px 0 0;border-radius:14px;padding:26px 24px;background:linear-gradient(96deg,#3fc47a 0%,#1f9d57 55%,#145f38 100%);color:#fff}
+  .ask h3{margin:0 0 8px;font-size:clamp(22px,3vw,30px);font-weight:900;letter-spacing:-.03em;line-height:1.05}
+  .ask p{margin:0 0 16px;max-width:56ch;color:rgba(255,255,255,.88)}
+  .ask .btn{background:#fff;color:#145f38}
+  .ask .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+
+  /* this week */
+  .week{margin:56px 0 0;border-radius:16px;overflow:hidden;background:var(--navy);color:#fff;padding:clamp(24px,4vw,44px)}
+  .week .kick{color:var(--deck-gold)}
+  .week h2{font-size:clamp(30px,5vw,54px);font-weight:900;letter-spacing:-.03em;line-height:.98;margin:0 0 22px;text-transform:uppercase}
+  .week ol{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:640px}
+  .week li a{display:flex;gap:16px;align-items:center;text-decoration:none;background:#fff;color:var(--navy);padding:18px 20px;border-radius:10px;font-weight:900;font-size:clamp(16px,2.2vw,20px);transition:transform .12s ease}
+  .week li a:hover{transform:translateX(4px)}
+  .week li a .n{color:var(--deck-orange);font-family:ui-monospace,Menlo,monospace;font-size:14px}
+  .week li a small{display:block;font-weight:500;font-size:13px;color:rgba(27,49,89,.7);margin-top:2px}
+  .week .contact{margin:26px 0 0;display:flex;flex-wrap:wrap;gap:8px 24px;font-size:14px;color:rgba(255,255,255,.75)}
+  .week .contact a{color:#fff;text-decoration:none;font-weight:700}
+
+  /* deck strip */
+  .deck{margin:56px 0 0;padding-top:26px;border-top:1px solid var(--line)}
+  .deck h2{margin:0 0 6px}
+  .deck p{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+  .strip{display:flex;gap:10px;overflow-x:auto;padding:4px 0 14px;scroll-snap-type:x mandatory}
+  .strip a{flex:0 0 240px;scroll-snap-align:start;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .strip img{aspect-ratio:16/9;object-fit:cover;width:100%}
+
+  footer{margin:48px 0 0;padding:26px 0 40px;border-top:1px solid var(--line);font-size:13px;color:rgba(255,255,255,.45)}
+  footer a{color:rgba(255,255,255,.7)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+
+<header class="shell top">
+  <a class="mark" href="/">We Are <span class="flame">RCAP</span><small>RON CLARK ACADEMY PARENTS</small></a>
+  <p class="mono">General meeting<br />Sept 14, 2026</p>
+</header>
+
+<main class="shell">
+
+  <section class="hero">
+    <p class="eyebrow mono"><i></i>The first general meeting of the year</p>
+    <h1>The whole meeting, in one scroll.</h1>
+    <p class="lede">The Zoom room hit its limit before 7:00, so some of you never got in. This page is for you, and for anyone who wants the links from the night without scrubbing a recording. <b>Every slide, what was said, and where to click.</b></p>
+    <div class="actions">
+      <a class="btn gold" href="#recording">Watch the recording</a>
+      <a class="btn ghost" href="#this-week">Skip to this week</a>
+    </div>
+
+    <div class="video" id="recording">
+      <iframe src="https://www.youtube-nocookie.com/embed/SLIv_B5gogY?rel=0" title="RCAP General Meeting, September 14, 2026" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <p class="video-note">About 45 minutes. If the player does not load, <a href="https://youtu.be/SLIv_B5gogY" target="_blank" rel="noopener noreferrer">open it on YouTube</a>.</p>
+
+    <nav class="agenda" aria-label="Agenda">
+      <h2 class="mono" style="color:rgba(255,255,255,.5)">Tonight, as it ran</h2>
+      <ol>
+        <li><a href="#welcome"><span class="n">01</span>Welcome and the year ahead</a></li>
+        <li><a href="#board"><span class="n">02</span>Meet your board</a></li>
+        <li><a href="#donation"><span class="n">03</span>Membership donation</a></li>
+        <li><a href="#year"><span class="n">04</span>The year at a glance</a></li>
+        <li><a href="#money"><span class="n">05</span>Treasurer's report</a></li>
+        <li><a href="#committees"><span class="n">06</span>Committees and volunteer hours</a></li>
+        <li><a href="#tools"><span class="n">07</span>New tools</a></li>
+        <li><a href="#questions"><span class="n">08</span>Questions, and one thing to do this week</a></li>
+      </ol>
+    </nav>
+  </section>
+
+</main>
+
+<nav class="rail" aria-label="Sections">
+  <div class="shell rail-in" id="rail">
+    <a href="#welcome">01 Welcome</a><a href="#board">02 Board</a><a href="#donation">03 Donation</a><a href="#year">04 The year</a><a href="#money">05 Money</a><a href="#committees">06 Committees</a><a href="#tools">07 Tools</a><a href="#questions">08 Questions</a><a href="#this-week">This week</a>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <!-- 01 -->
+  <section class="s" id="welcome">
+    <div class="s-head"><span class="n">01</span><h2>Welcome and the year ahead</h2><span class="who">Mose</span></div>
+    <div class="slide navy">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick on-navy">We are RCAP</p>
+        <h3><b>We are<br />all RCA<span class="o">P.</span></b></h3>
+        <p class="sub">Every RCA parent belongs. Every voice matters.</p>
+      </div>
+      <div class="band gold"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <blockquote class="said">We want to make sure that all those people who may have stood on the wall and watched a party happen, that you move to the center of the dance floor this year.<cite>Mose James IV, Chair</cite></blockquote>
+        <p>If your child is at RCA, you are already RCAP. There is no joining. The job this year is to make that felt: to make it easy to find where you fit, and to make sure nobody feels like four or five people do everything. RCA gives our kids more than we can repay. This is our small way of giving some of it back.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="/"><span>wearercap.org<small>The front page. Meetings, the calendar, and every tool.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="s" id="board">
+    <div class="s-head"><span class="n">02</span><h2>Meet your board</h2><span class="who">Mose</span></div>
+    <div class="slide navy">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick on-navy">Meet your board</p>
+        <h3>Here to <b>serve you.</b></h3>
+        <div class="people">
+          <a class="person" href="/board/"><img src="/images/board/mose.jpg" alt="" loading="lazy" width="128" height="128" /><b>Mose James</b><span>Chair</span></a>
+          <a class="person" href="/board/"><img src="/images/board/crystal.jpg" alt="" loading="lazy" width="128" height="128" /><b>Crystal Jones</b><span>Co-Chair</span></a>
+          <a class="person" href="/board/"><img src="/images/board/farren.jpg" alt="" loading="lazy" width="128" height="128" /><b>Farren Salter</b><span>Secretary</span></a>
+          <a class="person" href="/board/"><img src="/images/board/latasha.jpg" alt="" loading="lazy" width="128" height="128" /><b>Latasha Emeri</b><span>Treasurer</span></a>
+        </div>
+        <p class="kick on-navy" style="margin-top:34px">Your class rep</p>
+        <div class="people five">
+          <a class="person" href="/board/"><img src="/images/board/camille.jpg" alt="" loading="lazy" width="128" height="128" /><b>Camille Cunningham</b><span class="plain">Class of 2027</span></a>
+          <a class="person" href="/board/"><img src="/images/board/sara.jpg" alt="" loading="lazy" width="128" height="128" /><b>Sara White</b><span class="plain">Class of 2028</span></a>
+          <a class="person" href="/board/"><img src="/images/board/adriane.jpg" alt="" loading="lazy" width="128" height="128" /><b>Adriane Simpson</b><span class="plain">Class of 2029</span></a>
+          <a class="person" href="/board/"><img src="/images/board/sidonie.jpg" alt="" loading="lazy" width="128" height="128" /><b>Sidonie Holloman</b><span class="plain">Class of 2030</span></a>
+          <a class="person" href="/board/"><img src="/images/board/will.jpg" alt="" loading="lazy" width="128" height="128" /><b>Will Wesley</b><span class="plain">Class of 2031</span></a>
+        </div>
+      </div>
+      <div class="band gold"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <p>Latasha carries over from last year's board, so the money has continuity. Sara was on the board last year too and now represents the Class of 2028.</p>
+        <p>The class reps are the second layer. They are in your class group meeting and in your house, with a finger on the pulse of what your grade needs. Bring them anything about your class first. They pass it straight to the board, and the board passes things back through them. There is no separate RCAP group meeting; this is how the loop works.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="/board/"><span>The board page<small>Bios, emails, and the meeting calendar.</small></span><span class="arr">&#8599;</span></a>
+          <a href="mailto:rcaparents@ronclarkacademy.com"><span>rcaparents@ronclarkacademy.com<small>Reaches all four officers.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="s" id="donation">
+    <div class="s-head"><span class="n">03</span><h2>Membership donation</h2><span class="who">Crystal</span></div>
+    <div class="slide">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick">We are funded by families</p>
+        <div class="cols">
+          <div>
+            <h3><b>Membership<br />donation</b></h3>
+            <p class="big">$25</p>
+            <p class="big-lab">Per family, for the year</p>
+            <ul class="bul">
+              <li>One payment per family, through PayPal</li>
+              <li>Your donation and the fall raffle fund the year</li>
+              <li>The first class to 100% gets a something</li>
+            </ul>
+          </div>
+          <a class="qr" href="https://www.paypal.com/ncp/payment/EWP8R298MW83A" target="_blank" rel="noopener noreferrer"><img src="/meeting/sept-14/qr-paypal.png" alt="QR code for the PayPal membership donation" width="200" height="200" loading="lazy" /><span>PayPal link</span></a>
+        </div>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <blockquote class="said">The house that gets there first will have a something. We have not determined what that would look like, because we would love to hear from you.<cite>Crystal Jones, Co-Chair</cite></blockquote>
+        <p>$25 per family covers the socials, Trunk or Treat, and the rest of what RCAP does for the year. It is collected once, through PayPal, so nobody chases anybody. Ice cream, popsicles, pizza: the first-to-100% prize is yours to name. The Class of 2027 got there first, so there will be a second prize too.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a class="hot" href="https://www.paypal.com/ncp/payment/EWP8R298MW83A" target="_blank" rel="noopener noreferrer"><span>Make your membership donation<small>$25, once, through PayPal.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/wish-i-knew/"><span>Name the prize<small>Tell the board what the first class to 100% should get.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="s" id="year">
+    <div class="s-head"><span class="n">04</span><h2>The year at a glance</h2><span class="who">Crystal</span></div>
+    <div class="slide">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick">We are busy all year</p>
+        <h3>Here's what <b>you're a part of</b></h3>
+        <div class="tiles">
+          <div class="tile ev hot"><div class="m">Sept</div><div class="d">R&amp;B Karaoke Night</div><div class="t">Parent social, adults only<b>Sun 27, 5 to 7pm</b></div></div>
+          <div class="tile ev"><div class="m">Oct</div><div class="d">Fall Raffle</div><div class="t">Our biggest fundraiser<b>Drawing Nov 16</b></div></div>
+          <div class="tile ev"><div class="m">Oct</div><div class="d">Trunk or Treat</div><div class="t">A spooky good time for the kids<b>Oct 31</b></div></div>
+          <div class="tile ev"><div class="m">Nov</div><div class="d">Holiday Decor</div><div class="t">The building after Thanksgiving break</div></div>
+          <div class="tile ev"><div class="m">Dec</div><div class="d">4 Days of Christmas</div><div class="t">Each class celebrates the staff for a day</div></div>
+          <div class="tile ev"><div class="m">Apr</div><div class="d">Teacher Appreciation Week</div><div class="t">Five full days<b>Last week of April</b></div></div>
+        </div>
+        <p class="sub" style="margin-top:28px">Save the dates: general meetings, always Mondays at 7:00pm</p>
+        <div class="tiles">
+          <div class="tile"><div class="m">Sept</div><div class="d">14</div><div class="t">Mon, virtual<b>Tonight</b></div></div>
+          <div class="tile"><div class="m">Nov</div><div class="d">16</div><div class="t">Mon, virtual<b>Raffle drawing</b></div></div>
+          <div class="tile"><div class="m">Jan</div><div class="d">25</div><div class="t">Mon, virtual</div></div>
+          <div class="tile hot"><div class="m">Apr</div><div class="d">26</div><div class="t">Mon, in person<b>Elections</b></div></div>
+        </div>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <blockquote class="said">Leave the children at home. This is an adult-only event, and just have a good time.<cite>Crystal Jones, Co-Chair</cite></blockquote>
+        <p>Sunday, September 27, 5 to 7pm at RCA. Last year was Dine in Color. This year it is R&amp;B karaoke, so pick your song now. The fall raffle brought in over $25,000 last year and is the engine for everything else. Trunk or Treat is back on Halloween. Holiday Decor turns the building over Thanksgiving weekend. For Four Days of Christmas, fourth and fifth grades share Monday and each class after that takes its own day, with Friday left open for family day. Teacher Appreciation Week runs the last week of April so it gets five full days.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="/"><span>Happening now<small>The next few dates, on the front page.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/rca-calendar-2026-2027.pdf" target="_blank" rel="noopener noreferrer"><span>RCA school calendar<small>The full 2026-27 PDF.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/board/#meetings-h"><span>Meeting dates<small>All four, on the board page.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="s" id="money">
+    <div class="s-head"><span class="n">05</span><h2>Treasurer's report</h2><span class="who">Latasha</span></div>
+    <div class="slide">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick">We are accountable</p>
+        <h3>Where the <b>money stands</b></h3>
+        <div class="money">
+          <div>
+            <div class="cash"><div class="l">Cash on hand, July 1</div><div class="v">$6,716.14</div></div>
+            <div class="ledger">
+              <div><span>Last year's income</span><b>$21,125</b></div>
+              <div><span>Last year's expenses</span><b>$23,350</b></div>
+              <div><span>Last year's raffle</span><b>$25,120</b></div>
+            </div>
+          </div>
+          <ul class="bul">
+            <li>This year's draft budget uses last year's actuals</li>
+            <li>Committee leads finalize their own plans</li>
+            <li>Two to three volunteers needed for the audit</li>
+            <li>Updates at the November meeting</li>
+          </ul>
+        </div>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <blockquote class="said">We are going to have a conservative budget. If we bring in more, that's awesome. We will adjust and move forward.<cite>Latasha Emeri, Treasurer</cite></blockquote>
+        <p>The year opened with $6,716.14. The raffle brought in $25,120 last year, and the plan is to budget conservatively and spend about $23,350 on the events Crystal walked through. Committees will firm up their numbers, and anything that changes gets reported at the next general meeting.</p>
+        <p>New this year, per the bylaws: an audit team. Two or three parents go through last year's books and tighten whatever needs tightening. It is a committee you can pick on the sign-up form.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="/committee-interest/"><span>Join the audit team<small>Three seats. Pick "Audit Team" on the form.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="s" id="committees">
+    <div class="s-head"><span class="n">06</span><h2>Committees and volunteer hours</h2><span class="who">Farren</span></div>
+    <div class="slide orange">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick" style="color:#fff">We are looking for you</p>
+        <h3><b>Committees</b></h3>
+        <div class="cgrid">
+          <a href="/committee-interest/"><b>Fall Raffle</b><span>October</span></a>
+          <a href="/committee-interest/"><b>Trunk or Treat</b><span>Oct 31</span></a>
+          <a href="/committee-interest/"><b>Holiday Decor</b><span>November</span></a>
+          <a href="/committee-interest/"><b>Concessions</b><span>Basketball season</span></a>
+          <a href="/committee-interest/"><b>4 Days of Christmas</b><span>December</span></a>
+          <a href="/committee-interest/"><b>Teacher Appreciation Week</b><span>April</span></a>
+          <a href="/committee-interest/"><b>Uniform Exchange</b><span>All year</span></a>
+          <a href="/committee-interest/"><b>Men of RCAP</b><span>All year</span></a>
+        </div>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <p>Eight committees, plus the audit team. Every one is open to anyone, and every one needs a chair, a co-chair, and members. The form asks whether you want to lead. If you filled it out early, that question may have been hidden; go back in, or reply to the email you got and say you want to chair.</p>
+        <blockquote class="said">If you have a call for your committee, you do log that hour or the 30 minutes into Track it Forward. Those do count.<cite>Farren Salter, Secretary</cite></blockquote>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a class="hot" href="/committee-interest/"><span>Pick a committee<small>Two minutes. Say if you want to chair.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" style="margin-top:28px">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick">We are hands on</p>
+        <div class="cols">
+          <div>
+            <h3>Volunteer <b>hours</b></h3>
+            <p class="big" style="font-size:clamp(48px,9vw,110px)">40 hours</p>
+            <p class="big-lab">Per family, per year</p>
+            <ul class="bul">
+              <li>Log them in Track it Forward</li>
+              <li>EXP days, events, the merch room, concessions, field day, and more</li>
+              <li>Committee planning meetings count, including Zoom</li>
+              <li>Helping plan or run an event counts. Attending only as a parent does not.</li>
+            </ul>
+          </div>
+          <a class="qr" href="https://www.trackitforward.com/site/the-ron-clark-academy" target="_blank" rel="noopener noreferrer"><img src="/meeting/sept-14/qr-tif.png" alt="QR code for Track it Forward" width="200" height="200" loading="lazy" /><span>Track it Forward</span></a>
+        </div>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <p>EXP is the Ron Clark Academy Experience: educators fly in from everywhere to watch our teachers teach, and they need us there. Passing out salads, pointing people to the bathroom, folding the thousands of shirts in the merch room. Two hours or eight, it all counts. Check in with Mr. Walker when you arrive so he knows what you came to do. Need an EXP shirt? Ask anyone there.</p>
+        <p>If you work 9 to 5: emails go out for evening and weekend jobs all year, some employers give paid volunteer time, and Holiday Decor alone can be 25 hours in one weekend. Anyone in your family can earn hours for you, as long as they are on your approved list with a volunteer button from the school.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="https://www.trackitforward.com/site/the-ron-clark-academy" target="_blank" rel="noopener noreferrer"><span>Track it Forward<small>Log your hours.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/invite/"><span>Serve at EXP<small>The dates, and how to sign up for a shift.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/what-to-expect/"><span>What to expect at EXP<small>Your first shift, start to finish.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section class="s" id="tools">
+    <div class="s-head"><span class="n">07</span><h2>New tools</h2><span class="who">Mose</span></div>
+    <div class="slide navy">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick on-navy">We are online</p>
+        <h3>Built to make <b>your life easier</b></h3>
+        <div class="tools">
+          <a href="/directory/"><b>The RCAP Collective<span class="tag">New</span></b><span>Realtors, photographers, a probate lawyer, social-emotional learning. Shop with each other first. If you have a business, add it.</span></a>
+          <a href="/carpool/"><b>Carpool</b><span>The sign in the rotunda, brought into this century. Add your family, keep your address private, and see who lives near you.</span></a>
+          <a href="/uniform-exchange/"><b>Uniform Exchange</b><span>Kids grow. Say what you need, by house and size, and get a text when it is ready.</span></a>
+          <a href="/committee-interest/"><b>Find Your Place<span class="tag">New</span></b><span>Tell us what you would like to help with. Raise your hand to chair.</span></a>
+          <a href="/wish-i-knew/"><b>One Thing I Wish I Knew<span class="tag">Now open to all</span></b><span>Share a tip, ask a question, answer one, or put an idea in front of the board.</span></a>
+          <a href="/rcap-recap/"><b>The RCAP Recap</b><span>After a big day, the vault opens and everyone drops in photos and one word.</span></a>
+        </div>
+      </div>
+      <div class="band gold"></div>
+    </div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was said</h4>
+        <blockquote class="said">Everything we need is right here at RCA. So now we can actually shop with one another too.<cite>Mose James IV, Chair</cite></blockquote>
+        <p>The front page always shows what is next, Bingo Night included, and the school calendar is one click away. The carpool started with a teacher remembering parents holding up "I live in Gwinnett" signs in the gym; now your area shows on a map, your address never does, and it is entirely optional. Nothing on the site needs a password. There is a small gate with a question any RCA kid can answer; it was off tonight and goes back on soon.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a href="/directory/"><span>Add your business to the Collective<small>Or find what you need in-house first.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/carpool/"><span>Carpool<small>See families near you.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/uniform-exchange/"><span>Uniform Exchange<small>Request a piece, or donate one.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section class="s" id="questions">
+    <div class="s-head"><span class="n">08</span><h2>Questions from the floor</h2><span class="who">Everyone</span></div>
+    <div class="slide">
+      <div class="slide-in pad-b">
+        <span class="brand">Ron Clark<br />Academy<br />Parents</span>
+        <p class="kick">We are listening</p>
+        <h3><b>Questions</b></h3>
+        <p class="sub">What was asked in the chat and on the floor, answered.</p>
+      </div>
+      <div class="band"></div>
+    </div>
+    <div class="qa">
+      <div class="q"><b>How do I sign up to chair a committee?</b><p>Fill out the <a href="/committee-interest/">committee form</a>. It asks whether you want to lead. If you filled it out early, that question may have been hidden, so do it again or reply to your confirmation email.</p></div>
+      <div class="q"><b>How does the carpool actually work?</b><p>It is opt-in and parent to parent. Add your family on the <a href="/carpool/">carpool page</a>. Anyone near you who has also opted in can see your general area, never your address, and reach out. You work out the ride between you.</p></div>
+      <div class="q"><b>Is there an RCAP group meeting?</b><p>No. Your class rep is in your class group meeting already. That is where RCAP information flows both ways.</p></div>
+      <div class="q"><b>Is there a password for the website?</b><p>No. There is a small trivia gate that any RCA student can answer. It was off for tonight and comes back on soon. If you get stumped, the next question is easier.</p></div>
+      <div class="q"><b>When is the first EXP, and is there training?</b><p>The first EXP days of the year are this month. Show up, check in with Mr. Walker in the Great Hall, and you are set. Newcomer training usually happens right before Bingo Night; Crystal is confirming and will send word. <a href="/invite/">Dates and shifts are here.</a></p></div>
+      <div class="q"><b>How do I get an EXP shirt?</b><p>Volunteer at EXP and tell someone you need one.</p></div>
+      <div class="q"><b>I work a traditional schedule. How do I get hours?</b><p>Emails go out all year for evening and weekend jobs: buttons, graduation, the talent show. Holiday Decor can be 25 hours in one weekend. Some employers give paid volunteer time; ask yours. And anyone in your family can earn hours for you if they are on your approved list with a volunteer button.</p></div>
+      <div class="q"><b>Could the Men of RCAP host a grill-off as a fundraiser?</b><p>Great idea, on the list. Every man here should be in the Men of RCAP group; pick it on the <a href="/committee-interest/">committee form</a> and Steve Johnson will get you plugged in.</p></div>
+      <div class="q"><b>Which class paid first?</b><p>The Class of 2027 reached 100% first. Everyone else, there is a second prize.</p></div>
+    </div>
+
+    <div class="ask">
+      <h3>Still have a question? Ask it here.</h3>
+      <p>One Thing I Wish I Knew is now the open floor for every RCA parent. Ask the small practical thing, answer one for somebody else, or put an idea in front of the board. A person reads every post before it goes up.</p>
+      <div class="actions">
+        <a class="btn" href="/wish-i-knew/">Ask, answer, or suggest</a>
+        <a class="btn ghost" href="/wish-i-knew/read/">Read what parents have shared</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- this week -->
+  <section class="week" id="this-week">
+    <p class="kick mono">We are RCAP</p>
+    <h2>Two things<br />this week.</h2>
+    <ol>
+      <li><a href="https://www.paypal.com/ncp/payment/EWP8R298MW83A" target="_blank" rel="noopener noreferrer"><span class="n">1</span><span>Make your membership donation<small>$25 per family, once, through PayPal.</small></span></a></li>
+      <li><a href="/committee-interest/"><span class="n">2</span><span>Pick a committee<small>Two minutes. Say if you want to chair.</small></span></a></li>
+    </ol>
+    <div class="contact">
+      <a href="mailto:rcaparents@ronclarkacademy.com">rcaparents@ronclarkacademy.com</a>
+      <a href="https://www.instagram.com/rcaparents" target="_blank" rel="noopener noreferrer">@rcaparents</a>
+      <a href="/">wearercap.org</a>
+      <span>Your class rep</span>
+    </div>
+  </section>
+
+  <section class="deck">
+    <h2 class="mono" style="color:rgba(255,255,255,.5)">The deck, as shown</h2>
+    <p>The slides from the night, in order. Tap one to see it full size.</p>
+    <div class="strip">
+      <a href="/meeting/sept-14/slides/slide-02.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-02.jpg" alt="Slide: We Are RCAP, general meeting" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-03.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-03.jpg" alt="Slide: Tonight's agenda" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-04.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-04.jpg" alt="Slide: We are all RCAP" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-05.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-05.jpg" alt="Slide: Meet your board" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-06.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-06.jpg" alt="Slide: Your class rep" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-07.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-07.jpg" alt="Slide: $25 per family" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-08.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-08.jpg" alt="Slide: Here's what you're a part of" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-09.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-09.jpg" alt="Slide: Save the dates" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-10.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-10.jpg" alt="Slide: Where the money stands" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-11.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-11.jpg" alt="Slide: Committees" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-12.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-12.jpg" alt="Slide: How to join a committee" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-13.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-13.jpg" alt="Slide: Volunteer hours" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-14.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-14.jpg" alt="Slide: We are online" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-17.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-17.jpg" alt="Slide: The tools on wearercap.org" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-18.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-18.jpg" alt="Slide: Questions" loading="lazy" width="960" height="540" /></a>
+      <a href="/meeting/sept-14/slides/slide-19.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-19.jpg" alt="Slide: This week" loading="lazy" width="960" height="540" /></a>
+    </div>
+  </section>
+
+  <footer>
+    Next general meeting: Monday, November 16, 7:00pm, virtual. The raffle drawing happens there.
+    Questions: <a href="mailto:hello@wearercap.org">hello@wearercap.org</a>
+  </footer>
+
+</main>
+
+<script>
+  // Light up the chip for whichever section is on screen. Nothing else on the
+  // page needs script; the recording and every link work without it.
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#rail a'));
+    var byId = {};
+    links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+    var secs = Object.keys(byId).map(function (id) { return document.getElementById(id); }).filter(Boolean);
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) { a.classList.remove('on'); });
+        var a = byId[e.target.id]; if (!a) return;
+        a.classList.add('on');
+        a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      });
+    }, { rootMargin: '-40% 0px -50% 0px' });
+    secs.forEach(function (s) { io.observe(s); });
+  })();
+</script>
+</body>
+</html>
