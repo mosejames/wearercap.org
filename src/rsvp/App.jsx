@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarDays, MapPin, Users, Pencil } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Pencil, Share2 } from 'lucide-react';
 import * as api from './api.js';
 import {
   countLine, eventWhen, eyebrowDate, mapsUrl, slugFromPath, mergeWall, mergeThread,
@@ -19,6 +19,43 @@ const ART = {
 };
 
 const DEFAULT_SLUG = 'karaoke-sept-27';
+
+// Opens the phone's own share sheet, so a parent lands in Messages, WhatsApp,
+// GroupMe or wherever they already talk to other RCA parents. Desktop browsers
+// mostly lack navigator.share, so there it falls back to copying the link and
+// says so, rather than showing a button that does nothing.
+function ShareButton({ event }) {
+  const [copied, setCopied] = useState(false);
+
+  const url = typeof window !== 'undefined' ? window.location.href : '';
+  const text = `${event.title} — Sunday, September 27, 5 to 7 PM at Ron Clark Academy. Come sing with us.`;
+
+  async function share() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: event.title, text, url });
+        return;
+      } catch (err) {
+        // The person closed the sheet. Not an error worth surfacing.
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2400);
+    } catch (err) {
+      /* nothing sensible left to try */
+    }
+  }
+
+  return (
+    <button className="rv-share" type="button" onClick={share}>
+      <Share2 size={18} aria-hidden="true" />
+      {copied ? 'Link copied' : 'Share with an RCA friend'}
+    </button>
+  );
+}
 
 export default function App() {
   const slug = slugFromPath(window.location.pathname) || DEFAULT_SLUG;
@@ -213,6 +250,7 @@ function EventPage({ slug }) {
               <li><Users size={20} /><span><b>RCA parents</b><br />Adults only. Leave the kids with someone who loves them.</span></li>
             </ul>
             {event.blurb && <p className="rv-blurb">{event.blurb}</p>}
+            <ShareButton event={event} />
           </section>
         )}
 

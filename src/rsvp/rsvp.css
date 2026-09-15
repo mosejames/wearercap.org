@@ -261,3 +261,29 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
 .rv-admin-thread{list-style:none;padding:0;display:grid;gap:10px}
 .rv-admin-thread li{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .rv-admin-thread p{margin:4px 0}
+
+/* Share. Opens the phone's own share sheet, so it lands in whatever the parent
+   already uses to talk to other RCA parents. Full width on a phone because it
+   is a primary action there, inline on wider screens. */
+.rv-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 14px 22px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rv-share:hover { background: currentColor; }
+.rv-share:hover svg { color: #fff; }
+@media (max-width: 560px) {
+  .rv-share { width: 100%; }
+}
