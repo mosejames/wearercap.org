@@ -37,6 +37,11 @@
   --flame:linear-gradient(96deg,var(--gold) 0%,var(--orange) 34%,var(--red) 68%,var(--magenta) 100%);
   /* The ask lane's answer to the flame. Same angle, so the two read as a pair. */
   --deep-blue:linear-gradient(96deg,#4d8bf5 0%,#1f55c0 55%,#16357d 100%);
+  /* The idea lane. Isibindi green, so the three lanes sit as warm, cool, and
+     growing, and so an idea for RCAP never reads as a question or a tip. */
+  --green:#1F9D57;
+  --green-soft:#ecf7f0;
+  --deep-green:linear-gradient(96deg,#3fc47a 0%,#1f9d57 55%,#145f38 100%);
   --shadow:0 1px 2px rgba(14,12,11,.05);
 }
 
@@ -96,19 +101,20 @@ a{color:inherit;text-decoration:none}
   background:var(--flame);-webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .hero.ask h1 .grad{background:linear-gradient(96deg,#6f9dfa 0%,#1f55c0 78%);-webkit-background-clip:text;background-clip:text}
+.hero.idea h1 .grad{background:linear-gradient(96deg,#5fd693 0%,#1f9d57 78%);-webkit-background-clip:text;background-clip:text}
 .hero .intro{
   font-size:clamp(15px,1.6vw,17.5px);line-height:1.6;color:rgba(255,255,255,.7);
   max-width:52ch;margin:18px 0 0;text-wrap:pretty;
 }
 
 /* ------------------------------------------------------------------ toggle
-   A segmented pill. One track, two labels, and a thumb that slides between
-   them — the movement is what tells a parent the two lanes are alternatives
-   rather than two separate buttons that each do something. Both labels stay
-   readable at all times: the unpicked one is the only signal the other lane
-   exists, so it never fades into the track. */
+   A segmented pill. One track, three labels, and a thumb that slides between
+   them — the movement is what tells a parent the lanes are alternatives
+   rather than three separate buttons that each do something. Every label stays
+   readable at all times: the unpicked ones are the only signal the other lanes
+   exist, so they never fade into the track. */
 .toggle{
-  position:relative;display:grid;grid-template-columns:1fr 1fr;
+  position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;
   width:100%;max-width:520px;margin:18px 0 20px;
   padding:5px;border-radius:999px;
   background:rgba(255,255,255,.07);
@@ -116,18 +122,19 @@ a{color:inherit;text-decoration:none}
 }
 .toggle-thumb{
   position:absolute;top:5px;left:5px;
-  width:calc(50% - 5px);height:calc(100% - 10px);
+  width:calc((100% - 10px) / 3);height:calc(100% - 10px);
   border-radius:999px;background:var(--flame);
   transition:transform .3s cubic-bezier(.4,0,.2,1),background .3s ease;
 }
-/* Exactly one thumb-width across lands it flush in the right half. */
+/* One thumb-width across per segment. */
 .toggle.ask .toggle-thumb{transform:translateX(100%);background:var(--blue)}
+.toggle.idea .toggle-thumb{transform:translateX(200%);background:var(--green)}
 
 .toggle-half{
   position:relative;z-index:1;
   background:transparent;border:0;border-radius:999px;
-  padding:12px 6px;
-  font-size:clamp(14px,3.7vw,19px);line-height:1.1;letter-spacing:-.01em;
+  padding:12px 4px;
+  font-size:clamp(12.5px,3.2vw,18px);line-height:1.1;letter-spacing:-.01em;
   font-weight:800;white-space:nowrap;
   color:rgba(255,255,255,.55);
   transition:color .22s ease;
@@ -209,6 +216,14 @@ a{color:inherit;text-decoration:none}
 .compose-wrap::after{background:var(--deep-blue);opacity:0}
 .compose-wrap.ask::before{opacity:0}
 .compose-wrap.ask::after{opacity:1}
+/* A third ground for the third lane. The green layer sits above the other two
+   and fades in the same way. */
+.compose-wrap .ground-idea{
+  position:absolute;inset:0;z-index:-1;background:var(--deep-green);
+  opacity:0;transition:opacity .3s ease;
+}
+.compose-wrap.idea::before{opacity:0}
+.compose-wrap.idea .ground-idea{opacity:1}
 
 .compose{
   margin-top:-88px;   /* paired with .hero's bottom padding — see the note there */
@@ -222,6 +237,9 @@ a{color:inherit;text-decoration:none}
 /* The whole page keys to the lane now, so a flame button in the blue lane is
    the one thing left arguing with it. */
 .compose.ask .btn.flame{background:var(--deep-blue)}
+.compose.idea{border-top-color:var(--green)}
+.compose.idea .field:focus{border-color:var(--green)}
+.compose.idea .btn.flame{background:var(--deep-green)}
 .compose-title{font-size:26px;font-weight:900;letter-spacing:-.03em;line-height:1.1;margin:10px 0 14px}
 /* The receipt keeps the accent of the lane it came from, so the page does not
    change colour under someone the moment they hit send. */
@@ -307,6 +325,7 @@ a{color:inherit;text-decoration:none}
    the only thing telling them apart at a glance, so it does real work. */
 .card.advice{border-top:4px solid var(--orange)}
 .card.question{border-top:4px solid var(--blue);background:var(--blue-soft)}
+.card.idea{border-top:4px solid var(--green);background:var(--green-soft)}
 .card.seed{border-top-color:var(--line);opacity:.72}
 
 .card-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
@@ -315,6 +334,7 @@ a{color:inherit;text-decoration:none}
   letter-spacing:.12em;text-transform:uppercase;color:var(--orange);
 }
 .topic-tag.ask{color:var(--blue)}
+.topic-tag.idea{color:var(--green)}
 
 .card-headline{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.16;text-wrap:pretty}
 .card-headline.xl{font-size:25px}

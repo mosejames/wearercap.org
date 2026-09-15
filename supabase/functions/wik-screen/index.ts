@@ -30,7 +30,7 @@ const db = createClient(
 
 type Post = {
   id: string;
-  kind: 'advice' | 'question' | 'answer';
+  kind: 'advice' | 'question' | 'answer' | 'suggestion';
   topic: string;
   headline: string;
   body: string | null;
@@ -46,7 +46,7 @@ type Verdict = { verdict: 'clean' | 'borderline' | 'violation'; reason: string }
 // failure this is actually guarding against is not abuse — it is a well-meant
 // post that names a teacher, or airs something that belongs in a private
 // conversation, landing in front of a family who has not started yet.
-const SYSTEM = `You screen short posts written by parents at Ron Clark Academy for a page that welcomes incoming families. You are the first reader; a person sees your verdict afterwards.
+const SYSTEM = `You screen short posts written by parents at Ron Clark Academy for a parent-to-parent page. Posts are tips, questions, answers, or (Type: suggestion) ideas addressed to RCAP, the parent organization. You are the first reader; a person sees your verdict afterwards.
 
 Return CLEAN only if the post is all of these:
 - Practical or encouraging, aimed at helping a family who is new.
@@ -58,6 +58,8 @@ Return CLEAN only if the post is all of these:
 Return BORDERLINE if it is probably fine but you are not certain — anything you would want a human to glance at, anything ambiguous, anything mildly negative in tone, anything that reads like it might be about a specific person without naming them, or anything you simply cannot categorise.
 
 Return VIOLATION for: naming or clearly identifying a teacher, staff member or student; an attack on anyone; a grievance or complaint about the school or a person; anything about bullying, discipline or a safety incident; spam, advertising or solicitation; contact details; profanity; or anything a new family should not be met with.
+
+For Type: suggestion, "practical" means it proposes something RCAP could try, change, or do more of. A constructive proposal that implies something could be better is still CLEAN. Every other rule above applies unchanged: no named person, no grievance, no solicitation.
 
 When you are unsure, you are BORDERLINE. Never stretch to CLEAN.
 
@@ -127,6 +129,7 @@ const KIND_LABEL: Record<string, string> = {
   advice: 'Advice',
   question: 'Question',
   answer: 'Answer',
+  suggestion: 'Idea for RCAP',
 };
 
 async function telegram(p: Post, v: Verdict, published: boolean) {

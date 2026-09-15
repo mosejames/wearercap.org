@@ -3,7 +3,7 @@ import { TOPICS, SEEDS } from './config.js';
 import { listPublic } from './data.js';
 import {
   FORM_URL, byline, useCompose, ComposeFields, useMasonry,
-  Topbar, Footer, CountStrip, AdviceCard, QuestionCard,
+  Topbar, Footer, CountStrip, AdviceCard, QuestionCard, IdeaCard,
 } from './shared.jsx';
 
 /* ------------------------------------------------------- answer, in a modal */
@@ -69,7 +69,7 @@ export default function Board() {
   const [loaded, setLoaded] = useState(false);
   const [loadErr, setLoadErr] = useState('');
   const [answering, setAnswering] = useState(null);
-  const [lane, setLane] = useState('all');  // all | advice | questions
+  const [lane, setLane] = useState('all');  // all | advice | questions | ideas
   const [topic, setTopic] = useState('all');
 
   const reload = useCallback(async () => {
@@ -88,6 +88,7 @@ export default function Board() {
 
   const advice = useMemo(() => rows.filter((r) => r.kind === 'advice'), [rows]);
   const questions = useMemo(() => rows.filter((r) => r.kind === 'question'), [rows]);
+  const ideas = useMemo(() => rows.filter((r) => r.kind === 'suggestion'), [rows]);
   const answersFor = useMemo(() => {
     const m = {};
     for (const r of rows) {
@@ -108,13 +109,15 @@ export default function Board() {
   const byTopic = (list) => (topic === 'all' ? list : list.filter((r) => r.topic === topic));
   const shownAdvice = byTopic(advice);
   const shownQuestions = byTopic(questions);
+  const shownIdeas = byTopic(ideas);
 
-  const showSeeds = loaded && advice.length === 0 && topic === 'all' && lane !== 'questions';
+  const showSeeds = loaded && advice.length === 0 && topic === 'all' && (lane === 'all' || lane === 'advice');
 
   // A ref each, because each grid packs itself independently.
   const seedGrid = useMasonry([showSeeds]);
   const adviceGrid = useMasonry([shownAdvice, lane]);
   const questionGrid = useMasonry([shownQuestions, answersFor, lane]);
+  const ideaGrid = useMasonry([shownIdeas, lane]);
 
   return (
     <>
@@ -125,10 +128,10 @@ export default function Board() {
           <p className="kicker">Parent to parent</p>
           <h1>What parents<br /><span className="grad">have shared.</span></h1>
           <p className="intro">
-            Everything on this page was written by an RCA family and read by a
-            person before it went up.
+            Tips, questions, answers and ideas for RCAP. Everything on this page
+            was written by an RCA family and read by a person before it went up.
           </p>
-          <CountStrip counts={{ advice: advice.length, questions: questions.length }} />
+          <CountStrip counts={{ advice: advice.length, questions: questions.length, ideas: ideas.length }} />
           <div className="hero-cta">
             <a className="btn flame" href={FORM_URL}>Add one of your own</a>
           </div>
@@ -141,8 +144,9 @@ export default function Board() {
             <div className="lanes">
               {[
                 ['all', 'Everything'],
-                ['advice', `Advice (${advice.length})`],
+                ['advice', `Tips (${advice.length})`],
                 ['questions', `Questions (${questions.length})`],
+                ['ideas', `Ideas for RCAP (${ideas.length})`],
               ].map(([id, label]) => (
                 <button key={id} className={`lane ${lane === id ? 'on' : ''}`} onClick={() => setLane(id)}>
                   {label}
@@ -179,13 +183,13 @@ export default function Board() {
             </>
           )}
 
-          {lane !== 'questions' && shownAdvice.length > 0 && (
+          {(lane === 'all' || lane === 'advice') && shownAdvice.length > 0 && (
             <div className="grid" ref={adviceGrid}>
               {shownAdvice.map((p) => <AdviceCard key={p.id} post={p} />)}
             </div>
           )}
 
-          {lane !== 'advice' && shownQuestions.length > 0 && (
+          {(lane === 'all' || lane === 'questions') && shownQuestions.length > 0 && (
             <>
               {lane === 'all' && <h2 className="lane-head">Questions from parents</h2>}
               <div className="grid" ref={questionGrid}>
@@ -201,7 +205,16 @@ export default function Board() {
             </>
           )}
 
-          {loaded && !showSeeds && shownAdvice.length === 0 && shownQuestions.length === 0 && (
+          {(lane === 'all' || lane === 'ideas') && shownIdeas.length > 0 && (
+            <>
+              {lane === 'all' && <h2 className="lane-head">Ideas for RCAP</h2>}
+              <div className="grid" ref={ideaGrid}>
+                {shownIdeas.map((p) => <IdeaCard key={p.id} post={p} />)}
+              </div>
+            </>
+          )}
+
+          {loaded && !showSeeds && shownAdvice.length === 0 && shownQuestions.length === 0 && shownIdeas.length === 0 && (
             <p className="empty">Nothing under this filter yet.</p>
           )}
 

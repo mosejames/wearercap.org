@@ -1,26 +1,24 @@
 // ---------------------------------------------------------------------------
 // One Thing I Wish I Knew — everything worth changing lives here.
 //
-// Same fixture idea as the Recap: this is not a one-off for 2031. When the
-// Class of 2032 walks in, change INCOMING and VETERAN_CLASSES below, give the
-// round a fresh slug, and the page is ready again. Last year's thread stays in
-// the database untouched.
+// It started as a bridge for one incoming class. Since the first general
+// meeting of 2026-27 it is the open floor: any RCA parent can hand over a
+// thing they wish they knew, ask a question, answer one, or put an idea in
+// front of the board. The round slug is unchanged so the posts already on the
+// board stay where they are. Next year, give the round a fresh slug.
 // ---------------------------------------------------------------------------
 
 export const ROUNDS = [
   {
     slug: 'class-of-2031',
-    // The class walking in the door. The advice is aimed at them.
-    incoming: '2031',
-    // The classes who have been here, and so are the ones who answer.
-    veterans: ['2027', '2028', '2029', '2030'],
-    // Who may ask: everybody. Being new to RCA is not the only way to be new
-    // to something here — a first-time 7th grade parent and a first-time 8th
-    // grade parent both have questions, and gatekeeping the asking by class
-    // was never the point. Answering still belongs to the veterans.
+    // Every class, in every lane. The old split (veterans advise, newcomers
+    // ask) was dropped on purpose: a first-time 7th grade parent has questions
+    // and a Class of 2031 parent six weeks in already has something worth
+    // passing on.
+    veterans: ['2027', '2028', '2029', '2030', '2031'],
     askers: ['2027', '2028', '2029', '2030', '2031'],
-    label: 'FOR THE CLASS OF 2031',
-    name: 'Class of 2031',
+    label: 'EVERY RCA PARENT',
+    name: 'Every RCA parent',
   },
 ];
 
@@ -34,20 +32,31 @@ export const SITE = {
   boardHead: 'What parents have already shared',
 };
 
-// The two halves of the toggle. `label` is what shows on the switch and has to
-// read as a completion of "ONE THING…", so keep them short and parallel.
+// The three segments of the toggle. `label` is what shows on the switch and
+// has to read as a completion of "ONE THING…", so keep them short and parallel.
+// `tone` is the CSS hook: the hero, the compose card and the board card all key
+// their colour off it.
 export const MODES = {
   advice: {
     label: 'I wish I knew',
     title: 'One Thing I Wish I Knew',
-    lead: 'You have been here a while. Hand something over to the families walking in.',
+    lead: 'Something you know now that you did not at first. Hand it to the parent who needs it next.',
+    tone: '',
   },
   question: {
     label: 'I’d like to ask',
     title: 'One Thing I’d Like to Ask',
     lead: 'Ask the small practical thing. Somebody here has already lived it.',
+    tone: 'ask',
+  },
+  suggestion: {
+    label: 'I’d suggest',
+    title: 'One Thing I’d Suggest',
+    lead: 'An idea for RCAP. An event, a fix, a better way to do something. The board reads every one.',
+    tone: 'idea',
   },
 };
+export const MODE_ORDER = ['advice', 'question', 'suggestion'];
 
 export const RELATIONS = ['Mom', 'Dad', 'Grandparent', 'Auntie', 'Uncle', 'Bonus Parent', 'Guardian'];
 
@@ -76,7 +85,27 @@ export const TOPICS = [
   { id: 'other',       label: 'Something else',      hint: 'If it does not fit anything on the list, it still belongs here.' },
 ];
 
-export const topicById = (id) => TOPICS.find((t) => t.id === id) || { id, label: id, hint: '' };
+// ---------------------------------------------------------------------------
+// IDEA TOPICS
+// Suggestions are aimed at RCAP rather than at another parent, so they sort by
+// what part of RCAP they touch. Same rule as above: ids are stored, labels are
+// free to change.
+// ---------------------------------------------------------------------------
+export const IDEA_TOPICS = [
+  { id: 'idea-events',     label: 'Events & socials',      hint: 'The parent social, Trunk or Treat, Bingo, anything we gather for.' },
+  { id: 'idea-fundraise',  label: 'Raising money',         hint: 'The raffle, a grill-off, a better way to fund the year.' },
+  { id: 'idea-teachers',   label: 'Celebrating staff',     hint: 'Four Days of Christmas, Teacher Appreciation Week, the small stuff in between.' },
+  { id: 'idea-volunteer',  label: 'Volunteering',          hint: 'EXP shifts, hours, making it easier to show up.' },
+  { id: 'idea-comms',      label: 'Communication',         hint: 'Email, the website, group meetings, how word gets around.' },
+  { id: 'idea-meetings',   label: 'General meetings',      hint: 'Format, timing, what to cover next time.' },
+  { id: 'idea-newfam',     label: 'Welcoming new families', hint: 'What would have helped you in the first month.' },
+  { id: 'idea-other',      label: 'Something else',        hint: 'If it does not fit anything on the list, it still belongs here.' },
+];
+
+export const topicById = (id) =>
+  TOPICS.find((t) => t.id === id)
+  || IDEA_TOPICS.find((t) => t.id === id)
+  || { id, label: id, hint: '' };
 
 // ---------------------------------------------------------------------------
 // THE ASK
@@ -101,6 +130,13 @@ export const QUESTION_HELP =
   'about how things work here, not about a particular teacher or student.';
 export const QUESTION_BODY_PROMPT = 'Anything else that would help someone answer';
 export const QUESTION_BODY_HELP = 'Optional.';
+
+export const SUGGESTION_PROMPT = 'What should RCAP try, change, or do more of?';
+export const SUGGESTION_HELP =
+  'One line is plenty. Say the idea, not the case for it; the case goes below. ' +
+  'Keep it about how RCAP works, not about a particular person.';
+export const SUGGESTION_BODY_PROMPT = 'Why it would help';
+export const SUGGESTION_BODY_HELP = 'Optional. What it would change for families, or what made you think of it.';
 
 export const ANSWER_PROMPT = 'Your answer';
 export const ANSWER_HELP = 'Speak from your own family. What actually worked.';

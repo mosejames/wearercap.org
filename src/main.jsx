@@ -247,8 +247,8 @@ const tools = [
     icon: Lightbulb,
     title: 'One Thing I Wish I Knew',
     body:
-      'RCA is a big place and learning it takes a minute. See what other ' +
-      'parents have shared, and add a best practice of your own.',
+      'The open floor. Share a tip, ask a question, answer one, or put an ' +
+      'idea in front of the board. Every RCA parent, every class.',
     href: '/wish-i-knew/',
     // The only row whose action goes somewhere other than the row itself.
     action: 'Read what parents said',

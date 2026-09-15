@@ -1,8 +1,9 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
-  CURRENT, SITE, RELATIONS, TOPICS, topicById, suggestThree,
+  CURRENT, SITE, MODES, RELATIONS, TOPICS, IDEA_TOPICS, topicById, suggestThree,
   ADVICE_PROMPT, ADVICE_HELP, ADVICE_BODY_PROMPT, ADVICE_BODY_HELP,
   QUESTION_PROMPT, QUESTION_HELP, QUESTION_BODY_PROMPT, QUESTION_BODY_HELP,
+  SUGGESTION_PROMPT, SUGGESTION_HELP, SUGGESTION_BODY_PROMPT, SUGGESTION_BODY_HELP,
   ANSWER_PROMPT, ANSWER_HELP,
   HEADLINE_MAX, BODY_MAX,
 } from './config.js';
@@ -36,8 +37,13 @@ export const sizeClass = (text) => {
   return 'md';
 };
 
-// Anyone may ask; only the classes who have been here may advise or answer.
+// Every lane is open to every class now. The two lists still exist in config
+// so a future round can close one again without touching the form.
 export const classesFor = (mode) => (mode === 'question' ? CURRENT.askers : CURRENT.veterans);
+
+// The CSS hook for a lane. Answers live in the question lane, so they take its
+// colour.
+export const toneFor = (mode) => (mode === 'answer' ? 'ask' : (MODES[mode]?.tone || ''));
 
 export function shareThisPage(url = window.location.origin + FORM_URL) {
   if (navigator.share) navigator.share({ title: 'One Thing I Wish I Knew', url });
@@ -143,8 +149,9 @@ export function CountStrip({ counts, className = '' }) {
   return (
     <p className={`mono strip ${className}`}>
       {CURRENT.label}
-      <b>·</b>{counts.advice} {counts.advice === 1 ? 'ANSWER' : 'ANSWERS'}
+      <b>·</b>{counts.advice} {counts.advice === 1 ? 'TIP' : 'TIPS'}
       <b>·</b>{counts.questions} {counts.questions === 1 ? 'QUESTION' : 'QUESTIONS'}
+      <b>·</b>{counts.ideas || 0} {counts.ideas === 1 ? 'IDEA' : 'IDEAS'}
     </p>
   );
 }
@@ -290,13 +297,15 @@ function QuestionPicker({ f, counts }) {
 export function ComposeFields({ f, mode, topicCounts = {} }) {
   const isQuestion = mode === 'question';
   const isAnswer = mode === 'answer';
+  const isIdea = mode === 'suggestion';
 
-  const prompt = isAnswer ? ANSWER_PROMPT : isQuestion ? QUESTION_PROMPT : ADVICE_PROMPT;
-  const help = isAnswer ? ANSWER_HELP : isQuestion ? QUESTION_HELP : ADVICE_HELP;
-  const bodyPrompt = isQuestion ? QUESTION_BODY_PROMPT : ADVICE_BODY_PROMPT;
-  const bodyHelp = isQuestion ? QUESTION_BODY_HELP : ADVICE_BODY_HELP;
-  // One label for both lanes now that asking is open to every class. "Your
-  // student starts" only ever made sense for the incoming families.
+  const prompt = isAnswer ? ANSWER_PROMPT : isQuestion ? QUESTION_PROMPT : isIdea ? SUGGESTION_PROMPT : ADVICE_PROMPT;
+  const help = isAnswer ? ANSWER_HELP : isQuestion ? QUESTION_HELP : isIdea ? SUGGESTION_HELP : ADVICE_HELP;
+  const bodyPrompt = isQuestion ? QUESTION_BODY_PROMPT : isIdea ? SUGGESTION_BODY_PROMPT : ADVICE_BODY_PROMPT;
+  const bodyHelp = isQuestion ? QUESTION_BODY_HELP : isIdea ? SUGGESTION_BODY_HELP : ADVICE_BODY_HELP;
+  // Ideas sort by the part of RCAP they touch; everything else by school life.
+  const topicList = isIdea ? IDEA_TOPICS : TOPICS;
+  // One label for every lane now that all of them are open to every class.
   const classLabel = 'Your student’s class';
 
   return (
@@ -352,13 +361,13 @@ export function ComposeFields({ f, mode, topicCounts = {} }) {
 
       {/* The dropdown is the write-your-own path, and the answer modal, which
           inherits its topic from the question it is answering. */}
-      {(isQuestion || (mode === 'advice' && f.ownWay)) && (
+      {(isQuestion || isIdea || (mode === 'advice' && f.ownWay)) && (
         <>
           <label className="lab">
             What is this about
             <select className="field" value={f.topic} onChange={(e) => f.setTopic(e.target.value)}>
               <option value="">Choose…</option>
-              {TOPICS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              {topicList.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </label>
           {f.topic && <p className="hint">{topicById(f.topic).hint}</p>}
@@ -372,7 +381,11 @@ export function ComposeFields({ f, mode, topicCounts = {} }) {
           rows={isAnswer ? 4 : 3}
           value={f.headline}
           maxLength={HEADLINE_MAX}
-          placeholder={isQuestion ? 'How early do people actually line up for car line?' : ''}
+          placeholder={
+            isQuestion ? 'How early do people actually line up for car line?'
+              : isIdea ? 'A Men of RCAP grill-off as a fall fundraiser.'
+              : ''
+          }
           onChange={(e) => f.setHeadline(e.target.value)}
         />
         <span className="count">{HEADLINE_MAX - f.headline.length}</span>
@@ -435,6 +448,22 @@ export function AdviceCard({ post, seed = false }) {
       </p>
       {post.body && <p className="card-body">{post.body}</p>}
       <p className="card-by">{seed ? 'An RCA parent' : byline(post)}</p>
+    </article>
+  );
+}
+
+// An idea for RCAP. No answer button: the board reads these, and the reply is
+// what happens next, not a comment thread.
+export function IdeaCard({ post }) {
+  return (
+    <article className="card idea">
+      <div className="card-meta">
+        <span className="topic-tag idea">{topicById(post.topic).label}</span>
+        <span className="mono dim">{shortDate(post.createdAt)}</span>
+      </div>
+      <p className={`card-headline ${sizeClass(post.headline)}`}>{post.headline}</p>
+      {post.body && <p className="card-body">{post.body}</p>}
+      <p className="card-by">{byline(post)}</p>
     </article>
   );
 }

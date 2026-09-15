@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookOpen, Share2 } from 'lucide-react';
-import { CURRENT, SITE, MODES, topicById } from './config.js';
+import { CURRENT, SITE, MODES, MODE_ORDER, topicById } from './config.js';
 import { listPublic, waitForPublish, adminAll, setStatus, declineThread } from './data.js';
 import {
   BOARD_URL, FORM_URL, byline, shortDate, useCompose, ComposeFields,
-  Topbar, Footer, CountStrip, shareThisPage,
+  Topbar, Footer, CountStrip, shareThisPage, toneFor,
 } from './shared.jsx';
+
+const KIND_LABEL = { advice: 'Tip', question: 'Question', answer: 'Answer', suggestion: 'Idea' };
 
 // The back office is reached by typing #admin and has no chrome of its own, so
 // without this it is a dead end: you deal with the queue and the only way out
@@ -22,18 +24,18 @@ function AdminNav() {
 
 /* ------------------------------------------------------------- landing form */
 
-// A segmented pill: one track, two labels, and a thumb that slides between
+// A segmented pill: one track, three labels, and a thumb that slides between
 // them. The thumb is a separate element rather than a background on the active
-// half so it can animate across instead of blinking from one side to the other.
+// third so it can animate across instead of blinking from one place to another.
 function ModeToggle({ mode, setMode }) {
   return (
     <div
-      className={`toggle ${mode === 'question' ? 'ask' : ''}`}
+      className={`toggle ${toneFor(mode)}`}
       role="tablist"
       aria-label="What do you want to do"
     >
       <span className="toggle-thumb" aria-hidden="true" />
-      {['advice', 'question'].map((m) => (
+      {MODE_ORDER.map((m) => (
         <button
           key={m}
           role="tab"
@@ -54,6 +56,7 @@ function ModeToggle({ mode, setMode }) {
 // back.
 function DonePanel({ post, onAgain }) {
   const isQuestion = post.kind === 'question';
+  const isIdea = post.kind === 'suggestion';
   const [state, setState] = useState('checking'); // checking | live | held
 
   useEffect(() => {
@@ -66,20 +69,24 @@ function DonePanel({ post, onAgain }) {
 
   const title = state === 'live'
     ? 'It’s live.'
-    : isQuestion ? 'Your question is in.' : 'Each one teach one.';
+    : isQuestion ? 'Your question is in.' : isIdea ? 'The board has it.' : 'Each one teach one.';
 
   const copy = {
     checking: 'Putting it on the board…',
     live: isQuestion
       ? 'It is on the board now, where a parent who has been here can answer it.'
-      : 'Thank you for sharing. It is on the board now, where the families coming in will read it.',
+      : isIdea
+        ? 'It is on the board now, where every RCAP officer and every parent can see it.'
+        : 'Thank you for sharing. It is on the board now, where the families who need it will read it.',
     held: isQuestion
       ? 'A parent who has been here will answer it. Both the question and the answer get read before they go up, so give it a day.'
-      : 'Thank you for sharing. Everything here gets read before it goes up, so yours will be on the board shortly.',
+      : isIdea
+        ? 'Thank you. The board reads every idea. Everything here gets read by a person before it goes up, so give it a day.'
+        : 'Thank you for sharing. Everything here gets read before it goes up, so yours will be on the board shortly.',
   }[state];
 
   return (
-    <div className={`compose done-panel ${isQuestion ? 'ask' : ''}`}>
+    <div className={`compose done-panel ${toneFor(post.kind)}`}>
       <span className="eyebrow">{state === 'live' ? 'Published' : 'Got it'}</span>
       <h2 className="compose-title">{title}</h2>
       <p className={`done-copy ${state === 'checking' ? 'waiting' : ''}`}>{copy}</p>
@@ -89,7 +96,7 @@ function DonePanel({ post, onAgain }) {
       </blockquote>
       <div className="done-actions">
         <button className="btn flame" onClick={onAgain}>
-          {isQuestion ? 'Ask another one' : 'Share another one'}
+          {isQuestion ? 'Ask another one' : isIdea ? 'Add another idea' : 'Share another one'}
         </button>
         {state === 'live' && (
           <a className="btn ghost" href={BOARD_URL}>
@@ -238,8 +245,8 @@ function Admin() {
         {shown.map((r) => (
           <div className="admin-row" key={r.id}>
             <div className="card-meta">
-              <span className={`topic-tag ${r.kind === 'question' ? 'ask' : ''}`}>
-                {r.kind === 'answer' ? 'Answer' : r.kind === 'question' ? 'Question' : 'Advice'}
+              <span className={`topic-tag ${toneFor(r.kind)}`}>
+                {KIND_LABEL[r.kind] || r.kind}
                 {' · '}{topicById(r.topic).label}
               </span>
               <span className="mono dim">{shortDate(r.createdAt)}</span>
@@ -284,7 +291,7 @@ function Admin() {
 export default function App() {
   const [mode, setMode] = useState('advice');
   const [done, setDone] = useState(null);
-  const [counts, setCounts] = useState({ advice: 0, questions: 0 });
+  const [counts, setCounts] = useState({ advice: 0, questions: 0, ideas: 0 });
   const [topicCounts, setTopicCounts] = useState({});
   const [isAdmin, setIsAdmin] = useState(
     () => typeof window !== 'undefined' && window.location.hash === '#admin'
@@ -302,6 +309,7 @@ export default function App() {
       setCounts({
         advice: rows.filter((r) => r.kind === 'advice').length,
         questions: rows.filter((r) => r.kind === 'question').length,
+        ideas: rows.filter((r) => r.kind === 'suggestion').length,
       });
       // What the board already covers, so the suggestions can steer at the gaps.
       const byTopic = {};
@@ -323,13 +331,13 @@ export default function App() {
     <>
       <Topbar />
 
-      <section className={`hero ${mode === 'question' ? 'ask' : ''}`}>
+      <section className={`hero ${toneFor(mode)}`}>
         <div className="shell">
           <p className="kicker">{SITE.kicker}</p>
 
           {/* Switch first, then the headline it rewrites. Flipping the pill and
               watching the title change is the clearest way to show a parent
-              that there are two lanes and which one they are standing in. */}
+              that there are three lanes and which one they are standing in. */}
           <ModeToggle mode={mode} setMode={setMode} />
 
           <h1>
@@ -340,24 +348,27 @@ export default function App() {
         </div>
       </section>
 
-      <section className={`compose-wrap ${mode === 'question' ? 'ask' : ''}`}>
+      <section className={`compose-wrap ${toneFor(mode)}`}>
+        {/* Third background layer; the first two are the section's own
+            pseudo-elements. See .compose-wrap in wik.css. */}
+        <span className="ground-idea" aria-hidden="true" />
         <div className="narrow">
           {done ? (
             <DonePanel post={done} onAgain={() => { setDone(null); f.reset(); }} />
           ) : (
-            <div className={`compose ${mode === 'question' ? 'ask' : ''}`}>
+            <div className={`compose ${toneFor(mode)}`}>
               <ComposeFields f={f} mode={mode} topicCounts={topicCounts} />
               <button
                 className="btn flame wide"
                 onClick={() => f.submit((p) => { setDone(p); f.reset(); loadCounts(); })}
                 disabled={!f.ready || f.busy}
               >
-                {f.busy ? 'Sending…' : mode === 'question' ? 'Send my question' : 'Send it in'}
+                {f.busy ? 'Sending…' : mode === 'question' ? 'Send my question' : mode === 'suggestion' ? 'Send my idea' : 'Send it in'}
               </button>
               <p className="review-note">
-                Everything here is read by a person before it goes up. This is the
-                first thing many new families will see, so we keep it useful and
-                we keep it kind.
+                Everything here is read by a person before it goes up. Families
+                you have not met yet will read it, so we keep it useful and we
+                keep it kind.
               </p>
             </div>
           )}
