@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { TOPICS, SEEDS } from './config.js';
+import { TOPICS, SEEDS, MEETING_FAQ } from './config.js';
 import { listPublic } from './data.js';
 import {
   FORM_URL, byline, useCompose, ComposeFields, useMasonry,
-  Topbar, Footer, CountStrip, AdviceCard, QuestionCard, IdeaCard,
+  Topbar, Footer, CountStrip, AdviceCard, QuestionCard, IdeaCard, FaqCard,
 } from './shared.jsx';
 
 /* ------------------------------------------------------- answer, in a modal */
@@ -102,13 +102,14 @@ export default function Board() {
 
   // Only offer a topic filter for topics that actually have something in them.
   const liveTopics = useMemo(() => {
-    const used = new Set(rows.map((r) => r.topic));
+    const used = new Set([...rows.map((r) => r.topic), ...MEETING_FAQ.map((f) => f.topic)]);
     return TOPICS.filter((t) => used.has(t.id));
   }, [rows]);
 
   const byTopic = (list) => (topic === 'all' ? list : list.filter((r) => r.topic === topic));
   const shownAdvice = byTopic(advice);
   const shownQuestions = byTopic(questions);
+  const shownFaq = topic === 'all' ? MEETING_FAQ : MEETING_FAQ.filter((f) => f.topic === topic);
   const shownIdeas = byTopic(ideas);
 
   const showSeeds = loaded && advice.length === 0 && topic === 'all' && (lane === 'all' || lane === 'advice');
@@ -116,6 +117,7 @@ export default function Board() {
   // A ref each, because each grid packs itself independently.
   const seedGrid = useMasonry([showSeeds]);
   const adviceGrid = useMasonry([shownAdvice, lane]);
+  const faqGrid = useMasonry([shownFaq, lane]);
   const questionGrid = useMasonry([shownQuestions, answersFor, lane]);
   const ideaGrid = useMasonry([shownIdeas, lane]);
 
@@ -131,7 +133,7 @@ export default function Board() {
             Tips, questions, answers and ideas for RCAP. Everything on this page
             was written by an RCA family and read by a person before it went up.
           </p>
-          <CountStrip counts={{ advice: advice.length, questions: questions.length, ideas: ideas.length }} />
+          <CountStrip counts={{ advice: advice.length, questions: questions.length + MEETING_FAQ.length, ideas: ideas.length }} />
           <div className="hero-cta">
             <a className="btn flame" href={FORM_URL}>Add one of your own</a>
           </div>
@@ -145,7 +147,7 @@ export default function Board() {
               {[
                 ['all', 'Everything'],
                 ['advice', `Tips (${advice.length})`],
-                ['questions', `Questions (${questions.length})`],
+                ['questions', `Questions (${questions.length + MEETING_FAQ.length})`],
                 ['ideas', `Ideas for RCAP (${ideas.length})`],
               ].map(([id, label]) => (
                 <button key={id} className={`lane ${lane === id ? 'on' : ''}`} onClick={() => setLane(id)}>
@@ -189,9 +191,20 @@ export default function Board() {
             </div>
           )}
 
+          {/* Asked out loud at a meeting, answered by the board. First in the
+              lane so the next parent with the same question finds it here. */}
+          {(lane === 'all' || lane === 'questions') && shownFaq.length > 0 && (
+            <>
+              <h2 className="lane-head" id="questions">Asked at the meeting</h2>
+              <div className="grid" ref={faqGrid}>
+                {shownFaq.map((f) => <FaqCard key={f.q} item={f} />)}
+              </div>
+            </>
+          )}
+
           {(lane === 'all' || lane === 'questions') && shownQuestions.length > 0 && (
             <>
-              {lane === 'all' && <h2 className="lane-head">Questions from parents</h2>}
+              <h2 className="lane-head">Questions from parents</h2>
               <div className="grid" ref={questionGrid}>
                 {shownQuestions.map((p) => (
                   <QuestionCard
@@ -214,7 +227,7 @@ export default function Board() {
             </>
           )}
 
-          {loaded && !showSeeds && shownAdvice.length === 0 && shownQuestions.length === 0 && shownIdeas.length === 0 && (
+          {loaded && !showSeeds && shownAdvice.length === 0 && shownQuestions.length === 0 && shownFaq.length === 0 && shownIdeas.length === 0 && (
             <p className="empty">Nothing under this filter yet.</p>
           )}
 

@@ -283,3 +283,75 @@ export function suggestThree(counts = {}, exclude = []) {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// FROM THE MEETING
+// Questions that were asked out loud at a general meeting, with the answer the
+// board gave. They sit at the top of the questions lane so the next parent with
+// the same question finds it before asking again. Not in the database on
+// purpose: nobody wrote these as a post, and they should not carry a byline.
+// Add the next meeting's on top; keep the answers short and link where the
+// real answer lives.
+// ---------------------------------------------------------------------------
+export const MEETING_FAQ = [
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'volunteer',
+    q: 'How do I sign up to chair a committee?',
+    a: 'Fill out the committee form. It asks whether you want to lead. If you filled it out early, that question may have been hidden, so do it again or reply to your confirmation email.',
+    link: { href: '/committee-interest/', label: 'The committee form' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'mornings',
+    q: 'How does the carpool actually work?',
+    a: 'It is opt-in and parent to parent. Add your family on the carpool page. Anyone near you who has also opted in can see your general area, never your address, and reach out. You work out the ride between you.',
+    link: { href: '/carpool/', label: 'The carpool page' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'parents',
+    q: 'Is there an RCAP group meeting?',
+    a: 'No. Your class rep is in your class group meeting already. That is where RCAP information flows both ways.',
+    link: { href: '/board/', label: 'Your class rep' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'parents',
+    q: 'Is there a password for the website?',
+    a: 'No. There is a small trivia gate that any RCA student can answer. If you get stumped, the next question is easier.',
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'volunteer',
+    q: 'When is the first EXP, and is there training?',
+    a: 'Show up, check in with Mr. Walker in the Great Hall, and you are set. Newcomer training usually happens right before Bingo Night. Dates and shifts are on the Serve at EXP page.',
+    link: { href: '/invite/', label: 'Serve at EXP' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'volunteer',
+    q: 'How do I get an EXP shirt?',
+    a: 'Volunteer at EXP and tell someone you need one.',
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'volunteer',
+    q: 'I work a traditional schedule. How do I get my hours?',
+    a: 'Emails go out all year for evening and weekend jobs: buttons, graduation, the talent show. Holiday Decor can be 25 hours in one weekend. Some employers give paid volunteer time; ask yours. And anyone in your family can earn hours for you if they are on your approved list with a volunteer button.',
+    link: { href: 'https://www.trackitforward.com/site/the-ron-clark-academy', label: 'Track it Forward' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'volunteer',
+    q: 'Could the Men of RCAP host a grill-off as a fundraiser?',
+    a: 'On the list. Every man here should be in the Men of RCAP group; pick it on the committee form and you will get plugged in.',
+    link: { href: '/committee-interest/', label: 'The committee form' },
+  },
+  {
+    asked: 'Sept 14 general meeting',
+    topic: 'parents',
+    q: 'Which class paid first?',
+    a: 'The Class of 2027 reached 100% first. Everyone else, there is a second prize.',
+  },
+];

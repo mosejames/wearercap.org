@@ -197,12 +197,6 @@
   .links a.hot small{color:rgba(26,22,19,.65)}
   .links a.hot .arr{color:var(--ink)}
 
-  /* Q and A */
-  .qa{display:grid;gap:14px;margin:22px 0 0}
-  .q{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--ink-2)}
-  .q b{display:block;font-size:17px;font-weight:900;letter-spacing:-.01em;margin-bottom:8px}
-  .q p{margin:0;color:rgba(255,255,255,.8);font-size:15.5px;line-height:1.55}
-  .q p a{color:var(--gold)}
   .ask{margin:26px 0 0;border-radius:14px;padding:26px 24px;background:linear-gradient(96deg,#3fc47a 0%,#1f9d57 55%,#145f38 100%);color:#fff}
   .ask h3{margin:0 0 8px;font-size:clamp(22px,3vw,30px);font-weight:900;letter-spacing:-.03em;line-height:1.05}
   .ask p{margin:0 0 16px;max-width:56ch;color:rgba(255,255,255,.88)}
@@ -225,9 +219,6 @@
   .deck{margin:56px 0 0;padding-top:26px;border-top:1px solid var(--line)}
   .deck h2{margin:0 0 6px}
   .deck p{margin:0 0 16px;color:var(--muted);font-size:14.5px}
-  .strip{display:flex;gap:10px;overflow-x:auto;padding:4px 0 14px;scroll-snap-type:x mandatory}
-  .strip a{flex:0 0 240px;scroll-snap-align:start;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#000}
-  .strip img{aspect-ratio:16/9;object-fit:cover;width:100%}
 
   footer{margin:48px 0 0;padding:26px 0 40px;border-top:1px solid var(--line);font-size:13px;color:rgba(255,255,255,.45)}
   footer a{color:rgba(255,255,255,.7)}
@@ -540,9 +531,9 @@
       <div>
         <h4 class="mono">Where to click</h4>
         <div class="links">
-          <a href="https://www.trackitforward.com/site/the-ron-clark-academy" target="_blank" rel="noopener noreferrer"><span>Track it Forward<small>Log your hours.</small></span><span class="arr">&#8599;</span></a>
-          <a href="/invite/"><span>Serve at EXP<small>The dates, and how to sign up for a shift.</small></span><span class="arr">&#8599;</span></a>
           <a href="/what-to-expect/"><span>What to expect at EXP<small>Your first shift, start to finish.</small></span><span class="arr">&#8599;</span></a>
+          <a href="/invite/"><span>Go serve at EXP<small>The dates, and how to sign up for a shift.</small></span><span class="arr">&#8599;</span></a>
+          <a href="https://www.trackitforward.com/site/the-ron-clark-academy" target="_blank" rel="noopener noreferrer"><span>Track it Forward<small>Log your hours.</small></span><span class="arr">&#8599;</span></a>
         </div>
       </div>
     </div>
@@ -596,21 +587,23 @@
       </div>
       <div class="band"></div>
     </div>
-    <div class="qa">
-      <div class="q"><b>How do I sign up to chair a committee?</b><p>Fill out the <a href="/committee-interest/">committee form</a>. It asks whether you want to lead. If you filled it out early, that question may have been hidden, so do it again or reply to your confirmation email.</p></div>
-      <div class="q"><b>How does the carpool actually work?</b><p>It is opt-in and parent to parent. Add your family on the <a href="/carpool/">carpool page</a>. Anyone near you who has also opted in can see your general area, never your address, and reach out. You work out the ride between you.</p></div>
-      <div class="q"><b>Is there an RCAP group meeting?</b><p>No. Your class rep is in your class group meeting already. That is where RCAP information flows both ways.</p></div>
-      <div class="q"><b>Is there a password for the website?</b><p>No. There is a small trivia gate that any RCA student can answer. It was off for tonight and comes back on soon. If you get stumped, the next question is easier.</p></div>
-      <div class="q"><b>When is the first EXP, and is there training?</b><p>The first EXP days of the year are this month. Show up, check in with Mr. Walker in the Great Hall, and you are set. Newcomer training usually happens right before Bingo Night; Crystal is confirming and will send word. <a href="/invite/">Dates and shifts are here.</a></p></div>
-      <div class="q"><b>How do I get an EXP shirt?</b><p>Volunteer at EXP and tell someone you need one.</p></div>
-      <div class="q"><b>I work a traditional schedule. How do I get hours?</b><p>Emails go out all year for evening and weekend jobs: buttons, graduation, the talent show. Holiday Decor can be 25 hours in one weekend. Some employers give paid volunteer time; ask yours. And anyone in your family can earn hours for you if they are on your approved list with a volunteer button.</p></div>
-      <div class="q"><b>Could the Men of RCAP host a grill-off as a fundraiser?</b><p>Great idea, on the list. Every man here should be in the Men of RCAP group; pick it on the <a href="/committee-interest/">committee form</a> and Steve Johnson will get you plugged in.</p></div>
-      <div class="q"><b>Which class paid first?</b><p>The Class of 2027 reached 100% first. Everyone else, there is a second prize.</p></div>
+    <div class="notes">
+      <div>
+        <h4 class="mono">What was asked</h4>
+        <p>Nine questions came in from the chat and the floor: how to sign up to chair, how the carpool works, whether there is an RCAP group meeting, the website gate, the first EXP and its training, EXP shirts, hours for parents on a 9 to 5, a grill-off for the Men of RCAP, and which class paid first.</p>
+        <p>They live on the One Thing I Wish I Knew board now, with their answers, so the next parent with the same question finds it there. Add yours to the pile.</p>
+      </div>
+      <div>
+        <h4 class="mono">Where to click</h4>
+        <div class="links">
+          <a class="hot" href="/wish-i-knew/read/#questions"><span>Read the questions and answers<small>Nine from the meeting, plus what parents have asked since.</small></span><span class="arr">&#8599;</span></a>
+        </div>
+      </div>
     </div>
 
     <div class="ask">
       <h3>Still have a question? Ask it here.</h3>
-      <p>One Thing I Wish I Knew is now the open floor for every RCA parent. Ask the small practical thing, answer one for somebody else, or put an idea in front of the board. A person reads every post before it goes up.</p>
+      <p>One Thing I Wish I Knew is the open floor for every RCA parent. Ask the small practical thing, answer one for somebody else, or put an idea in front of the board. A person reads every post before it goes up.</p>
       <div class="actions">
         <a class="btn" href="/wish-i-knew/">Ask, answer, or suggest</a>
         <a class="btn ghost" href="/wish-i-knew/read/">Read what parents have shared</a>
@@ -635,25 +628,10 @@
   </section>
 
   <section class="deck">
-    <h2 class="mono" style="color:rgba(255,255,255,.5)">The deck, as shown</h2>
-    <p>The slides from the night, in order. Tap one to see it full size.</p>
-    <div class="strip">
-      <a href="/meeting/sept-14/slides/slide-02.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-02.jpg" alt="Slide: We Are RCAP, general meeting" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-03.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-03.jpg" alt="Slide: Tonight's agenda" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-04.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-04.jpg" alt="Slide: We are all RCAP" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-05.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-05.jpg" alt="Slide: Meet your board" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-06.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-06.jpg" alt="Slide: Your class rep" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-07.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-07.jpg" alt="Slide: $25 per family" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-08.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-08.jpg" alt="Slide: Here's what you're a part of" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-09.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-09.jpg" alt="Slide: Save the dates" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-10.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-10.jpg" alt="Slide: Where the money stands" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-11.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-11.jpg" alt="Slide: Committees" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-12.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-12.jpg" alt="Slide: How to join a committee" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-13.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-13.jpg" alt="Slide: Volunteer hours" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-14.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-14.jpg" alt="Slide: We are online" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-17.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-17.jpg" alt="Slide: The tools on wearercap.org" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-18.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-18.jpg" alt="Slide: Questions" loading="lazy" width="960" height="540" /></a>
-      <a href="/meeting/sept-14/slides/slide-19.jpg" target="_blank" rel="noopener"><img src="/meeting/sept-14/slides/slide-19.jpg" alt="Slide: This week" loading="lazy" width="960" height="540" /></a>
+    <h2 class="mono" style="color:rgba(255,255,255,.5)">The deck</h2>
+    <p>The slides from the night, as shown, in one PDF.</p>
+    <div class="links" style="max-width:420px">
+      <a href="/meeting/sept-14/rcap-general-meeting-2026-09-14.pdf" target="_blank" rel="noopener noreferrer"><span>Download the slides<small>PDF, 18 pages, about 1.5 MB.</small></span><span class="arr">&#8599;</span></a>
     </div>
   </section>
 

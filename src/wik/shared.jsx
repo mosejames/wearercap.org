@@ -468,6 +468,34 @@ export function IdeaCard({ post }) {
   );
 }
 
+// A question that was asked out loud at a meeting, with the board's answer.
+// Same shape as a question card so the lane reads as one thing, but no byline
+// and no answer button: it is a record, not a thread.
+export function FaqCard({ item }) {
+  return (
+    <article className="card question faq">
+      <div className="card-meta">
+        <span className="topic-tag ask">{topicById(item.topic).label}</span>
+        <span className="mono dim">ASKED AT THE {item.asked.toUpperCase()}</span>
+      </div>
+      <p className={`card-headline ${sizeClass(item.q)}`}>{item.q}</p>
+      <div className="answers">
+        <div className="answer">
+          <p>{item.a}</p>
+          {item.link && (
+            <p className="faq-link">
+              <a href={item.link.href} target={item.link.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
+                {item.link.label} →
+              </a>
+            </p>
+          )}
+          <p className="card-by">The RCAP board</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function QuestionCard({ post, answers, onAnswer }) {
   return (
     <article className="card question">

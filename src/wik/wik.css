@@ -352,6 +352,10 @@ a{color:inherit;text-decoration:none}
 .answer{border-left:3px solid var(--blue);padding-left:12px}
 .answer p:first-child{margin:0;font-size:15px;line-height:1.55}
 .card.question .btn.ghost{margin-top:16px;border-color:rgba(31,85,192,.4);color:var(--blue)}
+.card.faq .answers{margin-top:14px}
+.faq-link{margin:8px 0 0;font-size:14px;font-weight:700}
+.faq-link a{color:var(--blue)}
+.lane-head{scroll-margin-top:16px}
 
 .seed-note{
   margin:0 0 20px;font-size:14.5px;line-height:1.55;color:var(--ink-soft);
