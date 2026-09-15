@@ -2345,6 +2345,21 @@ button {
   background: #241f1a;
 }
 
+/* The social bar: flyer navy, a gold RSVP pill instead of the arrow. */
+.social-bar { background: #1a2a56; }
+.social-bar:hover { background: #22346a; }
+.social-bar + .board-bar { margin-top: 12px; }
+.social-bar-go {
+  flex: none;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: #f0b323;
+  color: #0f1a3a;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
 .board-bar-text {
   display: block;
   min-width: 0;

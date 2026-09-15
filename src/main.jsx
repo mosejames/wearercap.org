@@ -781,6 +781,17 @@ function App() {
           ))}
         </div>
 
+        {/* The next social, with its own RSVP page. Same bar shape as the two
+            below so the section keeps one shape for "the next thing to do".
+            Remove after Sept 27 or point it at the next event page. */}
+        <a className="board-bar social-bar" href="/karaoke">
+          <span className="board-bar-text">
+            <strong>Parent Social: R&amp;B Karaoke</strong>
+            <span>Sunday, September 27, 5 to 7pm at RCA. Adults only. See who's coming.</span>
+          </span>
+          <span className="social-bar-go">RSVP</span>
+        </a>
+
         {/* The last general meeting, for everyone who was not in the room. Same
             bar as the board callout below, so the page has one shape for "the
             next thing to read". Point it at the newest meeting page. */}
