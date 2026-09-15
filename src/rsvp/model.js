@@ -4,8 +4,14 @@ import { HOUSES as DIRECTORY_HOUSES } from '../directory/model.js';
    every one of these again inside event_rsvp_upsert; the copy here exists so a
    parent sees the problem next to the field instead of after a round trip. */
 
-// Same four houses and colours as The Collective. Imported, not copied.
-export const HOUSES = DIRECTORY_HOUSES;
+// The Collective runs a pastel set built for its dark theme, where Altruismo is
+// a pale stone. On this cream page that circle nearly disappears, and Altruismo
+// is near-black everywhere else on the site (the Recap board and the Uniform
+// Exchange both use #14110F). Overridden here so the house reads correctly,
+// without changing The Collective's own palette.
+export const HOUSES = DIRECTORY_HOUSES.map((h) =>
+  h.key === 'altruismo' ? { ...h, color: '#14110F' } : h,
+);
 export const NO_HOUSE_COLOR = '#1a2a56';
 export const GRADES = [4, 5, 6, 7, 8];
 export const COMMENT_MAX = 280;
@@ -35,9 +41,10 @@ export function houseColor(key) {
   return h ? h.color : NO_HOUSE_COLOR;
 }
 
-/* Altruismo's colour is a pale stone, so white initials disappear on it. */
-export function houseInk(key) {
-  return key === 'altruismo' ? '#1a1613' : '#ffffff';
+/* Every house circle now takes white initials, Altruismo included, since it is
+   near-black rather than the pale stone it used to be. */
+export function houseInk() {
+  return '#ffffff';
 }
 
 export function houseName(key) {

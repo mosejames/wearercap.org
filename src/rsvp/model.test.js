@@ -124,7 +124,9 @@ describe('houses', () => {
     expect(HOUSES.map((h) => h.key)).toEqual(['amistad', 'isibindi', 'reveur', 'altruismo']);
     expect(houseColor('isibindi')).toBe('#77cfa0');
     expect(houseColor(null)).toBe(NO_HOUSE_COLOR);
-    expect(houseInk('altruismo')).toBe('#1a1613');
+    // Altruismo is near-black on this page, so its initials are white like the rest.
+    expect(houseColor('altruismo')).toBe('#14110F');
+    expect(houseInk('altruismo')).toBe('#ffffff');
   });
 });
 
