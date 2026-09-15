@@ -5,7 +5,53 @@ import { Avatar } from './Chip.jsx';
 
 /* Answers on the wall, oldest first. Each one carries its question above it,
    so a line like "Ginuwine. Do not tell my husband." lands. */
-export function ThreadList({ thread }) {
+// Four, deliberately. A long picker on a parent thread adds decisions without
+// adding warmth.
+export const REACTIONS = ['\u2764\ufe0f', '\ud83d\ude02', '\ud83d\udd25', '\ud83d\ude4c'];
+
+function Reactions({ comment, canReact, onReact, onLockedClick }) {
+  // Counts come from the server; this holds the in-flight state so a tap feels
+  // instant and cannot be double-fired while the request is out.
+  const [busy, setBusy] = useState('');
+  const counts = comment.reactions || {};
+  const mine = comment.mine || [];
+
+  async function tap(emoji) {
+    if (!canReact) return onLockedClick && onLockedClick();
+    if (busy) return;
+    setBusy(emoji);
+    try {
+      await onReact(comment.id, emoji);
+    } finally {
+      setBusy('');
+    }
+  }
+
+  return (
+    <p className="rv-reacts">
+      {REACTIONS.map((emoji) => {
+        const n = counts[emoji] || 0;
+        const on = mine.indexOf(emoji) > -1;
+        return (
+          <button
+            key={emoji}
+            type="button"
+            className={`rv-react${on ? ' on' : ''}${n ? '' : ' empty'}`}
+            aria-pressed={on}
+            aria-label={`${emoji} ${n}`}
+            disabled={busy === emoji}
+            onClick={() => tap(emoji)}
+          >
+            <span aria-hidden="true">{emoji}</span>
+            {n > 0 && <b>{n}</b>}
+          </button>
+        );
+      })}
+    </p>
+  );
+}
+
+export function ThreadList({ thread, canReact, onReact, onLockedClick }) {
   if (!thread.length) return <p className="rv-empty">Nobody has answered yet. Go first.</p>;
   return (
     <ol className="rv-thread">
@@ -16,6 +62,12 @@ export function ThreadList({ thread }) {
             <p className="rv-note-meta"><b>{c.wall_name}</b> <time dateTime={c.created_at}>{relativeTime(c.created_at)}</time></p>
             {c.prompt && <p className="rv-note-q">{c.prompt}</p>}
             <p className="rv-note-body">{c.body}</p>
+            <Reactions
+              comment={c}
+              canReact={canReact}
+              onReact={onReact}
+              onLockedClick={onLockedClick}
+            />
           </div>
         </li>
       ))}

@@ -82,7 +82,7 @@ function EventPage({ slug }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [ev, w, t] = await Promise.all([api.loadEvent(slug), api.loadWall(slug), api.loadThread(slug)]);
+      const [ev, w, t] = await Promise.all([api.loadEvent(slug), api.loadWall(slug), api.loadThread(slug, api.getToken(slug))]);
       if (!ev) { setMissing(true); return; }
       setEvent(ev);
       setWall(w);
@@ -167,7 +167,7 @@ function EventPage({ slug }) {
   async function post(body, prompt) {
     const id = await api.comment(token, body, prompt);
     api.notifyComment(token, id);
-    setThread(await api.loadThread(slug));
+    setThread(await api.loadThread(slug, api.getToken(slug)));
   }
 
   const openForm = () => setSheet('form');
@@ -262,7 +262,15 @@ function EventPage({ slug }) {
           ) : (
             event && <p className="rv-lock">The thread is closed.</p>
           )}
-          <ThreadList thread={[...thread].reverse()} />
+          <ThreadList
+            thread={[...thread].reverse()}
+            canReact={going}
+            onReact={async (commentId, emoji) => {
+              await api.reactToComment(api.getToken(slug), commentId, emoji);
+              setThread(await api.loadThread(slug, api.getToken(slug)));
+            }}
+            onLockedClick={openForm}
+          />
         </section>
       </main>
 

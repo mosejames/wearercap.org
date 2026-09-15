@@ -55,7 +55,17 @@ async function rpc(name, args) {
 
 export const loadEvent = (slug) => rpc('event_get', { p_slug: slug });
 export const loadWall = async (slug) => (await rpc('event_wall', { p_slug: slug })) || [];
-export const loadThread = async (slug) => (await rpc('event_thread', { p_slug: slug })) || [];
+// The token is optional and only decides which reactions come back marked as
+// this browser's own; the counts are the same either way.
+export const loadThread = async (slug, token) =>
+  (await rpc('event_thread', { p_slug: slug, p_token: isToken(token) ? token : null })) || [];
+
+// Toggling is done in the database so one RSVP counts once per emoji per
+// comment, however many times the button is tapped.
+export async function reactToComment(token, commentId, emoji) {
+  if (!isToken(token)) return null;
+  return rpc('event_comment_react', { p_token: token, p_comment_id: commentId, p_emoji: emoji });
+}
 
 export async function loadMine(slug, token) {
   if (!isToken(token)) return null;

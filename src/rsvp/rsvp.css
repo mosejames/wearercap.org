@@ -299,3 +299,22 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
 @media (max-width: 560px) {
   .rv-share { width: 100%; }
 }
+
+/* Reactions on a thread comment. Four only. A count appears once somebody has
+   tapped, so an untouched comment shows four quiet outlines rather than a row
+   of zeros. */
+.rv-reacts { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 0; }
+.rv-react {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 34px; padding: 5px 11px;
+  border: 1px solid rgba(26, 22, 19, 0.16); border-radius: 999px;
+  background: transparent; font: inherit; font-size: 14px; line-height: 1;
+  cursor: pointer; transition: border-color .14s ease, background .14s ease;
+}
+.rv-react b { font-size: 12.5px; font-weight: 800; }
+.rv-react.empty { opacity: .55; }
+.rv-react.on { background: rgba(176, 71, 10, .1); border-color: #b0470a; opacity: 1; }
+.rv-react:disabled { opacity: .45; cursor: default; }
+@media (hover: hover) {
+  .rv-react:hover { border-color: #b0470a; background: rgba(176, 71, 10, .06); }
+}
