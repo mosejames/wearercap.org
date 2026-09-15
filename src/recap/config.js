@@ -41,6 +41,10 @@ export const ROUNDS = [
       { id: 'joyful', label: 'Joyful' },
       { id: 'family', label: 'Family' },
     ],
+    // By Bingo Night the class of 2031 had been sorted, so no class is waiting
+    // on a house. null turns the unsorted lane off for this round; the EXP
+    // round keeps it, because at the time 2031 genuinely had no house.
+    unsortedClass: null,
     wordPrompt: 'One word for Bingo Night',
     wordLead: 'My Bingo Night in one word',
     bandLead: 'What Bingo Night felt like',
@@ -120,6 +124,11 @@ export const MULTI = {
 // building, not before; an empty option only invites a wrong pick.
 export const CLASSES = ['2027', '2028', '2029', '2030', '2031'];
 export const FIRST_SUMMER_CLASS = '2031';
+
+// The class still waiting on a house, for the active round. A round that sets
+// unsortedClass: null has none, so the unsorted lane disappears entirely.
+export const UNSORTED_CLASS =
+  CURRENT.unsortedClass !== undefined ? CURRENT.unsortedClass : FIRST_SUMMER_CLASS;
 export const RELATIONS = ['Mom', 'Dad', 'Grandparent', 'Auntie', 'Uncle', 'Bonus Parent', 'Guardian'];
 
 // Preset words keep the tallies clustering; parents can also write their own.

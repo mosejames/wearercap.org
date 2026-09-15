@@ -3,12 +3,12 @@ import {
   SITE, ROUNDS, CURRENT, HOUSES, UNSORTED, CLASSES, RELATIONS, WORDS,
   WORD_MAX, WORD_PROMPT, WORD_HINT, PROMPTS, randomPrompt,
   LINE_PROMPT, LINE_HINT, LINE_PLACEHOLDER, HOURS_URL, HASHTAGS,
-  FIRST_SUMMER_CLASS, MULTI, wordLabel, houseById, roundBySlug,
+  FIRST_SUMMER_CLASS, UNSORTED_CLASS, MULTI, wordLabel, houseById, roundBySlug,
 } from './config.js';
 import { listEntries, addEntry, uploadFile, setHidden } from './data.js';
 import { makeZip } from './zip.js';
 
-const LANES = [...HOUSES, UNSORTED, MULTI];
+const LANES = UNSORTED_CLASS ? [...HOUSES, UNSORTED, MULTI] : [...HOUSES, MULTI];
 
 // Always render the closing date in school time, not the reader's timezone.
 const CLOSE_LABEL = (iso) =>
@@ -154,7 +154,7 @@ function useEntryForm(initial) {
   const [media, setMedia] = useState([]);
   const [err, setErr] = useState('');
   const set = (k) => (v) => setF((p) => ({ ...p, [k]: v }));
-  const firstSummer = f.gradClass === FIRST_SUMMER_CLASS;
+  const firstSummer = UNSORTED_CLASS && f.gradClass === UNSORTED_CLASS;
   const house = firstSummer ? UNSORTED.id : f.house;
   const word = f.customWord.trim() ? f.customWord.trim().toLowerCase() : f.word;
   const ready = Boolean(
@@ -220,7 +220,7 @@ function EntryFields({ form }) {
         <div className="chips">
           {CLASSES.map((c) => (
             <button key={c} type="button" className={`chip${f.gradClass === c ? ' on' : ''}`}
-                    onClick={() => { set('gradClass')(c); if (c === FIRST_SUMMER_CLASS) set('house')(''); }}>{c}</button>
+                    onClick={() => { set('gradClass')(c); if (UNSORTED_CLASS && c === UNSORTED_CLASS) set('house')(''); }}>{c}</button>
           ))}
         </div>
       </div>
@@ -408,7 +408,7 @@ function MadLib({ form }) {
           <div className="chips slotchips">
             {CLASSES.map((c) => (
               <button key={c} type="button" className={`chip${f.gradClass === c ? ' on' : ''}`}
-                      onClick={() => { set('gradClass')(c); if (c === FIRST_SUMMER_CLASS) set('house')(''); setEditing(null); }}>
+                      onClick={() => { set('gradClass')(c); if (UNSORTED_CLASS && c === UNSORTED_CLASS) set('house')(''); setEditing(null); }}>
                 {c}
               </button>
             ))}
