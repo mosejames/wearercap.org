@@ -133,8 +133,16 @@ const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestb
 // The PayPal payment link for the annual membership donation.
 const DONATE_URL = 'https://www.paypal.com/ncp/payment/EWP8R298MW83A';
 
-const MEETING_TAKEOVER = true;
+const MEETING_TAKEOVER = false;
 const MEETING_STARTS = new Date('2026-09-14T19:00:00-04:00');
+
+// The most recent general meeting, walked through slide by slide at its own
+// address. Update all three when the next one has a page.
+const MEETING_RECAP = {
+  href: '/meeting/sept-14/',
+  title: 'Missed the September 14 meeting?',
+  body: 'The room hit its limit before 7:00. Every slide, what was said, the recording, and every link from the night, in one scroll.',
+};
 
 const heroImage = '/images/rcap-hero-welcome.jpg';
 const videoPoster = '/images/rcap-video-hero.jpg';
@@ -167,10 +175,11 @@ const navLinks = [
 // the tiles beneath it. Delete a row once its date has passed and the next one
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: 'RCAP General Meeting', time: '7pm, virtual', description: 'Our first of the year. Meet the board, hear what is coming, and find where you fit.', image: '/images/rcap-meeting-night.jpg', join: 'https://us06web.zoom.us/j/81639745595?pwd=slHZjoasjw5rIkStFl3ftF7UN9J7EZ.1' },
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, 6pm' },
+  // The first row is the featured card and needs time, description and image.
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/rcap-community-smiles.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
+  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
   { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
 ];
@@ -769,6 +778,19 @@ function App() {
             </article>
           ))}
         </div>
+
+        {/* The last general meeting, for everyone who was not in the room. Same
+            bar as the board callout below, so the page has one shape for "the
+            next thing to read". Point it at the newest meeting page. */}
+        <a className="board-bar" href={MEETING_RECAP.href}>
+          <span className="board-bar-text">
+            <strong>{MEETING_RECAP.title}</strong>
+            <span>{MEETING_RECAP.body}</span>
+          </span>
+          <span className="board-bar-go" aria-hidden="true">
+            <ArrowRight size={20} />
+          </span>
+        </a>
       </section>
 
       {/* Story — where the hero's video went. A first-time parent gets the
