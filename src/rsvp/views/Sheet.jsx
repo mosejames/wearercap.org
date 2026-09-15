@@ -163,9 +163,14 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
             <label className="rv-toggle">
               <input type="checkbox" checked={form.bringing} onChange={(e) => set('bringing', e.target.checked)} />
               <span className="rv-switch" aria-hidden="true" />
-              <span>Coming as a pair?</span>
+              <span>Bringing a guest?</span>
             </label>
-            <p className="rv-hint rv-hint-tight">Your spouse or your student's other parent. Every other RCA parent gets their own spot on the wall, so send them the link.</p>
+            {/* The hint used to read "your spouse or your student's other
+                parent", which quietly ruled out the grandmothers, godparents
+                and aunties who show up for these kids. The board settled on two
+                seats and a name, and the page does not ask who that person is
+                to you. */}
+            <p className="rv-hint rv-hint-tight">Two seats per RCA family. Every other RCA parent gets their own spot on the wall, so send them the link.</p>
             {form.bringing && (
               <label className="rv-field rv-sub">
                 <span>Their name</span>
