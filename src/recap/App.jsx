@@ -124,7 +124,7 @@ function WordBand({ words }) {
     <section className="wordband">
       <div className="shell">
         <div className="wordband-head">
-          <span className="eyebrow">What EXP felt like</span>
+          <span className="eyebrow">{CURRENT.bandLead || SITE.bandLead}</span>
           <p>Every word below came from a parent who was there.</p>
         </div>
         <div className="wordband-list">
@@ -333,7 +333,7 @@ function MadLib({ form }) {
       <div className="ml-word">
         {wordShown && !wordOpen ? (
           <div className="ml-wordcard">
-            <p className="ml-word-lead">My EXP in one word</p>
+            <p className="ml-word-lead">{CURRENT.wordLead || SITE.wordLeadLong}</p>
             <button type="button"
                     className={`ml-word-big${wordShown.length > 12 ? ' sm' : wordShown.length > 9 ? ' md' : ''}`}
                     onClick={() => setWordOpen(true)}>
@@ -343,7 +343,7 @@ function MadLib({ form }) {
           </div>
         ) : (
           <>
-            <p className="ml-word-sub">My EXP in one word:</p>
+            <p className="ml-word-sub">{(CURRENT.wordLead || SITE.wordLeadLong)}:</p>
             <div className="ml-opts center">
               {ROUND_WORDS.map((w) => (
                 <button key={w.id} type="button"
@@ -1011,7 +1011,7 @@ export default function App() {
         <div className="shell">
           <p>Every hour you gave this summer counts — but only if it’s logged.{' '}
             <a href={HOURS_URL} target="_blank" rel="noreferrer">Log your volunteer hours →</a></p>
-          <p className="tags">{HASHTAGS.join(' · ')}</p>
+          <p className="tags">{(CURRENT.hashtags || HASHTAGS).join(' · ')}</p>
           <p style={{ marginTop: 14 }}>Ron Clark Academy Parents · Students at the center, always.</p>
         </div>
       </footer>

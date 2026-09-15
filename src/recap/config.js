@@ -42,6 +42,25 @@ export const ROUNDS = [
       { id: 'family', label: 'Family' },
     ],
     wordPrompt: 'One word for Bingo Night',
+    wordLead: 'My Bingo Night in one word',
+    bandLead: 'What Bingo Night felt like',
+    hashtags: ['#RCAPBINGO', '#RCABINGONIGHT', '#RONCLARKACADEMY'],
+    // Sentence starters for this round. The EXP set asked about volunteering
+    // and what people learned; none of that fits a bingo hall.
+    prompts: [
+      'The moment the room lost it\u2026',
+      'My table was\u2026',
+      'I was one number away from\u2026',
+      'The person who took it too seriously\u2026',
+      'I laughed hardest when\u2026',
+      'Next time I am bringing\u2026',
+      'My lucky card\u2026',
+      'The prize I really wanted\u2026',
+      'I did not expect\u2026',
+      'Who I sat with\u2026',
+      'The best trash talk of the night\u2026',
+      'One thing I will remember\u2026',
+    ],
     linePrompt: 'What happened?',
     lineHint: 'one line, brag or complain',
     linePlaceholder: 'A near miss, a rival, the moment the room lost it\u2026',
@@ -68,6 +87,8 @@ export const SITE = {
   intro:
     'EXP was powered by parents like you. Tell us how it felt with one word, a quick note, or a selfie. Join the recap in under 30 seconds.',
   wordLead: 'Tap your answer',
+  wordLeadLong: 'My EXP in one word',
+  bandLead: 'What EXP felt like',
 };
 
 // Official house colors, confirmed by Mose (July 2026):
@@ -143,7 +164,10 @@ export const PROMPTS = [
 ];
 
 export const randomPrompt = (not) => {
-  const pool = not ? PROMPTS.filter((p) => p !== not) : PROMPTS;
+  // The active round may carry its own starters; rounds without them use the
+  // shared list.
+  const all = CURRENT.prompts || PROMPTS;
+  const pool = not ? all.filter((p) => p !== not) : all;
   return pool[Math.floor(Math.random() * pool.length)];
 };
 
