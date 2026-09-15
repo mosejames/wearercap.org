@@ -650,6 +650,20 @@ button {
   line-height: 1.4;
 }
 
+/* A tile that has its own page gets one small link, pinned under the label. */
+.event-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -6px 12px 14px;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--ink, #1a1613);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+
 .resources-section {
   padding-bottom: 60px;
 }
@@ -2273,6 +2287,7 @@ button {
 .homepage-refresh .event-day { padding: 12px 8px; font-size: 46px; }
 .homepage-refresh .event-card.is-range .event-day { font-size: 32px; padding: 13px 8px; }
 .homepage-refresh .event-what { padding: 0 8px 8px; font-size: 16px; line-height: 1.45; }
+.homepage-refresh .event-cta { margin: 0 8px 12px; font-size: 15px; }
 .homepage-refresh :is(a, button):focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 5px; }
 @media (max-width: 1100px) {
   .homepage-refresh .nav { flex-direction: column; align-items: stretch; gap: 18px; }

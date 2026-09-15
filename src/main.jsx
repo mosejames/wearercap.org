@@ -179,7 +179,7 @@ const upcomingEvents = [
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/bingo.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
-  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm' },
+  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm', href: '/karaoke', cta: 'RSVP' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
   { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
 ];
@@ -763,7 +763,7 @@ function App() {
           </div>
         </article>
         <div className="event-grid" aria-label="More upcoming RCAP dates">
-          {upcomingEvents.slice(1).map(({ month, year, weekday, day, label }) => (
+          {upcomingEvents.slice(1).map(({ month, year, weekday, day, label, href, cta }) => (
             <article
               className={`event-card${day.length > 2 ? ' is-range' : ''}`}
               key={`${month}-${day}-${label}`}
@@ -776,6 +776,7 @@ function App() {
               </header>
               <p className="event-day">{day}</p>
               <p className="event-what">{label}</p>
+              {href && <a className="event-cta" href={href}>{cta || 'Details'} <ArrowUpRight size={15} aria-hidden="true" /></a>}
             </article>
           ))}
         </div>
