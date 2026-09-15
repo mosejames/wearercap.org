@@ -13,19 +13,18 @@
 <meta property="og:url" content="https://wearercap.org/meeting/sept-14/" />
 <meta property="og:type" content="article" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="theme-color" content="#1a1613" />
+<meta name="theme-color" content="#0f1e3a" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=Newsreader:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 <style>
-  /* Two palettes on one page, on purpose. The site's ink and flame frame the
-     page. Inside each slide frame, the deck's own navy, cream and orange are
-     used exactly as they were on screen that night, so a parent who was there
-     recognises the slide and a parent who was not gets the real one. */
+  /* One family of blues, on purpose. The page sits on a deep navy a few steps
+     below the deck's own, so the slide frames read as slides on a stage. The
+     flame is kept for the mark and the accents only. */
   :root{
-    --ink:#1a1613;--ink-2:#241f1b;--paper:#faf4ea;--gold:#f7a81c;--orange:#f26a1b;--red:#d8202d;--magenta:#e0218a;
+    --ink:#0f1e3a;--ink-2:#0b1730;--paper:#faf4ea;--gold:#f7a81c;--orange:#f26a1b;--red:#d8202d;--magenta:#e0218a;
     --flame:linear-gradient(96deg,#e8a516 0%,#f26a1b 34%,#d8202d 68%,#e0218a 100%);
     --navy:#1b3159;--navy-2:#142546;--cream:#fbf8f1;--deck-orange:#f26a1b;--deck-gold:#e8a516;
     --line:rgba(255,255,255,.14);--muted:rgba(255,255,255,.66);
@@ -74,7 +73,7 @@
   .agenda li a .n{color:var(--gold);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700}
 
   /* sticky chip nav, only useful while scrolling the long part */
-  .rail{position:sticky;top:0;z-index:5;background:rgba(26,22,19,.92);backdrop-filter:saturate(1.2) blur(8px);-webkit-backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);margin-top:36px}
+  .rail{position:sticky;top:0;z-index:5;background:rgba(15,30,58,.92);backdrop-filter:saturate(1.2) blur(8px);-webkit-backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--line);margin-top:36px}
   .rail-in{display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:none;-ms-overflow-style:none}
   .rail-in::-webkit-scrollbar{display:none}
   .rail a{flex:0 0 auto;text-decoration:none;color:rgba(255,255,255,.62);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
@@ -87,7 +86,7 @@
   .s-head h2{margin:0;font-size:clamp(24px,3.4vw,36px);font-weight:900;letter-spacing:-.03em;line-height:1.05}
   .s-head .who{color:rgba(255,255,255,.5);font-size:13px;font-weight:600;margin-left:auto;white-space:nowrap}
 
-  .slide{position:relative;border-radius:14px;overflow:hidden;background:var(--cream);color:var(--navy);box-shadow:0 20px 60px rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08)}
+  .slide{position:relative;border-radius:14px;overflow:hidden;background:var(--cream);color:var(--navy);box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
   .slide-in{padding:clamp(22px,4vw,44px)}
   .slide .kick{font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--deck-orange);margin:0 0 10px}
   .slide .kick.on-navy{color:var(--deck-gold)}
@@ -96,7 +95,7 @@
   .slide h3 .o{color:var(--deck-orange)}
   .slide .brand{position:absolute;right:clamp(18px,3vw,32px);top:clamp(18px,3vw,32px);font-size:8.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;text-align:right;line-height:1.5;color:var(--navy);opacity:.85}
   .slide .brand::after{content:'';display:block;width:26px;height:2px;background:var(--deck-orange);margin:6px 0 0 auto}
-  .slide.navy{background:var(--navy);color:#fff}
+  .slide.navy{background:var(--navy);color:#fff;border-color:rgba(255,255,255,.16)}
   .slide.navy h3,.slide.navy .brand{color:#fff}
   .slide.navy .brand::after{background:var(--deck-gold)}
   .slide.orange{background:var(--deck-orange);color:var(--navy)}
@@ -174,7 +173,7 @@
   /* tools slide */
   .tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0 0}
   @media(max-width:640px){.tools{grid-template-columns:1fr}}
-  .tools a{display:block;text-decoration:none;color:#fff;background:var(--ink);padding:16px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.14);transition:border-color .15s ease,transform .15s ease}
+  .tools a{display:block;text-decoration:none;color:#fff;background:var(--ink-2);padding:16px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.14);transition:border-color .15s ease,transform .15s ease}
   .tools a:hover{border-color:var(--gold);transform:translateY(-2px)}
   .tools b{display:block;font-size:16px;font-weight:900;margin-bottom:4px}
   .tools b .tag{display:inline-block;vertical-align:middle;margin-left:8px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--gold);padding:2px 6px;border-radius:3px}
@@ -194,7 +193,7 @@
   .links a small{color:rgba(255,255,255,.5);font-weight:500;font-size:12.5px;display:block;margin-top:2px}
   .links a .arr{color:var(--gold);flex:0 0 auto}
   .links a.hot{background:var(--gold);color:var(--ink);border-color:var(--gold)}
-  .links a.hot small{color:rgba(26,22,19,.65)}
+  .links a.hot small{color:rgba(15,30,58,.7)}
   .links a.hot .arr{color:var(--ink)}
 
   .ask{margin:26px 0 0;border-radius:14px;padding:26px 24px;background:linear-gradient(96deg,#3fc47a 0%,#1f9d57 55%,#145f38 100%);color:#fff}
@@ -204,7 +203,7 @@
   .ask .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
 
   /* this week */
-  .week{margin:56px 0 0;border-radius:16px;overflow:hidden;background:var(--navy);color:#fff;padding:clamp(24px,4vw,44px)}
+  .week{margin:56px 0 0;border-radius:16px;overflow:hidden;background:var(--navy);color:#fff;padding:clamp(24px,4vw,44px);border:1px solid rgba(255,255,255,.16)}
   .week .kick{color:var(--deck-gold)}
   .week h2{font-size:clamp(30px,5vw,54px);font-weight:900;letter-spacing:-.03em;line-height:.98;margin:0 0 22px;text-transform:uppercase}
   .week ol{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:640px}
