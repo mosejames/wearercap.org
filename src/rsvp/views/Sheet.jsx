@@ -165,14 +165,15 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
             <label className="rv-toggle">
               <input type="checkbox" checked={form.bringing} onChange={(e) => set('bringing', e.target.checked)} />
               <span className="rv-switch" aria-hidden="true" />
-              <span>Bringing someone?</span>
+              <span>Coming with your co-parent?</span>
             </label>
+            <p className="rv-hint rv-hint-tight">Your student's other parent or guardian. Every other RCA parent gets their own spot on the wall, so send them the link.</p>
             {form.bringing && (
               <label className="rv-field rv-sub">
-                <span>Their name</span>
+                <span>Your co-parent's name</span>
                 <input
                   value={form.plus_one_name} onChange={(e) => set('plus_one_name', e.target.value)}
-                  autoComplete="off" placeholder="Spouse, partner or friend" aria-invalid={!!errors.plus_one_name}
+                  autoComplete="off" placeholder="First and last" aria-invalid={!!errors.plus_one_name}
                 />
                 {errors.plus_one_name && <em>{errors.plus_one_name}</em>}
               </label>

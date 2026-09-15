@@ -15,7 +15,7 @@ function cell(v) {
 }
 
 export function toCsv(rows) {
-  const head = ['RSVP', 'Status', 'Name', 'Phone', 'Email', 'House', 'Grades', 'Plus one', 'Photo', 'Confirmation email'];
+  const head = ['RSVP', 'Status', 'Name', 'Phone', 'Email', 'House', 'Grades', 'Co-parent', 'Photo', 'Confirmation email'];
   const body = rows.map((r) => [
     fmt(r.created_at), r.status, r.full_name, r.phone, r.email, houseName(r.house),
     (r.grades || []).join('; '), r.plus_one_name, r.photo_url ? 'yes' : '',
