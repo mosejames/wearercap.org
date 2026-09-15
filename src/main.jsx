@@ -176,7 +176,7 @@ const navLinks = [
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
   // The first row is the featured card and needs time, description and image.
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/rcap-community-smiles.jpg' },
+  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/bingo.jpg' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm' },
