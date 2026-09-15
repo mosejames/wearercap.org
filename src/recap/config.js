@@ -24,6 +24,27 @@ export const ROUNDS = [
     goal: 100,
     titleLead: 'DESCRIBE BINGO NIGHT',
     titleGrad: 'IN ONE WORD.',
+    // Bingo needs its own register. "Inspired" and "Welcomed" belong to EXP;
+    // this room is competitive and funny. "So close" and "robbed" matter most:
+    // almost nobody wins, and those give the rest of the room something true to
+    // say instead of a polite compliment.
+    words: [
+      { id: 'lucky', label: 'Lucky' },
+      { id: 'loud', label: 'Loud' },
+      { id: 'hyped', label: 'Hyped' },
+      { id: 'competitive', label: 'Competitive' },
+      { id: 'ruthless', label: 'Ruthless' },
+      { id: 'hilarious', label: 'Hilarious' },
+      { id: 'soclose', label: 'So close' },
+      { id: 'robbed', label: 'Robbed' },
+      { id: 'together', label: 'Together' },
+      { id: 'joyful', label: 'Joyful' },
+      { id: 'family', label: 'Family' },
+    ],
+    wordPrompt: 'One word for Bingo Night',
+    linePrompt: 'What happened?',
+    lineHint: 'one line, brag or complain',
+    linePlaceholder: 'A near miss, a rival, the moment the room lost it\u2026',
     intro:
       'A room full of RCA families, cards down, somebody about to shout. Tell us how it felt with one word, a quick note, or a photo. Takes about thirty seconds.',
   },
@@ -134,7 +155,7 @@ export const roundBySlug = (slug) => ROUNDS.find((r) => r.slug === slug) || CURR
 
 // Preset ids map to their label; a custom word renders as typed, capitalized.
 export const wordLabel = (id) => {
-  const hit = WORDS.find((w) => w.id === id);
+  const hit = (CURRENT.words || WORDS).find((w) => w.id === id);
   if (hit) return hit.label;
   const t = String(id || '').trim();
   return t.charAt(0).toUpperCase() + t.slice(1);

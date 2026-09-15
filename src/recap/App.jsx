@@ -245,9 +245,9 @@ function EntryFields({ form }) {
       </div>
 
       <div className="step">
-        <label>{WORD_PROMPT} <span className="hint">{WORD_HINT}</span></label>
+        <label>{CURRENT.wordPrompt || WORD_PROMPT} <span className="hint">{WORD_HINT}</span></label>
         <div className="chips">
-          {WORDS.map((w) => (
+          {ROUND_WORDS.map((w) => (
             <button key={w.id} type="button"
                     className={`chip big${!f.customWord.trim() && f.word === w.id ? ' on' : ''}`}
                     onClick={() => { set('word')(w.id); set('customWord')(''); }}>{w.label}</button>
@@ -259,8 +259,8 @@ function EntryFields({ form }) {
       </div>
 
       <div className="step">
-        <label>{LINE_PROMPT} <span className="hint">{LINE_HINT}</span></label>
-        <textarea className="field" value={f.story} placeholder={LINE_PLACEHOLDER}
+        <label>{CURRENT.linePrompt || LINE_PROMPT} <span className="hint">{CURRENT.lineHint || LINE_HINT}</span></label>
+        <textarea className="field" value={f.story} placeholder={CURRENT.linePlaceholder || LINE_PLACEHOLDER}
                   onChange={(e) => set('story')(e.target.value.slice(0, 400))} />
         <div className="charc">{f.story.length}/400</div>
       </div>
@@ -345,7 +345,7 @@ function MadLib({ form }) {
           <>
             <p className="ml-word-sub">My EXP in one word:</p>
             <div className="ml-opts center">
-              {WORDS.map((w) => (
+              {ROUND_WORDS.map((w) => (
                 <button key={w.id} type="button"
                         className={`chip${!f.customWord.trim() && f.word === w.id ? ' on' : ''}`}
                         onClick={() => { set('word')(w.id); set('customWord')(''); setWordOpen(false); }}>
@@ -772,6 +772,11 @@ function Lightbox({ entry, onClose }) {
   );
 }
 
+// The active round may carry its own word list; rounds without one use the
+// shared default. Resolved once here so every place that renders or
+// validates a word agrees.
+const ROUND_WORDS = CURRENT.words || WORDS;
+
 export default function App() {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -797,7 +802,7 @@ export default function App() {
     const w = (new URLSearchParams(window.location.search).get('word') || '').toLowerCase().trim();
     if (!w) return;
     if (new Date(CURRENT.closesAt).getTime() <= Date.now()) return;
-    setOpen(WORDS.some((x) => x.id === w) ? w : '');
+    setOpen(ROUND_WORDS.some((x) => x.id === w) ? w : '');
   }, []);
 
   useEffect(() => {
@@ -907,7 +912,7 @@ export default function App() {
             <div className="hero-words">
               <p className="hero-words-lead">{SITE.wordLead}</p>
               <div className="wchips">
-                {WORDS.map((w) => (
+                {ROUND_WORDS.map((w) => (
                   <button key={w.id} className="wchip" onClick={() => setOpen(w.id)}>{w.label}</button>
                 ))}
                 <button className="wchip own" onClick={() => setOpen('')}>Your own word…</button>
