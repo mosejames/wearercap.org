@@ -19,6 +19,7 @@ export default defineConfig({
         m3vault: resolve(__dirname, 'm3-vault/index.html'),
         committeeinterest: resolve(__dirname, 'committee-interest/index.html'),
         board: resolve(__dirname, 'board/index.html'),
+        rsvp: resolve(__dirname, 'rsvp/index.html'),
       },
     },
   },

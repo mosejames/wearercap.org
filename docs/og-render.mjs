@@ -22,6 +22,7 @@ const CARDS = {
   my:         { html: UX, v: 'my',     out: 'uniform-exchange-my-og.png' },
   admin:      { html: UX, v: 'admin',  out: 'uniform-exchange-admin-og.png' },
   collective: { html: 'og-collective.html', out: 'directory/collective-og.png' },
+  karaoke:    { html: 'og-rsvp-karaoke.html', out: 'rsvp-karaoke-og.png' },
 };
 
 const only = process.argv[2];

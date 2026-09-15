@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/rsvp/:slug/calendar.ics",
+      "destination": "/api/event-ics?slug=:slug"
+    },
+    {
+      "source": "/rsvp/:slug",
+      "destination": "/rsvp/index.html"
+    },
+    {
       "source": "/uniform-exchange/h/:token",
       "destination": "/api/link?p=holder&v=:token"
     },
@@ -32,6 +40,13 @@
     {
       "source": "/committeeinterest",
       "destination": "/committee-interest/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/karaoke",
+      "destination": "/rsvp/karaoke-sept-27",
+      "permanent": false
     }
   ]
 }

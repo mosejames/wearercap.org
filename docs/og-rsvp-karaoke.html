@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  Source for the Parent Social RSVP OG card (1200×630).
+
+    public/rsvp-karaoke-og.png
+
+  The flyer, landscape: cream lockup strip, navy band, the mic from the flyer
+  bleeding in from the right. The headline says what it is and the strap says
+  where to add your name.
+
+  Regenerate:  node docs/og-render.mjs karaoke
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{width:1200px;height:630px;overflow:hidden;font-family:'Archivo',sans-serif;background:#faf4ea}
+  .top{height:120px;display:flex;align-items:center;justify-content:space-between;padding:0 72px;color:#1a2a56}
+  .mark{font-weight:900;font-size:58px;letter-spacing:-.045em}
+  .mark b{color:#f0b323}
+  .side{font-weight:800;font-size:17px;line-height:1.25;letter-spacing:.04em;border-bottom:4px solid #f0b323;padding-bottom:8px}
+  .band{position:relative;height:510px;background:#0f1a3a;color:#fff;overflow:hidden}
+  .art{position:absolute;right:0;top:0;height:100%;aspect-ratio:350/792;transform:scale(1.25);transform-origin:right center;
+    background:url(../public/images/rsvp-karaoke-mic.jpg) center/cover;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 50%)}
+  .in{position:relative;padding:48px 72px}
+  .eyebrow{font-weight:800;font-size:22px;letter-spacing:.16em;color:#f0b323}
+  h1{font-weight:900;font-size:128px;line-height:.86;letter-spacing:-.035em;margin-top:14px}
+  h1 span{display:block}
+  h1 .g{color:#f0b323}
+  .sub{display:flex;align-items:center;gap:16px;width:520px;margin-top:20px;font-weight:700;font-size:24px;letter-spacing:.26em}
+  .sub::before,.sub::after{content:"";flex:1;height:3px;background:#f0b323}
+  .when{margin-top:22px;font-weight:800;font-size:32px;letter-spacing:-.01em}
+  .when small{font-size:24px;font-weight:700;color:rgba(255,255,255,.85);margin-left:10px}
+</style>
+</head>
+<body>
+  <div class="top"><div class="mark">WE ARE RCA<b>P</b>.</div><div class="side">RON CLARK ACADEMY PARENTS</div></div>
+  <div class="band">
+    <div class="art"></div>
+    <div class="in">
+      <p class="eyebrow">SEE WHO'S COMING · ADD YOUR NAME</p>
+      <h1><span>PARENT</span><span class="g">SOCIAL</span></h1>
+      <p class="sub">R&amp;B KARAOKE</p>
+      <p class="when">Sunday, Sept 27<small>5 to 7 PM at RCA</small></p>
+    </div>
+  </div>
+</body>
+</html>
