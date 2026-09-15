@@ -1052,7 +1052,7 @@ function App() {
         >
           <Heart size={17} aria-hidden="true" />
           <span className="give-long">Make your membership donation</span>
-          <span className="give-short" aria-hidden="true">Donate</span>
+          <span className="give-short" aria-hidden="true">Membership donation</span>
         </a>
       ) : null}
 

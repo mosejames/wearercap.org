@@ -2475,9 +2475,9 @@ button {
     top: calc(env(safe-area-inset-top, 0px) + 16px);
     right: 16px;
     bottom: auto;
-    gap: 7px;
-    padding: 10px 16px;
-    font-size: 14px;
+    gap: 6px;
+    padding: 9px 14px;
+    font-size: 13px;
   }
   .give-long { display: none; }
   .give-short { display: inline; }
