@@ -67,7 +67,7 @@ const officers = [
     photo: '/images/board/farren.jpg',
     email: contactEmail,
     bio:
-      'Farren Salter, mother of Logan, a sixth grader, with two more at home keeping ' +
+      'Farren Salter, mother of Logann, a sixth grader, with two more at home keeping ' +
       'her busy. She is the reason anything said in a meeting can be found again. ' +
       'Quietly precise, and the first to check that we spelled a name right. ' +
       'If it got written down, sorted, or followed up this year, her name is on it.',
