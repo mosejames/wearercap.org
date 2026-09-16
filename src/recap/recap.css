@@ -611,3 +611,5 @@ textarea.field{resize:vertical;min-height:96px;line-height:1.5}
   color:rgba(255,255,255,.6);text-decoration:none}
 .backhome:hover{color:#fff}
 @media(max-width:560px){.backhome{letter-spacing:.1em;font-size:10px}}
+.vault-pointer .vault-pointer-copy{margin:0 0 12px;font-size:14px;line-height:1.45;color:var(--ink-soft)}
+.vault-pointer .btn{display:inline-block;text-decoration:none}

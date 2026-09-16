@@ -265,7 +265,7 @@ function EntryFields({ form }) {
         <div className="charc">{f.story.length}/400</div>
       </div>
 
-      <div className="step">
+      {CURRENT.photosAt ? <VaultPointer /> : <div className="step">
         <label>Photos, video, selfies <span className="hint">straight off your camera roll — faces welcome</span></label>
         <div className="thumbs">
           {media.map((m, i) => (
@@ -280,7 +280,7 @@ function EntryFields({ form }) {
           )}
         </div>
         <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={pick} />
-      </div>
+      </div>}
 
       {err && <p className="err">{err}</p>}
     </>
@@ -440,7 +440,7 @@ function MadLib({ form }) {
         <span className="charc">{f.story.length}/400</span>
       </div>
 
-      <div className="ml-proof">
+      {CURRENT.photosAt ? <VaultPointer /> : <><div className="ml-proof">
         <p className="ml-prooflab">Proof it happened <span className="ml-opt">(optional)</span></p>
         <div className="ml-upload">
           {media.map((m, i) => (
@@ -458,9 +458,21 @@ function MadLib({ form }) {
           )}
         </div>
       </div>
-      <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={pick} />
+      <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={pick} /></>}
 
       {err && <p className="err">{err}</p>}
+    </div>
+  );
+}
+
+// Rounds with photosAt send photos to the RCAP Vault instead of taking them
+// here. Entries that already carry photos keep showing them on the board.
+function VaultPointer() {
+  return (
+    <div className="ml-proof vault-pointer">
+      <p className="ml-prooflab">Got photos from {CURRENT.name}?</p>
+      <p className="vault-pointer-copy">They go in the RCAP Vault, where they count for your house and stay with the year.</p>
+      <a className="btn flame" href={CURRENT.photosAt} target="_blank" rel="noreferrer">Add photos to the vault →</a>
     </div>
   );
 }
@@ -547,12 +559,21 @@ function Done({ entry, onClose }) {
             <h2>You’re in the recap.</h2>
             <p>Thank you, {entry.parentName || `${entry.child}’s ${entry.relation}`}. Close this and you’ll see yourself up there.</p>
           </div>
+          {CURRENT.photosAt ? (
+            <div className="next">
+              <b>Now the photos</b>
+              <p>Add your {CURRENT.name} photos to the RCAP Vault. Every one counts for your house.</p>
+              <a className="btn flame" href={CURRENT.photosAt} target="_blank" rel="noreferrer"
+                 style={{ display: 'inline-block', textDecoration: 'none' }}>Add photos to the vault →</a>
+            </div>
+          ) : (
           <div className="next">
             <b>One more thing, and it takes 40 seconds</b>
             <p>Log the hours you worked this summer. It counts — but only if it’s logged.</p>
             <a className="btn flame" href={HOURS_URL} target="_blank" rel="noreferrer"
                style={{ display: 'inline-block', textDecoration: 'none' }}>Log my hours →</a>
           </div>
+          )}
           <div className="next">
             <b>Know a parent who was there?</b>
             <p>This is only as full as we make it. Send them the link.</p>

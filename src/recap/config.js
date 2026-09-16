@@ -21,6 +21,10 @@ export const ROUNDS = [
     label: 'BINGO NIGHT \u00b7 2026',
     prompt: 'tonight',
     closesAt: '2026-09-22T23:59:59-04:00',
+    // Photos for ordinary all-school events live in the RCAP Vault, where they
+    // count for a house and stay with the year. The recap keeps the words.
+    // The real path, not the hash, so a shared link previews as Bingo Night.
+    photosAt: '/rcap-vault/e/bingo-night',
     goal: 100,
     titleLead: 'DESCRIBE BINGO NIGHT',
     titleGrad: 'IN ONE WORD.',
@@ -69,7 +73,7 @@ export const ROUNDS = [
     lineHint: 'one line, brag or complain',
     linePlaceholder: 'A near miss, a rival, the moment the room lost it\u2026',
     intro:
-      'A room full of RCA families, cards down, somebody about to shout. Tell us how it felt with one word, a quick note, or a photo. Takes about thirty seconds.',
+      'A room full of RCA families, cards down, somebody about to shout. Tell us how it felt with one word or a quick note. Photos go in the RCAP Vault. Takes about thirty seconds.',
   },
   {
     slug: 'esp-2026',
