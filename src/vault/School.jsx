@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { RCA_HOUSES, rcaHouse, plural } from './config.js';
+import { RCA_HOUSES, rcaHouse, plural, HOUSE } from './config.js';
 import { houseBoard, mostLoved, mediaUrl } from './data.js';
+import { Avatar } from './Community.jsx';
+import { rewardCall } from './rewards.js';
 import { isVideo } from './videos.js';
 
 // Both widgets poll, because the point of a school-wide vault is watching the
@@ -88,4 +90,29 @@ export function MostLoved({ eventId = null, version, events = [], title, onOpen,
       )}
     </div>
   );
+}
+
+
+export function ContributorBoard({ eventId, version, owner }) {
+  const { data, failed } = usePolled(() => rewardCall('vault_contributors', {
+    p_month: null, p_event: eventId, p_house: HOUSE.id,
+  }), [eventId, version]);
+  if (!data) return <p className={failed ? 'err' : 'empty'} role="status">{failed ? 'Contributors could not load. Retrying shortly.' : 'Loading contributors…'}</p>;
+  // The existing endpoint combines linked identities and excludes hidden uploads.
+  // Its points ranking includes engagement; this view ranks only uploads.
+  const rows = data.filter(r => Number(r.uploads) > 0).sort((a,b) => Number(b.uploads) - Number(a.uploads) || a.display_name.localeCompare(b.display_name) || a.owner.localeCompare(b.owner));
+  if (!rows.length) return <p className="empty">Add photos to be the first on the board.</p>;
+  let rank = 0, lastCount = null;
+  return <div className="contributor-board"><p className="fine">Photos and videos shared</p><ol className="leaderboard">
+    {rows.map(r => {
+      if (Number(r.uploads) !== lastCount) rank += 1;
+      lastCount = Number(r.uploads);
+      return <li key={r.owner} className={r.owner === owner ? 'is-you' : ''}>
+        <span className="leader-rank">{rank}</span>
+        <a href={`#/person/${r.owner}`} aria-label={`View ${r.display_name}’s contributions`}><Avatar owner={r.owner} name={r.display_name} /></a>
+        <div className="leader-person"><a className="leader-name" href={`#/person/${r.owner}`}><b>{r.display_name}{r.owner === owner ? ' · You' : ''}</b></a></div>
+        <strong className="leader-score">{r.uploads}<small>{Number(r.uploads) === 1 ? 'upload' : 'uploads'}</small></strong>
+      </li>;
+    })}
+  </ol></div>;
 }

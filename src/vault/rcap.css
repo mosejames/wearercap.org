@@ -128,3 +128,8 @@ html[data-vault="rcap"] .sheet .grid{margin-top:12px}
  html[data-vault="rcap"] .gallery-actions .btn{font-size:13px;padding-left:12px;padding-right:12px}
  html[data-vault="rcap"] .gallery-actions .ev-invite{margin-left:auto}
 }
+
+html[data-vault="rcap"] .leaderboard-tabs{max-width:100%;flex-wrap:wrap}
+html[data-vault="rcap"] .contributor-board .leaderboard{margin-top:12px}
+html[data-vault="rcap"] .contributor-board .leader-person{min-width:0;overflow-wrap:anywhere}
+html[data-vault="rcap"] .contributor-board .leader-score{flex-shrink:0}

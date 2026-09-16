@@ -11,7 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals, saveRcaHouse, staffRole as fetchStaffRole,
 } from './data.js';
-import { HouseBoard, MostLoved } from './School.jsx';
+import { HouseBoard, MostLoved, ContributorBoard } from './School.jsx';
 import { SaveMedia } from './SaveMedia.jsx';
 import { ACTIVITIES, SuggestionForm, SuggestionReview, GalleryVisibility } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
@@ -1187,9 +1187,10 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         <p className="fine">{event.title}</p>
         <div className="sort leaderboard-tabs" aria-label="Leaderboard view">
           <button className={leaderTab === 'houses' ? 'on' : ''} aria-pressed={leaderTab === 'houses'} onClick={() => setLeaderTab('houses')}>House uploads</button>
+          <button className={leaderTab === 'people' ? 'on' : ''} aria-pressed={leaderTab === 'people'} onClick={() => setLeaderTab('people')}>Contributors</button>
           <button className={leaderTab === 'photos' ? 'on' : ''} aria-pressed={leaderTab === 'photos'} onClick={() => setLeaderTab('photos')}>Most liked</button>
         </div>
-        {leaderTab === 'houses' ? <HouseBoard eventId={event.id} version={visible.length} title="House uploads" /> : <PhotoGrid photos={[...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes)} rank likedSet={liked} emptyText="No likes yet. Heart a photo to start." onOpen={i => { const ranked = [...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes); setLeaderboard(false); setIndex(sorted.findIndex(p => p.id === ranked[i].id)); }} />}
+        {leaderTab === 'houses' ? <HouseBoard eventId={event.id} version={visible.length} title="House uploads" /> : leaderTab === 'people' ? <ContributorBoard eventId={event.id} version={visible.length} owner={owner} /> : <PhotoGrid photos={[...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes)} rank likedSet={liked} emptyText="No likes yet. Heart a photo to start." onOpen={i => { const ranked = [...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes); setLeaderboard(false); setIndex(sorted.findIndex(p => p.id === ranked[i].id)); }} />}
       </Sheet>}
       <div className="shell">
         {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(sorted.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button></div>}

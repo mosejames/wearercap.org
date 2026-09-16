@@ -13,6 +13,16 @@ vi.mock('./data.js', async importOriginal => ({
   myLikes: async () => new Set(), commentCounts: async () => new Map(),
   houseBoard: async () => [{house:'amistad',photos:2,families:1}],
 }));
+vi.mock('./rewards.js', async importOriginal => ({
+  ...await importOriginal(),
+  rewardCall: vi.fn(async () => [
+    {owner:'engaged',display_name:'Many likes',uploads:0,score:100},
+    {owner:'small',display_name:'Small batch',uploads:1,score:90},
+    {owner:'large',display_name:'Large batch',uploads:12,score:60},
+    {owner:'tied',display_name:'Tied batch',uploads:12,score:60},
+  ]),
+}));
+import { rewardCall } from './rewards.js';
 import { SchoolGallery } from './App.jsx';
 import { listPhotos } from './data.js';
 it('opens the event gallery first and keeps house standings and ranked photos behind the leaderboard', async () => {
@@ -35,5 +45,12 @@ it('opens the event gallery first and keeps house standings and ranked photos be
     expect(ranked).toHaveLength(2);
     expect(ranked[0].getAttribute('aria-label')).toContain('Favorite family');
     expect(host.querySelectorAll('.event > .shell .tile')).toHaveLength(2);
+    await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Contributors').click());
+    expect(rewardCall).toHaveBeenCalledWith('vault_contributors', expect.objectContaining({p_event:'bingo'}));
+    const contributors=host.querySelectorAll('.contributor-board li');
+    expect(contributors).toHaveLength(3);
+    expect(contributors[0].textContent).toContain('Large batch');
+    expect([...contributors].map(r=>r.querySelector('.leader-rank').textContent)).toEqual(['1','1','2']);
+    expect(contributors[0].querySelector('.leader-name').getAttribute('href')).toBe('#/person/large');
   } finally {await act(async()=>root.unmount());host.remove();}
 });
