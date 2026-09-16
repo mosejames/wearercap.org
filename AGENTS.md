@@ -243,3 +243,10 @@ must reload to use the check. Historical RCAP originals were fingerprinted
 on September 16. If a concurrent duplicate reaches storage before its row is
 rejected, its unused storage objects remain; no photo or leaderboard credit
 is created. Old `/rcap-vault/` links permanently redirect to `/rcap-capsule/`.
+
+RCAP photo uploads now call `prepareImage` with `optimize: true`: the saved
+master is a JPEG up to 2560 pixels at quality 0.85, with no upscaling. An
+already-small JPEG is retained if recompression would increase its size.
+Capture time is saved in the photo row. Duplicate fingerprints use the selected
+source bytes before resizing. Amistad/M3 retain originals; videos keep their
+existing quality controls. Older stored photos are not modified.

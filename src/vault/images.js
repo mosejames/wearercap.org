@@ -1,13 +1,13 @@
 // ---------------------------------------------------------------------------
 // Client-side image preparation. Runs on the phone before anything uploads.
 //
-// For each picked file this produces three blobs — the untouched original,
+// For each picked file this produces three blobs — a master (optionally optimized),
 // a ~1800px web rendition for the lightbox, a ~560px thumb for the grid —
 // plus dimensions and the EXIF capture time. HEIC that the browser cannot
 // decode (Chrome on a Mac, mostly; iPhones hand Safari a JPEG) is converted
 // with heic-to, loaded only when it is actually needed.
 // ---------------------------------------------------------------------------
-import { WEB_MAX, THUMB_MAX, WEB_QUALITY, THUMB_QUALITY, HEIC_ORIGINAL_QUALITY } from './config.js';
+import { PHOTO_MASTER_MAX, PHOTO_MASTER_QUALITY, WEB_MAX, THUMB_MAX, WEB_QUALITY, THUMB_QUALITY, HEIC_ORIGINAL_QUALITY } from './config.js';
 
 const isHeic = (file) =>
   /image\/hei[cf]/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '');
@@ -89,9 +89,10 @@ async function heicToJpeg(file) {
 
 /**
  * @param {File} file
+ * @param {{optimize?:boolean}} options
  * @returns {Promise<{id:string, ext:string, contentType:string, orig:Blob, web:Blob, thumb:Blob, width:number, height:number, takenAt:Date|null, name:string}>}
  */
-export async function prepareImage(file) {
+export async function prepareImage(file, { optimize = false } = {}) {
   const takenAt = await readTakenAt(file);
   let orig = file;
   let bitmap;
@@ -103,10 +104,20 @@ export async function prepareImage(file) {
     bitmap = await decode(orig);
   }
   // Chrome on iOS can decode HEIC but cannot re-encode it; if the original is
-  // still HEIC we keep it as-is (Safari and Photos open it) — the web and
+  // still HEIC we keep it as-is unless optimizing the master — the web and
   // thumb renditions are JPEG either way.
   try {
-    const { w, h } = sizeOf(bitmap);
+    let { w, h } = sizeOf(bitmap);
+    // RCAP stores a print/share-sized master instead of the camera original.
+    // Keep an already-small JPEG if recompressing it would make it larger.
+    if (optimize) {
+      const master = await toJpeg(bitmap, PHOTO_MASTER_MAX, PHOTO_MASTER_QUALITY);
+      const keepSmaller = orig.type === 'image/jpeg' && Math.max(w, h) <= PHOTO_MASTER_MAX && orig.size <= master.blob.size;
+      if (!keepSmaller) {
+        orig = new File([master.blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+        w = master.w; h = master.h;
+      }
+    }
     const web = await toJpeg(bitmap, WEB_MAX, WEB_QUALITY);
     const thumb = await toJpeg(bitmap, THUMB_MAX, THUMB_QUALITY);
     return {

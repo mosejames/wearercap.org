@@ -397,7 +397,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
     <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
       {!state ? (
         <div className={`stack dz-wrap${drop.over ? ' over' : ''}`} {...drop.handlers}>
-          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. Photos keep their originals. Videos use the quality you choose below.</p>
+          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. {IS_SCHOOL ? 'Photos are automatically resized for crisp viewing and sharing. Your phone’s originals stay untouched.' : 'Photos keep their originals.'} Videos use the quality you choose below.</p>
           <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
           <button className="dz" disabled={optimizing} onClick={() => inputRef.current?.click()}>
             <span className="dz-icon">{I.plus}</span>
@@ -497,7 +497,7 @@ function DownloadSheet({ event, photos, onClose }) {
         };
       });
       const stream = zipStream(entries, { onProgress: setProg });
-      const how = await saveStream(stream, `${WORDS.zip}-${YEAR.start.slice(0, 4)}-${YEAR.end.slice(2, 4)}-${event.slug}${which === 'orig' ? '-originals' : ''}.zip`);
+      const how = await saveStream(stream, `${WORDS.zip}-${YEAR.start.slice(0, 4)}-${YEAR.end.slice(2, 4)}-${event.slug}${which === 'orig' ? (IS_SCHOOL ? '-full-quality' : '-originals') : ''}.zip`);
       if (how === 'cancelled') setProg(null);
     } catch (ex) {
       setErr(ex.message || 'Download failed.');
@@ -515,7 +515,7 @@ function DownloadSheet({ event, photos, onClose }) {
               <b>Web size</b><span>Smaller photos for screens. Videos stay original size. ~{fmtBytes(est('web'))}</span>
             </button>
             <button className={which === 'orig' ? 'on' : ''} onClick={() => setWhich('orig')}>
-              <b>Originals</b><span>Exactly what was uploaded. Full size. ~{fmtBytes(est('orig'))}</span>
+              <b>{IS_SCHOOL ? 'Full quality' : 'Originals'}</b><span>{IS_SCHOOL ? 'The best saved version of each photo or video.' : 'Exactly what was uploaded. Full size.'} ~{fmtBytes(est('orig'))}</span>
             </button>
           </div>
           {which === 'orig' && est('orig') > 1.2e9 && (

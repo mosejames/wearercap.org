@@ -120,6 +120,8 @@ export const KINDS = {
 
 // Rendition sizes generated on the phone before upload. The original is kept
 // untouched (or converted to a full-size JPEG if it arrived as HEIC).
+export const PHOTO_MASTER_MAX = 2560;
+export const PHOTO_MASTER_QUALITY = 0.85;
 export const WEB_MAX = 1800;     // long edge, px — the lightbox size
 export const THUMB_MAX = 560;    // long edge, px — the grid size
 export const WEB_QUALITY = 0.84;

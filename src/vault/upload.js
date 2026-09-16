@@ -97,7 +97,7 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
       continue;
     }
     try {
-      ready.push({ ...await (isVideo(f) ? prepareVideo(f) : prepareImage(f)), contentHash: hash });
+      ready.push({ ...await (isVideo(f) ? prepareVideo(f) : prepareImage(f, { optimize: IS_SCHOOL })), contentHash: hash });
     } catch (e) {
       state.failed.push({ name: f.name, error: e.message || 'Could not read' });
     }
