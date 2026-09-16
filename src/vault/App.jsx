@@ -805,9 +805,9 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           <small>{YEAR.label} · {WORDS.topSub}</small>
         </a>
         <nav className="nav">
-          <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
-          <a href="#/community" className={route === 'community' ? 'on' : ''}>Leaders</a>
-          <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>
+          <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>{IS_SCHOOL ? 'Gallery' : 'Timeline'}</a>
+          {!IS_SCHOOL && <a href="#/community" className={route === 'community' ? 'on' : ''}>Leaders</a>}
+          {!IS_SCHOOL && <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>}
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
           {profile
             ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label="My Vault" aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My Vault</span></button>
@@ -1052,9 +1052,18 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
   );
 }
 
+export function SchoolGallery({ events, loading, today, ...props }) {
+  const available = events.filter(e => !e.hidden && e.startsOn <= today && e.kind !== 'everyday')
+    .sort((a,b) => Number(b.featured) - Number(a.featured) || b.startsOn.localeCompare(a.startsOn));
+  const event = available[0] || events.find(e => !e.hidden && e.kind === 'everyday') || events.find(e => !e.hidden);
+  if (loading) return <main className="shell page"><p role="status">Loading photos…</p></main>;
+  if (!event) return <main className="shell page"><h1>RCAP photos</h1><p>Our first album is on its way.</p></main>;
+  return <EventPage key={event.id} event={event} events={events} today={today} homeMode {...props} />;
+}
+
 /* --------------------------------------------------------------- event */
 
-function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
+function EventPage({ event, events, homeMode = false, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
   useDocTitle(event?.title);
   // Drop anywhere on the page and the sheet opens already holding the files.
   const dropOver = useWindowDropTarget((list) => { if (list.length) onAdd(event, list); }, acceptsUploads(event, todayISO()));
@@ -1064,6 +1073,8 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
   const [sort, setSort] = useState('time');
   const [open, setOpen] = useState(null);
   const [dl, setDl] = useState(false);
+  const [leaderboard, setLeaderboard] = useState(false);
+  const [leaderTab, setLeaderTab] = useState('houses');
   const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
 
@@ -1096,7 +1107,7 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
   }, [initialPhotoId, photos, sorted]);
 
   const setIndex = (i) => { setOpen(i); window.history.replaceState(null, '', `#/e/${event.slug}/p/${sorted[i].id}`); };
-  const close = () => { setOpen(null); window.history.replaceState(null, '', `#/e/${event.slug}`); };
+  const close = () => { setOpen(null); window.history.replaceState(null, '', homeMode ? '#/' : `#/e/${event.slug}`); };
 
   const toggleLike = async (p) => {
     const was = liked.has(p.id);
@@ -1123,7 +1134,22 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
           </div>
         </div>
       )}
-      <div className="ev-head">
+      {IS_SCHOOL ? <div className="ev-head gallery-head">
+        <div className="shell">
+          <div className="gallery-heading">
+            <div><p className="gallery-date">{event.ongoing ? 'All year' : fmtRange(event.startsOn, event.endsOn)}{photos && <> · {plural(visible.length, 'photo')}</>}</p><h1>{event.title}</h1></div>
+            <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>
+          </div>
+          <div className="gallery-actions">
+            {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
+            <button className="btn ghost" onClick={() => setLeaderboard(true)}>Leaderboard</button>
+            <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
+            {canMove && visible.length > 0 && <button className="link" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? 'Cancel selection' : 'Select uploads'}</button>}
+            {/* Bulk download remains admin-only, even in the compact gallery. */}
+            {admin && visible.length > 0 && <button className="link" onClick={() => setDl(true)}>Download all</button>}
+          </div>
+        </div>
+      </div> : <div className="ev-head">
         <div className="shell">
           <a href="#/" className="crumb">← The year</a>
           <span className="ev-date big">{event.ongoing ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
@@ -1156,20 +1182,21 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
             )}
           </div>
         </div>
-      </div>
-      {IS_SCHOOL && event.kind !== 'everyday' && photos && (
-        <section className="shell school-board event-board" aria-label="House leaderboard and most loved photo for this event">
-          <HouseBoard eventId={event.id} version={visible.length} title="The house race" sub={`Photos from ${event.title}, by house.`} />
-          <MostLoved eventId={event.id} version={visible.reduce((n, p) => n + p.likes, 0)} events={events} title={`Most loved from ${event.title}`} hideEmpty
-            onOpen={(id) => { const i = sorted.findIndex((p) => p.id === id); if (i >= 0) setIndex(i); }} />
-        </section>
-      )}
+      </div>}
+      {IS_SCHOOL && leaderboard && <Sheet title="Leaderboard" onClose={() => setLeaderboard(false)}>
+        <p className="fine">{event.title}</p>
+        <div className="sort leaderboard-tabs" aria-label="Leaderboard view">
+          <button className={leaderTab === 'houses' ? 'on' : ''} aria-pressed={leaderTab === 'houses'} onClick={() => setLeaderTab('houses')}>House uploads</button>
+          <button className={leaderTab === 'photos' ? 'on' : ''} aria-pressed={leaderTab === 'photos'} onClick={() => setLeaderTab('photos')}>Most liked</button>
+        </div>
+        {leaderTab === 'houses' ? <HouseBoard eventId={event.id} version={visible.length} title="House uploads" /> : <PhotoGrid photos={[...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes)} rank likedSet={liked} emptyText="No likes yet. Heart a photo to start." onOpen={i => { const ranked = [...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes); setLeaderboard(false); setIndex(sorted.findIndex(p => p.id === ranked[i].id)); }} />}
+      </Sheet>}
       <div className="shell">
         {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(sorted.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button></div>}
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
-            emptyText={status === 'upcoming' ? `Not yet. ${event.title} is ${fmtDate(event.startsOn, { weekday: 'long' })}.` : 'No photos yet. Somebody has to be first.'}
+            emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
       </div>
@@ -1681,12 +1708,13 @@ export default function App() {
         onName={() => setPhoneAsk({ then: () => go('/me') })}
         onProfile={() => go('/me')} />
 
-      {route.name === 'home' && <MemoryStrip recent={recent} covers={allCovers} events={events} />}
+      {route.name === 'home' && !IS_SCHOOL && <MemoryStrip recent={recent} covers={allCovers} events={events} />}
 
-      {route.name === 'home' && (
+      {route.name === 'home' && !IS_SCHOOL && (
         <Home onSuggest={() => setSuggesting(true)} events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
           onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
+      {route.name === 'home' && IS_SCHOOL && <SchoolGallery events={events} loading={!totals} canMove={admin} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd} onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} today={today} showToast={showToast} />}
       {route.name === 'event' && (events.length ? (
         <EventPage key={route.slug} events={events} canMove={admin} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />

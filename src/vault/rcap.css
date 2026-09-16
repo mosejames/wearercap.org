@@ -96,3 +96,35 @@ html[data-vault="rcap"] .ev.featured .ev-blank{color:rgba(26,42,86,.35)}
 html[data-vault="rcap"] .choice button.on{box-shadow:0 0 0 2px rgba(26,42,86,.15)}
 html[data-vault="rcap"] .soon-card:hover{background:rgba(26,42,86,.03)}
 html[data-vault="rcap"] :focus-visible{outline-color:var(--gold)}
+
+/* Photos lead; event details and competition stay within easy reach. */
+html[data-vault="rcap"] .calm-header .topbar-in{min-height:70px;padding-top:12px;padding-bottom:12px}
+html[data-vault="rcap"] .calm-header .mark .vault-label{font-size:27px}
+html[data-vault="rcap"] .calm-header .mark small{display:none}
+html[data-vault="rcap"] .gallery-head{background:var(--paper);padding-top:24px;padding-bottom:18px;border-bottom:0}
+html[data-vault="rcap"] .gallery-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+html[data-vault="rcap"] .gallery-head h1{font-size:clamp(30px,4vw,48px);text-transform:none;line-height:1.08;margin:4px 0 0;letter-spacing:-.04em}
+html[data-vault="rcap"] .gallery-date{margin:0;color:var(--ink-soft);font-size:12px;font-weight:600}
+html[data-vault="rcap"] .gallery-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:18px}
+html[data-vault="rcap"] .gallery-actions .btn{min-height:44px;padding:10px 16px;box-shadow:none}
+html[data-vault="rcap"] .gallery-albums select{max-width:210px;padding:10px 28px 10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--red);font:inherit;font-size:13px}
+html[data-vault="rcap"] .gallery-albums .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+html[data-vault="rcap"] .event>.shell{max-width:1600px;padding-left:12px;padding-right:12px}
+html[data-vault="rcap"] .grid{columns:2;column-gap:8px;margin:0}
+html[data-vault="rcap"] .grid .tile-wrap{margin-bottom:8px}
+html[data-vault="rcap"] .tile{border-radius:8px}
+html[data-vault="rcap"] .tile-meta em.on{color:var(--gold);background:var(--red);border-radius:12px;padding:3px 6px}
+html[data-vault="rcap"] .leaderboard-tabs{margin:12px 0 20px;width:fit-content}
+html[data-vault="rcap"] .leaderboard-tabs button{min-height:44px}
+html[data-vault="rcap"] .sheet .house-board{padding:0;border:0;background:none}
+html[data-vault="rcap"] .sheet .grid{margin-top:12px}
+@media(min-width:680px){html[data-vault="rcap"] .grid{columns:3;column-gap:12px}html[data-vault="rcap"] .grid .tile-wrap{margin-bottom:12px}}
+@media(min-width:1100px){html[data-vault="rcap"] .event>.shell>.grid{columns:4}}
+@media(max-width:540px){
+ html[data-vault="rcap"] .gallery-head{padding-top:18px;padding-bottom:14px}
+ html[data-vault="rcap"] .gallery-heading{align-items:flex-start;gap:10px}
+ html[data-vault="rcap"] .gallery-albums select{max-width:120px;font-size:12px;padding-left:8px}
+ html[data-vault="rcap"] .gallery-actions{gap:8px;margin-top:14px}
+ html[data-vault="rcap"] .gallery-actions .btn{font-size:13px;padding-left:12px;padding-right:12px}
+ html[data-vault="rcap"] .gallery-actions .ev-invite{margin-left:auto}
+}
