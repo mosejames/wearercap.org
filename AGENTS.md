@@ -250,3 +250,20 @@ already-small JPEG is retained if recompression would increase its size.
 Capture time is saved in the photo row. Duplicate fingerprints use the selected
 source bytes before resizing. Amistad/M3 retain originals; videos keep their
 existing quality controls. Older stored photos are not modified.
+
+### Capsule family appreciation
+
+`src/vault/CapsuleCommunity.jsx` adds a private thank-you reaction to other
+people’s RCAP photos, an inbox and unread indicator in My Capsule, a First
+Share badge, and group-chat sharing after successful uploads. Nothing sends
+an SMS or posts to a group automatically. Thank-yous do not earn points.
+
+`vault_private.capsule_thanks` and `capsule_first_shares` have RLS and no
+direct client grants. The public `capsule_community` RPC uses an invoker
+wrapper around a private, verified-member-only function. Only a sender can
+change their reaction; only the contributor can read its notification.
+Undo hides a reaction, and re-sending does not create another notification.
+The first-share insert trigger awards once per account, including videos;
+existing contributors were credited without a new-upload celebration.
+`supabase/tests/capsule_family_appreciation.sql` verifies privacy and awards
+in a rollback-only transaction.

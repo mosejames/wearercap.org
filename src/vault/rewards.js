@@ -1,6 +1,6 @@
 import { supabase } from './auth.js';
 export const MILESTONES = [10, 50, 100, 250, 500];
-export const badgeName = (n) => ({10:'Memory maker',50:'Moment keeper',100:'House storyteller',250:'Friendship champion',500:'Vault legend'}[n] || 'Memory maker');
+export const badgeName = (n) => ({1:'First Share',10:'Memory maker',50:'Moment keeper',100:'House storyteller',250:'Friendship champion',500:'Vault legend'}[n] || 'Memory maker');
 export async function rewardCall(name, args) {
   const { data, error } = await supabase.rpc(name, args);
   if (error) throw error;

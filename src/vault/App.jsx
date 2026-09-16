@@ -11,6 +11,7 @@ import {
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals, saveRcaHouse, staffRole as fetchStaffRole,
 } from './data.js';
+import { ThankYouButton, PostUploadShare, CapsuleInbox, ThanksIndicator } from './CapsuleCommunity.jsx';
 import { HouseBoard, MostLoved, ContributorBoard } from './School.jsx';
 import { SaveMedia } from './SaveMedia.jsx';
 import { ACTIVITIES, SuggestionForm, SuggestionReview, GalleryVisibility } from './Categories.jsx';
@@ -451,6 +452,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
             </div>
           )}
           {err && <p className="err">{err}</p>}
+          {IS_SCHOOL && finished && state.done.length > 0 && <PostUploadShare event={event} />}
           {finished
             ? <button className="btn primary" onClick={onClose}>See them in the {WORDS.placeLower}</button>
             : <button className="btn ghost" onClick={() => abort.current?.abort()}>Stop</button>}
@@ -712,6 +714,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
             {admin && !mine && <button className="lb-action" onClick={async () => { if (!confirm('Ban this uploader’s verified number from contributing?')) return; try { await banUploader(p.id, pass); alert('Contributor banned.'); } catch(e) { alert(e.message); } }}>Ban contributor</button>}
           </div>
         </div>
+        {IS_SCHOOL && !mine && !isVideo(p) && <ThankYouButton key={`${p.id}:${owner || 'guest'}`} photoId={p.id} owner={owner} onSignIn={onNeedName} />}
         {videoError && <p className="fine">This browser cannot play this video. <a href={mediaUrl(p, 'orig')} download target="_blank" rel="noopener">Download the original</a> to watch it.</p>}
         {p.caption && <p className="lb-cap">{p.caption}</p>}
         <div className="lb-comments">
@@ -816,6 +819,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           {profile
             ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label={`My ${WORDS.place}`} aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My {WORDS.place}</span></button>
             : <button className="nav-btn" onClick={onName}>Sign in</button>}
+          {IS_SCHOOL && profile && <ThanksIndicator owner={profile.owner} />}
           <details className="mobile-nav" onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary').focus();}}}>
             <summary aria-label="Open navigation menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></summary>
             <div className="mobile-nav-links" onClick={e=>{if(e.target.closest('a'))e.currentTarget.closest('details').open=false;}}>
@@ -1380,6 +1384,7 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
         </div>
       </div>
       <DashboardShare onSuggest={onSuggest} events={events} onAdd={onAdd} hasUploads={photos?.some(p => !p.removedAt)} />
+      {IS_SCHOOL && <CapsuleInbox key={owner} owner={owner} refresh={rewardVersion} />}
       <DashboardStats owner={owner} refresh={photos} />
       <BadgeShelf owner={owner} refresh={rewardVersion} />
       <div className="community-tabs personal-tabs" aria-label="Your activity">{[['photos','My photos & videos'],['likes','My likes'],['comments','My comments']].map(([key,label])=><button key={key} aria-pressed={activityTab===key} className={activityTab===key?'selected':''} onClick={()=>setActivityTab(key)}>{label}</button>)}</div>
