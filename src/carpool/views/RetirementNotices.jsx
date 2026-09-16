@@ -17,10 +17,8 @@ export default function RetirementNotices({ userId, canCreate, onCreate }) {
   return <>
     {error && <p role="alert">{error} <button className="cp-btn cp-btn--quiet" onClick={() => setRetry((n) => n + 1)}>Try again</button></p>}
     {notices.map((notice) => <section className="cp-next-step" key={notice.id} aria-labelledby={`notice-${notice.id}`}>
-      <p className="cp-label">An update on your request</p>
-      <h2 className="cp-h3" id={`notice-${notice.id}`}>Your next step is yours.</h2>
-      <p>{notice.group_name} was a setup test that accidentally stayed visible. We have retired it and closed your waiting request. This was not a rejection of your family.</p>
-      <p>Your family profile is still here. You can explore nearby families or start a crew in your own area. Starting a crew does not commit you to rides or add anyone automatically.</p>
+      <h2 className="cp-h3" id={`notice-${notice.id}`}>A quick update.</h2>
+      <p>{notice.group_name} was a test crew and is now closed. Your profile is unchanged, and you can explore nearby families or start your own crew.</p>
       {canCreate && <button type="button" className="cp-btn cp-btn--primary cp-btn--block" onClick={onCreate}>Create your crew <span aria-hidden="true">→</span></button>}
       <button type="button" className="cp-btn cp-btn--quiet" disabled={busy !== null} onClick={async () => {
         setBusy(notice.id);

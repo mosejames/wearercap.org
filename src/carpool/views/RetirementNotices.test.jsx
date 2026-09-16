@@ -16,11 +16,11 @@ it('explains retirement and opens creation without dismissing or joining anythin
   fetchRetirementNotices.mockResolvedValue([{ id: 'n1', group_name: 'College Park Carpool Crew' }]);
   await act(async () => root.render(<RetirementNotices userId="parent1" canCreate onCreate={onCreate} />));
   expect(fetchRetirementNotices).toHaveBeenCalledWith('parent1');
-  expect(host.textContent).toContain('This was not a rejection');
+  expect(host.textContent).toContain('was a test crew and is now closed');
   await act(async () => host.querySelector('button').click());
   expect(onCreate).toHaveBeenCalledOnce();
   expect(dismissRetirementNotice).not.toHaveBeenCalled();
-  expect(host.textContent).toContain('Your next step is yours');
+  expect(host.textContent).toContain('A quick update');
 });
 it('only removes the notice after a successful explicit dismissal', async () => {
   fetchRetirementNotices.mockResolvedValue([{ id: 'n1', group_name: 'Test crew' }]);
