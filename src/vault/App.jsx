@@ -1,6 +1,6 @@
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
+  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -765,12 +765,13 @@ function PromoCard({ promo }) {
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [] }) {
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
-    return promos.length ? <>{empty}<div className="grid promo-only">{promos.map((pr) => <PromoCard key={pr.id} promo={pr} />)}</div></> : empty;
+    return promos.length ? <>{empty}<div className="grid promo-only">{promos.map((pr) => <PromoCard key={pr.id} promo={{ ...pr, ...(pr.variants?.[0] || {}) }} />)}</div></> : empty;
   }
-  const at = (i) => promos.filter((pr) => Math.min(pr.after, photos.length) === i);
+  const slots = promoSlots(promos, photos.length);
+  const at = (i) => slots.filter((s) => s.at === i);
   return (
     <div className="grid">
-      {at(0).map((pr) => <PromoCard key={pr.id} promo={pr} />)}
+      {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
       {photos.map((p, i) => (<Fragment key={p.id}>
         <div className="tile-wrap"><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
@@ -783,7 +784,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
             </span>
           )}
         </button></div>
-        {at(i + 1).map((pr) => <PromoCard key={pr.id} promo={pr} />)}
+        {at(i + 1).map((s) => <PromoCard key={s.key} promo={s.card} />)}
       </Fragment>))}
     </div>
   );

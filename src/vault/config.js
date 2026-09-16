@@ -76,38 +76,63 @@ const WORDS_BY_VAULT = {
 export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 
 // Cards placed inside an album's photo grid, between the photos. School vault
-// only. `events` lists the album slugs a card appears in; `after` is how many
-// photos come before it (short albums get it at the end); `until` is the last
-// day it shows, Eastern. Nothing here touches the database.
+// only. `events` lists the album slugs a card appears in. The first card
+// lands after `after` photos, then it repeats every `every` photos, rotating
+// through `variants` so a long scroll never shows the same words twice in a
+// row. Short albums get the first card at the end. `until` is the last day it
+// shows, Eastern. Nothing here touches the database.
+//
+// Spacing: two cards, each every 40 photos, offset by 20, is one card per 20
+// photos. Present all the way down, never back to back.
 export const PROMOS = IS_SCHOOL ? [
   {
     id: 'karaoke-sept-27',
     events: ['bingo-night'],
     after: 6,
+    every: 40,
     until: '2026-09-27',
-    eyebrow: 'Sun, Sept 27 · 5 to 7pm',
-    title: 'Parent Social: R&B Karaoke',
-    body: 'Bingo was the warm-up. Bring your best song.',
     cta: 'RSVP',
     href: '/karaoke',
     image: '/images/rcap-karaoke-mic.jpg',
+    variants: [
+      { eyebrow: 'Sun, Sept 27 · 5 to 7pm', title: 'Parent Social: R&B Karaoke', body: 'Bingo was the warm-up. Bring your best song.' },
+      { eyebrow: 'Parent Social · Sept 27', title: 'Come sing with the families in these photos.', body: 'R&B karaoke, 5 to 7pm. Grab your spot.' },
+    ],
   },
   {
     id: 'membership-2026',
     events: ['bingo-night'],
-    after: 18,
+    after: 26,
+    every: 40,
     until: '2027-05-28',
-    eyebrow: 'RCAP membership',
-    title: 'Nights like this run on members.',
-    body: 'Bingo, karaoke, EXP. Your membership donation keeps them coming.',
-    cta: 'Make your donation',
+    cta: 'Join the team',
     href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
     external: true,
+    variants: [
+      { eyebrow: 'RCAP membership', title: 'We are community. We are connected.', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
+      { eyebrow: 'RCAP membership', title: 'Be part of the team.', body: 'Every RCA family, pulling together for the school that pours into our children.' },
+      { eyebrow: 'RCAP membership', title: 'This school gives us so much.', body: 'Your membership donation is how we give back, together.' },
+    ],
   },
 ] : [];
 
 export const promosFor = (slug, today) =>
   PROMOS.filter((p) => p.events.includes(slug) && today <= p.until).sort((a, b) => a.after - b.after);
+
+// Where each card lands in an album of `count` photos: [{ at, promo, card }].
+// `at` is how many photos come before it; `card` is the variant to show.
+export const promoSlots = (promos, count) => {
+  const slots = [];
+  for (const p of promos) {
+    const variants = p.variants?.length ? p.variants : [p];
+    for (let n = 0, at = p.after; ; n++, at += p.every || Infinity) {
+      if (at > count && n > 0) break;
+      slots.push({ at: Math.min(at, count), promo: p, card: { ...p, ...variants[n % variants.length] }, key: `${p.id}-${n}` });
+      if (!p.every || at >= count) break;
+    }
+  }
+  return slots.sort((x, y) => x.at - y.at);
+};
 
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };
 
