@@ -658,7 +658,12 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  align-self: flex-start;
+  /* The tile is a grid, so align-self is the wrong axis: it was stretching the
+     pill across the full column. justify-self plus fit-content makes it hug the
+     word. */
+  justify-self: start;
+  align-self: start;
+  width: fit-content;
   margin: 2px 12px 14px;
   padding: 9px 15px;
   border-radius: 999px;
