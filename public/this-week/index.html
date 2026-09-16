@@ -22,9 +22,9 @@
     body { margin:0; background:var(--navy); color:var(--ink); font-family:Arial,Helvetica,sans-serif; -webkit-font-smoothing:antialiased; }
     body::before { content:""; display:block; height:7px; background:linear-gradient(100deg,#ffb51b,#ff7b21 45%,#ef3f84); }
     .page { width:min(100% - 40px,520px); margin:0 auto; padding:24px 0 28px; }
-    .brand { display:flex; justify-content:space-between; align-items:center; gap:16px; color:#fff; }
-    .wordmark { font-size:19px; font-weight:900; letter-spacing:-.7px; text-decoration:none; color:#fff; }
-    .wordmark span { color:#ff8b27; }
+    .brand { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; color:#fff; }
+    .brand-logo-link { display:block; width:132px; line-height:0; }
+    .brand-logo { display:block; width:100%; height:auto; }
     .month { color:#b9cbd5; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
     header { padding:26px 0 18px; color:#fff; }
     .eyebrow { margin:0 0 10px; color:#ff9a34; font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
@@ -41,7 +41,7 @@
     .link-card.has-image .arrow { position:absolute; top:17px; right:18px; }
     .inline-number { display:inline-grid; width:24px; height:24px; margin:0 7px 0 0; vertical-align:2px; font-size:11px; }
     .link-card:hover { background:#fff; border-color:#ff8b27; transform:translate(-2px,-2px); }
-    .link-card:focus-visible, .home:focus-visible, .wordmark:focus-visible, .donation-card:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
+    .link-card:focus-visible, .home:focus-visible, .brand-logo-link:focus-visible, .donation-card:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
     .number { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#e8edf0; font-size:12px; font-weight:800; color:var(--navy); }
     .link-card h2 { margin:1px 0 6px; font-size:18px; letter-spacing:-.35px; line-height:1.25; }
     .link-card p { margin:0; color:var(--muted); font-size:14px; line-height:1.45; }
@@ -63,11 +63,11 @@
 <body>
   <main class="page">
     <div class="brand">
-      <a class="wordmark" href="/" aria-label="We Are RCAP home">We Are <span>RCAP</span></a>
+      <a class="brand-logo-link" href="/" aria-label="We Are RCAP home"><img class="brand-logo" src="/this-week/logo2.png" alt="We Are RCAP" width="988" height="880" /></a>
       <span class="month">September 2026</span>
     </div>
     <header>
-      <p class="eyebrow">We Are RCAP</p>
+      <p class="eyebrow">Your quick list</p>
       <h1>This week,<span>RCAP.</span></h1>
       <p class="intro">A few things for the next few days, all in one place. Start wherever you like.</p>
     </header>
