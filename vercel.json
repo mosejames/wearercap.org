@@ -30,7 +30,7 @@
       "destination": "/api/vault-link?slug=:slug"
     },
     {
-      "source": "/rcap-vault/e/:slug",
+      "source": "/rcap-capsule/e/:slug",
       "destination": "/api/vault-link?slug=:slug&vault=rcap"
     },
     {
@@ -51,6 +51,16 @@
       "source": "/karaoke",
       "destination": "/rsvp/karaoke-sept-27",
       "permanent": false
+    },
+    {
+      "source": "/rcap-vault",
+      "destination": "/rcap-capsule/",
+      "permanent": true
+    },
+    {
+      "source": "/rcap-vault/:path*",
+      "destination": "/rcap-capsule/:path*",
+      "permanent": true
     }
   ]
 }

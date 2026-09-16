@@ -17,7 +17,7 @@
 
 const SITE = 'https://wearercap.org';
 
-// /rcap-vault/e/<slug> arrives here with vault=rcap; everything else is Amistad.
+// /rcap-capsule/e/<slug> arrives here with vault=rcap; everything else is Amistad.
 const VAULTS = {
   amistad: {
     house: 'amistad', path: 'ami-vault', name: 'The Amistad Vault', short: 'Amistad Vault',
@@ -27,7 +27,7 @@ const VAULTS = {
     img: `${SITE}/ami-vault-og.png?v=4`,
   },
   rcap: {
-    house: 'rcap', path: 'rcap-vault', name: 'The RCAP Capsule', short: 'RCAP Capsule',
+    house: 'rcap', path: 'rcap-capsule', name: 'The RCAP Capsule', short: 'RCAP Capsule',
     og: 'RCA memories, every house', theme: '#1a2a56',
     blurb: 'Every RCA family, every all-school event, every photo. Add yours and count it for your house.',
     eventLine: 'Photos and videos from every RCA family. Add yours and count it for your house.',

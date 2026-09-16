@@ -24,7 +24,7 @@ export const ROUNDS = [
     // Photos for ordinary all-school events live in the RCAP Capsule, where they
     // count for a house and stay with the year. The recap keeps the words.
     // The real path, not the hash, so a shared link previews as Bingo Night.
-    photosAt: '/rcap-vault/e/bingo-night',
+    photosAt: '/rcap-capsule/e/bingo-night',
     goal: 100,
     titleLead: 'DESCRIBE BINGO NIGHT',
     titleGrad: 'IN ONE WORD.',

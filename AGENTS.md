@@ -113,13 +113,13 @@ A photo vault for one RCA house at `/ami-vault/`. Key facts:
   a real visitor into the hash route. This exists so a texted invite previews as
   that one event instead of the generic vault.
 
-### The RCAP Vault, in brief
+### The RCAP Capsule, in brief
 
-The school-wide photo vault at `/rcap-vault/`: every RCA family, every
+The school-wide photo vault at `/rcap-capsule/`: every RCA family, every
 all-school event. It is the Amistad Vault app (`src/vault/`) and the same
 `vault_*` schema with `house = 'rcap'`. Key facts:
 
-- **One app, two vaults.** `rcap-vault/index.html` sets
+- **One app, two vaults.** `rcap-capsule/index.html` sets
   `<html data-vault="rcap">`; `src/vault/config.js` reads it into `HOUSE`,
   `IS_SCHOOL` and `WORDS` (every sentence that names the group). No attribute
   means Amistad, so `/ami-vault/` and the tests are unchanged.
@@ -135,7 +135,7 @@ all-school event. It is the Amistad Vault app (`src/vault/`) and the same
 - **Every function that used to hardcode `'amistad'`** now takes the house
   from the row, or a `p_house` argument defaulting to `'amistad'`. Migration:
   `supabase/migrations/20260916120000_rcap_vault_houses.sql`.
-- Share cards: `/rcap-vault/e/<slug>` → `api/vault-link.js?vault=rcap`.
+- Share cards: `/rcap-capsule/e/<slug>` → `api/vault-link.js?vault=rcap`.
   Storage keys: `rcap/2026-27/<user>/<slug>/<id>/`.
 
 ### The M³ Vault, in brief
@@ -231,3 +231,15 @@ The reasoning behind `37f254e` is worth carrying forward: the parent who was at
 the event knows which families were there, so sharing is theirs to do. Bulk
 download is a different risk and stays admin-only. Prefer opening up sharing and
 gating bulk or destructive actions.
+
+### Capsule duplicate checks
+
+RCAP uploads fingerprint the selected bytes with SHA-256 before conversion.
+`src/vault/duplicates.js` and `upload.js` skip identical files in the batch or
+event; `vault_photos_event_content_hash_key` prevents concurrent inserts from
+both counting. The check is RCAP-only. Edited/recompressed files differ.
+`content_hash` is nullable for legacy clients; already-open pre-release tabs
+must reload to use the check. Historical RCAP originals were fingerprinted
+on September 16. If a concurrent duplicate reaches storage before its row is
+rejected, its unused storage objects remain; no photo or leaderboard credit
+is created. Old `/rcap-vault/` links permanently redirect to `/rcap-capsule/`.

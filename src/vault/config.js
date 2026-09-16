@@ -130,7 +130,7 @@ export const MAX_BATCH = 60;           // files per pick
 export const MAX_FILE_MB = 50;         // anything bigger is skipped with a note
 export const UPLOAD_PARALLEL = 3;
 
-export const ADMIN_HINT = `Back office lives at /${IS_SCHOOL ? 'rcap-vault' : 'ami-vault'}/#/admin`;
+export const ADMIN_HINT = `Back office lives at /${IS_SCHOOL ? 'rcap-capsule' : 'ami-vault'}/#/admin`;
 export const CONTACT = 'mose@mosejames.com';
 
 export const DATE_TZ = 'America/New_York';
