@@ -2487,3 +2487,75 @@ button {
   .give-float { transition: none; animation: none; }
   .give-float:hover { transform: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Callouts. Three side by side under Happening Now. These were stacked
+   full-width bars, which read as three rules across the page and competed with
+   each other; as columns each one is a distinct ask. Stacks on a phone.
+   ------------------------------------------------------------------------ */
+.callouts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.callout {
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 20px;
+  background: var(--ink);
+  color: var(--white);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.callout:hover { background: #241f1a; transform: translateY(-2px); }
+
+.callout-kicker {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 9px;
+}
+
+.callout strong {
+  font-size: clamp(17px, 1.5vw, 19px);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.callout-body {
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14.5px;
+  line-height: 1.5;
+  /* Pushes the action to the bottom so all three line up whatever the copy. */
+  flex: 1;
+}
+
+.callout-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.callout:hover .callout-go { gap: 11px; }
+
+@media (max-width: 860px) {
+  .callouts { grid-template-columns: 1fr; gap: 12px; }
+  .callout-body { flex: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .callout, .callout-go { transition: none; }
+  .callout:hover { transform: none; }
+}

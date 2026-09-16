@@ -796,29 +796,32 @@ function App() {
           ))}
         </div>
 
-        {/* The next social, with its own RSVP page. Same bar shape as the two
-            below so the section keeps one shape for "the next thing to do".
-            Remove after Sept 27 or point it at the next event page. */}
-        <a className="board-bar social-bar" href="/karaoke">
-          <span className="board-bar-text">
+        {/* Three side by side rather than stacked full-width bars. Each is a
+            different kind of ask (come, add, read), so they compete less as
+            columns than they did as three rules across the page. They stack
+            back to full width on a phone. */}
+        <div className="callouts">
+          <a className="callout callout-social" href="/karaoke">
+            <span className="callout-kicker">Sun, Sept 27</span>
             <strong>Parent Social: R&amp;B Karaoke</strong>
-            <span>Sunday, September 27, 5 to 7pm at RCA. Adults only. See who's coming.</span>
-          </span>
-          <span className="social-bar-go">RSVP</span>
-        </a>
+            <span className="callout-body">5 to 7pm at RCA. Adults only. See who is coming.</span>
+            <span className="callout-go">RSVP <ArrowRight size={17} aria-hidden="true" /></span>
+          </a>
 
-        {/* The last general meeting, for everyone who was not in the room. Same
-            bar as the board callout below, so the page has one shape for "the
-            next thing to read". Point it at the newest meeting page. */}
-        <a className="board-bar" href={MEETING_RECAP.href}>
-          <span className="board-bar-text">
+          <a className="callout callout-capsule" href="/rcap-capsule/">
+            <span className="callout-kicker">Bingo Night</span>
+            <strong>Add your photos</strong>
+            <span className="callout-body">You were there with your phone out. Put them in the capsule so the whole school can see the night.</span>
+            <span className="callout-go">Open the capsule <ArrowRight size={17} aria-hidden="true" /></span>
+          </a>
+
+          <a className="callout" href={MEETING_RECAP.href}>
+            <span className="callout-kicker">Sept 14 meeting</span>
             <strong>{MEETING_RECAP.title}</strong>
-            <span>{MEETING_RECAP.body}</span>
-          </span>
-          <span className="board-bar-go" aria-hidden="true">
-            <ArrowRight size={20} />
-          </span>
-        </a>
+            <span className="callout-body">{MEETING_RECAP.body}</span>
+            <span className="callout-go">Read the recap <ArrowRight size={17} aria-hidden="true" /></span>
+          </a>
+        </div>
       </section>
 
       {/* Story — where the hero's video went. A first-time parent gets the
