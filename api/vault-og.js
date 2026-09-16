@@ -7,9 +7,12 @@ const fonts = [
   { name:'Figtree', data:readFileSync(new URL('./fonts/Figtree-Medium.ttf',import.meta.url)), weight:500, style:'normal' },
   { name:'Figtree', data:readFileSync(new URL('./fonts/Figtree-Black.ttf',import.meta.url)), weight:900, style:'normal' },
 ];
-const navy='#1a2a56',gold='#f0b323',cream='#faf4ea';
+const THEMES = {
+  rcap: { navy:'#1a2a56', gold:'#f0b323', cream:'#faf4ea', name:'RCAP', word:'CAPSULE', family:'RON CLARK ACADEMY  /  PARENTS', band:'IN THE CAPSULE', path:'rcap-capsule' },
+  amistad: { navy:'#bd0032', gold:'#ffd7e2', cream:'#fff8fa', name:'AMI', word:'VAULT', family:'AMISTAD  /  HOUSE OF FRIENDSHIP', band:'IN THE VAULT', path:'ami-vault' },
+};
 const box=(style,...children)=>h('div',{style:{display:'flex',...style}},...children);
-function mark(){return h('svg',{width:270,height:260,viewBox:'0 0 270 260'},
+function mark({navy, gold, cream}){return h('svg',{width:270,height:260,viewBox:'0 0 270 260'},
  h('rect',{x:51,y:29,width:161,height:190,rx:20,fill:navy,stroke:cream,strokeWidth:3,transform:'rotate(15 130 124)'}),
  h('rect',{x:34,y:35,width:161,height:190,rx:20,fill:navy,stroke:gold,strokeWidth:5,transform:'rotate(-12 114 130)'}),
  h('rect',{x:58,y:44,width:160,height:190,rx:20,fill:cream}),
@@ -18,41 +21,23 @@ function mark(){return h('svg',{width:270,height:260,viewBox:'0 0 270 260'},
  h('circle',{cx:170,cy:91,r:15,fill:gold}),
  h('path',{d:'M120 212H155',stroke:navy,strokeWidth:7,strokeLinecap:'round'}),
  h('path',{d:'M230 28L236 45L253 51L236 57L230 74L224 57L207 51L224 45Z',fill:gold}));}
-function capsuleCard(event, closed){
+function brandedCard(event, closed, theme){
+ const {navy, gold, cream} = theme;
  const label = event.length > 64 ? `${event.slice(0, 61).trimEnd()}…` : event;return box({width:'100%',height:'100%',background:navy,fontFamily:'Figtree',flexDirection:'column',color:cream},
  box({height:421,padding:'36px 58px 30px',flexDirection:'column',position:'relative'},
  box({justifyContent:'space-between',alignItems:'center'},
- box({fontSize:29,fontWeight:900,letterSpacing:5,color:gold},'RCAP'),
- box({fontSize:17,fontWeight:500,letterSpacing:2,color:cream},'RON CLARK ACADEMY  /  PARENTS')),
+ box({fontSize:29,fontWeight:900,letterSpacing:5,color:gold},theme.name),
+ box({fontSize:17,fontWeight:500,letterSpacing:2,color:cream},theme.family)),
  box({alignItems:'center',justifyContent:'space-between',flexGrow:1},
- box({flexDirection:'column',marginTop:-5},box({fontWeight:900,fontSize:126,letterSpacing:-6,lineHeight:1},'CAPSULE'),box({fontSize:37,fontWeight:500,marginTop:22,letterSpacing:-1},'Your photos. Our memories.')),
- box({marginRight:4,marginTop:7},mark())),
+ box({flexDirection:'column',marginTop:-5},box({fontWeight:900,fontSize:126,letterSpacing:-6,lineHeight:1},theme.word),box({fontSize:37,fontWeight:500,marginTop:22,letterSpacing:-1},'Your photos. Our memories.')),
+ box({marginRight:4,marginTop:7},mark(theme))),
  box({fontSize:17,letterSpacing:1,color:cream},'SOMEONE’S FAVORITE PHOTO MIGHT BE YOURS.')),
  box({height:209,background:cream,color:navy,padding:'29px 58px',justifyContent:'space-between',alignItems:'center',borderTop:`7px solid ${gold}`},
- box({flexDirection:'column',width:690,flexShrink:0},box({fontSize:16,letterSpacing:3,fontWeight:900,marginBottom:5},'IN THE CAPSULE'),box({fontSize:label.length>40?36:label.length>20?48:67,letterSpacing:-2,fontWeight:900,lineHeight:1.08,wordBreak:'break-word'},label)),
- box({flexDirection:'column',alignItems:'flex-end',gap:14,flexShrink:0},box({fontSize:23,fontWeight:900,background:navy,color:cream,borderRadius:50,padding:'19px 24px',gap:12,alignItems:'center'},closed ? 'View the memories' : 'See photos. Add yours',h('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none'},h('path',{d:'M5 19L19 5M5 5H19V19',stroke:cream,strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'}))),box({fontSize:16,fontWeight:500},'wearercap.org/rcap-capsule'))));}
+ box({flexDirection:'column',width:690,flexShrink:0},box({fontSize:16,letterSpacing:3,fontWeight:900,marginBottom:5},theme.band),box({fontSize:label.length>40?36:label.length>20?48:67,letterSpacing:-2,fontWeight:900,lineHeight:1.08,wordBreak:'break-word'},label)),
+ box({flexDirection:'column',alignItems:'flex-end',gap:14,flexShrink:0},box({fontSize:23,fontWeight:900,background:navy,color:cream,borderRadius:50,padding:'19px 24px',gap:12,alignItems:'center'},closed ? 'View the memories' : 'See photos. Add yours',h('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none'},h('path',{d:'M5 19L19 5M5 5H19V19',stroke:cream,strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'}))),box({fontSize:16,fontWeight:500},`wearercap.org/${theme.path}`))));}
 
-const THEMES = {
-  amistad: { bg:'#bd0032', mark:'AMI VAULT', fallback:'HOUSE OF FRIENDSHIP', soft:'#ffe5ed', date:'#ffd7e2', btn:'#bd0032', tag:'Our year. All together.' },
-  rcap: { bg:'#1a2a56', mark:'RCAP CAPSULE', fallback:'FOUR HOUSES. ONE SCHOOL.', soft:'#faf4ea', date:'#f0b323', btn:'#1a2a56', tag:'Count it for your house.' },
-};
 export function eventCard(title, date, closed = false, vault = 'amistad') {
-  if (vault === 'rcap') return new ImageResponse(capsuleCard(title, closed), {width:1200,height:630,fonts});
-  const T = THEMES[vault] || THEMES.amistad;
-  const fontSize = title.length > 110 ? 45 : title.length > 70 ? 55 : title.length > 42 ? 68 : 82;
-  return new ImageResponse(h('div', {style:{display:'flex',width:'100%',height:'100%',padding:24,background:'#fff',fontFamily:'Figtree',color:'#fff'}},
-    h('div', {style:{display:'flex',flexDirection:'column',justifyContent:'space-between',width:'100%',height:'100%',padding:'40px 46px',borderRadius:32,background:T.bg}},
-      h('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:24}},
-        h('div', {style:{fontSize:30,fontWeight:900,letterSpacing:3,color:vault==='rcap'?T.date:'#fff'}}, T.mark),
-        h('div', {style:{fontSize:22,fontWeight:900,color:T.date,textAlign:'right',maxWidth:650}},date || T.fallback)),
-      h('div', {style:{display:'flex',flexDirection:'column',gap:18}},
-        h('div', {style:{fontSize,fontWeight:900,lineHeight:1.02,letterSpacing:-2,wordBreak:'break-word'}},title),
-        h('div', {style:{fontSize:29,fontWeight:500,color:T.soft}},closed ? 'The moments we made. The memories we keep.' : 'Were you there? Share photos and videos.')),
-      h('div', {style:{display:'flex',alignItems:'center',gap:32}},
-        h('div', {style:{display:'flex',alignItems:'center',gap:20,background:'#fff',color:T.btn,padding:'20px 30px',borderRadius:22,fontSize:36,fontWeight:900}},
-          !closed && h('svg',{width:34,height:34,viewBox:'0 0 24 24',fill:'none'},h('path',{d:'M12 3v18M3 12h18',stroke:T.btn,strokeWidth:3,strokeLinecap:'round'})),
-          closed ? 'View the memories' : 'Add photos / videos'),
-        h('div',{style:{fontSize:24,fontWeight:500,color:T.soft}},T.tag)))),
+  return new ImageResponse(brandedCard(title, closed, THEMES[vault] || THEMES.amistad),
     {width:1200,height:630,fonts});
 }
 
