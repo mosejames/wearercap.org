@@ -23,6 +23,7 @@ import {
   groupEmailHref,
 } from '../groupHandoff.js';
 import { fetchNearby, isMissingRpcError } from '../directory.js';
+import RetirementNotices from './RetirementNotices.jsx';
 import { suggestCrew } from '../crews.js';
 import Collapsible from './Collapsible.jsx';
 import { scheduleOverlap } from '../compatibility.js';
@@ -456,6 +457,14 @@ export default function Groups({ family, userId }) {
 
   return (
     <section className="cp-subblock">
+      <RetirementNotices userId={me} canCreate={loaded && data.canOrganize && !family.paused_at} onCreate={() => {
+        setName(`Area ${family.area_label} crew`);
+        setDirection(family.direction);
+        setWeekdays([...family.weekdays]);
+        setMeetingPoint('');
+        setStartOpen(true);
+        setScrollNonce((n) => n + 1);
+      }} />
       {loading && <p className="cp-loading">Loading your groups</p>}
       {loadError && (
         // No "Could not load groups:" prefix any more. Every message reaching
