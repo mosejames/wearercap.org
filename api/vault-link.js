@@ -24,7 +24,7 @@ const VAULTS = {
     og: 'Our Amistad memories', theme: '#db0032',
     blurb: 'One house, one school year, every photo. Add yours from your phone in under a minute.',
     eventLine: 'Photos and videos from our House of Friendship.',
-    img: `${SITE}/api/vault-og?vault=amistad&v=5`,
+    img: `${SITE}/api/vault-og?vault=amistad&v=6`,
   },
   rcap: {
     house: 'rcap', path: 'rcap-capsule', name: 'The RCAP Capsule', short: 'RCAP Capsule',
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
         : 'A little piece of our year, kept together.',
     ].filter(Boolean).join(' ');
 
-    const imageParams = new URLSearchParams({ title: ev.title, date, v: V.house === 'rcap' ? '6' : '5' });
+    const imageParams = new URLSearchParams({ title: ev.title, date, v: '6' });
     if (V.house !== 'amistad') imageParams.set('vault', V.house);
     if (!ev.open) imageParams.set('closed', '1');
     img = `${SITE}/api/vault-og?${imageParams}`;

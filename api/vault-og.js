@@ -9,7 +9,7 @@ const fonts = [
 ];
 const THEMES = {
   rcap: { navy:'#1a2a56', gold:'#f0b323', cream:'#faf4ea', name:'RCAP', word:'CAPSULE', family:'RON CLARK ACADEMY  /  PARENTS', band:'IN THE CAPSULE', path:'rcap-capsule' },
-  amistad: { navy:'#bd0032', gold:'#ffd7e2', cream:'#fff8fa', name:'AMI', word:'VAULT', family:'AMISTAD  /  HOUSE OF FRIENDSHIP', band:'IN THE VAULT', path:'ami-vault' },
+  amistad: { navy:'#bd0032', gold:'#ffffff', cream:'#ffffff', name:'AMI', word:'VAULT', family:'AMISTAD  /  HOUSE OF FRIENDSHIP', band:'IN THE VAULT', path:'ami-vault' },
 };
 const box=(style,...children)=>h('div',{style:{display:'flex',...style}},...children);
 function mark({navy, gold, cream}){return h('svg',{width:270,height:260,viewBox:'0 0 270 260'},
