@@ -75,6 +75,40 @@ const WORDS_BY_VAULT = {
 };
 export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 
+// Cards placed inside an album's photo grid, between the photos. School vault
+// only. `events` lists the album slugs a card appears in; `after` is how many
+// photos come before it (short albums get it at the end); `until` is the last
+// day it shows, Eastern. Nothing here touches the database.
+export const PROMOS = IS_SCHOOL ? [
+  {
+    id: 'karaoke-sept-27',
+    events: ['bingo-night'],
+    after: 6,
+    until: '2026-09-27',
+    eyebrow: 'Sun, Sept 27 · 5 to 7pm',
+    title: 'Parent Social: R&B Karaoke',
+    body: 'Bingo was the warm-up. Bring your best song.',
+    cta: 'RSVP',
+    href: '/karaoke',
+    image: '/images/rcap-karaoke-mic.jpg',
+  },
+  {
+    id: 'membership-2026',
+    events: ['bingo-night'],
+    after: 18,
+    until: '2027-05-28',
+    eyebrow: 'RCAP membership',
+    title: 'Nights like this run on members.',
+    body: 'Bingo, karaoke, EXP. Your membership donation keeps them coming.',
+    cta: 'Make your donation',
+    href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
+    external: true,
+  },
+] : [];
+
+export const promosFor = (slug, today) =>
+  PROMOS.filter((p) => p.events.includes(slug) && today <= p.until).sort((a, b) => a.after - b.after);
+
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };
 
 export const SITE = {

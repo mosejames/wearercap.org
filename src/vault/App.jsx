@@ -1,6 +1,6 @@
-import { createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
+  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -743,12 +743,36 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 
 /* ---------------------------------------------------------------- grid */
 
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected }) {
-  if (!photos.length) return <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
+function PromoCard({ promo }) {
+  const ext = promo.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+  return (
+    <div className="tile-wrap promo-wrap">
+      <a className={`promo-tile${promo.image ? ' has-image' : ''}`} href={promo.href} {...ext}>
+        {promo.image && <img src={promo.image} alt="" loading="lazy" decoding="async" />}
+        <span className="promo-body">
+          <span className="promo-eyebrow">{promo.eyebrow}</span>
+          <b>{promo.title}</b>
+          {promo.body && <span className="promo-copy">{promo.body}</span>}
+          <span className="promo-cta">{promo.cta} →</span>
+        </span>
+      </a>
+    </div>
+  );
+}
+
+// promos are cards between photos. They never take a photo index, so onOpen(i)
+// still points at the right photo.
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [] }) {
+  if (!photos.length) {
+    const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
+    return promos.length ? <>{empty}<div className="grid promo-only">{promos.map((pr) => <PromoCard key={pr.id} promo={pr} />)}</div></> : empty;
+  }
+  const at = (i) => promos.filter((pr) => Math.min(pr.after, photos.length) === i);
   return (
     <div className="grid">
-      {photos.map((p, i) => (
-        <div className="tile-wrap" key={p.id}><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
+      {at(0).map((pr) => <PromoCard key={pr.id} promo={pr} />)}
+      {photos.map((p, i) => (<Fragment key={p.id}>
+        <div className="tile-wrap"><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
@@ -759,7 +783,8 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
             </span>
           )}
         </button></div>
-      ))}
+        {at(i + 1).map((pr) => <PromoCard key={pr.id} promo={pr} />)}
+      </Fragment>))}
     </div>
   );
 }
@@ -1195,6 +1220,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
+            promos={selecting ? [] : promosFor(event.slug, today)}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
