@@ -187,6 +187,13 @@ const upcomingEvents = [
 // The single most time-sensitive ask. One item, not a list — if everything
 // is urgent, nothing is. Set to null to hide the banner entirely.
 const POP_SEEN = 'rcap-committee-pop';
+
+// The committee invitation modal. Off since 16 Sept 2026: every parent has had
+// the chance, committees are in the nav, in the Serve section and in the Tools
+// list, and an interruption is the wrong way to ask for something nobody needs
+// to be asked for twice. Flip to true to bring it back for a future push; the
+// modal itself is untouched below.
+const COMMITTEE_POP_ENABLED = false;
 // Beat between reaching Serve and the modal arriving. Long enough to read the
 // heading, short enough that it never feels like waiting.
 const DWELL_MS = 900;
@@ -567,6 +574,7 @@ function App() {
   // middle of the viewport. Once armed the timer is not cancelled, so scrolling
   // onward does not strand the modal and nobody has to sit still waiting.
   React.useEffect(() => {
+    if (!COMMITTEE_POP_ENABLED) return undefined;
     const node = serveRef.current;
     if (!node) return undefined;
     try {
