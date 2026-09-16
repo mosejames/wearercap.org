@@ -2,6 +2,7 @@ import { Component, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './vault.css';
+import './rcap.css';
 
 class VaultErrorBoundary extends Component {
   state = {failed:false};

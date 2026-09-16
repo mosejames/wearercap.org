@@ -30,7 +30,7 @@ async function sign(eventSlug, items) {
   const r = await fetch('/api/vault-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...await authHeaders() },
-    body: JSON.stringify({ eventSlug, files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })) }),
+    body: JSON.stringify({ house: HOUSE.id, eventSlug, files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })) }),
   });
   if (!r.ok) {
     let msg = `Could not get upload permission (${r.status})`;

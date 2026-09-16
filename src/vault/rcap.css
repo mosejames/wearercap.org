@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap');
+
+/* The RCAP Vault: wearercap.org's palette and type on the vault's layout.
+   Every rule is scoped to html[data-vault="rcap"], so nothing here can touch
+   the Amistad Vault, and the extra attribute outranks the base rules without
+   relying on source order.
+
+   Contrast, measured: white on accent #b0470a 5.6:1, accent on paper 5.12:1,
+   ink on paper 16.4:1, gold on ink 9.05:1. Gold is only ever on ink. */
+html[data-vault="rcap"]{
+  --ink:#1a1613;
+  --ink-soft:#5c534b;
+  --paper:#faf4ea;
+  --surface:#fffdf8;
+  --line:#e6dccb;
+  --mist:#f2eadc;
+  --cream:#f4ecdf;
+  --red:#b0470a;
+  --red-deep:#8f3a08;
+  --red-bright:#b0470a;
+  --chrome:#1a1613;
+  --ember:#b0470a;
+  --gold:#f7a81c;
+}
+html[data-vault="rcap"] body{background:var(--paper);font-family:'Archivo',system-ui,-apple-system,sans-serif}
+html[data-vault="rcap"] ::selection{background:rgba(247,168,28,.35)}
+html[data-vault="rcap"] .btn.primary{box-shadow:0 10px 24px rgba(176,71,10,.28)}
+html[data-vault="rcap"] .fab{box-shadow:0 12px 30px rgba(176,71,10,.38)}
+html[data-vault="rcap"] .memory-strip{background:var(--paper)}
+html[data-vault="rcap"] .mark .vault-label{color:var(--gold)}
+html[data-vault="rcap"] .foot-mark span{color:var(--gold)}
+html[data-vault="rcap"] .latest-event-card{box-shadow:inset 0 -4px 0 var(--gold)}
+html[data-vault="rcap"] .latest-event-card .eyebrow{color:var(--gold)}
+html[data-vault="rcap"] .latest-event-actions .btn{color:var(--ink)}
+html[data-vault="rcap"] .home-tagline,
+html[data-vault="rcap"] .ev-blurb,
+html[data-vault="rcap"] .family-note p,
+html[data-vault="rcap"] .school-sub{font-family:'Newsreader',Georgia,serif;font-style:italic}
+
+/* ---------------- house leaderboard and most loved ---------------- */
+html[data-vault="rcap"] .school-board{display:grid;grid-template-columns:1fr;gap:18px;padding-top:8px;padding-bottom:28px}
+@media(min-width:860px){html[data-vault="rcap"] .school-board{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:stretch}}
+html[data-vault="rcap"] .event-board{padding-top:24px;padding-bottom:6px}
+html[data-vault="rcap"] .house-board,
+html[data-vault="rcap"] .most-loved{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0}
+html[data-vault="rcap"] .school-head .eyebrow{margin-bottom:6px}
+html[data-vault="rcap"] .school-sub{margin:0 0 16px;font-size:18px;line-height:1.35;color:var(--ink)}
+html[data-vault="rcap"] .house-rows{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+html[data-vault="rcap"] .house-row-label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+html[data-vault="rcap"] .house-row-label b{font-size:17px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+html[data-vault="rcap"] .house-row-label b::before{content:'';width:12px;height:12px;border-radius:3px;background:var(--house);flex-shrink:0}
+html[data-vault="rcap"] .house-row-label span{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap}
+html[data-vault="rcap"] .house-row-label i{font-style:normal;font-weight:500;color:var(--ink-soft)}
+@media(max-width:420px){html[data-vault="rcap"] .house-row-label i{display:none}}
+html[data-vault="rcap"] .house-bar{height:14px;border-radius:999px;background:var(--mist);overflow:hidden}
+html[data-vault="rcap"] .house-bar span{display:block;height:100%;border-radius:999px;background:var(--house);transition:width .6s ease}
+html[data-vault="rcap"] .house-row.lead .house-row-label b::after{content:'Leading';font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--gold);border-radius:999px;padding-top:4px;padding-bottom:4px;padding-left:8px;padding-right:8px}
+html[data-vault="rcap"] .most-loved{display:flex;flex-direction:column}
+html[data-vault="rcap"] .most-loved-card{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--ink);flex:1;min-height:220px}
+html[data-vault="rcap"] .most-loved-card img{width:100%;height:100%;min-height:220px;max-height:420px;object-fit:cover}
+html[data-vault="rcap"] .most-loved-meta{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding-top:28px;padding-bottom:14px;padding-left:16px;padding-right:16px;color:#fff;background:linear-gradient(transparent,rgba(26,22,19,.88))}
+html[data-vault="rcap"] .most-loved-meta b{background:var(--gold);color:var(--ink);border-radius:999px;padding-top:6px;padding-bottom:6px;padding-left:12px;padding-right:12px;font-weight:900;font-size:15px;white-space:nowrap}
+html[data-vault="rcap"] .most-loved-meta span{font-size:14px;font-weight:700;line-height:1.3;min-width:0}
+html[data-vault="rcap"] .most-loved-meta i{font-style:normal;font-weight:500}
+html[data-vault="rcap"] .empty-loved .school-sub{margin-bottom:0}
+
+/* ---------------- house picker in the profile sheet ---------------- */
+html[data-vault="rcap"] .house-pick{border:0;margin:0;padding:0;min-width:0}
+html[data-vault="rcap"] .house-pick legend{font-size:14px;font-weight:800;margin-bottom:4px;padding:0}
+html[data-vault="rcap"] .house-pick .fine{margin-bottom:10px}
+html[data-vault="rcap"] .house-pick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html[data-vault="rcap"] .house-chip{position:relative;display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--line);border-left:6px solid var(--house);border-radius:12px;padding-top:10px;padding-bottom:10px;padding-left:12px;padding-right:10px;cursor:pointer;background:var(--surface)}
+html[data-vault="rcap"] .house-chip input{position:absolute;opacity:0;pointer-events:none}
+html[data-vault="rcap"] .house-chip b{font-size:15px;font-weight:900}
+html[data-vault="rcap"] .house-chip small{font-size:12px;color:var(--ink-soft)}
+html[data-vault="rcap"] .house-chip.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+html[data-vault="rcap"] .house-chip:has(input:focus-visible){outline:3px solid var(--gold);outline-offset:2px}
+
+/* The base header is .calm-header{background:var(--red)}, which would put
+   gold on the accent at about 2:1. The RCAP header is ink. */
+html[data-vault="rcap"] .calm-header{background:var(--chrome)}
+html[data-vault="rcap"] .house-pick legend{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+@media(min-width:860px){html[data-vault="rcap"] .school-board:has(.empty-loved){align-items:start}}
+html[data-vault="rcap"] .event-board:not(:has(.most-loved)){grid-template-columns:minmax(0,680px)}

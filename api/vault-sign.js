@@ -38,7 +38,8 @@ const R2 = {
   publicBase: (process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, ''),
 };
 
-const HOUSE = 'amistad';
+// Which vault. Clients from before RCAP send nothing and mean Amistad.
+const HOUSES = new Set(['amistad', 'rcap']);
 const YEAR = '2026-27';
 const MAX_FILES = 40;               // per request; the client batches
 const URL_TTL = 15 * 60;            // presigned PUT lifetime, seconds
@@ -58,9 +59,9 @@ function publicBase(m) {
 }
 
 // Object keys. One folder per photo so the three renditions travel together.
-export function keysFor(eventSlug, id, ext, userId) {
+export function keysFor(eventSlug, id, ext, userId, house = 'amistad') {
   const slug = String(eventSlug || 'misc').toLowerCase().replace(/[^a-z0-9-]+/g, '-').slice(0, 60);
-  const base = `${HOUSE}/${YEAR}/${userId}/${slug}/${id}`;
+  const base = `${HOUSES.has(house) ? house : 'amistad'}/${YEAR}/${userId}/${slug}/${id}`;
   return {
     orig: `${base}/orig.${ext}`,
     web: `${base}/web.jpg`,
@@ -104,6 +105,8 @@ export default async function handler(req, res) {
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
   const files = Array.isArray(body?.files) ? body.files.slice(0, MAX_FILES) : [];
   if (!files.length) return res.status(400).json({ error: 'No files' });
+  const house = body?.house == null ? 'amistad' : String(body.house);
+  if (!HOUSES.has(house)) return res.status(400).json({ error: 'Unknown vault' });
 
   const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
   const authorization = req.headers?.authorization;
@@ -117,7 +120,7 @@ export default async function handler(req, res) {
     if (!user.ok) return res.status(401).json({ error: 'Please sign in again.' });
     userId = (await user.json()).id;
     const reservation = await fetch(`${SUPABASE_URL}/rest/v1/rpc/vault_reserve_uploads`, {
-      method: 'POST', headers, body: JSON.stringify({ p_slug: body.eventSlug, p_ids: files.map((f) => f.id) }), signal: AbortSignal.timeout(5000),
+      method: 'POST', headers, body: JSON.stringify({ p_slug: body.eventSlug, p_ids: files.map((f) => f.id), p_house: house }), signal: AbortSignal.timeout(5000),
     });
     if (!reservation.ok) return res.status(403).json({ error: 'This album is closed, the upload limit was reached, or these files were already submitted. Please retry with a new selection.' });
     if (!UUID.test(userId)) return res.status(403).json({ error: 'Invalid account.' });
@@ -132,7 +135,7 @@ export default async function handler(req, res) {
     if (!UUID.test(id) || !EXT_OK.test(ext)) {
       return res.status(400).json({ error: `Bad file entry: ${id || '?'}.${ext}` });
     }
-    const keys = keysFor(body.eventSlug, id, ext, userId);
+    const keys = keysFor(body.eventSlug, id, ext, userId, house);
     const item = { id, keys };
     if (client) {
       item.urls = {

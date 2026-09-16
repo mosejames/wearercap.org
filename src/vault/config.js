@@ -1,21 +1,81 @@
 // ---------------------------------------------------------------------------
-// The Amistad Vault — everything worth changing lives here.
+// The vaults — everything worth changing lives here.
+//
+// One app, two vaults. The page says which one it is with
+// <html data-vault="rcap">; with no attribute it is the Amistad Vault, so
+// /ami-vault/ and every test render exactly as they did before RCAP existed.
+// The database partitions on vault_*.house, so HOUSE.id is the only value
+// that decides what data a page sees.
 // ---------------------------------------------------------------------------
 
-export const HOUSE = {
-  id: 'amistad',
-  name: 'Amistad',
-  short: 'AMI',
-  meaning: 'Friendship',
-  color: '#BD0032',
-  fg: '#FFFFFF',
+export const VAULT_ID =
+  (typeof document !== 'undefined' && document.documentElement?.dataset?.vault) || 'amistad';
+export const IS_SCHOOL = VAULT_ID !== 'amistad';
+
+const HOUSES_BY_VAULT = {
+  amistad: { id: 'amistad', name: 'Amistad', short: 'AMI', meaning: 'Friendship', color: '#BD0032', fg: '#FFFFFF' },
+  rcap: { id: 'rcap', name: 'RCA', short: 'RCAP', meaning: 'Four houses, one school', color: '#b0470a', fg: '#FFFFFF' },
 };
+export const HOUSE = HOUSES_BY_VAULT[VAULT_ID] || HOUSES_BY_VAULT.amistad;
+
+// The four RCA houses, for the school-wide leaderboard. Colors are the
+// official ones Mose confirmed in July 2026 (see src/recap/config.js).
+export const RCA_HOUSES = [
+  { id: 'amistad',   name: 'Amistad',   meaning: 'Friendship', color: '#D8202D' },
+  { id: 'altruismo', name: 'Altruismo', meaning: 'The Givers', color: '#14110F' },
+  { id: 'isibindi',  name: 'Isibindi',  meaning: 'Courage',    color: '#1F9D57' },
+  { id: 'reveur',    name: 'Rêveur',    meaning: 'Dreamers',   color: '#1F55C0' },
+];
+export const rcaHouse = (id) => RCA_HOUSES.find((h) => h.id === id) || null;
+
+// Every sentence that names the group. Amistad values are the original copy.
+const WORDS_BY_VAULT = {
+  amistad: {
+    wordmark: 'AMI VAULT',
+    footShort: 'AMI',
+    topSub: 'Amistad House',
+    family: 'Amistad family',
+    anFamily: 'an Amistad family',
+    ourFamily: 'our Amistad family',
+    fam: 'Amistad fam',
+    everyday: 'Everyday Amistad',
+    group: 'the house',
+    homeEyebrow: 'House of Friendship',
+    noteTitle: 'Every child. Every smile. Our family.',
+    noteBody: 'In the House of Friendship, we look out for one another and capture the joy along the way. When you take a photo, make room for the friends beside your child, too. A moment you share may be a memory another family treasures forever. This is our story, and we get to keep it together.',
+    footLine: 'Amistad means friendship. The vault is what it looks like.',
+    zip: 'amistad',
+    badge: 'Ami Vault photo badge',
+    shareImage: 'an AMI Vault image',
+    topRanked: 'Ranked by the house, live. Tap the heart on anything and it moves.',
+  },
+  rcap: {
+    wordmark: 'RCAP VAULT',
+    footShort: 'RCAP',
+    topSub: 'Ron Clark Academy',
+    family: 'RCA family',
+    anFamily: 'an RCA family',
+    ourFamily: 'every RCA family',
+    fam: 'RCA fam',
+    everyday: 'Everyday RCA',
+    group: 'the school',
+    homeEyebrow: 'Four houses. One school.',
+    noteTitle: 'Every house. Every family. One year.',
+    noteBody: 'Bingo Night, EXP, Field Day, the parent social. Every family is already taking the pictures. Add yours and they count for your house, and the whole school gets to keep them.',
+    footLine: 'Photos for every RCA family, from every all-school event this year.',
+    zip: 'rcap',
+    badge: 'RCAP Vault photo badge',
+    shareImage: 'an RCAP Vault image',
+    topRanked: 'Ranked by every family, live. Tap the heart on anything and it moves.',
+  },
+};
+export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };
 
 export const SITE = {
-  title: 'The Amistad Vault',
-  meta: ['THE AMISTAD VAULT', '2026–27'],
+  title: IS_SCHOOL ? 'The RCAP Vault' : 'The Amistad Vault',
+  meta: [IS_SCHOOL ? 'THE RCAP VAULT' : 'THE AMISTAD VAULT', '2026–27'],
   kicker: 'One house. One school year. Every photo.',
   titleLead: 'THE AMISTAD',
   titleGrad: 'VAULT.',
@@ -43,7 +103,7 @@ export const SITE = {
 // Copy on the home page around the open asks.
 export const ASK = {
   eyebrow: 'Photos wanted',
-  none: 'Nothing open right now. Add to Everyday Amistad any time.',
+  none: `Nothing open right now. Add to ${IS_SCHOOL ? 'Everyday RCA' : 'Everyday Amistad'} any time.`,
 };
 
 export const KINDS = {
@@ -66,7 +126,7 @@ export const MAX_BATCH = 60;           // files per pick
 export const MAX_FILE_MB = 50;         // anything bigger is skipped with a note
 export const UPLOAD_PARALLEL = 3;
 
-export const ADMIN_HINT = 'Back office lives at /ami-vault/#/admin';
+export const ADMIN_HINT = `Back office lives at /${IS_SCHOOL ? 'rcap-vault' : 'ami-vault'}/#/admin`;
 export const CONTACT = 'mose@mosejames.com';
 
 export const DATE_TZ = 'America/New_York';

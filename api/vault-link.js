@@ -16,8 +16,24 @@
 // ---------------------------------------------------------------------------
 
 const SITE = 'https://wearercap.org';
-const BASE = `${SITE}/ami-vault/`;
-const HOUSE = 'Amistad';
+
+// /rcap-vault/e/<slug> arrives here with vault=rcap; everything else is Amistad.
+const VAULTS = {
+  amistad: {
+    house: 'amistad', path: 'ami-vault', name: 'The Amistad Vault', short: 'Amistad Vault',
+    og: 'Our Amistad memories', theme: '#db0032',
+    blurb: 'One house, one school year, every photo. Add yours from your phone in under a minute.',
+    eventLine: 'Photos and videos from our House of Friendship.',
+    img: `${SITE}/ami-vault-og.png?v=4`,
+  },
+  rcap: {
+    house: 'rcap', path: 'rcap-vault', name: 'The RCAP Vault', short: 'RCAP Vault',
+    og: 'RCA memories, every house', theme: '#1a1613',
+    blurb: 'Every RCA family, every all-school event, every photo. Add yours and count it for your house.',
+    eventLine: 'Photos and videos from every RCA family. Add yours and count it for your house.',
+    img: `${SITE}/api/vault-og?vault=rcap&title=${encodeURIComponent('Every family. Every photo.')}&v=1`,
+  },
+};
 
 const esc = (s) =>
   String(s == null ? '' : s)
@@ -38,7 +54,7 @@ const when = (startsOn, endsOn) => {
   return `${fmt(startsOn)} to ${fmt(endsOn)}`;
 };
 
-async function describeEvent(slug) {
+async function describeEvent(slug, house) {
   if (!SUPA || !KEY || !slug) return null;
   const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
   const get = (path) =>
@@ -47,7 +63,7 @@ async function describeEvent(slug) {
       .catch(() => null);
 
   const rows = await get(
-    `vault_events?slug=eq.${encodeURIComponent(slug)}&house=eq.amistad` +
+    `vault_events?slug=eq.${encodeURIComponent(slug)}&house=eq.${house}` +
     `&select=id,slug,title,blurb,kind,starts_on,ends_on,ongoing,open,hidden&limit=1`
   );
   const ev = rows && rows[0];
@@ -58,33 +74,35 @@ async function describeEvent(slug) {
 
 export default async function handler(req, res) {
   const slug = String((req.query && req.query.slug) || '').trim();
-  const ev = await describeEvent(slug);
+  const V = VAULTS[String((req.query && req.query.vault) || '')] || VAULTS.amistad;
+  const BASE = `${SITE}/${V.path}/`;
+  const ev = await describeEvent(slug, V.house);
 
   // Unknown slug still resolves to the vault rather than a dead end.
   const dest = ev ? `${BASE}#/e/${encodeURIComponent(ev.slug)}` : BASE;
   const canonical = `${SITE}${String(req.url || '').split('?')[0]}`;
 
-  let title = `The ${HOUSE} Vault`;
-  let og = `The ${HOUSE} Vault`;
-  let desc =
-    'One house, one school year, every photo. Add yours from your phone in under a minute.';
-  let img = `${SITE}/ami-vault-og.png?v=4`;
-  let alt = `The ${HOUSE} Vault. One house, one school year, every photo.`;
+  let title = V.name;
+  let og = V.name;
+  let desc = V.blurb;
+  let img = V.img;
+  let alt = `${V.name}. ${V.blurb}`;
 
   if (ev) {
     const date = ev.ongoing ? 'All year long' : when(ev.starts_on, ev.ends_on);
-    og = 'Our Amistad memories';
-    title = `${ev.title} · The ${HOUSE} Vault`;
-    alt = `${ev.title}, ${HOUSE} Vault`;
+    og = V.og;
+    title = `${ev.title} · ${V.name}`;
+    alt = `${ev.title}, ${V.short}`;
 
     desc = [
       date ? `${date}.` : null,
       ev.open
-        ? "Photos and videos from our House of Friendship."
+        ? V.eventLine
         : 'A little piece of our year, kept together.',
     ].filter(Boolean).join(' ');
 
     const imageParams = new URLSearchParams({ title: ev.title, date, v: '4' });
+    if (V.house !== 'amistad') imageParams.set('vault', V.house);
     if (!ev.open) imageParams.set('closed', '1');
     img = `${SITE}/api/vault-og?${imageParams}`;
   }
@@ -97,14 +115,14 @@ export default async function handler(req, res) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#db0032" />
+    <meta name="theme-color" content="${esc(V.theme)}" />
     <title>${esc(title)}</title>
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content="${esc(desc)}" />
     <link rel="canonical" href="${esc(canonical)}" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="The ${esc(HOUSE)} Vault" />
+    <meta property="og:site_name" content="${esc(V.name)}" />
     <meta property="og:title" content="${esc(og)}" />
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${esc(canonical)}" />
@@ -122,13 +140,13 @@ export default async function handler(req, res) {
     <meta http-equiv="refresh" content="0; url=${esc(dest)}" />
     <script>window.location.replace(${JSON.stringify(dest)});</script>
     <style>
-      body{margin:0;display:grid;place-items:center;min-height:100vh;background:#db0032;
+      body{margin:0;display:grid;place-items:center;min-height:100vh;background:${V.theme};
         color:#fff;font:600 16px/1.5 system-ui,sans-serif;text-align:center;padding:24px}
       a{color:#fff}
     </style>
   </head>
   <body>
-    <p>Opening the ${esc(HOUSE)} Vault… <a href="${esc(dest)}">tap here</a> if nothing happens.</p>
+    <p>Opening ${esc(V.name)}… <a href="${esc(dest)}">tap here</a> if nothing happens.</p>
   </body>
 </html>`);
 }

@@ -30,6 +30,10 @@
       "destination": "/api/vault-link?slug=:slug"
     },
     {
+      "source": "/rcap-vault/e/:slug",
+      "destination": "/api/vault-link?slug=:slug&vault=rcap"
+    },
+    {
       "source": "/m3-vault/e/:slug",
       "destination": "/api/m3-link?slug=:slug"
     },

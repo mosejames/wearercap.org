@@ -110,6 +110,31 @@ A photo vault for one RCA house at `/ami-vault/`. Key facts:
   a real visitor into the hash route. This exists so a texted invite previews as
   that one event instead of the generic vault.
 
+### The RCAP Vault, in brief
+
+The school-wide photo vault at `/rcap-vault/`: every RCA family, every
+all-school event. It is the Amistad Vault app (`src/vault/`) and the same
+`vault_*` schema with `house = 'rcap'`. Key facts:
+
+- **One app, two vaults.** `rcap-vault/index.html` sets
+  `<html data-vault="rcap">`; `src/vault/config.js` reads it into `HOUSE`,
+  `IS_SCHOOL` and `WORDS` (every sentence that names the group). No attribute
+  means Amistad, so `/ami-vault/` and the tests are unchanged.
+- **Styles** for RCAP live in `src/vault/rcap.css`, every rule scoped to
+  `html[data-vault="rcap"]`.
+- **Identity is shared.** One SMS sign-in, one profile, works in both vaults.
+  The admin passcode is per vault (`vault_settings`, RCAP is `rcap2026`).
+  Staff role `owner` runs every house; `admin` and `moderator` are Amistad only.
+- **House leaderboard.** A family picks its RCA house in the profile sheet
+  (`vault_profiles.rca_house`). Each photo is stamped with it at insert by the
+  `limit_posts` trigger (`vault_photos.rca_house`). `vault_house_board` and
+  `vault_top_photos` feed `src/vault/School.jsx`.
+- **Every function that used to hardcode `'amistad'`** now takes the house
+  from the row, or a `p_house` argument defaulting to `'amistad'`. Migration:
+  `supabase/migrations/20260916120000_rcap_vault_houses.sql`.
+- Share cards: `/rcap-vault/e/<slug>` → `api/vault-link.js?vault=rcap`.
+  Storage keys: `rcap/2026-27/<user>/<slug>/<id>/`.
+
 ### The M³ Vault, in brief
 
 A one-day photo vault for the Class of 2028 Mall Math Marathon at `/m3-vault/`,

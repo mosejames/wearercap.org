@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { BadgeIcon } from './BadgeIcon.jsx';
-import { todayISO } from './config.js';
+import { todayISO, SITE, HOUSE } from './config.js';
 import { avatarUrl, badgeName, MILESTONES, monthNow, rewardCall } from './rewards.js';
 
 export const AvatarContext = createContext({ keys:{}, version:0 });
@@ -28,7 +28,7 @@ export function BadgeCelebration({ milestones, onClose }) {
 }
 export function CommunityPage({ events, eventId = '', owner, rewardVersion }) {
   const eligible = events.filter(e=>e.startsOn<=todayISO() || e.photoCount>0).sort((a,b)=>b.startsOn.localeCompare(a.startsOn));
-  useEffect(()=>{document.title='Memory makers · The Amistad Vault';},[]);
+  useEffect(()=>{document.title=`Memory makers · ${SITE.title}`;},[]);
   const [scope,setScope] = useState(eventId ? 'event' : 'all');
   const [month,setMonth] = useState(monthNow);
   const [event,setEvent] = useState(eventId || eligible[0]?.id || '');
@@ -37,7 +37,7 @@ export function CommunityPage({ events, eventId = '', owner, rewardVersion }) {
   const [retry,setRetry] = useState(0);
   useEffect(()=>{ let live=true;setRows(null);setErr('');
     if(scope==='event' && !event) {setRows([]);return;}
-    rewardCall('vault_contributors',{p_month:scope==='month' ? `${month}-01` : null,p_event:scope==='event' ? event : null}).then(r=>{if(live)setRows(r);}).catch(e=>{if(live)setErr(e.message);});
+    rewardCall('vault_contributors',{p_month:scope==='month' ? `${month}-01` : null,p_event:scope==='event' ? event : null,p_house:HOUSE.id}).then(r=>{if(live)setRows(r);}).catch(e=>{if(live)setErr(e.message);});
     return()=>{live=false;};
   },[scope,month,event,retry]);
   return <main className="shell page community-page"><span className="eyebrow">Our family, showing up</span><h1>Memory makers</h1><p>Behind every memory is someone who shared it. Let’s celebrate the people keeping our story together.</p>

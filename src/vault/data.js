@@ -15,7 +15,9 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 
 const TOKEN_KEY = 'ami-vault-token';
 const NAME_KEY = 'ami-vault-profile';
-const PASS_KEY = 'ami-vault-pass';
+// Sign-in and identity are shared across vaults on purpose: one verified
+// phone works everywhere. The admin passcode is per vault.
+const PASS_KEY = HOUSE.id === 'amistad' ? 'ami-vault-pass' : `${HOUSE.id}-vault-pass`;
 
 function randomToken() {
   const b = new Uint8Array(24);
@@ -81,7 +83,7 @@ export async function fetchProfile() {
   const owner = await getOwner();
   if (!owner) return null;
   const { data, error } = await supabase
-    .from('vault_people').select('owner, display_name, student').eq('owner', owner).maybeSingle();
+    .from('vault_people').select('owner, display_name, student, rca_house').eq('owner', owner).maybeSingle();
   if (error) throw error;
   if (!data) return null;
   const { data: choice, error: choiceError } = await supabase.rpc('vault_release_preference');
@@ -108,6 +110,20 @@ export async function saveProfile(form) {
   }
   rememberProfile(row);
   return row;
+}
+
+// The RCA house a family's school-wide uploads count for. Stamped onto each
+// photo when it is added, so changing it later only moves future photos.
+export async function saveRcaHouse(id) {
+  const { data, error } = await supabase.rpc('vault_save_rca_house', { p_rca_house: id });
+  if (error) throw error;
+  return data;
+}
+
+export async function staffRole() {
+  const { data, error } = await supabase.rpc('vault_staff_role_for', { p_house: HOUSE.id });
+  if (error) throw error;
+  return data;
 }
 
 /* --------------------------------------------------------------- storage */
@@ -184,7 +200,7 @@ export async function saveEvent(form, id = null, pass = '') {
     featured: !!form.featured,
     hidden: !!form.hidden,
   };
-  const { data, error } = await supabase.rpc('vault_admin_save_event', { p_pass: pass, p_id: id, p });
+  const { data, error } = await supabase.rpc('vault_admin_save_event', { p_pass: pass, p_id: id, p, p_house: HOUSE.id });
   if (error) throw error;
   return eventFromRow(Array.isArray(data) ? data[0] : data);
 }
@@ -210,6 +226,7 @@ const photoFromRow = (r) => ({
   hidden: r.hidden,
   removedAt: r.removed_at,
   cleanupPending: r.cleanup_pending,
+  rcaHouse: r.rca_house || null,
   createdAt: r.created_at,
   likes: 0,
 });
@@ -228,12 +245,8 @@ export async function listPhotos(eventId) {
   return photos;
 }
 
-export async function listTopPhotos(limit = 60) {
-  const { data: likes, error } = await supabase
-    .from('vault_photo_likes')
-    .select('photo_id, likes')
-    .order('likes', { ascending: false })
-    .limit(limit);
+export async function listTopPhotos(limit = 60, eventId = null) {
+  const { data: likes, error } = await supabase.rpc('vault_top_photos', { p_house: HOUSE.id, p_limit: limit, p_event: eventId });
   if (error) throw error;
   const ids = (likes || []).map((l) => l.photo_id);
   if (!ids.length) return [];
@@ -257,7 +270,22 @@ export async function listRecentPhotos(limit = 24) {
 export async function listMyPhotos() {
   const { data, error } = await supabase.rpc('vault_my_uploads');
   if (error) throw error;
-  return (data || []).map(photoFromRow);
+  // One identity spans every vault; this page only shows this vault's uploads.
+  return (data || []).filter((r) => (r.house || 'amistad') === HOUSE.id).map(photoFromRow);
+}
+
+// Photos per RCA house, busiest first. All four houses are always present.
+export async function houseBoard(eventId = null) {
+  const { data, error } = await supabase.rpc('vault_house_board', { p_house: HOUSE.id, p_event: eventId });
+  if (error) throw error;
+  return data || [];
+}
+
+// The single most loved photo, for one event or the whole vault. Null until
+// something has a heart.
+export async function mostLoved(eventId = null) {
+  const top = await listTopPhotos(1, eventId);
+  return top[0] || null;
 }
 export async function removeUpload(id, pass = '') {
   const response = await fetch('/api/vault-remove', {
@@ -273,12 +301,12 @@ export async function reportUpload(id, reason, note) {
   if (error) throw error;
 }
 export async function reviewReports(pass) {
-  const { data, error } = await supabase.rpc('vault_review_reports', { p_pass: pass });
+  const { data, error } = await supabase.rpc('vault_review_reports', { p_pass: pass, p_house: HOUSE.id });
   if (error) throw error;
   return (data || []).map((r) => ({ ...r, photo: photoFromRow(r.photo) }));
 }
 export async function dismissReport(id, pass) {
-  const { error } = await supabase.rpc('vault_resolve_report', { p_id: id, p_pass: pass });
+  const { error } = await supabase.rpc('vault_resolve_report', { p_id: id, p_pass: pass, p_house: HOUSE.id });
   if (error) throw error;
 }
 export async function banUploader(photoId, pass, hideAll = false) {
@@ -393,7 +421,7 @@ export async function saveRequest(form, id = null, pass = '') {
     due_on: form.dueOn || null,
     open: !!form.open,
   };
-  const { error } = await supabase.rpc('vault_admin_save_request', { p_pass: pass, p_id: id, p });
+  const { error } = await supabase.rpc('vault_admin_save_request', { p_pass: pass, p_id: id, p, p_house: HOUSE.id });
   if (error) throw error;
 }
 
@@ -419,17 +447,17 @@ export async function fetchTotals() {
 }
 
 export async function bannedMembers(pass) {
-  const { data, error } = await supabase.rpc('vault_banned_members', { p_pass: pass });
+  const { data, error } = await supabase.rpc('vault_banned_members', { p_pass: pass, p_house: HOUSE.id });
   if (error) throw error;
   return data || [];
 }
 export async function unbanMember(userId, pass) {
-  const { error } = await supabase.rpc('vault_unban_member', { p_user: userId, p_pass: pass });
+  const { error } = await supabase.rpc('vault_unban_member', { p_user: userId, p_pass: pass, p_house: HOUSE.id });
   if (error) throw error;
 }
 
 export async function listContributorPhotos(owner, offset = 0, event = null) {
-  const { data: gallery, error } = await supabase.rpc('vault_contributor_gallery_filtered', { p_owner: owner, p_offset: offset, p_event: event });
+  const { data: gallery, error } = await supabase.rpc('vault_contributor_gallery_filtered', { p_owner: owner, p_offset: offset, p_event: event, p_house: HOUSE.id });
   if (error) throw error;
   if (!gallery) throw new Error('This contributor gallery is unavailable.');
   if (!gallery.ids.length) return { ...gallery, photos: [] };

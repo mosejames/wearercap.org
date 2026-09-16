@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT,
+  HOUSE, YEAR, SITE, ASK, KINDS, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -9,8 +9,9 @@ import {
   storageConfig, mediaUrl, listEvents, saveEvent,
   listContributorPhotos, listCoverPhotos, listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
-  listRequests, saveRequest, listPhonesForAdmin, fetchTotals,
+  listRequests, saveRequest, listPhonesForAdmin, fetchTotals, saveRcaHouse, staffRole as fetchStaffRole,
 } from './data.js';
+import { HouseBoard, MostLoved } from './School.jsx';
 import { SaveMedia } from './SaveMedia.jsx';
 import { ACTIVITIES, SuggestionForm, SuggestionReview, GalleryVisibility } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
@@ -227,7 +228,7 @@ function ModerationPanel({ pass, onChanged }) {
     {err && <p className="err" role="alert">{err}</p>}
     {reports === null ? <p>Loading reports…</p> : !reports.length ? <p>No open concerns. Thank you for looking after our family.</p> : reports.map((r) => <article className="moderation-report" key={r.id}>
       <img src={mediaUrl(r.photo, 'thumb')} alt="Reported upload" />
-      <div><b>{r.event}</b>{r.photo.cleanupPending && <p className="err">Hidden from the gallery. Retry removal to finish deleting the files.</p>}<details className="moderation-preview"><summary>View full upload</summary>{isVideo(r.photo) ? <video controls playsInline preload="none" src={mediaUrl(r.photo, 'orig')} /> : <img src={mediaUrl(r.photo, 'web')} alt="Reported upload for review" loading="lazy" />}</details><p>{r.photo.uploaderName || 'Amistad family'} · {r.reason === 'privacy' ? 'Removal requested by family' : r.reason}</p>{r.note && <p>{r.note}</p>}
+      <div><b>{r.event}</b>{r.photo.cleanupPending && <p className="err">Hidden from the gallery. Retry removal to finish deleting the files.</p>}<details className="moderation-preview"><summary>View full upload</summary>{isVideo(r.photo) ? <video controls playsInline preload="none" src={mediaUrl(r.photo, 'orig')} /> : <img src={mediaUrl(r.photo, 'web')} alt="Reported upload for review" loading="lazy" />}</details><p>{r.photo.uploaderName || WORDS.family} · {r.reason === 'privacy' ? 'Removal requested by family' : r.reason}</p>{r.note && <p>{r.note}</p>}
         <div className="row"><button className="btn small ghost" disabled={busy} onClick={() => act(() => dismissReport(r.id, pass))}>Dismiss report</button>
         <button className="btn small primary" disabled={busy} onClick={() => { if (confirm('Remove this upload and delete its stored files?')) act(() => removeUpload(r.photo.id, pass)); }}>Remove upload</button>
         {r.can_ban && !r.banned && <button className="btn small ghost" disabled={busy} onClick={() => { if (confirm('Ban this verified number from uploading, commenting, and reporting?')) act(() => banUploader(r.photo.id, pass)); }}>Ban contributor</button>}
@@ -249,6 +250,7 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
     student: profile?.student || '',
     releaseOptIn: profile?.release_opt_in === true,
     badgeTextOptIn: profile?.badge_text_opt_in === true,
+    rcaHouse: profile?.rca_house || '',
   });
   const [textsAvailable, setTextsAvailable] = useState(false);
   useEffect(() => { let live=true; fetch('/api/vault-badge-text').then(r=>r.json()).then(r=>{if(live)setTextsAvailable(!!r.available);}).catch(()=>{}); return()=>{live=false;}; }, []);
@@ -262,25 +264,45 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
   const submit = async (e) => {
     e.preventDefault();
     if (form.displayName.trim().length < 2) { setErr('Add the name you want on your photos.'); return; }
+    if (IS_SCHOOL && !form.rcaHouse) { setErr('Pick your house so your photos count for it.'); return; }
     setBusy(true); setErr('');
-    try { const saved = await saveProfile(form); if (avatarFile || removeAvatar) await saveAvatar(avatarFile, removeAvatar); onSaved(saved); }
+    try {
+      const saved = await saveProfile(form);
+      if (IS_SCHOOL) { if (form.rcaHouse !== profile?.rca_house) await saveRcaHouse(form.rcaHouse); saved.rca_house = form.rcaHouse; }
+      if (avatarFile || removeAvatar) await saveAvatar(avatarFile, removeAvatar);
+      onSaved(saved);
+    }
     catch (ex) { setErr(ex.message || 'Could not save.'); setBusy(false); }
   };
   return (
     <Sheet title={firstTime ? 'Who is this?' : 'Your name and preferences'} onClose={busy ? () => {} : onClose}>
       <form className="stack" onSubmit={submit}>
-        {firstTime && <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} Your phone is verified. Choose the name your Amistad family will see.</p>}
-        <div className="profile-photo-picker"><Avatar owner={profile?.owner} name={form.displayName} photo={avatarPreview} hidePhoto={removeAvatar} large /><label className="field"><span>Profile photo <i>optional</i></span><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={busy} onChange={e=>{setAvatarFile(e.target.files?.[0] || null);setRemoveAvatar(false);}} /><small>A headshot helps your Amistad family recognize you.</small></label></div>
+        {firstTime ? <p className="lede">{reason || 'One quick thing so your photos have a name on them.'} Your phone is verified. Choose the name your {WORDS.family} will see.</p> : reason && <p className="lede">{reason}</p>}
+        <div className="profile-photo-picker"><Avatar owner={profile?.owner} name={form.displayName} photo={avatarPreview} hidePhoto={removeAvatar} large /><label className="field"><span>Profile photo <i>optional</i></span><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={busy} onChange={e=>{setAvatarFile(e.target.files?.[0] || null);setRemoveAvatar(false);}} /><small>A headshot helps your {WORDS.family} recognize you.</small></label></div>
         {profile && <button type="button" className="btn small ghost" disabled={busy} onClick={()=>{setRemoveAvatar(true);setAvatarFile(null);}}>Use my initials instead{removeAvatar ? ' ✓' : ''}</button>}
         <label className="field">
           <span>Your name</span>
           <input autoFocus value={form.displayName} onChange={set('displayName')} placeholder="Keisha J." maxLength={60} />
         </label>
+        {IS_SCHOOL && (
+          <fieldset className="house-pick">
+            <legend>Your house</legend>
+            <p className="fine">Your photos count toward your house on the leaderboard. Kids in two houses? Pick one, and switch any time.</p>
+            <div className="house-pick-row">
+              {RCA_HOUSES.map((h) => (
+                <label key={h.id} className={`house-chip${form.rcaHouse === h.id ? ' on' : ''}`} style={{ '--house': h.color }}>
+                  <input type="radio" name="rca-house" value={h.id} checked={form.rcaHouse === h.id} onChange={() => setForm((f) => ({ ...f, rcaHouse: h.id }))} />
+                  <b>{h.name}</b><small>{h.meaning}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <label className="field">
           <span>Student(s) <i>optional</i></span>
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
         </label>
-        <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new Ami Vault photo badge.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : 'Milestone texts are being connected. You can still collect and celebrate every badge in the Vault.'}</small></span></label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new {WORDS.badge}.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : 'Milestone texts are being connected. You can still collect and celebrate every badge in the Vault.'}</small></span></label>
         <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My Vault → Edit profile. Message and data rates may apply.</small></span></label>
         {err && <p className="err">{err}</p>}
         <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
@@ -406,7 +428,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
           <button className="btn primary" disabled={!files.length || optimizing || (files.some(isVideo) && quality === 'smaller' && !optimized)} onClick={start}>
             Add {files.length ? plural(files.length, 'file') : 'files'} to the vault
           </button>
-          <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in the house can see, like, comment on, and download what you add.</p>
+          <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in {WORDS.group} can see, like, comment on, and download what you add.</p>
         </div>
       ) : (
         <div className="stack">
@@ -458,7 +480,7 @@ function DownloadSheet({ event, photos, onClose }) {
       const pad = String(photos.length).length;
       const entries = photos.map((p, i) => {
         const ext = which === 'orig' || isVideo(p) ? (p.key.split('.').pop() || 'jpg') : 'jpg';
-        const who = (p.uploaderName || 'amistad').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+        const who = (p.uploaderName || WORDS.zip).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
         const when = p.takenAt ? p.takenAt.slice(0, 10) : p.createdAt.slice(0, 10);
         return {
           name: `${event.slug}/${String(i + 1).padStart(pad, '0')}-${when}-${who}.${ext}`,
@@ -471,7 +493,7 @@ function DownloadSheet({ event, photos, onClose }) {
         };
       });
       const stream = zipStream(entries, { onProgress: setProg });
-      const how = await saveStream(stream, `amistad-${YEAR.start.slice(0, 4)}-${YEAR.end.slice(2, 4)}-${event.slug}${which === 'orig' ? '-originals' : ''}.zip`);
+      const how = await saveStream(stream, `${WORDS.zip}-${YEAR.start.slice(0, 4)}-${YEAR.end.slice(2, 4)}-${event.slug}${which === 'orig' ? '-originals' : ''}.zip`);
       if (how === 'cancelled') setProg(null);
     } catch (ex) {
       setErr(ex.message || 'Download failed.');
@@ -516,7 +538,7 @@ function InviteSheet({ event, onClose }) {
   const [copied, setCopied] = useState('');
   const url = inviteUrl(event.slug);
   const when = event.ongoing ? 'all year' : fmtRange(event.startsOn, event.endsOn);
-  const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help our Amistad family keep the memories together: ${url}`;
+  const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help ${WORDS.ourFamily} keep the memories together: ${url}`;
 
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); }
@@ -532,7 +554,7 @@ function InviteSheet({ event, onClose }) {
   return (
     <Sheet title="Invite to upload" onClose={onClose}>
       <div className="stack">
-        <p className="lede">Invite our Amistad family to relive <b>{event.title}</b> and add their favorite photos and videos.</p>
+        <p className="lede">Invite {WORDS.ourFamily} to relive <b>{event.title}</b> and add their favorite photos and videos.</p>
         <div className="invite-card">
           <span className="eyebrow">The link</span>
           <code>{url}</code>
@@ -550,7 +572,7 @@ function InviteSheet({ event, onClose }) {
           <textarea rows={4} readOnly value={message} onFocus={(e) => e.target.select()} />
         </label>
         <p className="fine">
-          The shared preview includes an AMI Vault image with this event’s name, so everyone knows where to add their photos.
+          The shared preview includes {WORDS.shareImage} with this event’s name, so everyone knows where to add their photos.
           {event.startsOn > todayISO() && ` Heads up: this album opens at 12:01am on ${fmtDate(event.startsOn, { weekday: 'long' })}, so the link is a save-the-date until then.`}
         </p>
       </div>
@@ -661,7 +683,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
         <div className="lb-meta">
           <Avatar owner={p.owner} name={p.uploaderName} />
           <div>
-            <a className="lb-uploader" href={`#/person/${p.owner}`} onClick={onClose}><b>{p.uploaderName || 'Amistad family'}</b></a>
+            <a className="lb-uploader" href={`#/person/${p.owner}`} onClick={onClose}><b>{p.uploaderName || WORDS.family}</b></a>
             <small>{fmtDate(when, { year: 'numeric' })}{p.takenAt ? '' : ' · added'}{p.hidden ? ' · hidden' : ''}</small>
             {event?.slug&&<a className="lb-gallery-link" href={`#/e/${event.slug}`} onClick={onClose}>Gallery: {event.title} →</a>}
           </div>
@@ -779,8 +801,8 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
     <header className="topbar calm-header">
       <div className="shell topbar-in">
         <a href="#/" className="mark" aria-label={SITE.title}>
-          <span className="vault-label">AMI VAULT</span>
-          <small>{YEAR.label} · {HOUSE.name} House</small>
+          <span className="vault-label">{WORDS.wordmark}</span>
+          <small>{YEAR.label} · {WORDS.topSub}</small>
         </a>
         <nav className="nav">
           <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>Timeline</a>
@@ -940,7 +962,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
       <section className="home-intro">
         <div className="shell home-intro-row">
           <div>
-            <p className="eyebrow">House of Friendship</p>
+            <p className="eyebrow">{WORDS.homeEyebrow}</p>
             <p className="home-tagline">Our year. All together.</p>
             {!latestEvent && <h1>Add a moment to our year.</h1>}
           </div>
@@ -964,16 +986,20 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
         </div>
         <button className="link latest-other" onClick={() => setChoosing(true)}>Photos from another event? Choose an album →</button>
       </section>}
-      <section className="shell around-house"><h2>Around the House</h2><p>Some memories don’t need a date on the calendar.</p><div className="activity-tiles">{ACTIVITIES.map(c=>{
+      {IS_SCHOOL && <section className="shell school-board" aria-label="House leaderboard and most loved photo">
+        <HouseBoard version={totals?.photos} title="The house race" sub="Photos added this year, by house. Live." />
+        <MostLoved version={totals?.likes} events={events} title="Most loved this year" />
+      </section>}
+      {!IS_SCHOOL && <section className="shell around-house"><h2>Around the House</h2><p>Some memories don’t need a date on the calendar.</p><div className="activity-tiles">{ACTIVITIES.map(c=>{
         const album=events.find(e=>e.category===c.id&&e.ongoing&&!e.hidden);
         if(!album)return null;
         const thumb=covers.get(album.id)?.[0];
         return <a key={c.id} className="activity-tile" href={`#/activity/${c.id}`}>{thumb?<img src={mediaUrl(thumb,'thumb')} alt=""/>:<span className="activity-symbol" aria-hidden="true">{c.icon}</span>}<div><h3>{c.title}</h3><p>{c.description}</p></div></a>;
-      })}</div><button className="link suggest-link" onClick={onSuggest}>Missing an event? Suggest one →</button></section>
+      })}</div><button className="link suggest-link" onClick={onSuggest}>Missing an event? Suggest one →</button></section>}
       {choosing && <Sheet title="Which event are these from?" onClose={() => setChoosing(false)}>
         <div className="stack">
-          <button className="link" onClick={() => {setChoosing(false);onSuggest();}}>Missing an event? Suggest one →</button>
-          <p className="lede">Pick an event, or choose Everyday Amistad for moments at home, at school, or out together.</p>
+          {!IS_SCHOOL && <button className="link" onClick={() => {setChoosing(false);onSuggest();}}>Missing an event? Suggest one →</button>}
+          <p className="lede">Pick an event, or choose {WORDS.everyday} for moments at home, at school, or out together.</p>
           <label className="field"><span>Find an event</span><input autoFocus type="search" value={eventSearch} onChange={(e) => setEventSearch(e.target.value)} placeholder="Search events" /></label>
           <div className="choice">
             {uploadEvents.map((e) => <button key={e.id} onClick={() => { setChoosing(false); setEventSearch(''); onAdd(e); }}>
@@ -987,8 +1013,8 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
       <section className="year" id="the-year">
         <div className="shell">
           <div className="family-note">
-            <h2>Every child. Every smile. Our family.</h2>
-            <p>In the House of Friendship, we look out for one another and capture the joy along the way. When you take a photo, make room for the friends beside your child, too. A moment you share may be a memory another family treasures forever. This is our story, and we get to keep it together.</p>
+            <h2>{WORDS.noteTitle}</h2>
+            <p>{WORDS.noteBody}</p>
           </div>
           <div className="album-heading">
             <div><h2>Our albums</h2><p>The latest memories, ready to explore.</p></div>
@@ -1131,6 +1157,13 @@ function EventPage({ event, events, canMove, owner, profile, admin, pass, onAdd,
           </div>
         </div>
       </div>
+      {IS_SCHOOL && event.kind !== 'everyday' && photos && (
+        <section className="shell school-board event-board" aria-label="House leaderboard and most loved photo for this event">
+          <HouseBoard eventId={event.id} version={visible.length} title="The house race" sub={`Photos from ${event.title}, by house.`} />
+          <MostLoved eventId={event.id} version={visible.reduce((n, p) => n + p.likes, 0)} events={events} title={`Most loved from ${event.title}`} hideEmpty
+            onOpen={(id) => { const i = sorted.findIndex((p) => p.id === id); if (i >= 0) setIndex(i); }} />
+        </section>
+      )}
       <div className="shell">
         {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(sorted.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button></div>}
         {photos === null ? <p className="empty">Loading…</p> : (
@@ -1182,7 +1215,7 @@ function TopPage({ events, owner, profile, onNeedName, showToast }) {
       <div className="sec-head">
         <span className="eyebrow">Most loved</span>
         <h1 className="page-title">The most loved photos of the year.</h1>
-        <p>Ranked by the house, live. Tap the heart on anything and it moves.</p>
+        <p>{WORDS.topRanked}</p>
       </div>
       {photos === null ? <p className="empty">Loading…</p>
         : <PhotoGrid photos={photos} onOpen={setOpen} likedSet={liked} rank emptyText="No hearts yet. Go love something." />}
@@ -1268,7 +1301,7 @@ function DashboardShare({ events, onAdd, hasUploads, onSuggest }) {
     <section className="dashboard-share" aria-labelledby="dashboard-share-title">
       <span className="eyebrow">{hasUploads ? 'There’s more to our story' : 'You’re part of the story'}</span>
       <h2 id="dashboard-share-title">{hasUploads ? 'Keep the memories coming.' : 'Let’s share your first memory.'}</h2>
-      <p>A smile you captured could make another family’s day. Share your favorite photos and videos with our Amistad family.</p>
+      <p>A smile you captured could make another family’s day. Share your favorite photos and videos with {WORDS.ourFamily}.</p>
       {latest && <p className="dashboard-latest"><span>Latest event · {fmtRange(latest.startsOn, latest.endsOn)}</span><b>{latest.title}</b></p>}
       <div className="dashboard-share-actions">
         {available.length > 0 ? <button className="btn primary" onClick={() => latest ? onAdd(latest) : setChoosing(true)}>{I.plus} {hasUploads ? 'Share more memories' : 'Start sharing'}</button> : <a className="btn primary" href="#/">Explore our galleries</a>}
@@ -1344,7 +1377,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   const galleryPages=Math.max(1,Math.ceil(filteredGalleries.length/10)),currentGalleryPage=Math.min(galleryPage,galleryPages-1);
 
   const [tab,setTab]=useState('reports'),[pending,setPending]=useState({reports:0,suggestions:0});
-  const updateCounts=useCallback(async()=>{if(!admin)return;const results=await Promise.allSettled([reviewReports(pass),staffRole==='moderator'?Promise.resolve([]):rewardCall('vault_event_suggestions',{p_pass:pass})]);setPending({reports:results[0].status==='fulfilled'?results[0].value.length:0,suggestions:results[1].status==='fulfilled'?results[1].value.length:0});},[admin,pass,staffRole]);
+  const updateCounts=useCallback(async()=>{if(!admin)return;const results=await Promise.allSettled([reviewReports(pass),staffRole==='moderator'||IS_SCHOOL?Promise.resolve([]):rewardCall('vault_event_suggestions',{p_pass:pass})]);setPending({reports:results[0].status==='fulfilled'?results[0].value.length:0,suggestions:results[1].status==='fulfilled'?results[1].value.length:0});},[admin,pass,staffRole]);
   useEffect(()=>{updateCounts();},[updateCounts,tab]);
   const changed=()=>{refresh();updateCounts();};
   const [editing, setEditing] = useState(null);       // event form
@@ -1388,7 +1421,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
     const ev = byId.get(r.eventId);
     const link = `${SITE.origin}${SITE.base}#/e/${ev.slug}`;
     const due = r.dueOn ? ` by ${fmtDate(r.dueOn, { weekday: 'long' })}` : '';
-    setNudge(`Amistad fam: ${ev.title} photos wanted${due}. ${r.message ? `${r.message} ` : ''}Check your camera roll for the smiles, laughs, and moments worth keeping. Add yours and let’s relive the fun: ${link}`);
+    setNudge(`${WORDS.fam}: ${ev.title} photos wanted${due}. ${r.message ? `${r.message} ` : ''}Check your camera roll for the smiles, laughs, and moments worth keeping. Add yours and let’s relive the fun: ${link}`);
   };
   const copy = async (t) => { try { await navigator.clipboard.writeText(t); showToast('Copied.'); } catch { prompt('Copy', t); } };
 
@@ -1400,13 +1433,13 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My Vault to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
       </div>
 
-      <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],['suggestions','Suggestions'],...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
+      <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],...(IS_SCHOOL?[]:[['suggestions','Suggestions']]),...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
       {tab==='team'&&staffRole==='owner'&&<StaffPanel key="team" />}
       {tab==='members'&&staffRole==='owner'&&<StaffPanel key="members" directory />}
       {tab==='suggestions'&&<SuggestionReview events={events} pass={pass} onChanged={changed} />}
       {tab==='reports'&&<ModerationPanel pass={pass} onChanged={changed} />}
       {tab==='galleries'&&<>
-      <GalleryVisibility pass={pass} onChanged={changed} />
+      {!IS_SCHOOL && <GalleryVisibility pass={pass} onChanged={changed} />}
       <details className="adm-sec photo-requests"><summary>Photo requests · {requests.filter(r=>r.open).length} active</summary>
         <div className="adm-head"><h2>Photos wanted</h2><button className="btn small primary" onClick={() => setAsk({ id: null, form: { eventId: events[0]?.id, message: '', goal: 40, dueOn: '', open: true } })}>New ask</button></div>
         <table className="tbl">
@@ -1568,7 +1601,7 @@ export default function App() {
     let active = true;
     const check = async () => {
       try {
-        const [role, passOK] = await Promise.all([rewardCall('vault_staff_role'), pass ? checkPass(pass) : Promise.resolve(false)]);
+        const [role, passOK] = await Promise.all([fetchStaffRole(), pass ? checkPass(pass) : Promise.resolve(false)]);
         if (active) { setStaffRole(role); setAdmin(!!role || passOK); }
       } catch { if (active) { setStaffRole(null); setAdmin(false); } }
     };
@@ -1637,6 +1670,8 @@ export default function App() {
     if (route.name !== 'event' || route.slug !== ev.slug) go(`/e/${ev.slug}`);
     setDropped(files && files.length ? files : null);
     if (!owner || !profile) { needName(`Add your name so your ${ev.title} uploads have it.`, () => setUpload(ev)); return; }
+    // School-wide photos count for a house, so the house comes before the first upload.
+    if (IS_SCHOOL && !profile.rca_house) { setNameAsk({ reason: 'Pick your house so these photos count for it.', then: () => setUpload(ev) }); return; }
     try { await requireContributor(); setUpload(ev); } catch (e) { setDropped(null); showToast(e.message); }
   };
 
@@ -1666,8 +1701,8 @@ export default function App() {
       {suggesting && <Sheet title="Suggest an event" onClose={() => setSuggesting(false)}><SuggestionForm profile={profile} onSignIn={() => needName('Sign in to suggest an event.')} onDone={() => setSuggesting(false)} /></Sheet>}
       <footer className="foot">
         <div className="shell">
-          <p className="foot-mark"><span>AMI</span> VAULT · {YEAR.label}</p>
-          <p>{HOUSE.name} means {HOUSE.meaning.toLowerCase()}. The vault is what it looks like.</p>
+          <p className="foot-mark"><span>{WORDS.footShort}</span> VAULT · {YEAR.label}</p>
+          <p>{WORDS.footLine}</p>
           <p className="fine">Photos belong to the families who took them and are shared here for the house. Questions: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. {admin ? ADMIN_HINT : ''}</p>
         </div>
       </footer>
@@ -1676,8 +1711,9 @@ export default function App() {
         const o = await syncIdentity(); setOwner(o);
         const p = await fetchProfile();
         const next = phoneAsk; setPhoneAsk(null);
-        if (p) { setProfile({ ...p, release_opt_in: !!p.release_opt_in }); next.then?.(); }
-        else setNameAsk({ reason: next.reason, then: next.then });
+        if (p) setProfile({ ...p, release_opt_in: !!p.release_opt_in });
+        if (p && (!IS_SCHOOL || p.rca_house)) next.then?.();
+        else setNameAsk({ reason: p ? 'Pick your house so your photos count for it.' : next.reason, then: next.then });
       }} />}
       {reporting && <ReportSheet photo={reporting} onClose={() => setReporting(null)} />}
       {(nameAsk || profileOpen) && (

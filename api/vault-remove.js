@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     if (!r.ok) return res.status(403).json({ error: 'You cannot remove this upload. Please sign in again.' });
     const media = await r.json();
     // Never accept object keys from the browser.
-    if (!Array.isArray(media.keys) || media.keys.length !== 3 || media.keys.some((k) => !k.startsWith('amistad/') || k.includes('..'))) throw new Error('Invalid stored paths');
+    if (!Array.isArray(media.keys) || media.keys.length !== 3 || media.keys.some((k) => !/^(amistad|rcap)\//.test(k) || k.includes('..'))) throw new Error('Invalid stored paths');
     if (media.storage === 'r2') {
       const client = new AwsClient({ accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY, service: 's3', region: 'auto' });
       for (const path of media.keys) {
