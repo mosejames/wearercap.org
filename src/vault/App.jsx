@@ -751,7 +751,7 @@ function PromoCard({ promo }) {
         {promo.image && <img src={promo.image} alt="" loading="lazy" decoding="async" />}
         <span className="promo-body">
           <span className="promo-eyebrow">{promo.eyebrow}</span>
-          <b>{promo.title}</b>
+          {promo.logo ? <img className="promo-logo" src={promo.logo} alt={promo.title} width="988" height="880" loading="lazy" decoding="async" /> : <b>{promo.title}</b>}
           {promo.body && <span className="promo-copy">{promo.body}</span>}
           <span className="promo-cta">{promo.cta} →</span>
         </span>
@@ -765,7 +765,7 @@ function PromoCard({ promo }) {
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [] }) {
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
-    return promos.length ? <>{empty}<div className="grid promo-only">{promos.map((pr) => <PromoCard key={pr.id} promo={{ ...pr, ...(pr.variants?.[0] || {}) }} />)}</div></> : empty;
+    return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
   }
   const slots = promoSlots(promos, photos.length);
   const at = (i) => slots.filter((s) => s.at === i);

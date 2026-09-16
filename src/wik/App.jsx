@@ -289,7 +289,12 @@ function Admin() {
 // board it feeds lives at BOARD_URL, because mixing "write something" and
 // "read everything" on one screen made both of them long.
 export default function App() {
-  const [mode, setMode] = useState('advice');
+  // ?mode=suggestion opens straight on the suggestion box, for links like the
+  // cards in the RCAP Capsule gallery.
+  const [mode, setMode] = useState(() => {
+    const asked = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('mode') : null;
+    return asked && MODES[asked] ? asked : 'advice';
+  });
   const [done, setDone] = useState(null);
   const [counts, setCounts] = useState({ advice: 0, questions: 0, ideas: 0 });
   const [topicCounts, setTopicCounts] = useState({});

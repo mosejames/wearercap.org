@@ -172,3 +172,17 @@ html[data-vault="rcap"] .promo-cta{align-self:flex-start;margin-top:6px;backgrou
 html[data-vault="rcap"] .promo-tile:hover .promo-cta{background:#fff}
 html[data-vault="rcap"] .promo-tile:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 html[data-vault="rcap"] .grid.promo-only{margin-top:8px}
+
+/* Promo cards break the masonry: full width, so no card can sit beside
+   another. Photos above and below balance their own columns. On wider
+   screens the card lays out sideways so it stays short. */
+html[data-vault="rcap"] .grid>.promo-wrap{column-span:all;-webkit-column-span:all;margin-top:4px;margin-bottom:12px}
+html[data-vault="rcap"] .promo-tile.has-image img{aspect-ratio:21/9}
+@media(min-width:680px){
+ html[data-vault="rcap"] .grid>.promo-wrap .promo-tile{flex-direction:row;align-items:stretch;min-height:150px}
+ html[data-vault="rcap"] .grid>.promo-wrap .promo-tile.has-image img{width:38%;aspect-ratio:auto;height:auto;min-height:100%}
+ html[data-vault="rcap"] .grid>.promo-wrap .promo-body{flex:1;justify-content:center;padding-top:22px;padding-bottom:22px;padding-left:28px;padding-right:28px}
+ html[data-vault="rcap"] .grid>.promo-wrap .promo-body b{font-size:24px}
+}
+html[data-vault="rcap"] .promo-tile img.promo-logo{width:112px;height:auto;aspect-ratio:988/880;object-fit:contain;margin-top:4px;margin-bottom:4px}
+@media(min-width:680px){html[data-vault="rcap"] .grid>.promo-wrap .promo-tile img.promo-logo{width:132px;min-height:0}}

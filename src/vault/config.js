@@ -76,20 +76,27 @@ const WORDS_BY_VAULT = {
 export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 
 // Cards placed inside an album's photo grid, between the photos. School vault
-// only. `events` lists the album slugs a card appears in. The first card
-// lands after `after` photos, then it repeats every `every` photos, rotating
-// through `variants` so a long scroll never shows the same words twice in a
-// row. Short albums get the first card at the end. `until` is the last day it
-// shows, Eastern. Nothing here touches the database.
+// only. Nothing here touches the database.
 //
-// Spacing: two cards, each every 40 photos, offset by 20, is one card per 20
-// photos. Present all the way down, never back to back.
+// One rhythm for the whole album: the first card after PROMO_FIRST photos,
+// then one every PROMO_EVERY. The cards take turns in the order listed, and
+// each card rotates through its `variants`, so the same card never appears
+// twice in a row. `events` lists the album slugs a card appears in; `until`
+// is the last day it shows, Eastern.
+//
+// Each card spans the full width of the grid (column-span in rcap.css). In a
+// masonry grid a card sitting in one column lands beside whatever flowed into
+// the next column, which is how two membership cards ended up side by side on
+// a phone. A full-width card cannot have a neighbour.
+export const PROMO_FIRST = 6;
+export const PROMO_EVERY = 20;
+
+const SCHOOL_ALBUMS = ['bingo-night'];
+
 export const PROMOS = IS_SCHOOL ? [
   {
     id: 'karaoke-sept-27',
-    events: ['bingo-night'],
-    after: 6,
-    every: 40,
+    events: SCHOOL_ALBUMS,
     until: '2026-09-27',
     cta: 'RSVP',
     href: '/karaoke',
@@ -101,37 +108,60 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'membership-2026',
-    events: ['bingo-night'],
-    after: 26,
-    every: 40,
+    events: SCHOOL_ALBUMS,
     until: '2027-05-28',
     cta: 'Join the team',
     href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
     external: true,
     variants: [
-      { eyebrow: 'RCAP membership', title: 'We are community. We are connected.', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
+      { eyebrow: 'RCAP membership', title: 'We Are RCAP', logo: '/images/we-are-rcap-logo.png', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
       { eyebrow: 'RCAP membership', title: 'Be part of the team.', body: 'Every RCA family, pulling together for the school that pours into our children.' },
       { eyebrow: 'RCAP membership', title: 'This school gives us so much.', body: 'Your membership donation is how we give back, together.' },
+    ],
+  },
+  {
+    id: 'collective',
+    events: SCHOOL_ALBUMS,
+    until: '2027-05-28',
+    cta: 'Explore the Collective',
+    href: '/directory/',
+    variants: [
+      { eyebrow: 'The RCAP Collective', title: 'What you need might be at this table.', body: 'Businesses, services, creative work and student ventures from RCA families.' },
+      { eyebrow: 'The RCAP Collective', title: 'Hire the families you just saw.', body: 'Our own RCA community, in one directory. List yours too.' },
+    ],
+  },
+  {
+    id: 'suggestion-box',
+    events: SCHOOL_ALBUMS,
+    until: '2027-05-28',
+    cta: 'Open the suggestion box',
+    href: '/wish-i-knew/?mode=suggestion',
+    variants: [
+      { eyebrow: 'The suggestion box', title: 'Got an idea for next time?', body: 'An event, a fix, a better way to do something. The board reads every one.' },
+      { eyebrow: 'The suggestion box', title: 'Tell us what would make it better.', body: 'One idea for RCAP. It takes a minute, and it gets read.' },
     ],
   },
 ] : [];
 
 export const promosFor = (slug, today) =>
-  PROMOS.filter((p) => p.events.includes(slug) && today <= p.until).sort((a, b) => a.after - b.after);
+  PROMOS.filter((p) => p.events.includes(slug) && today <= p.until);
 
-// Where each card lands in an album of `count` photos: [{ at, promo, card }].
-// `at` is how many photos come before it; `card` is the variant to show.
+// Where the cards land in an album of `count` photos: [{ at, promo, card, key }].
+// `at` is how many photos come before the card. An album shorter than
+// PROMO_FIRST still gets one card, at the end.
 export const promoSlots = (promos, count) => {
-  const slots = [];
-  for (const p of promos) {
-    const variants = p.variants?.length ? p.variants : [p];
-    for (let n = 0, at = p.after; ; n++, at += p.every || Infinity) {
-      if (at > count && n > 0) break;
-      slots.push({ at: Math.min(at, count), promo: p, card: { ...p, ...variants[n % variants.length] }, key: `${p.id}-${n}` });
-      if (!p.every || at >= count) break;
-    }
-  }
-  return slots.sort((x, y) => x.at - y.at);
+  if (!promos.length) return [];
+  const spots = [];
+  for (let at = PROMO_FIRST; at <= count; at += PROMO_EVERY) spots.push(at);
+  if (!spots.length) spots.push(count);
+  const seen = new Map();
+  return spots.map((at, n) => {
+    const promo = promos[n % promos.length];
+    const k = seen.get(promo.id) || 0;
+    seen.set(promo.id, k + 1);
+    const variants = promo.variants?.length ? promo.variants : [promo];
+    return { at, promo, card: { ...promo, ...variants[k % variants.length] }, key: `${promo.id}-${k}` };
+  });
 };
 
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };
