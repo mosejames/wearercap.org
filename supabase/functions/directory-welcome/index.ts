@@ -99,7 +99,21 @@ Deno.serve(async (req) => {
 
   if (listingError) return reply(500, { error: 'Could not read the listing' });
   if (!listing) return reply(404, { error: 'No such listing' });
-  if (listing.owner_id !== auth.user.id) return reply(403, { error: 'Not your listing' });
+  // Owners trigger their own welcome. A directory admin may also send it, for
+  // listings published before this function worked. Either way the email goes
+  // to the listing owner's account address, never to the caller.
+  let to = auth.user.email;
+  if (listing.owner_id !== auth.user.id) {
+    const { data: admin } = await db
+      .from('directory_admins')
+      .select('user_id')
+      .eq('user_id', auth.user.id)
+      .maybeSingle();
+    if (!admin) return reply(403, { error: 'Not your listing' });
+    const { data: owner } = await db.auth.admin.getUserById(listing.owner_id);
+    if (!owner?.user?.email) return reply(200, { sent: false, reason: 'owner has no email' });
+    to = owner.user.email;
+  }
   if (!listing.published) return reply(200, { sent: false, reason: 'not published' });
   if (listing.welcome_sent_at) return reply(200, { sent: false, reason: 'already sent' });
   if (!RESEND_KEY) {
@@ -129,7 +143,7 @@ Deno.serve(async (req) => {
     },
     body: JSON.stringify({
       from: MAIL_FROM,
-      to: auth.user.email,
+      to,
       subject: 'Your listing is live on the RCAP Collective',
       text,
       html,

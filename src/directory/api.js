@@ -44,6 +44,23 @@ export async function sendWelcomeEmail(listingId) {
 // Published listings with the account email each owner signed up with. The
 // query lives in a security-definer function because auth.users is not readable
 // with the anon key, and it checks directory_admins before returning a row.
+// Published listings that never received the welcome email. Admin only.
+export async function listWelcomePending() {
+  const { data, error } = await supabase.rpc("directory_admin_welcome_pending");
+  if (error) throw error;
+  return data || [];
+}
+
+// Admin send. Unlike sendWelcomeEmail this reports the outcome so the admin
+// page can show it; the function still refuses anything already sent.
+export async function adminSendWelcome(listingId) {
+  const { data, error } = await supabase.functions.invoke("directory-welcome", {
+    body: { listing_id: listingId },
+  });
+  if (error) throw error;
+  return data || { sent: false };
+}
+
 export async function exportActiveListings() {
   const { data, error } = await supabase.rpc("directory_admin_export");
   if (error) throw error;
