@@ -243,3 +243,17 @@
   font-size: 15px;
   font-weight: 700;
 }
+
+/* The recap link on a meeting tile. Only past meetings carry one, so the tiles
+   still ahead simply end after the time, rather than offering a dead link. */
+.event-recap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 14px 14px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.event-recap:hover { text-decoration: underline; }

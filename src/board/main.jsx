@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Mail } from 'lucide-react';
 import '../styles.css';
 import './board.css';
 
@@ -79,8 +79,12 @@ const officers = [
 // Mondays at 7pm. Only April is in person, because that is the election.
 // May 10 is its backup. Same shape as the homepage tiles so they render through
 // the same markup and stylesheet; nothing here is styled twice.
+// After every general meeting, build its page and add `recap` to that row. The
+// tile then carries a "Read the recap" link and nothing else needs touching:
+// the meetings still to come simply have no recap yet, which is the honest
+// state rather than a dead link.
 const meetings = [
-  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual' },
+  { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual', recap: '/meeting/sept-14/' },
   { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
   { month: 'Jan', year: '2027', weekday: 'Mon', day: '25', label: '7:00pm, virtual' },
   { month: 'Apr', year: '2027', weekday: 'Mon', day: '26', label: '7:00pm, in person' },
@@ -199,7 +203,7 @@ function App() {
         </div>
 
         <div className="event-grid">
-          {meetings.map(({ month, year, weekday, day, label }) => (
+          {meetings.map(({ month, year, weekday, day, label, recap }) => (
             <article className="event-card" key={`${month}-${day}`}>
               <header className="event-banner">
                 <span>
@@ -209,6 +213,12 @@ function App() {
               </header>
               <p className="event-day">{day}</p>
               <p className="event-what">{label}</p>
+              {recap ? (
+                <a className="event-recap" href={recap}>
+                  Read the recap
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </a>
+              ) : null}
             </article>
           ))}
         </div>
