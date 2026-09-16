@@ -660,9 +660,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
   };
 
   const share = async () => {
-    const url = IS_SCHOOL
-      ? `${inviteUrl(encodeURIComponent(event.slug))}/p/${p.id}`
-      : `${SITE.origin}${SITE.base}#/e/${event.slug}/p/${p.id}`;
+    const url = `${inviteUrl(encodeURIComponent(event.slug))}/p/${p.id}`;
     if (navigator.share) { try { await navigator.share({ title: `${event.title} · ${SITE.title}`, url }); return; } catch { /* cancelled */ } }
     try { await navigator.clipboard.writeText(url); alert('Link copied.'); } catch { prompt('Copy this link', url); }
   };

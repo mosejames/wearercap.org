@@ -32,7 +32,7 @@ it('gives an event without photos its own named image and preserves the event de
 const photoId = '3bfa64fe-0b8f-4315-b7a0-5dd732728444';
 const event = { id: 'event-1', slug: 'bingo-night', title: 'Bingo Night', starts_on: '2026-09-15', open: true };
 const storedPhoto = { id: photoId, event_id: 'event-1', house: 'rcap', hidden: false, removed_at: null, storage: 'r2', web_key: 'rcap/photo/web.jpg', width: 2560, height: 1920 };
-async function renderPhoto(photo = storedPhoto, ev = event, id = photoId) {
+async function renderPhoto(photo = storedPhoto, ev = event, id = photoId, vault = 'rcap') {
   vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co');
   vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test');
   vi.stubEnv('R2_PUBLIC_BASE', 'https://media.wearercap.org');
@@ -40,7 +40,7 @@ async function renderPhoto(photo = storedPhoto, ev = event, id = photoId) {
     .mockResolvedValueOnce({ ok: true, json: async () => photo ? [photo] : [] }));
   const { default: handler } = await import('../../api/vault-link.js');
   const res = response();
-  await handler({ query: { slug: 'bingo-night', vault: 'rcap', photo: id }, url: `/rcap-capsule/e/bingo-night/p/${id}` }, res);
+  await handler({ query: { slug: 'bingo-night', vault, photo: id }, url: `/rcap-capsule/e/bingo-night/p/${id}` }, res);
   return res;
 }
 it('previews the existing R2 photo and opens that exact photo without generating a card', async () => {
@@ -85,4 +85,19 @@ it('rejects invalid photo identifiers before querying photos', async () => {
   const res = await renderPhoto(storedPhoto, event, 'invalid');
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(res.body).toContain('/api/vault-og?');
+});
+
+it.each(['r2', 'supabase'])('previews an Amistad photo in %s storage and opens it in Ami Vault', async (storage) => {
+  const res = await renderPhoto({ ...storedPhoto, house: 'amistad', web_key: 'amistad/photo/web.jpg', storage }, event, photoId, 'amistad');
+  expect(res.body).toContain('/amistad/photo/web.jpg');
+  expect(res.body).toContain('Bingo Night · Amistad Vault');
+  expect(res.body).toContain(`https://wearercap.org/ami-vault/e/bingo-night/p/${photoId}`);
+  expect(res.body).toContain(`https://wearercap.org/ami-vault/#/e/bingo-night/p/${photoId}`);
+  expect(res.body).not.toContain('/api/vault-og?');
+  expect(fetch.mock.calls[1][0]).toContain('house=eq.amistad');
+});
+it('does not expose a Capsule photo through an Ami Vault share', async () => {
+  const res = await renderPhoto(storedPhoto, event, photoId, 'amistad');
+  expect(res.body).toContain('/api/vault-og?');
+  expect(res.body).not.toContain('/rcap/photo/web.jpg');
 });
