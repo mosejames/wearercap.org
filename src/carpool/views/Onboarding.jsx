@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient.js';
 import { stashPendingFamily, readPendingFamily, clearPendingFamily } from '../pendingFamily.js';
 import { GOOGLE_CLIENT_ID, loadGoogleIdentity, createGoogleNonce } from '../googleIdentity.js';
 import FamilyForm from './FamilyForm.jsx';
+import HowItWorks from './HowItWorks.jsx';
 
 // Supabase's verifyOtp failure message is "Token has expired or is
 // invalid". Map that specific case to language a parent will actually
@@ -556,6 +557,7 @@ export default function Onboarding() {
             carry that. Do not water it back into an instruction like "add your
             family and we will...". */}
         <p className="cp-lede">A free, parent-built tool that helps RCA families connect with other families nearby who may want to share the school drive. Participation is completely optional. Create a profile, see who lives near you, and decide if carpooling is a good fit for your family.</p>
+        <HowItWorks />
         {/* Google goes ABOVE the form on purpose. A parent who fills in every
             field and then taps it loses all of that typing to the redirect, so
             the choice has to come before the investment, not after it. */}
