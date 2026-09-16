@@ -176,8 +176,7 @@ const navLinks = [
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
   // The first row is the featured card and needs time, description and image.
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night', time: '6pm, at RCA', description: 'Families, cards, daubers, and a room that gets loud. Come play.', image: '/images/bingo.jpg', cta: { href: '/rcap-recap/', label: 'Add to the Bingo Night recap' } },
-  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP, parent volunteers needed' },
+  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP', time: 'Both days, at RCA', description: 'Educators fly in from around the world to watch our teachers and our kids work. Parents are the first people they meet, and every session needs us.', image: '/images/rcap-exp-day.jpg', cta: { href: volunteerHref, label: 'Take a shift', external: true } },
   { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
   { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm', href: '/karaoke', cta: 'RSVP' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
@@ -764,7 +763,15 @@ function App() {
             {upcomingEvents[0].join ? (
               <a className="button primary" href={upcomingEvents[0].join} target="_blank" rel="noopener noreferrer">Join the meeting <ArrowUpRight size={18} aria-hidden="true" /></a>
             ) : upcomingEvents[0].cta ? (
-              <a className="button primary" href={upcomingEvents[0].cta.href}>{upcomingEvents[0].cta.label} <ArrowUpRight size={18} aria-hidden="true" /></a>
+              <a
+                className="button primary"
+                href={upcomingEvents[0].cta.href}
+                {...(upcomingEvents[0].cta.external
+                  ? { target: '_blank', rel: 'noopener noreferrer' }
+                  : {})}
+              >
+                {upcomingEvents[0].cta.label} <ArrowUpRight size={18} aria-hidden="true" />
+              </a>
             ) : (
               <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
             )}
