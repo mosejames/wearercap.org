@@ -102,9 +102,10 @@ export function CapsuleInbox({ owner, refresh }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     let live = true; setData(null); setError('');
-    capsuleCommunity('inbox', { p_offset: page * 20 }).then(r => { if (live) setData(r); })
+    const load = () => capsuleCommunity('inbox', { p_offset: page * 20 }).then(r => { if (live) { setData(r); setError(''); } })
       .catch(() => { if (live) setError('Your private thank-yous could not load.'); });
-    return () => { live = false; };
+    load(); const timer = setInterval(load, 45000);
+    return () => { live = false; clearInterval(timer); };
   }, [owner, refresh, page, retry]);
   const markRead = async () => {
     setBusy(true); setError('');
