@@ -821,8 +821,8 @@ function App() {
               width="1200"
               height="675"
             />
-            <span className="callout-kicker">Bingo Night</span>
-            <strong>Add your photos</strong>
+            <span className="callout-kicker">Add your photos</span>
+            <strong>Bingo Night</strong>
             <span className="callout-body">You were there with your phone out. Put them in the capsule so the whole school can see the night.</span>
             <span className="callout-go">Open the capsule <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
