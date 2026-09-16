@@ -87,6 +87,9 @@ const officers = [
 // section renders itself. `points` is the short version for a parent who will
 // not click; `href` is the full recap page. Keep it to three or four points:
 // this is the summary, not the minutes.
+//
+// No balances, no revenue, no budget figures here. Financials are reported to
+// parents in the meeting and in the recap page, not on a public board page.
 const recaps = [
   {
     key: 'sept-14',
@@ -96,7 +99,6 @@ const recaps = [
     points: [
       'Dues are $25 per family for the whole year, and every RCA family is already a member.',
       'The year ahead: the parents\u2019 social on Sept 27, the fall raffle, Trunk or Treat, holiday decor, 4 Days of Christmas, and Teacher Appreciation Week in the last week of April.',
-      'We started the year with $6,716.14 on hand. Last year\u2019s raffle brought in $25,120.',
       'Committee sign-ups opened, and Latasha asked for two or three parents to join a new audit team.',
     ],
   },
