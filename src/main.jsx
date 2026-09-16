@@ -823,7 +823,7 @@ function App() {
             />
             <span className="callout-kicker">Add your photos</span>
             <strong>Bingo Night</strong>
-            <span className="callout-body">You were there with your phone out. Put them in the capsule so the whole school can see the night.</span>
+            <span className="callout-body">Were you there? Grab the pictures of yourself and everybody else and share them, so the whole school can see the night.</span>
             <span className="callout-go">Open the capsule <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
 
