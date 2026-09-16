@@ -2559,3 +2559,39 @@ button {
   .callout, .callout-go { transition: none; }
   .callout:hover { transform: none; }
 }
+
+/* A callout with a photo behind it. The image is absolutely positioned so the
+   card keeps the height its copy gives it, matching the other two columns, and
+   a scrim under the text keeps it readable over a bright photo. */
+.callout.has-photo { position: relative; overflow: hidden; isolation: isolate; }
+
+.callout-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.callout.has-photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 10, 8, 0.58) 0%,
+    rgba(13, 10, 8, 0.78) 55%,
+    rgba(13, 10, 8, 0.92) 100%
+  );
+}
+
+.callout.has-photo:hover { background: var(--ink); }
+.callout.has-photo:hover .callout-photo { transform: scale(1.03); }
+.callout-photo { transition: transform 0.3s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .callout-photo { transition: none; }
+  .callout.has-photo:hover .callout-photo { transform: none; }
+}

@@ -801,21 +801,34 @@ function App() {
             columns than they did as three rules across the page. They stack
             back to full width on a phone. */}
         <div className="callouts">
-          <a className="callout callout-social" href="/karaoke">
+          <a className="callout callout-social has-photo" href="/karaoke">
+            <img className="callout-photo" src="/images/rcap-karaoke-mic.jpg" alt="" loading="lazy" width="1200" height="671" />
             <span className="callout-kicker">Sun, Sept 27</span>
             <strong>Parent Social: R&amp;B Karaoke</strong>
             <span className="callout-body">5 to 7pm at RCA. Adults only. See who is coming.</span>
             <span className="callout-go">RSVP <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
 
-          <a className="callout callout-capsule" href="/rcap-capsule/">
+          {/* The photo sits behind the copy rather than above it, so the card
+              keeps the same height as the other two. A scrim carries the text;
+              without it the white type disappears into the bright tablecloth. */}
+          <a className="callout callout-capsule has-photo" href="/rcap-capsule/">
+            <img
+              className="callout-photo"
+              src="/images/rcap-bingo-night.jpg"
+              alt=""
+              loading="lazy"
+              width="1200"
+              height="675"
+            />
             <span className="callout-kicker">Bingo Night</span>
             <strong>Add your photos</strong>
             <span className="callout-body">You were there with your phone out. Put them in the capsule so the whole school can see the night.</span>
             <span className="callout-go">Open the capsule <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
 
-          <a className="callout" href={MEETING_RECAP.href}>
+          <a className="callout has-photo" href={MEETING_RECAP.href}>
+            <img className="callout-photo" src="/images/rcap-meeting-call.jpg" alt="" loading="lazy" width="1200" height="671" />
             <span className="callout-kicker">Sept 14 meeting</span>
             <strong>{MEETING_RECAP.title}</strong>
             <span className="callout-body">{MEETING_RECAP.body}</span>
