@@ -6,8 +6,9 @@
 import { authHeaders } from './auth.js';
 import { isVideo, prepareVideo } from './videos.js';
 import { prepareImage } from './images.js';
-import { getOwner, insertPhotos, uploadToSupabase, storageConfig } from './data.js';
-import { HOUSE, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
+import { getOwner, insertPhotos, uploadToSupabase, storageConfig, duplicateHashes } from './data.js';
+import { fingerprint, isDuplicateError } from './duplicates.js';
+import { IS_SCHOOL, HOUSE, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
 
 const SIGN_CHUNK = 40;
 
@@ -61,7 +62,7 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
   await storageConfig();
   const owner = await getOwner();
   const state = {
-    total: files.length, prepared: 0, uploaded: 0, failed: [], done: [],
+    total: files.length, prepared: 0, uploaded: 0, failed: [], done: [], duplicates: [], checking: IS_SCHOOL, checked: 0,
     bytesTotal: files.reduce((n, f) => n + f.size, 0), bytesSent: 0, current: '',
   };
   const tick = () => onProgress && onProgress({ ...state });
@@ -69,17 +70,34 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
   // 1. Prepare every file (sequentially — canvas work on a phone is the
   //    bottleneck and running it in parallel just trades speed for crashes).
   const ready = [];
+  const candidates = [];
+  const seen = new Set();
   for (const f of files) {
+    if (signal?.aborted) break;
+    try {
+      if (f.size > MAX_FILE_MB * 1024 * 1024) throw new Error(`Over ${MAX_FILE_MB}MB`);
+      const hash = IS_SCHOOL ? await fingerprint(f) : null;
+      if (hash && seen.has(hash)) { state.duplicates.push(f.name); state.prepared++; }
+      else { candidates.push({ file: f, hash }); if (hash) seen.add(hash); }
+    } catch (e) { state.failed.push({ name: f.name, error: e.message }); state.prepared++; }
+    state.checked++;
+    tick();
+  }
+  const existing = IS_SCHOOL && candidates.length
+    ? await duplicateHashes(event.id, candidates.map(c => c.hash)) : new Set();
+  state.checking = false;
+  tick();
+  for (const { file: f, hash } of candidates) {
     if (signal?.aborted) break;
     state.current = f.name;
     tick();
-    if (f.size > MAX_FILE_MB * 1024 * 1024) {
-      state.failed.push({ name: f.name, error: `Over ${MAX_FILE_MB}MB` });
+    if (hash && existing.has(hash)) {
+      state.duplicates.push(f.name);
       state.prepared++; tick();
       continue;
     }
     try {
-      ready.push(await (isVideo(f) ? prepareVideo(f) : prepareImage(f)));
+      ready.push({ ...await (isVideo(f) ? prepareVideo(f) : prepareImage(f)), contentHash: hash });
     } catch (e) {
       state.failed.push({ name: f.name, error: e.message || 'Could not read' });
     }
@@ -107,6 +125,7 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
         try {
           await putAll(p, s, mode, (n) => { state.bytesSent += n; tick(); }, signal);
           const [row] = await insertPhotos([{
+            ...(p.contentHash ? { content_hash: p.contentHash } : {}),
             id: p.id,
             event_id: event.id,
             house: HOUSE.id,
@@ -120,7 +139,8 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
           }]);
           state.done.push(row);
         } catch (e) {
-          state.failed.push({ name: p.name, error: e.message || 'Upload failed' });
+          if (isDuplicateError(e)) state.duplicates.push(p.name);
+          else state.failed.push({ name: p.name, error: e.message || 'Upload failed' });
         }
         state.uploaded++;
         tick();

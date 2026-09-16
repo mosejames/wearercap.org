@@ -475,3 +475,13 @@ export async function listCoverPhotos(eventId) {
   if(error)throw error;
   return (data||[]).map(photoFromRow);
 }
+
+export async function duplicateHashes(eventId, hashes) {
+  const matches = [];
+  for (let i = 0; i < hashes.length; i += 200) {
+    const { data, error } = await supabase.rpc('vault_duplicate_hashes', { p_event: eventId, p_hashes: hashes.slice(i, i + 200) });
+    if (error) throw new Error('Could not check for duplicates. Please try again.');
+    matches.push(...(data || []));
+  }
+  return new Set(matches);
+}

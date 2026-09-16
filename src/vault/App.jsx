@@ -386,11 +386,12 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
       if (final.done.length) onDone(final.done);
     } catch (ex) {
       setErr(ex.message || 'Upload failed.');
+      setState(s => s ? { ...s, finished: true } : s);
     }
   };
 
   const finished = !!state?.finished;
-  const pct = state ? Math.round(((state.prepared / (state.total || 1)) * 25) + ((state.bytesTotal ? state.bytesSent / state.bytesTotal : 0) * 75)) : 0;
+  const pct = finished ? 100 : state ? Math.round(((state.prepared / (state.total || 1)) * 25) + ((state.bytesTotal ? state.bytesSent / state.bytesTotal : 0) * 75)) : 0;
 
   return (
     <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
@@ -436,10 +437,13 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
           <p className="lede">
             {finished
               ? `${plural(state.done.length, 'file')} added.`
+              : state.checking
+                ? `Checking for duplicates · ${state.checked || 0} of ${state.total}…`
               : state.prepared < state.total
                 ? `Preparing ${state.prepared + 1} of ${state.total}…`
                 : `Uploading · ${fmtBytes(state.bytesSent)} of ${fmtBytes(state.bytesTotal)}`}
           </p>
+          {state.duplicates?.length > 0 && <p role="status">{plural(state.duplicates.length, 'file')} skipped. Already in the {WORDS.place}.</p>}
           {state.failed.length > 0 && (
             <div className="failed">
               <b>{plural(state.failed.length, 'file')} skipped</b>
