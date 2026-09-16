@@ -28,11 +28,15 @@ export async function sendWelcomeEmail(listingId) {
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
     if (!token) return { sent: false };
-    const { data: result } = await supabase.functions.invoke("directory-welcome", {
+    const { data: result, error } = await supabase.functions.invoke("directory-welcome", {
       body: { listing_id: listingId },
     });
+    // invoke resolves with { error } rather than throwing, so surface it. A
+    // failed welcome must never block the save, but it should not be silent.
+    if (error) console.warn("Collective welcome email did not send:", error.message || error);
     return result || { sent: false };
-  } catch {
+  } catch (error) {
+    console.warn("Collective welcome email did not send:", error?.message || error);
     return { sent: false };
   }
 }

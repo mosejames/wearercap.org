@@ -634,22 +634,25 @@ export function Editor({
                   />
                   <small>{form.collaboration_note.length}/280 characters</small>
                 </label>
-                <label className="dir-check">
-                  <input
-                    type="checkbox"
-                    aria-label="Permission to publish"
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                  />
-                  <span>
-                    I am an RCA parent or guardian, have permission to share
-                    these photos and business details, and understand that
-                    published listings are visible to website visitors. I manage
-                    any student venture listed here.
-                  </span>
-                </label>
               </div>
             </div>
+            {/* Consent is required to publish, so it must never sit inside the
+                collapsed optional section above. It used to, and first-time
+                listers hit "Confirm that you have permission" with no visible box. */}
+            <label className="dir-check dir-consent">
+              <input
+                type="checkbox"
+                aria-label="Permission to publish"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+              />
+              <span>
+                I am an RCA parent or guardian, have permission to share
+                these photos and business details, and understand that
+                published listings are visible to website visitors. I manage
+                any student venture listed here.
+              </span>
+            </label>
             <div className="dir-save">
               <span>
                 {busy

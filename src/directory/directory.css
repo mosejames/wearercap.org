@@ -1334,7 +1334,8 @@ textarea:focus-visible {
   margin: 0;
   min-width: 0;
 }
-.dir-fields .dir-check {
+.dir-fields .dir-check,
+.dir-editor .dir-consent {
   flex-direction: row;
   align-items: flex-start;
   gap: 10px;
@@ -1399,6 +1400,11 @@ textarea:focus-visible {
 .dir-upload input {
   max-width: 100%;
   font-size: 11px;
+}
+.dir-editor .dir-consent {
+  display: flex;
+  margin: 0 0 22px;
+  color: var(--collective-text, inherit);
 }
 .dir-save {
   display: flex;

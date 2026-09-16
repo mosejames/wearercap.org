@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
   removePhotos: vi.fn(),
   uploadPhoto: vi.fn(),
   uploadVideo: vi.fn(),
+  sendWelcomeEmail: vi.fn(),
 }));
 vi.mock("./api.js", () => ({
   ...api,
@@ -168,4 +169,38 @@ it("removes a listing video only after saving the updated listing", async () => 
  await act(async()=>button("Save as draft").click());
  expect(api.saveBusiness).toHaveBeenCalledWith(expect.objectContaining({video:""}),{id:"owner"});
  expect(api.removePhotos).toHaveBeenCalledWith(["owner/listing/demo.mp4"]);
+});
+
+describe("first publish", () => {
+  const draft = { ...initial, id: "draft", published: false, photos: [] };
+  async function renderWith(listing) {
+    await act(async () =>
+      root.render(
+        <Editor initial={listing} user={{ id: "owner" }} onSaved={vi.fn()} onError={vi.fn()} />,
+      ),
+    );
+  }
+  function publish() {
+    return act(async () =>
+      host.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
+    );
+  }
+  it("keeps the permission box outside the collapsed optional section", async () => {
+    await renderWith(draft);
+    const box = host.querySelector('input[aria-label="Permission to publish"]');
+    expect(box).not.toBeNull();
+    expect(box.closest(".is-closed")).toBeNull();
+  });
+  it("sends the welcome when a listing is published for the first time", async () => {
+    await renderWith(draft);
+    await act(async () => host.querySelector('input[aria-label="Permission to publish"]').click());
+    await publish();
+    expect(api.sendWelcomeEmail).toHaveBeenCalledWith("draft");
+  });
+  it("does not send the welcome when an already published listing is saved again", async () => {
+    await renderWith(initial);
+    await publish();
+    expect(api.saveBusiness).toHaveBeenCalled();
+    expect(api.sendWelcomeEmail).not.toHaveBeenCalled();
+  });
 });
