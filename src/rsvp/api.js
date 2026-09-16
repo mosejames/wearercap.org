@@ -55,16 +55,33 @@ async function rpc(name, args) {
 
 export const loadEvent = (slug) => rpc('event_get', { p_slug: slug });
 export const loadWall = async (slug) => (await rpc('event_wall', { p_slug: slug })) || [];
-// The token is optional and only decides which reactions come back marked as
-// this browser's own; the counts are the same either way.
-export const loadThread = async (slug, token) =>
-  (await rpc('event_thread', { p_slug: slug, p_token: isToken(token) ? token : null })) || [];
+// Reacting needs no RSVP and no sign-in. Identity is a random token this
+// browser makes once and keeps; the database only ever stores its sha256. That
+// is enough to stop one person tapping fifty times, and it means a parent who
+// RSVP'd on a phone can still react from a laptop.
+const REACTOR_KEY = 'rcap-reactor';
 
-// Toggling is done in the database so one RSVP counts once per emoji per
-// comment, however many times the button is tapped.
-export async function reactToComment(token, commentId, emoji) {
-  if (!isToken(token)) return null;
-  return rpc('event_comment_react', { p_token: token, p_comment_id: commentId, p_emoji: emoji });
+export function reactorToken() {
+  let t = null;
+  try { t = localStorage.getItem(REACTOR_KEY); } catch { /* private mode */ }
+  if (!t) {
+    const b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    t = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    try { localStorage.setItem(REACTOR_KEY, t); } catch { /* memory only */ }
+  }
+  return t;
+}
+
+// Counts are the same for everyone; the token only decides which come back
+// marked as this browser's own.
+export const loadThread = async (slug) =>
+  (await rpc('event_thread', { p_slug: slug, p_reactor: reactorToken() })) || [];
+
+export async function reactToComment(commentId, emoji) {
+  return rpc('event_comment_react', {
+    p_reactor: reactorToken(), p_comment_id: commentId, p_emoji: emoji,
+  });
 }
 
 export async function loadMine(slug, token) {
