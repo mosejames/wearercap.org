@@ -61,6 +61,7 @@
     .home { display:flex; align-items:center; justify-content:center; gap:14px; min-height:48px; padding:13px 18px; background:#fffdfa; color:var(--navy); font-size:14px; font-weight:700; text-decoration:none; box-shadow:6px 6px 0 #ff7b21; }
     .footer-note { color:#b9cbd5; font-size:12px; line-height:1.5; margin:15px 0 0; }
     @media (prefers-reduced-motion:reduce) { .link-card { transition:none; } }
+    @media (min-width:700px) { .page { width:min(calc(100% - 144px),1040px); } .donation-card { padding:54px 50px 50px; } .donation-card h2 { font-size:48px; max-width:9ch; } .donation-card h2, .donation-card p { padding-right:300px; } .donation-card p { font-size:24px; } .donation-cta { margin-top:32px; padding:21px 28px; font-size:23px; } .donation-badge { top:24px; right:42px; width:280px; height:280px; font-size:30px; } .donation-badge .badge-amount { font-size:92px; } }
     @media (max-width:520px) { .donation-badge { top:20px; right:16px; width:150px; height:150px; padding:12px; font-size:17px; box-shadow:7px 7px 0 var(--pink); } .donation-badge .badge-amount { font-size:52px; } .donation-card h2, .donation-card p { padding-right:124px; } .link-card.has-image .card-image { height:220px; } .link-card.has-image .inline-number { top:183px; left:24px; width:64px; height:64px; font-size:36px; } .link-card.has-image .card-copy { padding:54px 24px 24px; } }
     @media (max-width:350px) { .page { width:calc(100% - 28px); } .link-card:not(.has-image) { padding:16px 12px; gap:9px; } .link-card h2 { font-size:17px; } }
   </style>
