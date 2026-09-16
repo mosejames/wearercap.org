@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/rcap-capsule/e/:slug/p/:photo",
+      "destination": "/api/vault-link?slug=:slug&photo=:photo&vault=rcap"
+    },
+    {
       "source": "/rsvp/:slug/calendar.ics",
       "destination": "/api/event-ics?slug=:slug"
     },

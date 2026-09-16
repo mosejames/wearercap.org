@@ -267,3 +267,11 @@ The first-share insert trigger awards once per account, including videos;
 existing contributors were credited without a new-upload celebration.
 `supabase/tests/capsule_family_appreciation.sql` verifies privacy and awards
 in a rollback-only transaction.
+
+Individual Capsule photo shares use `/rcap-capsule/e/<slug>/p/<photo-id>`.
+`api/vault-link.js` verifies the photo belongs to the visible event, excludes
+hidden/removed uploads, and uses its existing web JPEG from R2 or Supabase
+for Open Graph and Twitter previews. No new image is generated. A visitor
+opens the exact photo through the existing hash route. Missing or unavailable
+photos fall back to the album; event shares retain their branded cards.
+Photo share HTML is not CDN-cached, so fresh requests recheck visibility.

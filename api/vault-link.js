@@ -12,7 +12,7 @@
 // This answers with tags written for that event, then bounces a real visitor
 // into the app. The old hash links still work exactly as they did.
 //
-// Every invite uses a branded PNG with the event name, even before photos arrive.
+// Event invites use branded PNGs. Individual-photo links reuse their existing web JPEG.
 // ---------------------------------------------------------------------------
 
 const SITE = 'https://wearercap.org';
@@ -54,14 +54,18 @@ const when = (startsOn, endsOn) => {
   return `${fmt(startsOn)} to ${fmt(endsOn)}`;
 };
 
-async function describeEvent(slug, house) {
-  if (!SUPA || !KEY || !slug) return null;
-  const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
-  const get = (path) =>
-    fetch(`${SUPA}/rest/v1/${path}`, { headers, signal: AbortSignal.timeout(2500) })
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null);
+async function get(path) {
+  if (!SUPA || !KEY) return null;
+  try {
+    const r = await fetch(`${SUPA}/rest/v1/${path}`, {
+      headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, signal: AbortSignal.timeout(2500),
+    });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
 
+async function describeEvent(slug, house) {
+  if (!slug) return null;
   const rows = await get(
     `vault_events?slug=eq.${encodeURIComponent(slug)}&house=eq.${house}` +
     `&select=id,slug,title,blurb,kind,starts_on,ends_on,ongoing,open,hidden&limit=1`
@@ -72,15 +76,34 @@ async function describeEvent(slug, house) {
   return ev;
 }
 
+const PHOTO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function describePhoto(id, eventId, house) {
+  if (!PHOTO_ID.test(id)) return null;
+  const rows = await get(`vault_photos?id=eq.${id}&event_id=eq.${encodeURIComponent(eventId)}&house=eq.${house}` +
+    '&hidden=eq.false&removed_at=is.null&select=id,event_id,house,hidden,removed_at,storage,web_key,width,height&limit=1');
+  const p = rows?.[0];
+  if (!p || p.hidden || p.removed_at || p.event_id !== eventId || p.house !== house || !p.web_key) return null;
+  const base = p.storage === 'r2' ? process.env.R2_PUBLIC_BASE : p.storage === 'supabase' && SUPA ? `${SUPA}/storage/v1/object/public/vault-media` : null;
+  if (!base || !/^https:\/\//.test(base)) return null;
+  const image = `${base.replace(/\/+$/, '')}/${p.web_key.split('/').map(encodeURIComponent).join('/')}`;
+  // The existing web rendition is at most 1800px on its longest edge.
+  const scale = Math.min(1, 1800 / Math.max(p.width || 0, p.height || 0));
+  return { id: p.id, image, width: p.width > 0 ? Math.max(1, Math.round(p.width * scale)) : null,
+    height: p.height > 0 ? Math.max(1, Math.round(p.height * scale)) : null };
+}
+
 export default async function handler(req, res) {
   const slug = String((req.query && req.query.slug) || '').trim();
   const V = VAULTS[String((req.query && req.query.vault) || '')] || VAULTS.amistad;
   const BASE = `${SITE}/${V.path}/`;
   const ev = await describeEvent(slug, V.house);
+  const photoId = String(req.query?.photo || '').trim();
+  const photo = ev && photoId ? await describePhoto(photoId, ev.id, V.house) : null;
 
   // Unknown slug still resolves to the vault rather than a dead end.
-  const dest = ev ? `${BASE}#/e/${encodeURIComponent(ev.slug)}` : BASE;
-  const canonical = `${SITE}${String(req.url || '').split('?')[0]}`;
+  const dest = ev ? `${BASE}#/e/${encodeURIComponent(ev.slug)}${photo ? `/p/${photo.id}` : ''}` : BASE;
+  const canonical = ev ? `${BASE}e/${encodeURIComponent(ev.slug)}${photo ? `/p/${photo.id}` : ''}` : BASE;
 
   let title = V.name;
   let og = V.name;
@@ -107,9 +130,16 @@ export default async function handler(req, res) {
     img = `${SITE}/api/vault-og?${imageParams}`;
   }
 
+  if (photo) {
+    og = `${ev.title} · ${V.short}`;
+    desc = `A moment from ${ev.title}. Open this photo in ${V.name}.`;
+    img = photo.image;
+    alt = `Photo from ${ev.title}`;
+  }
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   // Refresh event details and upload availability regularly.
-  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', photoId ? 'no-store' : 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
   res.status(200).send(`<!doctype html>
 <html lang="en">
   <head>
@@ -127,9 +157,9 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${esc(canonical)}" />
     <meta property="og:image" content="${esc(img)}" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="${photo ? 'image/jpeg' : 'image/png'}" />
+    ${!photo || photo.width ? `<meta property="og:image:width" content="${photo ? photo.width : 1200}" />` : ''}
+    ${!photo || photo.height ? `<meta property="og:image:height" content="${photo ? photo.height : 630}" />` : ''}
     <meta property="og:image:alt" content="${esc(alt)}" />
 
     <meta name="twitter:card" content="summary_large_image" />
