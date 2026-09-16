@@ -53,6 +53,11 @@
       "permanent": false
     },
     {
+      "source": "/rcap-vault/",
+      "destination": "/rcap-capsule/",
+      "permanent": true
+    },
+    {
       "source": "/rcap-vault",
       "destination": "/rcap-capsule/",
       "permanent": true
