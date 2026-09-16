@@ -836,68 +836,59 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
 }
 
 export function MemoryStrip({ recent, covers, events }) {
-  const [paused, setPaused] = useState(false);
-  const [ready, setReady] = useState([]);
-  const randomOrder = useRef(new Map());
-  const [stripWidth, setStripWidth] = useState(() => window.innerWidth);
-  useEffect(() => {
-    const resize = () => setStripWidth(window.innerWidth);
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-  const photos = useMemo(() => {
-    const visibleEvents = new Map(events.filter((e) => !e.hidden).map((e) => [e.id, e]));
-    const pool = new Map([...recent, ...Array.from(covers.values()).flat()]
-      .filter((p) => !p.hidden && !isVideo(p) && visibleEvents.has(p.eventId)).map((p) => [p.id, p]));
-    const groups = new Map();
-    for (const p of pool.values()) {
-      if (!groups.has(p.eventId)) groups.set(p.eventId, []);
-      groups.get(p.eventId).push(p);
-    }
-    const shuffle = list => list.sort((a, b) => {
-      const key = x => Array.isArray(x) ? x[0]?.eventId : x.id;
-      for (const x of [a, b]) if (!randomOrder.current.has(key(x))) randomOrder.current.set(key(x), Math.random());
-      return randomOrder.current.get(key(a)) - randomOrder.current.get(key(b));
-    });
-    // Round-robin albums so a large recent upload cannot dominate the strip.
-    const albums = shuffle([...groups.values()].map(shuffle));
-    const chosen = [];
-    while (chosen.length < 16 && albums.some((a) => a.length)) {
-      for (const album of albums) { if (album.length && chosen.length < 16) chosen.push(album.pop()); }
-    }
-    return chosen.map((p) => ({ ...p, event: visibleEvents.get(p.eventId) }));
-  }, [recent, covers, events]);
-  // Decode first and reserve exact geometry, so loading cannot change the loop width.
-  const sources = photos.map(p => `${p.id}:${mediaUrl(p, 'thumb')}`).join('|');
-  useEffect(() => {
-    let active = true;
-    Promise.all(photos.map(async p => {
-      const img = new Image();
-      img.src = mediaUrl(p, 'thumb');
-      try {
-        await img.decode();
-        return img.naturalWidth && img.naturalHeight ? { ...p, ratio: img.naturalWidth / img.naturalHeight } : null;
-      } catch { return null; }
-    })).then(items => { if (active) setReady(items.filter(Boolean)); });
-    return () => { active = false; };
-  }, [sources]);
-  if (!ready.length) return null;
-  const rowWidth = ready.reduce((n, p) => n + p.ratio * (stripWidth < 680 ? 106.6 : 140.4) + 3, 0);
-  const repeats = Math.max(1, Math.ceil(stripWidth / rowWidth));
-  const tiles = Array.from({ length: repeats }, () => ready).flat();
+  // Five stills, reshuffled on every visit. This used to be an animating strip
+  // that decoded sixteen images, measured each one's aspect ratio, duplicated
+  // the row enough times to fill the viewport and then translated it forever.
+  // That is a lot of work above the fold on a phone, and any image that decoded
+  // late changed the loop width mid-animation, which is what the jumping was.
+  // Fixed square tiles need no measurement, so nothing shifts as they load.
+  const picks = useMemo(() => {
+    const visible = new Map(events.filter((e) => !e.hidden).map((e) => [e.id, e]));
+    const pool = new Map(
+      [...recent, ...Array.from(covers.values()).flat()]
+        .filter((ph) => !ph.hidden && !isVideo(ph) && visible.has(ph.eventId))
+        .map((ph) => [ph.id, ph]),
+    );
 
-  return <section className="memory-strip" aria-label="Moments from our galleries">
-    <div className="memory-window">
-      <div key={ready.map(p => p.id).join('|')} className={`memory-track${paused ? ' is-paused' : ''}`}>
-        {[0, 1].map((copy) => <div className="memory-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
-          {tiles.map((p, i) => <a key={`${p.id}-${i}`} href={`#/e/${p.event.slug}/p/${p.id}`} style={{ aspectRatio: p.ratio }} tabIndex={copy === 1 ? -1 : 0} aria-label={`View photo from ${p.event.title}`}>
-            <img src={mediaUrl(p, 'thumb')} width={Math.round(p.ratio * 200)} height={200} alt="" decoding="async" />
-          </a>)}
-        </div>)}
+    // One per album first, so five photos come from five different days
+    // wherever possible rather than five from whoever uploaded last.
+    const byAlbum = new Map();
+    for (const ph of pool.values()) {
+      if (!byAlbum.has(ph.eventId)) byAlbum.set(ph.eventId, []);
+      byAlbum.get(ph.eventId).push(ph);
+    }
+    const shuffle = (list) => list.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+
+    const albums = shuffle([...byAlbum.values()].map(shuffle));
+    const chosen = [];
+    while (chosen.length < 5 && albums.some((a) => a.length)) {
+      for (const album of albums) {
+        if (album.length && chosen.length < 5) chosen.push(album.pop());
+      }
+    }
+    return chosen.map((ph) => ({ ...ph, event: visible.get(ph.eventId) }));
+    // Deliberately keyed to the data only: re-picking on every render would
+    // reshuffle the tiles under the reader's cursor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recent, covers, events]);
+
+  if (!picks.length) return null;
+
+  return (
+    <section className="memory-strip" aria-label="Moments from our galleries">
+      <div className="memory-five">
+        {picks.map((ph) => (
+          <a
+            key={ph.id}
+            href={`#/e/${ph.event.slug}/p/${ph.id}`}
+            aria-label={`View photo from ${ph.event.title}`}
+          >
+            <img src={mediaUrl(ph, 'thumb')} alt="" loading="lazy" decoding="async" />
+          </a>
+        ))}
       </div>
-    </div>
-    <button className="memory-pause" onClick={() => setPaused((p) => !p)} aria-pressed={paused}>{paused ? 'Play photos' : 'Pause photos'}</button>
-  </section>;
+    </section>
+  );
 }
 
 /* ---------------------------------------------------------------- home */
