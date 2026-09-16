@@ -35,6 +35,10 @@
     .hero-image img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 42%; }
     ol { list-style:none; margin:0; padding:0; display:grid; gap:11px; }
     .link-card { display:grid; grid-template-columns:30px minmax(0,1fr) 18px; gap:12px; align-items:start; padding:19px 17px; text-decoration:none; color:inherit; background:#fffdfa; border:1px solid var(--line); border-radius:15px; transition:transform .15s,background .15s,border-color .15s; }
+    .link-card.has-image { grid-template-columns:92px minmax(0,1fr) 18px; padding:10px; gap:13px; }
+    .link-card.has-image .card-image { width:92px; height:94px; object-fit:cover; border-radius:10px; }
+    .link-card.has-image .card-copy { padding:7px 0; }
+    .inline-number { display:inline-grid; width:24px; height:24px; margin:0 7px 0 0; vertical-align:2px; font-size:11px; }
     .link-card:hover { background:#fff; border-color:#ff8b27; transform:translateY(-2px); }
     .link-card:focus-visible, .home:focus-visible, .wordmark:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
     .number { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#e8edf0; font-size:12px; font-weight:800; color:var(--navy); }
@@ -82,30 +86,23 @@
       <p class="eyebrow more-label">More for this week</p>
       <ol>
         <li>
-          <a class="link-card" href="https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/">
-            <span class="number" aria-hidden="true">1</span>
-            <div><h2>Take an EXP shift</h2><p>EXP is Sept. 17 &amp; 18. See the volunteer openings and find your spot.</p></div>
-            <span class="arrow" aria-hidden="true">↗</span>
-          </a>
-        </li>
-        <li>
-          <a class="link-card" href="/what-to-expect/">
-            <span class="number" aria-hidden="true">2</span>
-            <div><h2>What to expect at EXP</h2><p>New to EXP? See what the day looks like and how parents help.</p></div>
+          <a class="link-card has-image" href="/what-to-expect/">
+            <img class="card-image" src="/images/rcap-community-table.jpg" alt="A parent addressing the RCAP community at EXP" width="1800" height="1200" loading="lazy" />
+            <div class="card-copy"><h2><span class="number inline-number" aria-hidden="true">1</span>What to expect at EXP</h2><p>See what the day looks like, then find the volunteer sign-up inside.</p></div>
             <span class="arrow" aria-hidden="true">→</span>
           </a>
         </li>
         <li>
-          <a class="link-card" href="/karaoke">
-            <span class="number" aria-hidden="true">3</span>
-            <div><h2>RSVP for the parent social</h2><p>R&amp;B karaoke. Sept. 27, 5–7 p.m. at RCA. Adults only.</p></div>
+          <a class="link-card has-image" href="/karaoke">
+            <img class="card-image" src="/images/rcap-karaoke-mic.jpg" alt="A vintage microphone ready for R&amp;B karaoke" width="1200" height="675" loading="lazy" />
+            <div class="card-copy"><h2><span class="number inline-number" aria-hidden="true">2</span>RSVP for the parent social</h2><p>R&amp;B karaoke. Sept. 27, 5–7 p.m. at RCA. Adults only.</p></div>
             <span class="arrow" aria-hidden="true">→</span>
           </a>
         </li>
         <li>
-          <a class="link-card" href="/rcap-capsule/e/bingo-night">
-            <span class="number" aria-hidden="true">4</span>
-            <div><h2>Open the Bingo Night Capsule</h2><p>Find photos from the night and add a few of your own.</p></div>
+          <a class="link-card has-image" href="/rcap-capsule/e/bingo-night">
+            <img class="card-image" src="/images/rcap-bingo-night.jpg" alt="Families playing Bingo Night together" width="1200" height="675" loading="lazy" />
+            <div class="card-copy"><h2><span class="number inline-number" aria-hidden="true">3</span>Open the Bingo Night Capsule</h2><p>Find photos from the night and add a few of your own.</p></div>
             <span class="arrow" aria-hidden="true">→</span>
           </a>
         </li>
