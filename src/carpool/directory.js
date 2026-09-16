@@ -40,8 +40,8 @@ export async function fetchNearby() {
 // Until then nearby_families() does not exist, so calling it fails. This
 // predicate matches ONLY that narrow case (PostgREST returns code PGRST202 and
 // a "Could not find the function ... in the schema cache" message for a missing
-// RPC) so MapView can fall back to the pre-0009 flat directory rather than show
-// a blank map. Any other error (permissions, network, a real RPC failure) does
+// RPC) so optional group suggestions can degrade without blocking memberships.
+// Nearby-family browsing must not fall back to the older flat directory. Any other error (permissions, network, a real RPC failure) does
 // not match and still surfaces to the user as before.
 export function isMissingRpcError(error) {
   if (!error) return false;

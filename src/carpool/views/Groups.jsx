@@ -25,6 +25,7 @@ import {
 import { fetchNearby, isMissingRpcError } from '../directory.js';
 import { suggestCrew } from '../crews.js';
 import Collapsible from './Collapsible.jsx';
+import { scheduleOverlap } from '../compatibility.js';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -138,7 +139,7 @@ function GroupHandoff({ group, roster }) {
   return (
     <div className="cp-handoff">
       <p className="cp-label cp-label--muted cp-label--bar">Getting started</p>
-      <p className="cp-handoff-intro">You are a carpool now. Here is how to begin.</p>
+      <p className="cp-handoff-intro">Start with a conversation. Decide together before the first ride.</p>
 
       <div className="cp-handoff-actions">
         {textHref && (
@@ -274,7 +275,7 @@ export default function Groups({ family, userId }) {
         // silently to no crew. Any other error is also swallowed to [] on
         // purpose (a warn is left for debugging), because the groups the parent
         // came here for must still render even if the crew cannot be computed.
-        fetchNearby().catch((err) => {
+        (family?.paused_at ? Promise.resolve([]) : fetchNearby()).catch((err) => {
           if (!isMissingRpcError(err) && typeof console !== 'undefined') {
             console.warn('Suggested crew unavailable:', err?.message ?? err);
           }
@@ -455,22 +456,6 @@ export default function Groups({ family, userId }) {
 
   return (
     <section className="cp-subblock">
-      <p className="cp-label cp-label--bar">Carpool groups</p>
-      <h2 className="cp-h2">Ride <span className="cp-hl">together.</span></h2>
-      {/* Warmed at Mose's direction (2026-07-19): the systemic detail lives
-          on the #sharing page; each decision point keeps one short TRUE line
-          about what that click shares, plus the link. When editing any of
-          these, the rule is the same as ever: warmer is fine, less true is
-          not. */}
-      <div className="cp-consent">
-        <p>
-          A group is a few families who share the ride and can see each
-          other's contact details, so planning is easy. Groups can welcome
-          more families over time.{' '}
-          <a href="#sharing">How sharing works</a>
-        </p>
-      </div>
-
       {loading && <p className="cp-loading">Loading your groups</p>}
       {loadError && (
         // No "Could not load groups:" prefix any more. Every message reaching
@@ -525,18 +510,9 @@ export default function Groups({ family, userId }) {
         </div>
       )}
 
-      {/* Collapsed by default. Count tells a parent they are in at least one
-          group without opening it. */}
-      <Collapsible id="cp-mygroups" title="My groups" count={data.myGroups.length}>
-      {showEmptyStates && data.myGroups.length === 0 && (
-        <div className="cp-empty">
-          <p>
-            {data.canOrganize
-              ? 'You are not in a group yet. Ask to join one below, or start your own.'
-              : 'You are not in a group yet. Ask to join one below.'}
-          </p>
-        </div>
-      )}
+      {/* Memberships stay visible, including while nearby matching is paused. */}
+      {data.myGroups.length > 0 && <section aria-labelledby="cp-my-groups-title">
+      <h2 className="cp-h3" id="cp-my-groups-title">Your groups</h2>
       {/* The roster below is a snapshot, not a fixed list, and the parent has
           no say in how it changes. Say so where they are actually looking at
           it, not only at the moment they asked to join. */}
@@ -563,33 +539,6 @@ export default function Groups({ family, userId }) {
               <p className="cp-item-meta">{g.area_label} · {summarizeSchedule(g)}</p>
               {g.meeting_point && <p className="cp-item-meta">Meeting point: {g.meeting_point}</p>}
             </div>
-
-            <p className="cp-label cp-label--muted cp-label--bar">Families in this group</p>
-            {roster.length === 0 ? (
-              <div className="cp-empty">
-                <p>No members loaded yet.</p>
-              </div>
-            ) : (
-              <ul className="carpool-nearby-list">
-                {roster.map((m) => (
-                  <li key={m.user_id}>
-                    <p className="cp-item-name">{m.parent_name}</p>
-                    <p className="cp-item-meta">{m.child_names}</p>
-                    <p className="cp-item-meta">{m.area_label} · {summarizeSchedule(m)}</p>
-                    <p className="cp-item-contact">
-                      {m.contact_email && <a href={`mailto:${m.contact_email}`}>{m.contact_email}</a>}
-                      {m.contact_phone && <a href={`tel:${m.contact_phone}`}>{m.contact_phone}</a>}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* The persistent handoff panel, directly below the roster it leans
-                on. Rendered for every member, not just the organizer, so any
-                parent can start the group text. Degrades to just the checklist
-                when the roster has not loaded (no phones, no emails yet). */}
-            <GroupHandoff group={g} roster={roster} />
 
             {isOrganizer && (
               <div className="cp-subblock">
@@ -640,6 +589,33 @@ export default function Groups({ family, userId }) {
               </div>
             )}
 
+            <p className="cp-label cp-label--muted cp-label--bar">Families in this group</p>
+            {roster.length === 0 ? (
+              <div className="cp-empty">
+                <p>No members loaded yet.</p>
+              </div>
+            ) : (
+              <ul className="carpool-nearby-list">
+                {roster.map((m) => (
+                  <li key={m.user_id}>
+                    <p className="cp-item-name">{m.parent_name}</p>
+                    <p className="cp-item-meta">{m.child_names}</p>
+                    <p className="cp-item-meta">{m.area_label} · {summarizeSchedule(m)}</p>
+                    <p className="cp-item-contact">
+                      {m.contact_email && <a href={`mailto:${m.contact_email}`}>{m.contact_email}</a>}
+                      {m.contact_phone && <a href={`tel:${m.contact_phone}`}>{m.contact_phone}</a>}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* The persistent handoff panel, directly below the roster it leans
+                on. Rendered for every member, not just the organizer, so any
+                parent can start the group text. Degrades to just the checklist
+                when the roster has not loaded (no phones, no emails yet). */}
+            <GroupHandoff group={g} roster={roster} />
+
             <div className="cp-actions">
               <button
                 className="cp-btn cp-btn--danger cp-btn--sm"
@@ -656,11 +632,11 @@ export default function Groups({ family, userId }) {
           </div>
         );
       })}
-      </Collapsible>
+      </section>}
 
       {/* Only rendered when there is something outstanding, as before. */}
       {data.pendingSent.length > 0 && (
-        <Collapsible id="cp-requests" title="Requests you sent" count={data.pendingSent.length}>
+        <Collapsible id="cp-requests" title="Requests you sent" count={data.pendingSent.length} defaultOpen>
           <ul className="carpool-nearby-list">
             {data.pendingSent.map((g) => (
               <li key={g.id}>
@@ -701,8 +677,68 @@ export default function Groups({ family, userId }) {
         </Collapsible>
       )}
 
-      {/* Collapsed by default. Count advertises how many groups are joinable. */}
-      <Collapsible id="cp-nearbygroups" title="Groups near you" count={data.nearby.length}>
+      {!family.paused_at && <>
+      {/* The suggested-crew card sits OUTSIDE the "Start a group" collapsible so
+          its button stays tappable while that section is closed: tapping it is
+          what opens the section (below) and scrolls to the form. */}
+      {/* Families to start with: the families closest to the caller, offered as a
+          startable group. It sits above the create form so the "Create a group nearby" button can prefill the form's name and scroll
+          down to it. It renders only when suggestCrew found families inside the
+          tight crew radius (data.crew is null otherwise). It carries NO contact
+          details: the nearby rows behind it never held any, and none are added.
+          Starting the group does not auto-create anything and does not add these
+          families; they discover the finished group through their own
+          radius-scoped "Groups near you" and ask to join via the 0005 flow. */}
+      {data.crew && (
+        <div className="cp-card">
+          <p className="cp-label cp-label--muted cp-label--bar">Families to start with</p>
+          <h2 className="cp-h3">{data.crew.label}</h2>
+          <p className="cp-fine">
+            These families are within about five miles of your area. Compare your schedules, then see if a carpool could work.
+          </p>
+          <ul className="carpool-nearby-list">
+            {data.crew.families.slice(0, 3).map((f) => (
+              <li key={f.user_id}>
+                <p className="cp-item-name">{f.parent_name}</p>
+                <p className="cp-item-meta">
+                  Area {f.area_label} · about {f.distance_miles.toFixed(1)} mi between areas
+                </p>
+                <p className="cp-overlap">{scheduleOverlap(family, f)}</p>
+              </li>
+            ))}
+          </ul>
+          {data.canOrganize ? (
+            <>
+              <button
+                className="cp-btn cp-btn--primary cp-btn--block"
+                type="button"
+                onClick={() => {
+                  setName(data.crew.label);
+                  // Open the Start-a-group section, then scroll to it. The nonce
+                  // bump runs the scroll effect after the form has mounted, so
+                  // the expand always happens before the scroll.
+                  setStartOpen(true);
+                  setScrollNonce((n) => n + 1);
+                }}
+              >
+                Create a group nearby
+                <span className="cp-arr" aria-hidden="true">→</span>
+              </button>
+              <p className="cp-fine">
+                This creates a group for nearby families to discover. It does not invite or add anyone. You decide who joins; contact details are shared within the group.
+              </p>
+            </>
+          ) : (
+            <p className="cp-fine">
+              Running a group is switched on one family at a time. Ask at{' '}
+              <a href="mailto:carpool@wearercap.org">carpool@wearercap.org</a> and a parent
+              volunteer will get back to you. You can still join any group above in the meantime.
+            </p>
+          )}
+        </div>
+      )}
+
+      <Collapsible id="cp-nearbygroups" title="Groups near you" count={data.nearby.length} defaultOpen>
       {showEmptyStates && data.nearby.length === 0 && (
         <div className="cp-empty">
           <p>
@@ -718,7 +754,7 @@ export default function Groups({ family, userId }) {
             <li key={g.id}>
               <p className="cp-item-name">{g.name}</p>
               <p className="cp-item-meta">
-                {g.area_label} · {summarizeSchedule(g)} · {g.distanceMiles.toFixed(1)} mi
+                {g.area_label} · {summarizeSchedule(g)} · about {g.distanceMiles.toFixed(1)} mi between areas
               </p>
               {g.meeting_point && <p className="cp-item-meta">Meeting point: {g.meeting_point}</p>}
               <div className="cp-consent cp-consent--inline">
@@ -755,66 +791,15 @@ export default function Groups({ family, userId }) {
       )}
       </Collapsible>
 
-      {/* The suggested-crew card sits OUTSIDE the "Start a group" collapsible so
-          its button stays tappable while that section is closed: tapping it is
-          what opens the section (below) and scrolls to the form. */}
-      {/* Suggested crew: the families closest to the caller, offered as a
-          startable group. It sits above the create form so the "Start a group
-          with these families" button can prefill the form's name and scroll
-          down to it. It renders only when suggestCrew found families inside the
-          tight crew radius (data.crew is null otherwise). It carries NO contact
-          details: the nearby rows behind it never held any, and none are added.
-          Starting the group does not auto-create anything and does not add these
-          families; they discover the finished group through their own
-          radius-scoped "Groups near you" and ask to join via the 0005 flow. */}
-      {data.crew && (
-        <div className="cp-card">
-          <p className="cp-label cp-label--muted cp-label--bar">Suggested crew</p>
-          <h4 className="cp-h4">{data.crew.label}</h4>
-          <p className="cp-fine">
-            These are the families closest to you. You could start a carpool with them.
-          </p>
-          <ul className="carpool-nearby-list">
-            {data.crew.families.map((f) => (
-              <li key={f.user_id}>
-                <p className="cp-item-name">{f.parent_name}</p>
-                <p className="cp-item-meta">
-                  {f.area_label} · {summarizeSchedule(f)} · {f.distance_miles.toFixed(1)} mi
-                </p>
-              </li>
-            ))}
-          </ul>
-          {data.canOrganize ? (
-            <>
-              <button
-                className="cp-btn cp-btn--primary cp-btn--block"
-                type="button"
-                onClick={() => {
-                  setName(data.crew.label);
-                  // Open the Start-a-group section, then scroll to it. The nonce
-                  // bump runs the scroll effect after the form has mounted, so
-                  // the expand always happens before the scroll.
-                  setStartOpen(true);
-                  setScrollNonce((n) => n + 1);
-                }}
-              >
-                Start a group with these families
-                <span className="cp-arr" aria-hidden="true">→</span>
-              </button>
-              <p className="cp-fine">
-                We will name it for you. The families nearby will see it and can ask to join.
-              </p>
-            </>
-          ) : (
-            <p className="cp-fine">
-              Running a group is switched on one family at a time. Ask at{' '}
-              <a href="mailto:carpool@wearercap.org">carpool@wearercap.org</a> and a parent
-              volunteer will get back to you. You can still join any group above in the meantime.
-            </p>
-          )}
+      {!data.crew && !loading && !loadError && data.canOrganize && (
+        <div className="cp-next-step">
+          <h2 className="cp-h3">You can start small.</h2>
+          <p>Create a group for nearby families to discover. Joining starts a conversation, not a commitment to rides.</p>
+          <button type="button" className="cp-btn cp-btn--primary cp-btn--block" onClick={() => { setStartOpen(true); setScrollNonce((n) => n + 1); }}>
+            Create a group nearby <span aria-hidden="true">→</span>
+          </button>
         </div>
       )}
-
       {/* Controlled collapsible: collapsed by default, opened either by its own
           header or by the suggested-crew button above. */}
       <Collapsible id="cp-startgroup" title="Start a group" open={startOpen} onToggle={setStartOpen}>
@@ -858,8 +843,7 @@ export default function Groups({ family, userId }) {
         </p>
       </div>
       <p className="cp-fine">
-        Your group uses the general area you already gave us, never your street address. You become
-        its first member and you decide who joins.
+        Start with your general area and the days that might work. You become the first member and decide who joins. Meet and agree on the details before sharing a ride.
       </p>
       <form ref={createFormRef} onSubmit={handleCreate}>
         <div className="cp-field">
@@ -920,6 +904,7 @@ export default function Groups({ family, userId }) {
       </>
       )}
       </Collapsible>
+      </>}
     </section>
   );
 }

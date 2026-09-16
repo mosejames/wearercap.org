@@ -1226,3 +1226,9 @@ body {
   }
   .cp-btn:active { transform: none; }
 }
+
+/* Make the next step and schedule overlap easier to scan on small screens. */
+.cp-overlap { font-size: 14px; font-weight: 600; line-height: 1.5; color: var(--ink); margin-top: 8px; }
+.cp-next-step { padding: 22px; margin: 24px 0; border: 1px solid var(--orange); border-radius: 18px; }
+.cp-collapse-head.cp-label { font-size: 14px; letter-spacing: .06em; }
+.cp-banner p { margin-top: 8px; }
