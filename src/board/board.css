@@ -257,3 +257,33 @@
   text-decoration: none;
 }
 .event-recap:hover { text-decoration: underline; }
+
+/* Last meeting. A short version for the parent who will not click through, and
+   a way in for the one who will. Sits above the meeting calendar, so the page
+   reads: what happened, then what is next. */
+.bd-recap-points {
+  margin: 26px 0 28px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+  max-width: 68ch;
+}
+.bd-recap-points li {
+  position: relative;
+  padding: 15px 0 15px 26px;
+  border-bottom: 1px solid var(--line);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.bd-recap-points li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 25px;
+  width: 9px;
+  height: 2px;
+  background: var(--gold-deep);
+}
+@media (max-width: 560px) {
+  .bd-recap-points li { font-size: 15px; padding-left: 22px; }
+}

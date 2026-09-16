@@ -67,7 +67,7 @@ const officers = [
     photo: '/images/board/farren.jpg',
     email: contactEmail,
     bio:
-      'Farren Salter, mother of Logann, a sixth grader, with two more at home keeping ' +
+      'Farren Salter, mother of Logan, a sixth grader, with two more at home keeping ' +
       'her busy. She is the reason anything said in a meeting can be found again. ' +
       'Quietly precise, and the first to check that we spelled a name right. ' +
       'If it got written down, sorted, or followed up this year, her name is on it.',
@@ -83,6 +83,25 @@ const officers = [
 // tile then carries a "Read the recap" link and nothing else needs touching:
 // the meetings still to come simply have no recap yet, which is the honest
 // state rather than a dead link.
+// After every general meeting, add an entry to the TOP of this list and the
+// section renders itself. `points` is the short version for a parent who will
+// not click; `href` is the full recap page. Keep it to three or four points:
+// this is the summary, not the minutes.
+const recaps = [
+  {
+    key: 'sept-14',
+    date: 'Monday, September 14',
+    href: '/meeting/sept-14/',
+    headline: 'The room hit its limit before 7:00.',
+    points: [
+      'Dues are $25 per family for the whole year, and every RCA family is already a member.',
+      'The year ahead: the parents\u2019 social on Sept 27, the fall raffle, Trunk or Treat, holiday decor, 4 Days of Christmas, and Teacher Appreciation Week in the last week of April.',
+      'We started the year with $6,716.14 on hand. Last year\u2019s raffle brought in $25,120.',
+      'Committee sign-ups opened, and Latasha asked for two or three parents to join a new audit team.',
+    ],
+  },
+];
+
 const meetings = [
   { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual', recap: '/meeting/sept-14/' },
   { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
@@ -189,6 +208,30 @@ function App() {
           ))}
         </ul>
       </section>
+
+      {recaps.length ? (
+        <section className="content-section bd-recaps" aria-labelledby="recaps-h">
+          <div className="section-heading">
+            <p className="section-label">Last meeting</p>
+            <h2 id="recaps-h">{recaps[0].headline}</h2>
+            <p>
+              {recaps[0].date}. Here is the short version for anyone who could
+              not make it.
+            </p>
+          </div>
+
+          <ul className="bd-recap-points">
+            {recaps[0].points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+
+          <a className="button primary" href={recaps[0].href}>
+            Everything from the meeting
+            <ArrowUpRight size={18} aria-hidden="true" />
+          </a>
+        </section>
+      ) : null}
 
       <section className="content-section" aria-labelledby="meetings-h">
         <div className="section-heading">
