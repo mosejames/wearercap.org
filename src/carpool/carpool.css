@@ -600,6 +600,27 @@ body {
   margin: 12px 0 0;
 }
 .cp-consent--inline p { font-size: 13.5px; }
+.cp-sharing-consent { margin-top: 16px; }
+.cp-sharing-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cp-sharing-choice input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--orange);
+}
+.cp-sharing-choice input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.cp-sharing-consent p { margin-top: 10px; }
 
 /* --------------------------------------------------- status / feedback -- */
 

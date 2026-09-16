@@ -182,6 +182,24 @@ function GroupHandoff({ group, roster }) {
   );
 }
 
+function ContactSharingConsent({ id, organizer = false, checked, onChange }) {
+  return (
+    <div className="cp-consent cp-sharing-consent">
+      <label className="cp-sharing-choice" htmlFor={id}>
+        <input id={id} type="checkbox" checked={checked} onChange={onChange}
+          aria-describedby={`${id}-details`} required />
+        <span>{organizer
+          ? 'Share my email and phone with families I accept into this group.'
+          : "If I’m accepted, share my email and phone with this group’s members."}</span>
+      </label>
+      <p id={`${id}-details`}>
+        Members accepted by the organizer later will also be able to see your contact details.{' '}
+        <a href="#sharing">How sharing works</a>
+      </p>
+    </div>
+  );
+}
+
 export default function Groups({ family, userId }) {
   // family.user_id is the same person as userId; userId is passed in
   // separately because Ready already holds it and every fetcher here returns
@@ -245,6 +263,16 @@ export default function Groups({ family, userId }) {
     Array.isArray(family?.weekdays) && family.weekdays.length ? family.weekdays : [...WEEKDAYS],
   );
   const [meetingPoint, setMeetingPoint] = useState('');
+  const [createConsent, setCreateConsent] = useState(false);
+  // Consent belongs to one group and one action, never to every nearby group.
+  const [groupConsents, setGroupConsents] = useState({});
+  const setGroupConsent = (key, checked) => setGroupConsents((prev) => ({ ...prev, [key]: checked }));
+
+  async function withGroupConsent(key, work) {
+    if (!groupConsents[key]) throw new Error('Choose whether to share your email and phone before continuing.');
+    await work();
+    if (mountedRef.current) setGroupConsent(key, false);
+  }
 
   // One refetch routine for the whole view. Every action calls it when it
   // finishes, succeed or fail, so a button never sits disabled on a state the
@@ -414,6 +442,7 @@ export default function Groups({ family, userId }) {
     run(
       'create',
       async () => {
+        if (!createConsent) throw new Error('Choose whether to share your email and phone before creating a group.');
         // buildGroupRecord throws synchronously on bad input. It is inside the
         // same try so a validation message lands in the same place as a
         // database message, including the trigger's "Add your family before
@@ -429,6 +458,7 @@ export default function Groups({ family, userId }) {
         if (mountedRef.current) {
           setName('');
           setMeetingPoint('');
+          setCreateConsent(false);
         }
       },
       'Your group is created. You are the first member.',
@@ -504,11 +534,14 @@ export default function Groups({ family, userId }) {
                   You can answer once you have added yourself.
                 </p>
               )}
+              <ContactSharingConsent id={`seed-consent-${g.id}`} organizer
+                checked={!!groupConsents[`seed:${g.id}`]}
+                onChange={(e) => setGroupConsent(`seed:${g.id}`, e.target.checked)} />
               <button
                 className="cp-btn cp-btn--dark cp-btn--block"
                 type="button"
-                disabled={busyKey === `seed:${g.id}`}
-                onClick={() => run(`seed:${g.id}`, () => seedOwnMembership(g.id, me), `You are now in ${g.name}.`)}
+                disabled={!groupConsents[`seed:${g.id}`] || busyKey === `seed:${g.id}`}
+                onClick={() => run(`seed:${g.id}`, () => withGroupConsent(`seed:${g.id}`, () => seedOwnMembership(g.id, me)), `You are now in ${g.name}.`)}
               >
                 {busyKey === `seed:${g.id}` ? 'Adding…' : 'Add me to this group'}
                 <span className="cp-arr" aria-hidden="true">→</span>
@@ -779,14 +812,17 @@ export default function Groups({ family, userId }) {
                   make the introduction. The rest is yours.
                 </p>
               </div>
+              <ContactSharingConsent id={`request-consent-${g.id}`}
+                checked={!!groupConsents[`request:${g.id}`]}
+                onChange={(e) => setGroupConsent(`request:${g.id}`, e.target.checked)} />
               <div className="cp-item-actions">
                 <button
                   className="cp-btn cp-btn--dark cp-btn--block"
                   type="button"
-                  disabled={busyKey === `request:${g.id}`}
+                  disabled={!groupConsents[`request:${g.id}`] || busyKey === `request:${g.id}`}
                   onClick={() => run(
                     `request:${g.id}`,
-                    () => requestToJoin(g.id),
+                    () => withGroupConsent(`request:${g.id}`, () => requestToJoin(g.id)),
                     `Your request to join ${g.name} is on its way to the organizer.`,
                   )}
                 >
@@ -905,7 +941,9 @@ export default function Groups({ family, userId }) {
           <p className="cp-help">Pick somewhere public. Please do not put a home address here.</p>
         </div>
 
-        <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={busyKey === 'create'}>
+        <ContactSharingConsent id="create-sharing-consent" organizer
+          checked={createConsent} onChange={(e) => setCreateConsent(e.target.checked)} />
+        <button className="cp-btn cp-btn--primary cp-btn--block" type="submit" disabled={!createConsent || busyKey === 'create'}>
           {busyKey === 'create' ? 'Creating…' : 'Create group'}
           <span className="cp-arr" aria-hidden="true">→</span>
         </button>

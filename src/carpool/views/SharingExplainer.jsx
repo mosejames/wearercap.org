@@ -37,9 +37,19 @@ export default function SharingExplainer({ onBack }) {
       <p>
         The group's organizer sees your name, your children's names, your
         general area, and your schedule while they decide. Your email and
-        phone stay private unless they accept you. You can withdraw a request
+        phone stay private unless they accept you. Before sending your request,
+        you check a box agreeing to share your email and phone with this group's
+        members if accepted, including members the organizer accepts later.
+        You can withdraw a request
         any time before it is answered, and asking again later is always
         allowed.
+      </p>
+
+      <h3 className="cp-h3 cp-h3--section">When you create a group</h3>
+      <p>
+        Before creating a group, you check a box agreeing to share your email
+        and phone with families you accept into it. Creating a group does not
+        invite or add any other family.
       </p>
 
       <h3 className="cp-h3 cp-h3--section">When you are in a group</h3>
