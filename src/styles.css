@@ -651,16 +651,35 @@ button {
 }
 
 /* A tile that has its own page gets one small link, pinned under the label. */
+/* A gold pill, not an underlined link. On a tile full of plain text an
+   underline reads as part of the copy; a filled pill reads as a thing to tap,
+   which is the whole point of it being there. */
 .event-cta {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin: -6px 12px 14px;
-  font-weight: 800;
-  font-size: 13.5px;
+  gap: 5px;
+  align-self: flex-start;
+  margin: 2px 12px 14px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: var(--gold, #f7a81c);
   color: var(--ink, #1a1613);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 900;
+  font-size: 13.5px;
+  line-height: 1;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .event-cta:hover { background: #ffc247; transform: translateY(-1px); }
+}
+
+.event-cta:active { background: #e39508; }
+
+@media (prefers-reduced-motion: reduce) {
+  .event-cta { transition: none; }
+  .event-cta:hover { transform: none; }
 }
 
 
