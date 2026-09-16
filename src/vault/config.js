@@ -84,10 +84,7 @@ export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 // twice in a row. `events` lists the album slugs a card appears in; `until`
 // is the last day it shows, Eastern.
 //
-// Each card spans the full width of the grid (column-span in rcap.css). In a
-// masonry grid a card sitting in one column lands beside whatever flowed into
-// the next column, which is how two membership cards ended up side by side on
-// a phone. A full-width card cannot have a neighbour.
+// Cards share the photo columns without interrupting the masonry flow.
 export const PROMO_FIRST = 6;
 export const PROMO_EVERY = 20;
 
