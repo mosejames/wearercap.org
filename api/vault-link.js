@@ -28,7 +28,7 @@ const VAULTS = {
   },
   rcap: {
     house: 'rcap', path: 'rcap-vault', name: 'The RCAP Vault', short: 'RCAP Vault',
-    og: 'RCA memories, every house', theme: '#1a1613',
+    og: 'RCA memories, every house', theme: '#1a2a56',
     blurb: 'Every RCA family, every all-school event, every photo. Add yours and count it for your house.',
     eventLine: 'Photos and videos from every RCA family. Add yours and count it for your house.',
     img: `${SITE}/api/vault-og?vault=rcap&title=${encodeURIComponent('Every family. Every photo.')}&v=1`,

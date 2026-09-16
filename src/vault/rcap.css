@@ -1,12 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap');
 
-/* The RCAP Vault: wearercap.org's palette and type on the vault's layout.
+/* The RCAP Vault: RCA blue and gold, the palette of the parent social RSVP
+   page and the Sept 14 meeting email, with wearercap.org's type.
    Every rule is scoped to html[data-vault="rcap"], so nothing here can touch
    the Amistad Vault, and the extra attribute outranks the base rules without
    relying on source order.
 
-   Contrast, measured: white on accent #b0470a 5.6:1, accent on paper 5.12:1,
-   ink on paper 16.4:1, gold on ink 9.05:1. Gold is only ever on ink. */
+   Contrast, measured: white on navy #1a2a56 13.9:1, navy on paper 12.7:1,
+   gold on navy 7.4:1. Gold on paper is 1.7:1, so gold only ever sits on navy
+   (or carries navy type). */
 html[data-vault="rcap"]{
   --ink:#1a1613;
   --ink-soft:#5c534b;
@@ -15,23 +17,24 @@ html[data-vault="rcap"]{
   --line:#e6dccb;
   --mist:#f2eadc;
   --cream:#f4ecdf;
-  --red:#b0470a;
-  --red-deep:#8f3a08;
-  --red-bright:#b0470a;
-  --chrome:#1a1613;
-  --ember:#b0470a;
-  --gold:#f7a81c;
+  --red:#1a2a56;
+  --red-deep:#0f1a3a;
+  --red-bright:#1a2a56;
+  --chrome:#1a2a56;
+  --ember:#1a2a56;
+  --gold:#f0b323;
+  --error:#b3261e;
 }
 html[data-vault="rcap"] body{background:var(--paper);font-family:'Archivo',system-ui,-apple-system,sans-serif}
-html[data-vault="rcap"] ::selection{background:rgba(247,168,28,.35)}
-html[data-vault="rcap"] .btn.primary{box-shadow:0 10px 24px rgba(176,71,10,.28)}
-html[data-vault="rcap"] .fab{box-shadow:0 12px 30px rgba(176,71,10,.38)}
+html[data-vault="rcap"] ::selection{background:rgba(240,179,35,.4)}
+html[data-vault="rcap"] .btn.primary{box-shadow:0 10px 24px rgba(26,42,86,.28)}
+html[data-vault="rcap"] .fab{box-shadow:0 12px 30px rgba(26,42,86,.38)}
 html[data-vault="rcap"] .memory-strip{background:var(--paper)}
 html[data-vault="rcap"] .mark .vault-label{color:var(--gold)}
 html[data-vault="rcap"] .foot-mark span{color:var(--gold)}
 html[data-vault="rcap"] .latest-event-card{box-shadow:inset 0 -4px 0 var(--gold)}
 html[data-vault="rcap"] .latest-event-card .eyebrow{color:var(--gold)}
-html[data-vault="rcap"] .latest-event-actions .btn{color:var(--ink)}
+html[data-vault="rcap"] .latest-event-actions .btn{color:var(--red)}
 html[data-vault="rcap"] .home-tagline,
 html[data-vault="rcap"] .ev-blurb,
 html[data-vault="rcap"] .family-note p,
@@ -54,12 +57,12 @@ html[data-vault="rcap"] .house-row-label i{font-style:normal;font-weight:500;col
 @media(max-width:420px){html[data-vault="rcap"] .house-row-label i{display:none}}
 html[data-vault="rcap"] .house-bar{height:14px;border-radius:999px;background:var(--mist);overflow:hidden}
 html[data-vault="rcap"] .house-bar span{display:block;height:100%;border-radius:999px;background:var(--house);transition:width .6s ease}
-html[data-vault="rcap"] .house-row.lead .house-row-label b::after{content:'Leading';font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--gold);border-radius:999px;padding-top:4px;padding-bottom:4px;padding-left:8px;padding-right:8px}
+html[data-vault="rcap"] .house-row.lead .house-row-label b::after{content:'Leading';font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--red);color:var(--gold);border-radius:999px;padding-top:4px;padding-bottom:4px;padding-left:8px;padding-right:8px}
 html[data-vault="rcap"] .most-loved{display:flex;flex-direction:column}
-html[data-vault="rcap"] .most-loved-card{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--ink);flex:1;min-height:220px}
+html[data-vault="rcap"] .most-loved-card{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--red-deep);flex:1;min-height:220px}
 html[data-vault="rcap"] .most-loved-card img{width:100%;height:100%;min-height:220px;max-height:420px;object-fit:cover}
-html[data-vault="rcap"] .most-loved-meta{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding-top:28px;padding-bottom:14px;padding-left:16px;padding-right:16px;color:#fff;background:linear-gradient(transparent,rgba(26,22,19,.88))}
-html[data-vault="rcap"] .most-loved-meta b{background:var(--gold);color:var(--ink);border-radius:999px;padding-top:6px;padding-bottom:6px;padding-left:12px;padding-right:12px;font-weight:900;font-size:15px;white-space:nowrap}
+html[data-vault="rcap"] .most-loved-meta{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding-top:28px;padding-bottom:14px;padding-left:16px;padding-right:16px;color:#fff;background:linear-gradient(transparent,rgba(15,26,58,.9))}
+html[data-vault="rcap"] .most-loved-meta b{background:var(--gold);color:var(--red-deep);border-radius:999px;padding-top:6px;padding-bottom:6px;padding-left:12px;padding-right:12px;font-weight:900;font-size:15px;white-space:nowrap}
 html[data-vault="rcap"] .most-loved-meta span{font-size:14px;font-weight:700;line-height:1.3;min-width:0}
 html[data-vault="rcap"] .most-loved-meta i{font-style:normal;font-weight:500}
 html[data-vault="rcap"] .empty-loved .school-sub{margin-bottom:0}
@@ -76,9 +79,20 @@ html[data-vault="rcap"] .house-chip small{font-size:12px;color:var(--ink-soft)}
 html[data-vault="rcap"] .house-chip.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 html[data-vault="rcap"] .house-chip:has(input:focus-visible){outline:3px solid var(--gold);outline-offset:2px}
 
-/* The base header is .calm-header{background:var(--red)}, which would put
-   gold on the accent at about 2:1. The RCAP header is ink. */
+/* The base header is .calm-header{background:var(--red)}; say chrome so the
+   header follows the chrome token if the two ever split again. */
 html[data-vault="rcap"] .calm-header{background:var(--chrome)}
 html[data-vault="rcap"] .house-pick legend{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
 @media(min-width:860px){html[data-vault="rcap"] .school-board:has(.empty-loved){align-items:start}}
 html[data-vault="rcap"] .event-board:not(:has(.most-loved)){grid-template-columns:minmax(0,680px)}
+
+/* Amistad-pink leftovers in the base sheet, and error text that would
+   otherwise turn navy along with every other --red. */
+html[data-vault="rcap"] .err{color:var(--error)}
+html[data-vault="rcap"] .dashboard-share{border-color:var(--line);background:var(--surface)}
+html[data-vault="rcap"] .personal-standing{background:var(--surface)}
+html[data-vault="rcap"] .ev-invite:hover{background:rgba(26,42,86,.08)}
+html[data-vault="rcap"] .ev.featured .ev-blank{color:rgba(26,42,86,.35)}
+html[data-vault="rcap"] .choice button.on{box-shadow:0 0 0 2px rgba(26,42,86,.15)}
+html[data-vault="rcap"] .soon-card:hover{background:rgba(26,42,86,.03)}
+html[data-vault="rcap"] :focus-visible{outline-color:var(--gold)}

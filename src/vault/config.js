@@ -14,7 +14,7 @@ export const IS_SCHOOL = VAULT_ID !== 'amistad';
 
 const HOUSES_BY_VAULT = {
   amistad: { id: 'amistad', name: 'Amistad', short: 'AMI', meaning: 'Friendship', color: '#BD0032', fg: '#FFFFFF' },
-  rcap: { id: 'rcap', name: 'RCA', short: 'RCAP', meaning: 'Four houses, one school', color: '#b0470a', fg: '#FFFFFF' },
+  rcap: { id: 'rcap', name: 'RCA', short: 'RCAP', meaning: 'Four houses, one school', color: '#1a2a56', fg: '#FFFFFF' },
 };
 export const HOUSE = HOUSES_BY_VAULT[VAULT_ID] || HOUSES_BY_VAULT.amistad;
 
