@@ -902,7 +902,7 @@ export function MemoryStrip({ recent, covers, events }) {
 
 /* ---------------------------------------------------------------- home */
 
-function EventCard({ e, covers, today, admin, onInvite }) {
+function EventCard({ e, covers, today }) {
   const status = eventStatus(e, today);
   const kind = KINDS[e.kind] || KINDS.school;
   const thumbs = covers.get(e.id) || [];
@@ -925,11 +925,10 @@ function EventCard({ e, covers, today, admin, onInvite }) {
         </p>
       </div>
     </a>
-    {admin && (
-      <button className="ev-invite" onClick={(ev) => { ev.preventDefault(); onInvite(e); }}>
-        {I.share} Invite to upload
-      </button>
-    )}
+    {/* No invite button on the album list. It appeared under every card and
+        turned the timeline into a column of buttons. Inviting belongs on the
+        event's own page, where you are already looking at that gallery, and in
+        the admin table. */}
     </div>
   );
 }
@@ -1029,8 +1028,8 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
             {totals && <span>{plural(totals.photos, 'item')} shared</span>}
           </div>
           {!totals ? <p role="status">Loading albums…</p> : albums.length ? <div className="populated-albums">
-            {albums.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} />)}
-            {emptyEvents.slice(0, 2).map((e) => <div className="desktop-empty-album" key={e.id}><EventCard e={e} covers={covers} today={today} admin={admin} onInvite={onInvite} /></div>)}
+            {albums.map((e) => <EventCard key={e.id} e={e} covers={covers} today={today} />)}
+            {emptyEvents.slice(0, 2).map((e) => <div className="desktop-empty-album" key={e.id}><EventCard e={e} covers={covers} today={today} /></div>)}
           </div> : <p className="empty">Your photos will start our first album. Choose an event above to add a memory.</p>}
           {emptyEvents.length > 0 && <details className="missing-albums">
             <summary><span><b>Have photos from another event?</b><small>{plural(emptyEvents.length, 'event')} waiting for a first photo</small></span><span className="missing-toggle">Show events</span></summary>
