@@ -32,6 +32,8 @@ export const rcaHouse = (id) => RCA_HOUSES.find((h) => h.id === id) || null;
 const WORDS_BY_VAULT = {
   amistad: {
     wordmark: 'AMI VAULT',
+    place: 'Vault',
+    placeLower: 'vault',
     footShort: 'AMI',
     topSub: 'Amistad House',
     family: 'Amistad family',
@@ -50,7 +52,9 @@ const WORDS_BY_VAULT = {
     topRanked: 'Ranked by the house, live. Tap the heart on anything and it moves.',
   },
   rcap: {
-    wordmark: 'RCAP VAULT',
+    wordmark: 'RCAP CAPSULE',
+    place: 'Capsule',
+    placeLower: 'Capsule',
     footShort: 'RCAP',
     topSub: 'Ron Clark Academy',
     family: 'RCA family',
@@ -64,8 +68,8 @@ const WORDS_BY_VAULT = {
     noteBody: 'Bingo Night, EXP, Field Day, the parent social. Every family is already taking the pictures. Add yours and they count for your house, and the whole school gets to keep them.',
     footLine: 'Photos for every RCA family, from every all-school event this year.',
     zip: 'rcap',
-    badge: 'RCAP Vault photo badge',
-    shareImage: 'an RCAP Vault image',
+    badge: 'RCAP Capsule photo badge',
+    shareImage: 'an RCAP Capsule image',
     topRanked: 'Ranked by every family, live. Tap the heart on anything and it moves.',
   },
 };
@@ -74,8 +78,8 @@ export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 export const YEAR = { label: '2026–27', short: '26–27', start: '2026-08-26', end: '2027-05-28' };
 
 export const SITE = {
-  title: IS_SCHOOL ? 'The RCAP Vault' : 'The Amistad Vault',
-  meta: [IS_SCHOOL ? 'THE RCAP VAULT' : 'THE AMISTAD VAULT', '2026–27'],
+  title: IS_SCHOOL ? 'The RCAP Capsule' : 'The Amistad Vault',
+  meta: [IS_SCHOOL ? 'THE RCAP CAPSULE' : 'THE AMISTAD VAULT', '2026–27'],
   kicker: 'One house. One school year. Every photo.',
   titleLead: 'THE AMISTAD',
   titleGrad: 'VAULT.',

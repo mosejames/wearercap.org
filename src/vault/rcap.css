@@ -99,7 +99,7 @@ html[data-vault="rcap"] :focus-visible{outline-color:var(--gold)}
 
 /* Photos lead; event details and competition stay within easy reach. */
 html[data-vault="rcap"] .calm-header .topbar-in{min-height:70px;padding-top:12px;padding-bottom:12px}
-html[data-vault="rcap"] .calm-header .mark .vault-label{font-size:27px}
+html[data-vault="rcap"] .calm-header .mark .vault-label{font-size:clamp(19px,5.5vw,27px)}
 html[data-vault="rcap"] .calm-header .mark small{display:none}
 html[data-vault="rcap"] .gallery-head{background:var(--paper);padding-top:24px;padding-bottom:18px;border-bottom:0}
 html[data-vault="rcap"] .gallery-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}

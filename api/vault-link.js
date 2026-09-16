@@ -27,11 +27,11 @@ const VAULTS = {
     img: `${SITE}/ami-vault-og.png?v=4`,
   },
   rcap: {
-    house: 'rcap', path: 'rcap-vault', name: 'The RCAP Vault', short: 'RCAP Vault',
+    house: 'rcap', path: 'rcap-vault', name: 'The RCAP Capsule', short: 'RCAP Capsule',
     og: 'RCA memories, every house', theme: '#1a2a56',
     blurb: 'Every RCA family, every all-school event, every photo. Add yours and count it for your house.',
     eventLine: 'Photos and videos from every RCA family. Add yours and count it for your house.',
-    img: `${SITE}/api/vault-og?vault=rcap&title=${encodeURIComponent('Every family. Every photo.')}&v=1`,
+    img: `${SITE}/api/vault-og?vault=rcap&title=${encodeURIComponent('Every family. Every photo.')}&v=2`,
   },
 };
 
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
         : 'A little piece of our year, kept together.',
     ].filter(Boolean).join(' ');
 
-    const imageParams = new URLSearchParams({ title: ev.title, date, v: '4' });
+    const imageParams = new URLSearchParams({ title: ev.title, date, v: V.house === 'rcap' ? '5' : '4' });
     if (V.house !== 'amistad') imageParams.set('vault', V.house);
     if (!ev.open) imageParams.set('closed', '1');
     img = `${SITE}/api/vault-og?${imageParams}`;

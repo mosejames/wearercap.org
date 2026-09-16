@@ -302,10 +302,10 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
           <span>Student(s) <i>optional</i></span>
           <input value={form.student} onChange={set('student')} placeholder="Jordan, 6th" maxLength={80} />
         </label>
-        <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new {WORDS.badge}.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : 'Milestone texts are being connected. You can still collect and celebrate every badge in the Vault.'}</small></span></label>
-        <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future Vault releases.</span><small>Optional. You can change this anytime in My Vault → Edit profile. Message and data rates may apply.</small></span></label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.badgeTextOptIn} disabled={!textsAvailable && !form.badgeTextOptIn} onChange={e=>setForm(f=>({...f,badgeTextOptIn:e.target.checked}))} /><span><b>Celebrate my milestones by text</b><span>Text me when I earn a new {WORDS.badge}.</span><small>{textsAvailable ? 'Optional. One text per new badge, up to five photo milestones. Message and data rates may apply. Reply STOP to opt out, or turn this off here anytime.' : `Milestone texts are being connected. You can still collect and celebrate every badge in the ${WORDS.place}.`}</small></span></label>
+        <label className="release-opt-in"><input type="checkbox" checked={form.releaseOptIn} onChange={(e) => setForm((f) => ({ ...f, releaseOptIn: e.target.checked }))} /><span><b>Keep me in the loop</b><span>Text me about future {WORDS.place} releases.</span><small>Optional. You can change this anytime in My {WORDS.place} → Edit profile. Message and data rates may apply.</small></span></label>
         {err && <p className="err">{err}</p>}
-        <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? 'Into the vault' : 'Save'}</button>
+        <button className="btn primary" disabled={busy}>{busy ? 'Saving…' : firstTime ? `Into the ${WORDS.placeLower}` : 'Save'}</button>
       </form>
     </Sheet>
   );
@@ -414,7 +414,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
             <fieldset className="video-quality" disabled={optimizing}>
               <legend>Video quality</legend>
               <label><input type="radio" name="video-quality" checked={quality === 'original'} onChange={() => setQuality('original')} /><span><b>Original quality</b><small>Keep the file exactly as it is.</small></span></label>
-              <label><input type="radio" name="video-quality" checked={quality === 'smaller'} onChange={() => setQuality('smaller')} /><span><b>Smaller upload</b><small>Reduce video size on this device. The smaller copy replaces the original in the vault.</small></span></label>
+              <label><input type="radio" name="video-quality" checked={quality === 'smaller'} onChange={() => setQuality('smaller')} /><span><b>Smaller upload</b><small>Reduce video size on this device. The smaller copy replaces the original in the {WORDS.placeLower}.</small></span></label>
             </fieldset>
             {quality === 'smaller' && <>
               <p className="fine">Up to 1080p for standard video, with sound preserved. Keep this page open. You can review sizes before uploading.</p>
@@ -426,7 +426,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
           </div>}
           {err && <p className="err">{err}</p>}
           <button className="btn primary" disabled={!files.length || optimizing || (files.some(isVideo) && quality === 'smaller' && !optimized)} onClick={start}>
-            Add {files.length ? plural(files.length, 'file') : 'files'} to the vault
+            Add {files.length ? plural(files.length, 'file') : 'files'} to the {WORDS.placeLower}
           </button>
           <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in {WORDS.group} can see, like, comment on, and download what you add.</p>
         </div>
@@ -448,7 +448,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
           )}
           {err && <p className="err">{err}</p>}
           {finished
-            ? <button className="btn primary" onClick={onClose}>See them in the vault</button>
+            ? <button className="btn primary" onClick={onClose}>See them in the {WORDS.placeLower}</button>
             : <button className="btn ghost" onClick={() => abort.current?.abort()}>Stop</button>}
           {!finished && <p className="fine">Keep this screen open until it finishes.</p>}
         </div>
@@ -810,7 +810,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           {!IS_SCHOOL && <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>}
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
           {profile
-            ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label="My Vault" aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My Vault</span></button>
+            ? <button className={`nav-me${route === 'me' ? ' on' : ''}`} onClick={onProfile} aria-label={`My ${WORDS.place}`} aria-current={route === 'me' ? 'page' : undefined}><Avatar owner={profile.owner} name={profile.display_name} /><span>My {WORDS.place}</span></button>
             : <button className="nav-btn" onClick={onName}>Sign in</button>}
           <details className="mobile-nav" onKeyDown={e=>{if(e.key==='Escape'){e.currentTarget.open=false;e.currentTarget.querySelector('summary').focus();}}}>
             <summary aria-label="Open navigation menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></summary>
@@ -1118,7 +1118,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
     catch (e) { showToast(e.message); load(); }
   };
 
-  if (!event) return <div className="shell page"><p className="empty">That event is not in the vault. <a href="#/">Back to the year.</a></p></div>;
+  if (!event) return <div className="shell page"><p className="empty">That event is not in the {WORDS.placeLower}. <a href="#/">Back to the year.</a></p></div>;
 
   const status = eventStatus(event, today);
   const kind = KINDS[event.kind] || KINDS.school;
@@ -1309,7 +1309,7 @@ function ContributorPage({ contributor, events, owner, profile, onNeedName, show
 function ActivityPage({category,events,covers,onAdd,onSuggest,today}) {
   const c=ACTIVITIES.find(c=>c.id===category);
   useDocTitle(c?.title||'Around the House');
-  if(!c||!events.some(e=>e.category===category&&e.ongoing&&!e.hidden))return <main className="shell page"><h1>This gallery isn’t available right now</h1><a href="#/">Back to the Vault</a></main>;
+  if(!c||!events.some(e=>e.category===category&&e.ongoing&&!e.hidden))return <main className="shell page"><h1>This gallery isn’t available right now</h1><a href="#/">Back to the {WORDS.place}</a></main>;
   const albums=events.filter(e=>e.category===category&&!e.hidden&&(e.ongoing||e.startsOn<=today)).sort((a,b)=>Number(b.ongoing)-Number(a.ongoing)||b.startsOn.localeCompare(a.startsOn));
   const main=albums.find(e=>e.ongoing);
   return <main className="shell page"><a href="#/" className="crumb">← Around the House</a><h1>{c.title}</h1><p>{c.description}</p><div className="row">{main&&<button className="btn primary" onClick={()=>onAdd(main)}>{I.plus} Add photos / videos</button>}<button className="link" onClick={onSuggest}>Suggest an event →</button></div><div className="populated-albums activity-albums">{albums.map(e=><EventCard key={e.id} e={e} covers={covers} today={today} admin={false}/>)}</div></main>;
@@ -1362,7 +1362,7 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
       setPhotos(ps => ps.map(x => x.id === p.id ? {...x, likes: Math.max(0, (x.likes || 0) + (was ? -1 : 1))} : x));
     } catch (e) { showToast(e.message); }
   };
-  if (!owner) return <div className="shell page stack"><h1>My Vault</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
+  if (!owner) return <div className="shell page stack"><h1>My {WORDS.place}</h1><p>Sign in with a texted code to find and manage your memories.</p><button className="btn primary" onClick={onSignIn}>Text me a sign-in code</button></div>;
   return (
     <div className="shell page">
       <div className="me-head">
@@ -1457,8 +1457,8 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
     <div className="shell page admin">
       <div className="sec-head">
         <span className="eyebrow">Back office</span>
-        <h1 className="page-title">Run the vault.</h1>
-        <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My Vault to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
+        <h1 className="page-title">Run the {WORDS.placeLower}.</h1>
+        <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My {WORDS.place} to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
       </div>
 
       <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],...(IS_SCHOOL?[]:[['suggestions','Suggestions']]),...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
@@ -1652,7 +1652,7 @@ export default function App() {
         listRecentPhotos(24).then(setRecent), fetchTotals().then(setTotals),
       ]);
       if (results.some(r => r.status === 'rejected')) showToast('Some memories could not load. Refresh to try again.');
-    } catch (e) { showToast(e.message || 'Could not load the vault.'); }
+    } catch (e) { showToast(e.message || `Could not load the ${WORDS.placeLower}.`); }
   }, [showToast]);
 
   useEffect(() => { storageConfig().then(setStorage).catch(() => showToast('Photo storage could not load. Please refresh.')); refresh(); }, [refresh]);
@@ -1730,9 +1730,9 @@ export default function App() {
       {suggesting && <Sheet title="Suggest an event" onClose={() => setSuggesting(false)}><SuggestionForm profile={profile} onSignIn={() => needName('Sign in to suggest an event.')} onDone={() => setSuggesting(false)} /></Sheet>}
       <footer className="foot">
         <div className="shell">
-          <p className="foot-mark"><span>{WORDS.footShort}</span> VAULT · {YEAR.label}</p>
+          <p className="foot-mark"><span>{WORDS.footShort}</span> {WORDS.place.toUpperCase()} · {YEAR.label}</p>
           <p>{WORDS.footLine}</p>
-          <p className="fine">Photos belong to the families who took them and are shared here for the house. Questions: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. {admin ? ADMIN_HINT : ''}</p>
+          <p className="fine">Photos belong to the families who took them and are shared here for {WORDS.group}. Questions: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. {admin ? ADMIN_HINT : ''}</p>
         </div>
       </footer>
 
@@ -1753,7 +1753,7 @@ export default function App() {
       {upload && profile && !nameAsk && (
         <UploadSheet event={upload} profile={profile} initialFiles={dropped}
           onClose={() => { setUpload(null); setDropped(null); }}
-          onDone={() => { refresh(); claimBadges(); showToast('Added to the vault.'); }} />
+          onDone={() => { refresh(); claimBadges(); showToast(`Added to the ${WORDS.placeLower}.`); }} />
       )}
       {invite && <InviteSheet event={invite} onClose={() => setInvite(null)} />}
       <BadgeCelebration milestones={earned} onClose={()=>setEarned([])} /><Toast msg={toast} />

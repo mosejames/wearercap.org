@@ -9,7 +9,7 @@ const fonts = [
 ];
 const THEMES = {
   amistad: { bg:'#bd0032', mark:'AMI VAULT', fallback:'HOUSE OF FRIENDSHIP', soft:'#ffe5ed', date:'#ffd7e2', btn:'#bd0032', tag:'Our year. All together.' },
-  rcap: { bg:'#1a2a56', mark:'RCAP VAULT', fallback:'FOUR HOUSES. ONE SCHOOL.', soft:'#faf4ea', date:'#f0b323', btn:'#1a2a56', tag:'Count it for your house.' },
+  rcap: { bg:'#1a2a56', mark:'RCAP CAPSULE', fallback:'FOUR HOUSES. ONE SCHOOL.', soft:'#faf4ea', date:'#f0b323', btn:'#1a2a56', tag:'Count it for your house.' },
 };
 export function eventCard(title, date, closed = false, vault = 'amistad') {
   const T = THEMES[vault] || THEMES.amistad;

@@ -465,14 +465,14 @@ function MadLib({ form }) {
   );
 }
 
-// Rounds with photosAt send photos to the RCAP Vault instead of taking them
+// Rounds with photosAt send photos to the RCAP Capsule instead of taking them
 // here. Entries that already carry photos keep showing them on the board.
 function VaultPointer() {
   return (
     <div className="ml-proof vault-pointer">
       <p className="ml-prooflab">Got photos from {CURRENT.name}?</p>
-      <p className="vault-pointer-copy">They go in the RCAP Vault, where they count for your house and stay with the year.</p>
-      <a className="btn flame" href={CURRENT.photosAt} target="_blank" rel="noreferrer">Add photos to the vault →</a>
+      <p className="vault-pointer-copy">They go in the RCAP Capsule, where they count for your house and stay with the year.</p>
+      <a className="btn flame" href={CURRENT.photosAt} target="_blank" rel="noreferrer">Add photos to the Capsule →</a>
     </div>
   );
 }
@@ -562,9 +562,9 @@ function Done({ entry, onClose }) {
           {CURRENT.photosAt ? (
             <div className="next">
               <b>Now the photos</b>
-              <p>Add your {CURRENT.name} photos to the RCAP Vault. Every one counts for your house.</p>
+              <p>Add your {CURRENT.name} photos to the RCAP Capsule. Every one counts for your house.</p>
               <a className="btn flame" href={CURRENT.photosAt} target="_blank" rel="noreferrer"
-                 style={{ display: 'inline-block', textDecoration: 'none' }}>Add photos to the vault →</a>
+                 style={{ display: 'inline-block', textDecoration: 'none' }}>Add photos to the Capsule →</a>
             </div>
           ) : (
           <div className="next">
