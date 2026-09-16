@@ -907,7 +907,7 @@ function EventCard({ e, covers, today }) {
   const kind = KINDS[e.kind] || KINDS.school;
   const thumbs = covers.get(e.id) || [];
   return (
-    <div className={`ev-wrap${admin ? ' has-invite' : ''}`}>
+    <div className="ev-wrap">
     <a href={`#/e/${e.slug}`} className={`ev ${status}${e.featured ? ' featured' : ''}${e.kind === 'everyday' ? ' everyday' : ''}`}>
       <div className={`ev-cover n${Math.min(thumbs.length, 4)}`}>
         {thumbs.length ? thumbs.slice(0, 4).map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />)
