@@ -3,6 +3,9 @@
 Read this before changing anything. It covers access, how to run and verify the
 project, and the house rules that are not obvious from the code.
 
+If a local `HANDOFF-CODEX.md` exists beside this file, read it next. It has
+recent context and where credentials live. It is gitignored; never commit it.
+
 Repository: `mosejames/wearercap.org`. Production branch is `main`. Vercel
 deploys on every push to `main`, so a push is a release.
 

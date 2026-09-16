@@ -12,3 +12,6 @@ dist/
 # supabase CLI scratch
 supabase/.temp/
 .deploy/
+
+# Local handoff notes with passcodes. This repo is public.
+HANDOFF-CODEX.md
