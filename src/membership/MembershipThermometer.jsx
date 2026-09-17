@@ -31,6 +31,9 @@ export default function MembershipThermometer({ families = MEMBERSHIP.families, 
   const closing = useRef(false);
   const [shown, setShown] = useState(count);
   const [open, setOpen] = useState(false);
+  const [tucked, setTucked] = useState(false);
+  const tuckButton = useRef(null);
+  const reopenButton = useRef(null);
 
   useEffect(() => {
     if (!open) return;
@@ -78,10 +81,18 @@ export default function MembershipThermometer({ families = MEMBERSHIP.families, 
   }
 
   return <>
-    <aside className="membership-dock" aria-label="Membership donations">
+    <button ref={reopenButton} type="button" className="membership-reopen" hidden={!tucked} onClick={() => {
+      setTucked(false);
+      requestAnimationFrame(() => tuckButton.current?.focus());
+    }} aria-label="Show membership donations"><span aria-hidden="true">‹</span></button>
+    <aside className={`membership-dock${tucked ? ' is-tucked' : ''}`} aria-label="Membership donations" inert={tucked}>
+    <button ref={tuckButton} type="button" className="membership-tuck" onClick={() => {
+      setTucked(true);
+      requestAnimationFrame(() => reopenButton.current?.focus());
+    }} aria-label="Hide membership donations"><span aria-hidden="true">›</span></button>
     <button ref={trigger} className="membership-launcher" onClick={expand} aria-label={`${count} families have made their membership donation. View progress and donate.`} aria-haspopup="dialog">
       <Thermometer progress={ratio} />
-      <span className="membership-launcher-copy"><strong>{count}</strong><small>families toward our goal</small></span>
+      <span className="membership-launcher-copy"><strong>{count}</strong><small>families</small><span>toward our goal</span></span>
     </button>
     {paymentUrl && <button type="button" className="membership-dock-donate" onClick={expand} aria-haspopup="dialog">Make Your Membership Donation <span aria-hidden="true">↗</span></button>}
     </aside>

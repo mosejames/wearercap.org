@@ -1,7 +1,12 @@
-.membership-dock { position: fixed; z-index: 40; bottom: max(24px, env(safe-area-inset-bottom)); right: 0; width: min(270px, calc(100vw - 32px)); border: 1px solid #ffffff55; border-right: 0; border-radius: 18px 0 0 18px; background: #102b4ecc; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; box-shadow: 0 6px 30px #102b4e26; animation: membership-slide-in .65s cubic-bezier(.22,1,.36,1) both; overflow: hidden; }
-.membership-launcher { display: flex; width: 100%; gap: 14px; align-items: center; padding: 14px max(18px, env(safe-area-inset-right)) 14px 16px; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.membership-dock { position: fixed; z-index: 40; bottom: max(24px, env(safe-area-inset-bottom)); right: 0; width: min(190px, calc(100vw - 32px)); border: 1px solid #ffffff55; border-right: 0; border-radius: 18px 0 0 18px; background: #102b4ecc; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #ffffff; box-shadow: 0 6px 30px #102b4e26; animation: membership-slide-in .65s cubic-bezier(.22,1,.36,1) both; overflow: hidden; transition: translate .3s ease; }
+.membership-dock.is-tucked { translate: 100% 0; pointer-events: none; }
+.membership-tuck { position: absolute; top: 2px; right: 2px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: white; font-size: 25px; cursor: pointer; z-index: 1; }
+.membership-tuck:hover { background: #ffffff22; }
+.membership-reopen { position: fixed; z-index: 40; bottom: max(24px, env(safe-area-inset-bottom)); right: 0; width: 32px; height: 48px; border: 1px solid #ffffff55; border-right: 0; border-radius: 12px 0 0 12px; background: #102b4ee6; color: #f7a81c; font-size: 28px; cursor: pointer; }
+.membership-reopen:focus-visible { outline: 3px solid #f7a81c; outline-offset: -4px; }
+.membership-launcher { display: flex; width: 100%; gap: 14px; align-items: center; padding: 22px 28px 12px 16px; justify-content: center; border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; }
 .membership-launcher:hover { background: #102b4e66; }
-.membership-dock-donate { width: 100%; border: 0; cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px max(14px, env(safe-area-inset-right)) 14px 14px; background: #f7a81c; color: #102b4e; font-size: 11px; line-height: 1.4; font-weight: 800; }
+.membership-dock-donate { width: 100%; border: 0; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; min-height: 44px; background: #f7a81c; color: #102b4e; font-size: 11px; line-height: 1.4; font-weight: 800; }
 .membership-dock-donate:hover { background: #ffbc33; }
 .membership-dock :focus-visible { outline: 3px solid #ffffff; outline-offset: -4px; }
 .membership-launcher strong { display: block; font-size: 25px; font-weight: 900; line-height: 1.1; }
@@ -44,5 +49,5 @@
 @keyframes membership-shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(var(--shake)); } 75% { transform: rotate(calc(-1 * var(--shake))); } }
 @keyframes membership-bubble { from { transform: translateY(0) scale(.5); opacity: 0; } 20% { opacity: .8; } to { transform: translateY(-110px) scale(1.2); opacity: 0; } }
 @keyframes membership-pop { from { transform: translateY(0) scale(.2); opacity: 1; } to { transform: translateY(-100px) rotate(120deg); opacity: 0; } }
-@media (max-width: 600px) { .membership-launcher { padding: 10px max(12px, env(safe-area-inset-right)) 10px 10px; gap: 9px; } .membership-launcher strong { font-size: 22px; } .membership-card { padding: 34px 22px 20px; } }
-@media (prefers-reduced-motion: reduce) { .membership-meter, .membership-liquid i, .membership-burst i { animation: none; } .membership-burst { display: none; } .membership-dock { animation: none; } }
+@media (max-width: 600px) { .membership-dock { width: 150px; } .membership-launcher { padding: 24px 20px 10px 10px; gap: 9px; } .membership-dock-donate { font-size: 10px; padding: 9px 10px; } .membership-launcher strong { font-size: 22px; } .membership-card { padding: 34px 22px 20px; } }
+@media (prefers-reduced-motion: reduce) { .membership-meter, .membership-liquid i, .membership-burst i { animation: none; } .membership-burst { display: none; } .membership-dock { animation: none; transition: none; } }
