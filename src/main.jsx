@@ -15,10 +15,10 @@ import {
   Shirt,
   Users,
   X,
-  Heart,
 } from 'lucide-react';
 import { COMMITTEES } from './committee/data.js';
 import './styles.css';
+import MembershipThermometer from './membership/MembershipThermometer.jsx';
 
 // Pulled straight from the Find Your Place data so the two can never drift.
 // Editing src/committee/data.js updates the pills, the count, and the form.
@@ -130,8 +130,6 @@ const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestb
 // TEMPORARY. Replaces the hero with tonight's meeting so the join link is the
 // first thing on the page. Set this back to false to restore the normal hero;
 // nothing else needs touching, and nothing below the hero changes either way.
-// The PayPal payment link for the annual membership donation.
-const DONATE_URL = 'https://www.paypal.com/ncp/payment/EWP8R298MW83A';
 
 const MEETING_TAKEOVER = false;
 const MEETING_STARTS = new Date('2026-09-14T19:00:00-04:00');
@@ -1078,22 +1076,7 @@ function App() {
         </div>
       </footer>
 
-      {/* Floating give link. Sits above everything on every scroll position, so
-          the one thing we ask of a member is never more than a tap away. Hidden
-          while the committee modal is open so it cannot overlap the dialog. */}
-      {!isPopOpen ? (
-        <a
-          className="give-float"
-          href={DONATE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Make your membership donation"
-        >
-          <Heart size={17} aria-hidden="true" />
-          <span className="give-long">Make your membership donation</span>
-          <span className="give-short" aria-hidden="true">Membership donation</span>
-        </a>
-      ) : null}
+      {!isPopOpen && <MembershipThermometer />}
 
       {isPopOpen ? (
         <div className="pop-scrim">
