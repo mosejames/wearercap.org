@@ -2265,3 +2265,6 @@ textarea:focus-visible {
 .showcase-timer span.is-running { animation:showcase-drain linear forwards; }
 @keyframes showcase-drain { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .showcase-timer { display:none; } }
+
+/* Give the stacked parent wordmark room above the Collective name. */
+@media (min-width: 561px) { .dir-header { padding-top: 18px; padding-bottom: 18px; } }

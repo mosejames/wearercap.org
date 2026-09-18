@@ -178,4 +178,6 @@ html[data-vault="rcap"] .grid.promo-only{margin-top:8px}
 html[data-vault="rcap"] .grid>.promo-wrap{column-span:none;-webkit-column-span:none}
 html[data-vault="rcap"] .promo-body{min-width:0;overflow-wrap:anywhere}
 html[data-vault="rcap"] .promo-cta{max-width:100%}
-html[data-vault="rcap"] .promo-tile img.promo-logo{width:112px;height:auto;aspect-ratio:988/880;object-fit:contain;margin-top:4px;margin-bottom:4px}
+html[data-vault="rcap"] .promo-tile img.promo-logo{width:150px;max-width:100%;height:auto;aspect-ratio:auto;object-fit:contain;margin-top:4px;margin-bottom:4px}
+
+html[data-vault="rcap"] .calm-header .mark .rcap-capsule-label{display:block;font-size:9px;letter-spacing:.16em;margin-top:7px;color:#fff}

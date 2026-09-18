@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -1614,7 +1615,7 @@ function App() {
     <div className="cr">
       <header>
         <a className="brand" href="/">
-          RCA<span>P</span>
+          <Brand reversed width={160} />
         </a>
         <span className="header-label">PARENT RESOURCES</span>
         <a href="/">

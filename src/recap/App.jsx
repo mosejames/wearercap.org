@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   SITE, ROUNDS, CURRENT, HOUSES, UNSORTED, CLASSES, RELATIONS, WORDS,
@@ -919,7 +920,7 @@ export default function App() {
     <>
       <div className="topbar">
         <div className="shell topbar-in">
-          <div className="mark">RCA<span>P</span><small>RON CLARK ACADEMY PARENTS</small></div>
+          <a href="/" aria-label="RCAP home"><Brand reversed width={175} /></a>
           <div className="topmeta">
             {SITE.meta.map((m) => <div key={m}>{m}</div>)}
             <div>{CURRENT.label}</div>

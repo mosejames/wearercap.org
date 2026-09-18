@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
@@ -751,7 +752,7 @@ function PromoCard({ promo }) {
         {promo.image && <img src={promo.image} alt="" loading="lazy" decoding="async" />}
         <span className="promo-body">
           <span className="promo-eyebrow">{promo.eyebrow}</span>
-          {promo.logo ? <img className="promo-logo" src={promo.logo} alt={promo.title} width="988" height="880" loading="lazy" decoding="async" /> : <b>{promo.title}</b>}
+          {promo.logo ? <img className="promo-logo" src={promo.logo} alt={promo.title} width="427" height="193" loading="lazy" decoding="async" /> : <b>{promo.title}</b>}
           {promo.body && <span className="promo-copy">{promo.body}</span>}
           <span className="promo-cta">{promo.cta} →</span>
         </span>
@@ -834,7 +835,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
     <header className="topbar calm-header">
       <div className="shell topbar-in">
         <a href="#/" className="mark" aria-label={SITE.title}>
-          <span className="vault-label">{WORDS.wordmark}</span>
+          {IS_SCHOOL ? <span><Brand reversed width={150} /><small className="rcap-capsule-label">RCAP CAPSULE</small></span> : <span className="vault-label">{WORDS.wordmark}</span>}
           <small>{YEAR.label} · {WORDS.topSub}</small>
         </a>
         <nav className="nav">

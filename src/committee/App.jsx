@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { COMMITTEES, TRAITS, HOUSES, CLASS_YEARS, byId, rank, topMatches, stage, STAGE_LABEL } from './data.js';
 import { getToken, clearToken, saveQuiet, submit, sendConfirmation, seatCounts } from './api.js';
@@ -644,7 +645,7 @@ function Screen({ children, night, onNight, pct, onBack, wide, big, low, home })
     <>
       {pct != null && <div className="progress"><i style={{ width: pct + '%' }} /></div>}
       <div className={'topbar' + (onNight ? ' on-night' : '')}>
-        <span className="brand">We Are <span>RCAP</span></span>
+        <Brand reversed={!!onNight} weAre width={105} />
         {onBack && (
           <button className="backlink" onClick={onBack}>
             <span aria-hidden="true">&#8249;</span> Back

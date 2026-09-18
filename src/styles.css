@@ -2565,3 +2565,7 @@ button {
   .callout-photo { transition: none; }
   .callout.has-photo:hover .callout-photo { transform: none; }
 }
+
+/* Keep the stacked wordmark balanced on narrow screens. */
+@media (max-width: 600px) { .homepage-refresh .brand .rcap-wordmark { width: 180px !important; } }
+.closing > a:first-child { display: inline-block; margin-bottom: 24px; }

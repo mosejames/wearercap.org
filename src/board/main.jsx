@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowLeft, ArrowUpRight, Mail } from 'lucide-react';
@@ -148,7 +149,7 @@ function App() {
       <header className="bd-top">
         <a className="bd-back" href="/">
           <ArrowLeft size={16} aria-hidden="true" />
-          wearercap.org
+          <Brand width={170} />
         </a>
       </header>
 

@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -885,7 +886,8 @@ export default function App() {
           }}
         >
           <span className="collective-brand-name">
-            <b>RCAP</b> Collective
+            <Brand reversed width={165} />
+            <b>Collective</b>
             <span>Our community. Your next connection.</span>
           </span>
         </a>

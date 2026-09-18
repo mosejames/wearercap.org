@@ -111,7 +111,7 @@ export const PROMOS = IS_SCHOOL ? [
     href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
     external: true,
     variants: [
-      { eyebrow: 'RCAP membership', title: 'We Are RCAP', logo: '/images/we-are-rcap-logo.png', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
+      { eyebrow: 'RCAP membership', title: 'We Are RCAP', logo: '/brand/we-are-rcap-reversed.svg', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
       { eyebrow: 'RCAP membership', title: 'Be part of the team.', body: 'Every RCA family, pulling together for the school that pours into our children.' },
       { eyebrow: 'RCAP membership', title: 'This school gives us so much.', body: 'Your membership donation is how we give back, together.' },
     ],

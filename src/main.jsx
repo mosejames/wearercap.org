@@ -1,3 +1,4 @@
+import Brand from './components/Brand.jsx';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -666,8 +667,7 @@ function App() {
 
         <header className="nav">
           <a className="brand" href="/">
-            <span className="brand-mark">RCAP</span>
-            <span className="brand-sub">Ron Clark Academy Parents</span>
+            <Brand reversed width={220} />
           </a>
           <nav className="nav-links" aria-label="Main">
             {navLinks.map(({ label, href }) => (
@@ -1018,6 +1018,7 @@ function App() {
           block had a headline and a paragraph that repeated the welcome without
           adding anything, so it is just the footer now. */}
       <footer className="closing">
+        <a href="/" aria-label="RCAP home"><Brand weAre width={180} /></a>
         <p className="footer-heading">Jump to the cheat sheet</p>
         <nav className="footer-map" aria-label="Site sections">
           <a href="#story">Who We Are</a>

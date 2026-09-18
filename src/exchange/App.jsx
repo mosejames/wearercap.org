@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   SITE, DONATION_STANDARD, APPROX_NOTE, FIT_HINT, sizeGroups, sizeLabel, firstSize,
@@ -202,7 +203,8 @@ export default function App() {
       <header className="topbar">
         <div className="shell topbar-in">
           <a className="mark" href="#/">
-            RCAP <span>UNIFORM EXCHANGE</span>
+            <Brand reversed width={155} />
+            <small>UNIFORM EXCHANGE</small>
             <small>{SITE.meta.join(' · ')}</small>
           </a>
           <nav className="topnav">

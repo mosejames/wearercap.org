@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   CURRENT, SITE, MODES, RELATIONS, TOPICS, IDEA_TOPICS, topicById, suggestThree,
@@ -120,8 +121,7 @@ export function Topbar() {
     <header className="topbar">
       <div className="shell topbar-in">
         <a className="mark" href="/">
-          We Are <span>RCAP</span>
-          <small>RON CLARK ACADEMY PARENTS</small>
+          <Brand reversed weAre width={175} />
         </a>
         <p className="topmeta mono">
           {SITE.meta.map((m) => <span key={m}>{m}<br /></span>)}

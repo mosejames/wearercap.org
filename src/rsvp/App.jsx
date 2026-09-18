@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, MapPin, Users, Pencil, Share2 } from 'lucide-react';
 import * as api from './api.js';
@@ -175,7 +176,7 @@ function EventPage({ slug }) {
   if (missing) {
     return (
       <main className="rv-missing">
-        <p className="rv-lockup-sm">WE ARE RCA<b>P</b>.</p>
+        <Brand weAre width={170} />
         <h1>That event is not here.</h1>
         <p><a href="/">Back to wearercap.org</a></p>
       </main>
@@ -186,9 +187,9 @@ function EventPage({ slug }) {
     <div className={`rv-page${going ? ' is-going' : ''}`}>
       <header className="rv-lockup">
         <a href="/" className="rv-lockup-mark" aria-label="wearercap.org home">
-          <span>WE</span><span>ARE</span><span>RCA<b>P</b><i>.</i></span>
+          <Brand weAre width={240} />
         </a>
-        <p className="rv-lockup-side">RON CLARK<br />ACADEMY<br />PARENTS</p>
+
       </header>
 
       <section className="rv-band" style={art.image ? { '--art': `url(${art.image})` } : undefined}>
@@ -274,7 +275,7 @@ function EventPage({ slug }) {
       </main>
 
       <footer className="rv-footer">
-        <p className="rv-lockup-sm">WE ARE RCA<b>P</b>.</p>
+        <Brand reversed weAre width={170} />
         <p>Organized by parent volunteers. Not sponsored by or affiliated with Ron Clark Academy.</p>
         <p><a href="/">wearercap.org</a></p>
       </footer>

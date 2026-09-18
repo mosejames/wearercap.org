@@ -1,3 +1,4 @@
+import Brand from '../components/Brand.jsx';
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient.js';
 import { resolveView, fetchMember, ensureMemberRow } from './auth.js';
@@ -43,8 +44,7 @@ function Shell({ children }) {
     <>
       <header className="cp-masthead">
         <p className="cp-brand">
-          RCA<span className="cp-hl">P</span>
-          <span className="cp-brand-sub">We Are RCAP</span>
+          <Brand reversed weAre width={165} />
         </p>
         <p className="cp-issue">Carpool</p>
       </header>
