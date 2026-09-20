@@ -1,3 +1,4 @@
+import { hasSeenPromo, markPromoSeen } from './media/promo-visit.js';
 import { fullscreenOnFirstPlay } from './media/fullscreen.js';
 import Brand from './components/Brand.jsx';
 import React from 'react';
@@ -557,13 +558,14 @@ const karaokeMedia = 'https://media.wearercap.org/rcap/promos/2026-09-20/';
 function KaraokeWelcome() {
   const dialog = React.useRef(null);
   const video = React.useRef(null);
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(() => !hasSeenPromo());
   React.useEffect(() => {
     if (!open) return undefined;
     const node = dialog.current;
     const previous = document.activeElement;
     const unlock = lockScroll();
     node.showModal();
+    markPromoSeen();
     const stopFullscreen = fullscreenOnFirstPlay(video.current);
     return () => {
       stopFullscreen();
@@ -572,6 +574,16 @@ function KaraokeWelcome() {
       previous?.focus?.();
     };
   }, [open]);
+  React.useEffect(() => {
+    const restore = (event) => {
+      if (event.persisted && hasSeenPromo()) {
+        video.current?.pause();
+        setOpen(false);
+      }
+    };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+  }, []);
   const dismiss = () => {
     video.current?.pause();
     setOpen(false);
