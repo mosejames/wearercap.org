@@ -1,3 +1,4 @@
+import { fullscreenOnFirstPlay } from './media/fullscreen.js';
 import Brand from './components/Brand.jsx';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -563,7 +564,9 @@ function KaraokeWelcome() {
     const previous = document.activeElement;
     const unlock = lockScroll();
     node.showModal();
+    const stopFullscreen = fullscreenOnFirstPlay(video.current);
     return () => {
+      stopFullscreen();
       node.close();
       unlock();
       previous?.focus?.();
@@ -578,7 +581,7 @@ function KaraokeWelcome() {
   const quality = connection?.saveData || /^(slow-)?2g$/.test(connection?.effectiveType || '') ? '480p' : '720p';
   return (
     <dialog ref={dialog} className="karaoke-welcome" aria-labelledby="karaoke-welcome-title" onCancel={(event) => { event.preventDefault(); dismiss(); }}>
-      <video ref={video} controls playsInline preload="none" poster={`${karaokeMedia}poster.jpg`} width="720" height="1280">
+      <video ref={video} controls preload="none" poster={`${karaokeMedia}poster.jpg`} width="720" height="1280">
         <source src={`${karaokeMedia}this-is-how-we-do-it-${quality}.mp4`} type="video/mp4" />
         <a href={`${karaokeMedia}watch.html`}>Watch the video</a>
       </video>
