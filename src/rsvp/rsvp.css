@@ -318,3 +318,33 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
 @media (hover: hover) {
   .rv-react:hover { border-color: #b0470a; background: rgba(176, 71, 10, .06); }
 }
+
+/* Parent playlist: the same navy, gold, cream and house accents as the RSVP. */
+.rv-playlist{padding:0;margin:26px 0;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.rv-playlist-intro{background:var(--navy);color:#fff;padding:28px}
+.rv-playlist-intro .rv-eyebrow{display:flex;align-items:center;gap:8px}
+.rv-playlist-intro h2{font-family:var(--display);font-size:clamp(27px,5vw,40px);font-weight:900;line-height:1.08;letter-spacing:-.035em;margin:0 0 14px}
+.rv-playlist-intro>p:not(.rv-eyebrow){max-width:470px;color:#eee7db}
+.rv-playlist-body{padding:24px 28px}
+.rv-playlist-label{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rv-playlist h3{font-family:var(--display);font-weight:800;font-size:22px;margin:0}
+.rv-playlist-label>span{font-size:13px;color:var(--soft)}
+.rv-songs{list-style:none;padding:0;margin:14px 0}
+.rv-songs li{display:flex;gap:15px;padding:14px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.rv-track-number{color:var(--navy);font:800 13px var(--display);padding-top:4px;min-width:22px}
+.rv-songs li>div{min-width:0;overflow-wrap:anywhere}
+.rv-songs b,.rv-songs div>span{display:block}
+.rv-songs b{font-size:17px;line-height:1.3}.rv-songs div>span{color:var(--soft);margin-top:3px}
+.rv-songs small{display:flex;gap:7px;align-items:center;flex-wrap:wrap;color:var(--soft);font-size:12px;margin-top:7px}
+.rv-song-house{text-transform:capitalize;border-radius:20px;padding:2px 8px;background:var(--cream)}
+.rv-song-house.house-amistad{background:#fce6e8;color:#922b3b}.rv-song-house.house-isibindi{background:#e2efdf;color:#285230}
+.rv-song-house.house-reveur{background:#e2eafa;color:#254c87}.rv-song-house.house-altruismo{background:#eae7e2;color:#393530}
+.rv-artist-mentions{margin:22px 0;padding:18px;border-radius:12px;background:var(--cream)}
+.rv-artist-mentions p{margin:7px 0}.rv-artist-mentions small{color:var(--soft)}
+.rv-song-form{scroll-margin-top:25px;border-top:2px solid var(--gold);padding-top:24px}
+.rv-song-form>p{margin:6px 0 18px}.rv-song-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.rv-song-fields label{font-weight:700;font-size:14px;min-width:0}.rv-song-fields input{display:block;width:100%;min-height:50px;margin-top:6px;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:400 16px var(--body)}
+.rv-song-fields input:focus{outline:2px solid var(--navy);outline-offset:2px}
+.rv-song-form .rv-song-privacy{font-size:13px;color:var(--soft);margin:14px 0}
+.rv-song-error{color:var(--red)}.rv-song-success{color:#285230;font-weight:600}
+@media(max-width:520px){.rv-playlist-intro,.rv-playlist-body{padding:22px 18px}.rv-song-fields{grid-template-columns:1fr}.rv-song-form .rv-cta{width:100%}}

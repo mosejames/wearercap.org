@@ -11,6 +11,7 @@ import Sheet from './views/Sheet.jsx';
 import Done from './views/Done.jsx';
 import { ThreadList, Composer } from './views/Thread.jsx';
 import Admin from './views/Admin.jsx';
+import Playlist from './views/Playlist.jsx';
 
 /* /rsvp/<slug>. The next event is a row in public.events, not a new page.
    Only the hero art is per event, keyed by slug below; an event without art
@@ -253,6 +254,10 @@ function EventPage({ slug }) {
             {event.blurb && <p className="rv-blurb">{event.blurb}</p>}
             <ShareButton event={event} />
           </section>
+        )}
+
+        {slug === 'karaoke-sept-27' && event && (
+          <Playlist slug={slug} token={token} going={going} event={event} onRsvp={openForm} />
         )}
 
         <section className="rv-section">

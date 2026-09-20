@@ -183,3 +183,8 @@ export function subscribe(slug, { onRsvp, onComment }) {
 export const adminList = (pass, slug) => rpc('event_admin_list', { p_pass: pass, p_slug: slug });
 export const adminHideComment = (pass, id, hidden) => rpc('event_admin_hide_comment', { p_pass: pass, p_id: id, p_hidden: hidden });
 export const adminRemovePhoto = (pass, id) => rpc('event_admin_remove_photo', { p_pass: pass, p_rsvp: id });
+
+export const loadSongs = async (slug) => (await rpc('event_song_list', { p_slug: slug })) || [];
+export const submitSong = (slug, token, title, artist) => rpc('event_song_submit', {
+  p_slug: slug, p_token: token, p_title: title, p_artist: artist,
+});
