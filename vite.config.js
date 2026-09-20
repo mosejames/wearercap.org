@@ -8,6 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        karaokevideo: resolve(__dirname, 'this-is-how-we-do-it/index.html'),
         directory: resolve(__dirname, 'directory/index.html'),
         checkrequests: resolve(__dirname, 'check-requests/index.html'),
         carpool: resolve(__dirname, 'carpool/index.html'),
