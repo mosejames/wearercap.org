@@ -175,9 +175,8 @@ const navLinks = [
 // is promoted automatically. Parent Orientation came out on Sept 11.
 const upcomingEvents = [
   // The first row is the featured card and needs time, description and image.
-  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '17 & 18', label: 'RCA EXP', time: 'Both days, at RCA', description: 'Educators fly in from around the world to watch our teachers and our kids work. Parents are the first people they meet, and every session needs us.', image: '/images/rcap-exp-day.jpg', cta: { href: volunteerHref, label: 'Take a shift', external: true } },
-  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
-  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'Parent social, R&B karaoke, 5 to 7pm', href: '/karaoke', cta: 'RSVP' },
+  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'R&B Karaoke Night', time: '5 to 7 p.m. at RCA · Adults only', description: 'Grab your crew for an evening of R&B favorites and good company. Add your name and get ready to sing along.', image: '/images/rcap-karaoke-mic.jpg', cta: { href: '/karaoke', label: 'RSVP for R&B Karaoke' } },
+  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed', href: volunteerHref, cta: 'Sign up for EXP' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
   { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
 ];
@@ -552,6 +551,50 @@ function VideoModal({ open, onClose }) {
   );
 }
 
+const karaokeMedia = 'https://media.wearercap.org/rcap/promos/2026-09-20/';
+
+function KaraokeWelcome() {
+  const dialog = React.useRef(null);
+  const video = React.useRef(null);
+  const [open, setOpen] = React.useState(true);
+  React.useEffect(() => {
+    if (!open) return undefined;
+    const node = dialog.current;
+    const previous = document.activeElement;
+    const unlock = lockScroll();
+    node.showModal();
+    return () => {
+      node.close();
+      unlock();
+      previous?.focus?.();
+    };
+  }, [open]);
+  const dismiss = () => {
+    video.current?.pause();
+    setOpen(false);
+  };
+  if (!open) return null;
+  const connection = navigator.connection;
+  const quality = connection?.saveData || /^(slow-)?2g$/.test(connection?.effectiveType || '') ? '480p' : '720p';
+  return (
+    <dialog ref={dialog} className="karaoke-welcome" aria-labelledby="karaoke-welcome-title" onCancel={(event) => { event.preventDefault(); dismiss(); }}>
+      <div className="karaoke-welcome-top">
+        <p id="karaoke-welcome-title">This is how we do it.</p>
+        <button type="button" onClick={dismiss} autoFocus>Skip <X size={16} aria-hidden="true" /></button>
+      </div>
+      <video ref={video} controls playsInline preload="none" poster={`${karaokeMedia}poster.jpg`} width="720" height="1280">
+        <source src={`${karaokeMedia}this-is-how-we-do-it-${quality}.mp4`} type="video/mp4" />
+        <a href={`${karaokeMedia}watch.html`}>Watch the video</a>
+      </video>
+      <div className="karaoke-welcome-bottom">
+        <p>R&amp;B Karaoke Night<br /><span>Sunday, Sept. 27 · 5–7 p.m. · RCA · Adults only</span></p>
+        <a className="button primary" href="/karaoke">RSVP for R&amp;B Karaoke <ArrowUpRight size={18} aria-hidden="true" /></a>
+        <button type="button" className="karaoke-skip" onClick={dismiss}>Skip and explore the site</button>
+      </div>
+    </dialog>
+  );
+}
+
 function App() {
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
   const [isPopOpen, setIsPopOpen] = React.useState(false);
@@ -655,6 +698,7 @@ function App() {
 
   return (
     <main className="site-shell homepage-refresh">
+      <KaraokeWelcome />
       <section className="hero" aria-label="We Are RCAP">
         {/* Photo, scrim and edge travel together. Above 1100px this block is
             absolutely positioned behind the copy; below it, it becomes a band
@@ -755,7 +799,7 @@ function App() {
         <article className="featured-event">
           <div className="featured-event-photo">
             <img src={upcomingEvents[0].image} alt="Parents gathered at RCA" loading="lazy" width="1800" height="1200" />
-            <span className="featured-event-tag">Next on the calendar</span>
+            <span className="featured-event-tag">The parent social</span>
           </div>
           <div className="featured-event-copy">
             <p className="section-label">{upcomingEvents[0].weekday}, {upcomingEvents[0].month} {upcomingEvents[0].day} · {upcomingEvents[0].year}</p>
