@@ -2570,17 +2570,20 @@ button {
 @media (max-width: 600px) { .homepage-refresh .brand .rcap-wordmark { width: 180px !important; } }
 .closing > a:first-child { display: inline-block; margin-bottom: 24px; }
 
-/* Opening invitation, sized to keep both video and RSVP visible on phones. */
-.karaoke-welcome{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid #e8a516;border-radius:16px;background:#1a1613;color:#faf4ea;overflow:auto;box-shadow:0 20px 80px #0008}
-.karaoke-welcome::backdrop{background:rgba(0,0,0,.82)}
-.karaoke-welcome-top{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:12px}
-.karaoke-welcome-top p{margin:0;font-weight:800;font-size:16px}
-.karaoke-welcome-top button,.karaoke-skip{background:none;border:0;color:#faf4ea;cursor:pointer;font:inherit;min-height:44px}
-.karaoke-welcome-top button{display:flex;align-items:center;gap:6px}
-.karaoke-welcome video{display:block;width:100%;height:min(58dvh,560px);object-fit:contain;background:#000}
-.karaoke-welcome-bottom{padding:12px 16px 8px;text-align:center}
-.karaoke-welcome-bottom p{margin:0 0 12px;font-weight:800;color:#faf4ea}
-.karaoke-welcome-bottom span{font-size:12px;font-weight:400}
-.karaoke-welcome-bottom .button{width:100%;justify-content:center;font-size:14px}
-.karaoke-skip{display:block;margin:4px auto 0;font-size:13px;text-decoration:underline}
-.karaoke-welcome :focus-visible{outline:3px solid #ffb51b;outline-offset:3px}
+/* Opening invitation uses the site's locked navy, paper and gold palette. */
+.karaoke-welcome{width:min(390px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:10px;background:var(--paper);color:var(--navy);overflow:auto;box-shadow:0 24px 90px #0a153b66;font-family:inherit}
+.karaoke-welcome::backdrop{background:rgba(12,24,52,.78);backdrop-filter:blur(8px)}
+.karaoke-welcome-top{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;gap:12px;background:var(--navy)}
+.karaoke-welcome-top img{display:block;height:auto;max-height:40px}
+.karaoke-welcome-top button{display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:0;color:var(--paper);cursor:pointer;border-radius:50%}
+.karaoke-welcome-top button:hover{background:#ffffff18}
+.karaoke-welcome video{display:block;width:100%;height:min(53dvh,480px);object-fit:contain;background:var(--navy)}
+.karaoke-welcome-bottom{padding:20px 24px 12px;text-align:center;border-top:3px solid var(--gold)}
+.karaoke-welcome-kicker{margin:0 0 7px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:var(--gold-deep)}
+.karaoke-welcome-bottom h2{margin:0;color:var(--navy);font-size:26px;line-height:1.08;font-weight:900;letter-spacing:-.04em}
+.karaoke-welcome-details{margin:10px 0 16px;font-size:12px;line-height:1.5;color:var(--muted)}
+.karaoke-welcome-bottom .button{width:100%;justify-content:center;font-size:13px;color:var(--navy);padding:14px 20px}
+.karaoke-skip{display:block;margin:4px auto 0;padding:8px;background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;min-height:44px}
+.karaoke-skip:hover{color:var(--navy);text-decoration:underline}
+.karaoke-welcome :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(max-height:650px){.karaoke-welcome video{height:40dvh}.karaoke-welcome-bottom{padding:12px 18px 6px}.karaoke-welcome-bottom h2{font-size:23px}.karaoke-welcome-details{margin:7px 0 10px}}

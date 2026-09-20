@@ -579,17 +579,19 @@ function KaraokeWelcome() {
   return (
     <dialog ref={dialog} className="karaoke-welcome" aria-labelledby="karaoke-welcome-title" onCancel={(event) => { event.preventDefault(); dismiss(); }}>
       <div className="karaoke-welcome-top">
-        <p id="karaoke-welcome-title">This is how we do it.</p>
-        <button type="button" onClick={dismiss} autoFocus>Skip <X size={16} aria-hidden="true" /></button>
+        <img src="/brand/we-are-rcap-reversed.svg" alt="We Are RCAP" width="112" />
+        <button type="button" onClick={dismiss} autoFocus aria-label="Skip video"><X size={20} aria-hidden="true" /></button>
       </div>
       <video ref={video} controls playsInline preload="none" poster={`${karaokeMedia}poster.jpg`} width="720" height="1280">
         <source src={`${karaokeMedia}this-is-how-we-do-it-${quality}.mp4`} type="video/mp4" />
         <a href={`${karaokeMedia}watch.html`}>Watch the video</a>
       </video>
       <div className="karaoke-welcome-bottom">
-        <p>R&amp;B Karaoke Night<br /><span>Sunday, Sept. 27 · 5–7 p.m. · RCA · Adults only</span></p>
-        <a className="button primary" href="/karaoke">RSVP for R&amp;B Karaoke <ArrowUpRight size={18} aria-hidden="true" /></a>
-        <button type="button" className="karaoke-skip" onClick={dismiss}>Skip and explore the site</button>
+        <p className="karaoke-welcome-kicker">The parent social</p>
+        <h2 id="karaoke-welcome-title">R&amp;B Karaoke Night</h2>
+        <p className="karaoke-welcome-details">Sept. 27 · 5–7 p.m. · RCA · Adults only</p>
+        <a className="button primary" href="/karaoke">RSVP for the social <ArrowUpRight size={18} aria-hidden="true" /></a>
+        <button type="button" className="karaoke-skip" onClick={dismiss}>Skip to the website</button>
       </div>
     </dialog>
   );
