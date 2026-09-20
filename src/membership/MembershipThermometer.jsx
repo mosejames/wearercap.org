@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './membership.css';
 
 // Update the confirmed family count here. The goal controls the visual only.
-export const MEMBERSHIP = { families: 75, goal: 160, paymentUrl: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A' };
+export const MEMBERSHIP = { families: 77, goal: 160, paymentUrl: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A' };
 
 function Thermometer({ progress, burst = false }) {
   return (
