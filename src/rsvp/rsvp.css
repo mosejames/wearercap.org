@@ -363,6 +363,7 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
 .rv-invite p{font-size:13px;overflow-wrap:anywhere;max-width:280px}
 .rv-playlist-links{display:flex;gap:10px 22px;flex-wrap:wrap;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:700;color:var(--navy)}
 .rv-playlist-links a{text-underline-offset:4px}.rv-playlist-links .rv-listen{text-decoration:none;background:var(--navy);color:#fff;border-radius:30px;padding:10px 15px}
+.rv-spotify-player{display:block;width:100%;height:152px;border:0;border-radius:12px;margin:18px 0;color-scheme:normal}
 .rv-back{display:inline-block;margin:12px 0;color:var(--navy);font-weight:700;font-size:14px;text-underline-offset:4px}
 .rv-spotify-button{display:block;text-align:center;background:var(--navy);color:#fff;padding:16px;border-radius:99px;font-weight:800;text-decoration:none;margin:16px 0}
 @media(max-width:420px){.rv-crowd-bar{gap:12px}.rv-invite .rv-share{padding:10px 12px;font-size:13px}.rv-avatar-stack .rv-avatar{width:36px!important;height:36px!important}.rv-crowd-more{width:36px;height:36px}.rv-avatar-stack .rv-avatar+.rv-avatar,.rv-crowd-more{margin-left:-17px}}

@@ -242,6 +242,17 @@ function EventPage({ slug }) {
           <a href={`${PLAYLIST_PAGE}/`}>{SPOTIFY_PLAYLIST_URL ? 'Add to the playlist →' : 'The Parent Playlist →'}</a>
         </nav>}
 
+        {slug === 'karaoke-sept-27' && SPOTIFY_PLAYLIST_URL && <iframe
+          className="rv-spotify-player"
+          title="RCAP R&B Karaoke: The Parent Playlist on Spotify"
+          src={SPOTIFY_PLAYLIST_URL.replace('/playlist/', '/embed/playlist/')}
+          width="100%"
+          height="152"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+        />}
+
         {event && (
           <details className="rv-section rv-details rv-event-details">
             <summary>Event details & location</summary>
