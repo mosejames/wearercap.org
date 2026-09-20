@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/karaoke/playlist",
+      "destination": "/karaoke/playlist/index.html"
+    },
+    {
       "source": "/ami-vault/e/:slug/p/:photo",
       "destination": "/api/vault-link?slug=:slug&photo=:photo"
     },

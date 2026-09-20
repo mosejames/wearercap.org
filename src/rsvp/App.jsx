@@ -239,7 +239,7 @@ function EventPage({ slug }) {
 
         {slug === 'karaoke-sept-27' && <nav className="rv-playlist-links" aria-label="Parent playlist">
           {SPOTIFY_PLAYLIST_URL && <a className="rv-listen" href={SPOTIFY_PLAYLIST_URL} target="_blank" rel="noopener noreferrer">Listen on Spotify ↗</a>}
-          <a href={PLAYLIST_PAGE}>{SPOTIFY_PLAYLIST_URL ? 'Add to the playlist →' : 'The Parent Playlist →'}</a>
+          <a href={`${PLAYLIST_PAGE}/`}>{SPOTIFY_PLAYLIST_URL ? 'Add to the playlist →' : 'The Parent Playlist →'}</a>
         </nav>}
 
         {event && (
