@@ -578,10 +578,6 @@ function KaraokeWelcome() {
   const quality = connection?.saveData || /^(slow-)?2g$/.test(connection?.effectiveType || '') ? '480p' : '720p';
   return (
     <dialog ref={dialog} className="karaoke-welcome" aria-labelledby="karaoke-welcome-title" onCancel={(event) => { event.preventDefault(); dismiss(); }}>
-      <div className="karaoke-welcome-top">
-        <img src="/brand/we-are-rcap-reversed.svg" alt="We Are RCAP" width="112" />
-        <button type="button" onClick={dismiss} autoFocus aria-label="Skip video"><X size={20} aria-hidden="true" /></button>
-      </div>
       <video ref={video} controls playsInline preload="none" poster={`${karaokeMedia}poster.jpg`} width="720" height="1280">
         <source src={`${karaokeMedia}this-is-how-we-do-it-${quality}.mp4`} type="video/mp4" />
         <a href={`${karaokeMedia}watch.html`}>Watch the video</a>
