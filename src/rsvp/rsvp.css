@@ -348,3 +348,23 @@ label.rv-field > span:first-child,.rv-field legend{display:block;padding:0;margi
 .rv-song-form .rv-song-privacy{font-size:13px;color:var(--soft);margin:14px 0}
 .rv-song-error{color:var(--red)}.rv-song-success{color:#285230;font-weight:600}
 @media(max-width:520px){.rv-playlist-intro,.rv-playlist-body{padding:22px 18px}.rv-song-fields{grid-template-columns:1fr}.rv-song-form .rv-cta{width:100%}}
+
+/* Keep the crowd and playlist compact so the Thread stays close. */
+.rv-crowd-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.rv-crowd-toggle{border:0;background:none;padding:4px 0;text-align:left;min-height:48px}
+.rv-avatar-stack{display:flex;align-items:center;padding-left:0}
+.rv-avatar-stack .rv-avatar,.rv-crowd-more{border:3px solid var(--cream);flex-shrink:0}
+.rv-avatar-stack .rv-avatar+.rv-avatar,.rv-crowd-more{margin-left:-15px}
+.rv-crowd-more{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;font:800 12px var(--display);position:relative}
+.rv-crowd-caption{display:block;margin-top:7px;font-size:13px;font-weight:700;color:var(--navy)}
+.rv-crowd-toggle:focus-visible{outline:2px solid var(--navy);outline-offset:5px;border-radius:8px}
+.rv-crowd .rv-wall{padding-top:22px}.rv-crowd .rv-h{margin-bottom:12px}
+.rv-invite .rv-share{margin:0;padding:10px 16px;min-height:44px;font-size:14px;width:auto}
+.rv-invite p{font-size:13px;overflow-wrap:anywhere;max-width:280px}
+.rv-playlist-links{display:flex;gap:10px 22px;flex-wrap:wrap;align-items:center;padding:15px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:700;color:var(--navy)}
+.rv-playlist-links a{text-underline-offset:4px}.rv-playlist-links .rv-listen{text-decoration:none;background:var(--navy);color:#fff;border-radius:30px;padding:10px 15px}
+.rv-back{display:inline-block;margin:12px 0;color:var(--navy);font-weight:700;font-size:14px;text-underline-offset:4px}
+.rv-spotify-button{display:block;text-align:center;background:var(--navy);color:#fff;padding:16px;border-radius:99px;font-weight:800;text-decoration:none;margin:16px 0}
+@media(max-width:420px){.rv-crowd-bar{gap:12px}.rv-invite .rv-share{padding:10px 12px;font-size:13px}.rv-avatar-stack .rv-avatar{width:36px!important;height:36px!important}.rv-crowd-more{width:36px;height:36px}.rv-avatar-stack .rv-avatar+.rv-avatar,.rv-crowd-more{margin-left:-17px}}
+
+.rv-event-details{padding:16px 0}.rv-event-details summary{cursor:pointer;color:var(--navy);font-weight:700;font-size:14px;min-height:28px}.rv-event-details[open] summary{margin-bottom:18px}

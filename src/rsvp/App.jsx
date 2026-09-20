@@ -6,12 +6,13 @@ import {
   countLine, eventWhen, eyebrowDate, mapsUrl, slugFromPath, mergeWall, mergeThread,
   emptyForm, fromMine, wallName,
 } from './model.js';
-import { Chip } from './views/Chip.jsx';
+import Crowd from './views/Crowd.jsx';
 import Sheet from './views/Sheet.jsx';
 import Done from './views/Done.jsx';
 import { ThreadList, Composer } from './views/Thread.jsx';
 import Admin from './views/Admin.jsx';
-import Playlist from './views/Playlist.jsx';
+import PlaylistPage from './views/PlaylistPage.jsx';
+import { SPOTIFY_PLAYLIST_URL, PLAYLIST_PAGE } from './playlist-config.js';
 
 /* /rsvp/<slug>. The next event is a row in public.events, not a new page.
    Only the hero art is per event, keyed by slug below; an event without art
@@ -28,11 +29,13 @@ const DEFAULT_SLUG = 'karaoke-sept-27';
 // says so, rather than showing a button that does nothing.
 function ShareButton({ event }) {
   const [copied, setCopied] = useState(false);
+  const [shareError, setShareError] = useState(false);
 
-  const url = typeof window !== 'undefined' ? window.location.href : '';
-  const text = `${event.title} — Sunday, September 27, 5 to 7 PM at Ron Clark Academy. Come sing with us.`;
+  const url = `${window.location.origin}${event.slug === 'karaoke-sept-27' ? '/karaoke' : `/rsvp/${event.slug}`}`;
+  const text = `${event.title}. Sunday, September 27, 5 to 7 PM at Ron Clark Academy. Come sing with us.`;
 
   async function share() {
+    setShareError(false);
     if (navigator.share) {
       try {
         await navigator.share({ title: event.title, text, url });
@@ -47,15 +50,15 @@ function ShareButton({ event }) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch (err) {
-      /* nothing sensible left to try */
+      setShareError(true);
     }
   }
 
   return (
-    <button className="rv-share" type="button" onClick={share}>
+    <div className="rv-invite"><button className="rv-share" type="button" onClick={share}>
       <Share2 size={18} aria-hidden="true" />
-      {copied ? 'Link copied' : 'Share with an RCA friend'}
-    </button>
+      {copied ? 'Link copied' : 'Invite RCA parents'}
+    </button>{shareError && <p role="status">Copy this invite link: <a href={url}>{url}</a></p>}</div>
   );
 }
 
@@ -67,6 +70,7 @@ export default function App() {
     window.addEventListener('hashchange', f);
     return () => window.removeEventListener('hashchange', f);
   }, []);
+  if (window.location.pathname.replace(/\/$/, '') === PLAYLIST_PAGE) return <PlaylistPage />;
   if (hash === '#admin') return <Admin slug={slug} />;
   return <EventPage slug={slug} />;
 }
@@ -80,7 +84,6 @@ function EventPage({ slug }) {
   const [mine, setMine] = useState(null);
   const [sheet, setSheet] = useState(null); // null | 'form' | 'done'
   const [photoNote, setPhotoNote] = useState('');
-  const [fresh, setFresh] = useState(() => new Set());
 
   const refresh = useCallback(async () => {
     try {
@@ -114,7 +117,6 @@ function EventPage({ slug }) {
     const off = api.subscribe(slug, {
       onRsvp: (row) => {
         setWall((w) => {
-          if (!w.some((x) => x.id === row.id)) setFresh((f) => new Set(f).add(row.id));
           return mergeWall(w, row);
         });
         if (typeof row.going_count === 'number') setEvent((e) => (e ? { ...e, going_count: row.going_count } : e));
@@ -231,33 +233,25 @@ function EventPage({ slug }) {
       </section>
 
       <main className="rv-main">
-        <section className="rv-section">
-          <h2 className="rv-h">Who's coming</h2>
-          {wall.length ? (
-            <ul className="rv-wall">
-              {wall.map((p, i) => (
-                <Chip key={p.id} person={p} index={fresh.has(p.id) ? 0 : i} you={mine && p.id === mine.id} />
-              ))}
-            </ul>
-          ) : (
-            <p className="rv-empty">{event ? 'The wall is empty. Your name could be first.' : 'Loading the wall.'}</p>
-          )}
-        </section>
+        <Crowd wall={wall} mine={mine} loaded={!!event}>
+          {event && <ShareButton event={event} />}
+        </Crowd>
+
+        {slug === 'karaoke-sept-27' && <nav className="rv-playlist-links" aria-label="Parent playlist">
+          {SPOTIFY_PLAYLIST_URL && <a className="rv-listen" href={SPOTIFY_PLAYLIST_URL} target="_blank" rel="noopener noreferrer">Listen on Spotify ↗</a>}
+          <a href={PLAYLIST_PAGE}>{SPOTIFY_PLAYLIST_URL ? 'Add to the playlist →' : 'The Parent Playlist →'}</a>
+        </nav>}
 
         {event && (
-          <section className="rv-section rv-details">
+          <details className="rv-section rv-details rv-event-details">
+            <summary>Event details & location</summary>
             <ul>
               <li><CalendarDays size={20} /><span><b>{when.day}</b><br />{when.time}</span></li>
               <li><MapPin size={20} /><span><b>{event.venue_name}</b><br /><a href={mapsUrl(event)} target="_blank" rel="noreferrer">{event.venue_address}</a></span></li>
               <li><Users size={20} /><span><b>RCA parents</b><br />Adults only. Leave the kids with someone who loves them.</span></li>
             </ul>
             {event.blurb && <p className="rv-blurb">{event.blurb}</p>}
-            <ShareButton event={event} />
-          </section>
-        )}
-
-        {slug === 'karaoke-sept-27' && event && (
-          <Playlist slug={slug} token={token} going={going} event={event} onRsvp={openForm} />
+          </details>
         )}
 
         <section className="rv-section">

@@ -21,6 +21,7 @@ export default defineConfig({
         committeeinterest: resolve(__dirname, 'committee-interest/index.html'),
         board: resolve(__dirname, 'board/index.html'),
         rsvp: resolve(__dirname, 'rsvp/index.html'),
+        parentplaylist: resolve(__dirname, 'karaoke/playlist/index.html'),
       },
     },
   },

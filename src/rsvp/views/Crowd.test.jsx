@@ -1,0 +1,22 @@
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { it, expect } from 'vitest';
+import Crowd from './Crowd.jsx';
+it('keeps a large crowd collapsed and reveals all names on demand beside the invite', async () => {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const el = document.createElement('div'); document.body.append(el); const root = createRoot(el);
+  const wall = Array.from({ length: 30 }, (_, i) => ({ id: String(i), wall_name: `Parent ${i}`, house: 'reveur' }));
+  await act(async () => root.render(<Crowd wall={wall} mine={null} loaded><button>Invite RCA parents</button></Crowd>));
+  const toggle = el.querySelector('.rv-crowd-toggle');
+  expect(el.querySelectorAll('.rv-avatar-stack .rv-avatar')).toHaveLength(6);
+  expect(el.querySelector('.rv-crowd-more').textContent).toBe('+24');
+  expect(el.querySelectorAll('.rv-chip')).toHaveLength(0);
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  expect(el.querySelector('.rv-crowd-bar').textContent).toContain('Invite RCA parents');
+  await act(async () => toggle.click());
+  expect(el.querySelectorAll('.rv-chip')).toHaveLength(30);
+  expect(el.querySelector('#parent-crowd').hidden).toBe(false);
+  await act(async () => toggle.click());
+  expect(el.querySelector('#parent-crowd').hidden).toBe(true);
+  await act(async () => root.unmount()); el.remove();
+});
