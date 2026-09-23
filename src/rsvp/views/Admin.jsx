@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { adminList, adminHideComment, adminRemovePhoto } from '../api.js';
-import { houseName } from '../model.js';
+import { houseNames } from '../model.js';
 
 /* The RSVP back office at /rsvp/<slug>#admin. Same passcode as the committee
    back office, checked inside Postgres. It is a list. */
@@ -17,7 +17,7 @@ function cell(v) {
 export function toCsv(rows) {
   const head = ['RSVP', 'Status', 'Name', 'Phone', 'Email', 'House', 'Grades', 'Coming with', 'Photo', 'Confirmation email'];
   const body = rows.map((r) => [
-    fmt(r.created_at), r.status, r.full_name, r.phone, r.email, houseName(r.house),
+    fmt(r.created_at), r.status, r.full_name, r.phone, r.email, houseNames(r),
     (r.grades || []).join('; '), r.plus_one_name, r.photo_url ? 'yes' : '',
     r.confirm_sent_at ? fmt(r.confirm_sent_at) : r.confirm_error ? `FAILED: ${r.confirm_error}` : 'not sent',
   ].map(cell).join(','));
@@ -76,7 +76,7 @@ export default function Admin({ slug }) {
               <tr key={r.id} className={r.status !== 'going' ? 'off' : ''}>
                 <td>{fmt(r.created_at)}{r.status !== 'going' ? ' (cancelled)' : ''}</td>
                 <td>{r.full_name}</td><td>{r.phone}</td><td>{r.email}</td>
-                <td>{houseName(r.house)}</td><td>{(r.grades || []).join(', ')}</td><td>{r.plus_one_name}</td>
+                <td>{houseNames(r)}</td><td>{(r.grades || []).join(', ')}</td><td>{r.plus_one_name}</td>
                 <td>{r.photo_url && (
                   <span className="rv-admin-photo">
                     <img src={r.photo_url} alt="" width="40" height="40" />

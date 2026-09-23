@@ -52,6 +52,10 @@ export function houseName(key) {
   return h ? h.name : '';
 }
 
+// Legacy RSVPs have only house; an explicit array (including empty) wins.
+export const selectedHouses = (row) => Array.isArray(row.houses) ? [...new Set(row.houses)] : row.house ? [row.house] : [];
+export const houseNames = (row) => selectedHouses(row).map(houseName).join(', ');
+
 export const tidyName = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
 const SUFFIXES = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v', 'vi', 'esq', 'phd', 'md']);
@@ -101,7 +105,7 @@ export function validate(form) {
   else if (name.length > 80) errors.full_name = 'That name is too long.';
   if (!normalizePhone(form.phone)) errors.phone = 'Use a 10 digit US number.';
   if (!validEmail(form.email)) errors.email = 'Check your email address.';
-  if (!HOUSES.some((h) => h.key === form.house)) errors.house = 'Pick your house.';
+  if (!selectedHouses(form).length || selectedHouses(form).some((key) => !HOUSES.some((h) => h.key === key))) errors.house = 'Pick your house.';
   if ((form.grades || []).some((g) => !GRADES.includes(Number(g)))) errors.grades = 'Grades are 4 through 8.';
   if (form.bringing && tidyName(form.plus_one_name).length < 2) errors.plus_one_name = 'Add their name, or turn this off.';
   return errors;
@@ -113,7 +117,8 @@ export function toPayload(form) {
     full_name: tidyName(form.full_name),
     phone: normalizePhone(form.phone),
     email: String(form.email || '').trim().toLowerCase(),
-    house: form.house || null,
+    house: selectedHouses(form)[0] || null,
+    houses: selectedHouses(form),
     grades: [...new Set((form.grades || []).map(Number))].sort((a, b) => a - b),
     plus_one_name: form.bringing ? tidyName(form.plus_one_name) : null,
   };
@@ -126,7 +131,7 @@ export function fromMine(mine) {
     full_name: mine.full_name || '',
     phone: formatPhoneInput(mine.phone || ''),
     email: mine.email || '',
-    house: mine.house || '',
+    houses: selectedHouses(mine),
     grades: mine.grades || [],
     bringing: !!mine.plus_one_name,
     plus_one_name: mine.plus_one_name || '',
@@ -134,7 +139,7 @@ export function fromMine(mine) {
 }
 
 export function emptyForm() {
-  return { full_name: '', phone: '', email: '', house: '', grades: [], bringing: false, plus_one_name: '' };
+  return { full_name: '', phone: '', email: '', houses: [], grades: [], bringing: false, plus_one_name: '' };
 }
 
 /* Database error codes to the words a parent reads. */

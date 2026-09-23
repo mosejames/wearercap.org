@@ -84,7 +84,7 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
 
   const preview = {
     wall_name: wallName(form.full_name) || 'You',
-    house: form.house,
+    house: form.houses[0],
     photo_url: photo ? photo.url : mine && mine.photo_url,
   };
 
@@ -130,11 +130,15 @@ export default function Sheet({ event, initial, mine, onSubmit, onCancelRsvp, on
 
         <fieldset className="rv-field">
           <legend>Your house</legend>
+          <p className="rv-hint rv-hint-tight">Select all that apply.</p>
           <div className="rv-chips">
             {HOUSES.map((h) => (
               <button
-                type="button" key={h.key} className={`rv-pill${form.house === h.key ? ' on' : ''}`}
-                onClick={() => set('house', h.key)} aria-pressed={form.house === h.key}
+                type="button" key={h.key} className={`rv-pill${form.houses.includes(h.key) ? ' on' : ''}`}
+                onClick={() => {
+                  set('houses', form.houses.includes(h.key) ? form.houses.filter((key) => key !== h.key) : [...form.houses, h.key]);
+                  setErrors((e) => ({ ...e, house: undefined }));
+                }} aria-pressed={form.houses.includes(h.key)}
               >
                 <i style={{ background: h.color }} />{h.name}
               </button>

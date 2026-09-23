@@ -62,7 +62,7 @@ describe('payload', () => {
   it('tidies what goes to the database', () => {
     expect(toPayload(good)).toEqual({
       full_name: 'Jamelia Johnson', phone: '+14045550199', email: 'j@x.com',
-      house: 'amistad', grades: [6, 8], plus_one_name: 'Pat Lee',
+      house: 'amistad', houses: ['amistad'], grades: [6, 8], plus_one_name: 'Pat Lee',
     });
   });
   it('drops the +1 when toggled off', () => {
@@ -70,7 +70,7 @@ describe('payload', () => {
   });
   it('round trips a saved RSVP into the form', () => {
     const f = fromMine({ full_name: 'Jamelia Johnson', phone: '+14045550199', email: 'j@x.com', house: 'reveur', grades: [5], plus_one_name: null });
-    expect(f).toMatchObject({ phone: '(404) 555-0199', house: 'reveur', bringing: false, grades: [5] });
+    expect(f).toMatchObject({ phone: '(404) 555-0199', houses: ['reveur'], bringing: false, grades: [5] });
     expect(validate(f)).toEqual({});
   });
 });
@@ -154,5 +154,19 @@ describe('routing and merging', () => {
   it('centre crops to a square', () => {
     expect(squareCrop(1200, 800)).toEqual({ sx: 200, sy: 0, side: 800, out: 400 });
     expect(squareCrop(300, 500)).toEqual({ sx: 0, sy: 100, side: 300, out: 300 });
+  });
+});
+
+describe('multiple RSVP houses', () => {
+  it('saves and restores every selection without duplicates', () => {
+    const payload = toPayload({ ...good, houses: ['reveur', 'amistad', 'reveur'] });
+    expect(payload.houses).toEqual(['reveur', 'amistad']);
+    expect(payload.house).toBe('reveur');
+    expect(fromMine(payload).houses).toEqual(['reveur', 'amistad']);
+    expect(validate(fromMine(payload))).toEqual({});
+  });
+  it('rejects empty and invalid selections even with a legacy house', () => {
+    expect(validate({ ...good, houses: [] }).house).toBeTruthy();
+    expect(validate({ ...good, houses: ['amistad', 'invalid'] }).house).toBeTruthy();
   });
 });
