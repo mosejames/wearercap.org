@@ -553,6 +553,11 @@ function VideoModal({ open, onClose }) {
   );
 }
 
+// The karaoke welcome popup. Off since 23 Sept 2026: the homepage should open
+// on the homepage, not an interruption. The social still has its tile and RSVP
+// link. Flip to true to bring the popup back; the component is untouched below.
+const KARAOKE_POP_ENABLED = false;
+
 const karaokeMedia = 'https://media.wearercap.org/rcap/promos/2026-09-20/';
 
 function KaraokeWelcome() {
@@ -711,7 +716,7 @@ function App() {
 
   return (
     <main className="site-shell homepage-refresh">
-      <KaraokeWelcome />
+      {KARAOKE_POP_ENABLED ? <KaraokeWelcome /> : null}
       <section className="hero" aria-label="We Are RCAP">
         {/* Photo, scrim and edge travel together. Above 1100px this block is
             absolutely positioned behind the copy; below it, it becomes a band
