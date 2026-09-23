@@ -10,9 +10,13 @@ Anyone can sign up with their own US cellphone number and a texted verification 
 
 Initial board access is tied to verified email addresses:
 
-- `rcaparents@ronclarkacademy.com`: secretary, for Latasha's RCAP secretary account.
-- `rcapfinance@ronclarkacademy.com`: treasurer.
+- `rcaparents@ronclarkacademy.com`: secretary (the RCAP officers' shared inbox).
+- `lemeri@abc-seniors.com`: treasurer (Latasha Emeri).
 - `mose@mosejames.com`: setup manager.
+
+`rcapfinance@ronclarkacademy.com` was removed on September 23, 2026 at the Treasurer's request. The board does not use it, and it must not be given access or notices again.
+
+A request link from an email (`/check-requests/#request/<id>`) opened while signed out shows a sign-in step, email first, and returns to that request after sign-in.
 
 The secretary or manager can add or update board cellphone numbers in **Board review > Board access**. Add Latasha's verified cellphone number there for cellphone-based secretary access. Reviewers see only requests assigned to them and their own submissions. Secretary, treasurer, and manager see the full queue. Secretary access does not itself authorize approval: the assigned board member approves, and cannot approve their own request. Only the treasurer records payment, after approval, and cannot record their own payment.
 

@@ -108,8 +108,13 @@ function Guide() {
     </aside>
   );
 }
-function SignIn({ onError, allowEmail = true, allowGoogle = true }) {
-  const [emailMode, setEmailMode] = useState(false);
+function SignIn({
+  onError,
+  allowEmail = true,
+  allowGoogle = true,
+  preferEmail = false,
+}) {
+  const [emailMode, setEmailMode] = useState(preferEmail);
   const [phone, setPhone] = useState(""),
     [code, setCode] = useState(""),
     [sent, setSent] = useState(false),
@@ -174,7 +179,7 @@ function SignIn({ onError, allowEmail = true, allowGoogle = true }) {
         <strong>Sign in to submit and track your request</strong>
         <p>
           {emailMode
-            ? "Use your personal email. If you previously used cellphone sign-in, first add this email under Account & backup sign-in to keep your requests together."
+            ? "Use your email. If you previously used cellphone sign-in, first add this email under Account & backup sign-in to keep your requests together."
             : "Enter your cellphone number. We’ll text you a verification code. No email or password needed."}
         </p>
       </div>
@@ -185,7 +190,10 @@ function SignIn({ onError, allowEmail = true, allowGoogle = true }) {
           onClick={async () => {
             const { error } = await supabase.auth.signInWithOAuth({
               provider: "google",
-              options: { redirectTo: location.origin + "/check-requests/" },
+              options: {
+                redirectTo:
+                  location.origin + "/check-requests/" + location.hash,
+              },
             });
             if (error) onError(error.message);
           }}
@@ -202,7 +210,7 @@ function SignIn({ onError, allowEmail = true, allowGoogle = true }) {
       <form className="signin-form full" onSubmit={sent ? verify : send}>
         <div className="fields">
           <Field
-            label={emailMode ? "Personal email" : "Cellphone number"}
+            label={emailMode ? "Email" : "Cellphone number"}
             type={emailMode ? "email" : "tel"}
             required
             autoComplete={emailMode ? "email" : "tel"}
@@ -1494,7 +1502,7 @@ function Staff({ staff, onRefresh, onError }) {
     </section>
   );
 }
-function App() {
+export function App() {
   const [user, setUser] = useState(null),
     [authLoading, setAuthLoading] = useState(true),
     [tab, setTab] = useState("new"),
@@ -1706,6 +1714,20 @@ function App() {
         )}
         {authLoading ? (
           <p role="status">Checking your sign-in…</p>
+        ) : selected && !user ? (
+          <div className="workspace">
+            <section className="form-card">
+              <h2>Sign in to view this request</h2>
+              <p className="muted">
+                Board members: sign in with the email or cellphone number listed
+                in Board access to review this request and its receipts.
+                Requesters: use the cellphone number or email you submitted
+                with.
+              </p>
+              <SignIn onError={setError} preferEmail />
+            </section>
+            <Guide />
+          </div>
         ) : selected && user ? (
           current ? (
             <Detail
@@ -1729,7 +1751,8 @@ function App() {
               <h2>Request unavailable</h2>
               <p>
                 It may belong to another account. Sign in with the cellphone
-                number used for this request.
+                number or email that has access to this request. Board members
+                use the number or email listed in Board access.
               </p>
               <button className="secondary" onClick={() => navigate("mine")}>
                 Back to my requests
