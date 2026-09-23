@@ -1,6 +1,6 @@
 import { requesterRecap } from "./recap.ts";
 import { deliverArchive } from "./archive.ts";
-import { sendNotice } from "./send.ts";
+import { sendNotice, deliveryStatus } from "./send.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -34,25 +34,37 @@ Deno.serve(async (req) => {
     failed = 0;
   for (const job of jobs || []) {
     try {
+      let result = { providerId: null as string | null, failed: [] as string[] };
       if (job.archive_snapshot) await deliverArchive(job, db, config);
       else
-        await sendNotice(
+        result = await sendNotice(
           job.notice_snapshot
             ? { ...job, body: requesterRecap(job.notice_snapshot, false) }
             : job,
           config,
         );
+      // A group email that reached some addresses but not others is "sent",
+      // with the refused addresses recorded so nobody assumes they got it.
+      const partial = result.failed.length
+        ? `Resend refused ${result.failed.join(", ")}; the other recipients received it.`
+        : null;
+      if (partial) console.error(`cr_notifications ${job.id}: ${partial}`);
       const { error: saveError } = await db
         .from("cr_notifications")
         .update({
           state: "sent",
           sent_at: new Date().toISOString(),
-          last_error: null,
+          last_error: partial,
+          provider_id: result.providerId,
         })
         .eq("id", job.id);
       if (saveError) throw new Error("Delivery status could not be recorded.");
       sent++;
     } catch (e) {
+      console.error(
+        `cr_notifications ${job.id} to ${job.recipient} failed:`,
+        e instanceof Error ? e.message : e,
+      );
       await db
         .from("cr_notifications")
         .update({
@@ -63,9 +75,48 @@ Deno.serve(async (req) => {
       failed++;
     }
   }
+  // Follow up on group emails Resend accepted: record delivered or bounced.
+  // A bounce is logged and written to last_error; it never passes silently.
+  let checked = 0;
+  if (config.emailKey) {
+    const { data: pending } = await db.rpc("cr_delivery_checks", {
+      p_secret: secret,
+    });
+    for (const row of pending || []) {
+      const status = await deliveryStatus(row.provider_id, config).catch(
+        () => null,
+      );
+      if (!status) {
+        await db
+          .from("cr_notifications")
+          .update({ delivery_checked_at: new Date().toISOString() })
+          .eq("id", row.id);
+        continue;
+      }
+      const bad = ["bounced", "complained", "failed"].includes(status);
+      if (bad)
+        console.error(
+          `cr_notifications ${row.id} (${row.recipient}): Resend reports ${status}`,
+        );
+      await db
+        .from("cr_notifications")
+        .update({
+          delivery_status: status,
+          delivery_checked_at: new Date().toISOString(),
+          ...(bad
+            ? {
+                last_error: `Resend reports ${status}. At least one address did not receive this email; check the Resend log for which one.`,
+              }
+            : {}),
+        })
+        .eq("id", row.id);
+      checked++;
+    }
+  }
   return json({
     sent,
     failed,
+    checked,
     emailConfigured: !!config.emailKey,
     smsConfigured: !!(
       config.smsSid &&
