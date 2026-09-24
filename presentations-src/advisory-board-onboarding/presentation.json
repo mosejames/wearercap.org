@@ -1,0 +1,18 @@
+{
+  "slug": "advisory-board-onboarding",
+  "title": "Advisory Board Onboarding",
+  "headline": "We Are The Bridge.",
+  "description": "What the RCAP Advisory Board is, how the two-way bridge works, and the year's meeting dates.",
+  "date": "2026-09-24",
+  "audience": "RCAP Advisory Board",
+  "presenter": "Crystal Claybrooks Jones, Co-Chair",
+  "pdf": "rcap-advisory-board-onboarding-2026-09-24.pdf",
+  "assets": {
+    "/_blob/22788d9582a4a07a92233f35e6683302": "/brand/rcap.svg",
+    "/_blob/b554f4aad1fec2fea8f6b7337065c456": "/brand/rcap-reversed.svg",
+    "/_blob/8250b014bdf9dc8403a9f44a89580c78": "/brand/we-are-rcap-reversed.svg"
+  },
+  "notesReplace": [
+    ["DRAFT FOR MOSE TO CONFIRM. The onboarding doc left this section for Mose. These three points come from decisions the Executive Board made at its first meetings. ", "These three points come from decisions the Executive Board made at its first meetings. "]
+  ]
+}

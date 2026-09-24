@@ -1,0 +1,18 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-09-24T19:23:00Z"},
+  "title": "RCAP Advisory Board Onboarding",
+  "order": ["cover", "room", "vision", "purpose", "voice", "bridge", "duties", "agree", "advise", "commit", "practice", "try1", "try2", "dates", "yourturn", "close"],
+  "sections": {
+    "s1": {"description": "Welcome, who is in the room, and where the Executive Board is headed", "start": "cover"},
+    "s2": {"description": "What the Advisory Board is for and how the two-way bridge works", "start": "purpose"},
+    "s3": {"description": "The five responsibilities and the board's formal role", "start": "duties"},
+    "s4": {"description": "What the Executive Board commits in return and what it looks like in practice", "start": "commit"},
+    "s5": {"description": "The year's meeting dates and an open conversation", "start": "dates"}
+  },
+  "faces": {
+    "archivo": {"family": "Archivo", "href": "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&display=swap"},
+    "newsreader": {"family": "Newsreader", "href": "https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,400;1,500&display=swap"}
+  },
+  "designSystems": []
+}

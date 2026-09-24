@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f1a3a" />
+  <title>Presentations | RCAP</title>
+  <meta name="description" content="RCAP meeting presentations. View any deck in your browser or download the PDF with speaker notes." />
+  <link rel="canonical" href="https://wearercap.org/presentations/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="RCAP Presentations" />
+  <meta property="og:description" content="View any RCAP deck in your browser or download the PDF with speaker notes." />
+  <meta property="og:url" content="https://wearercap.org/presentations/" />
+  <meta property="og:image" content="https://wearercap.org/presentations/advisory-board-onboarding/share.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="_player/player.css" />
+  <style>
+    html, body { overflow:auto; height:auto; }
+    body { min-height:100%; background:#0f1a3a; }
+    body::before { content:""; display:block; height:7px; background:linear-gradient(100deg,#f7c23a,#f0b323 45%,#f26a1b); }
+    .wrap { width:min(100% - 40px, 1080px); margin:0 auto; padding:28px 0 64px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .top img { width:132px; height:auto; display:block; }
+    .top a.home { color:#aab4d0; font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; text-decoration:none; }
+    .top a.home:hover { color:#f0b323; }
+    header { padding:48px 0 36px; }
+    .eyebrow { margin:0 0 12px; color:#f0b323; font-size:13px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(34px, 8.6vw, 84px); font-weight:900; line-height:.98; letter-spacing:-2px; text-transform:uppercase; color:#fffdf8; }
+    .intro { max-width:52ch; margin:16px 0 0; color:#c9d1e6; font-size:17px; line-height:1.55; }
+    .list { display:grid; gap:28px; }
+    .card { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(0, 1fr); background:#fffdf8; color:#1a2a56; border-radius:18px; overflow:hidden; box-shadow:10px 10px 0 #f0b323; }
+    .card .thumb { display:block; background:#1a2a56; line-height:0; }
+    .card .thumb img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; }
+    .card .body { padding:26px 28px; display:flex; flex-direction:column; gap:10px; }
+    .meta { margin:0; color:#4a5578; font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    .card h2 { margin:0; font-size:30px; line-height:1.05; font-weight:900; text-transform:uppercase; letter-spacing:-.5px; }
+    .card p.desc { margin:0; color:#4a5578; font-size:15px; line-height:1.5; }
+    .who { margin:0; font-size:14px; color:#1a2a56; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; padding-top:10px; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:999px; font:700 14px/1 'Archivo', Arial, sans-serif; text-decoration:none; border:2px solid #1a2a56; color:#1a2a56; }
+    .btn.primary { background:#1a2a56; color:#fffdf8; }
+    .btn:hover { border-color:#f26a1b; color:#f26a1b; }
+    .btn.primary:hover { background:#f26a1b; color:#fffdf8; }
+    .btn:focus-visible { outline:3px solid #f0b323; outline-offset:3px; }
+    .empty { color:#c9d1e6; }
+    footer { margin-top:56px; color:#aab4d0; font-size:13px; text-align:center; }
+    footer a { color:#f0b323; }
+    @media (max-width:760px) { .card { grid-template-columns:1fr; } .card h2 { font-size:26px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a href="/" aria-label="RCAP home"><img src="/brand/rcap-reversed.svg" alt="RCAP, Ron Clark Academy Parents" /></a>
+      <a class="home" href="/">wearercap.org</a>
+    </div>
+    <header>
+      <p class="eyebrow">We Are RCAP</p>
+      <h1>Presentations</h1>
+      <p class="intro">Every deck we share at RCAP meetings, in one place. Page through it in your browser, or download the PDF with speaker notes.</p>
+    </header>
+    <section class="list" id="list" aria-live="polite">
+      <noscript><p class="empty">Turn on JavaScript to see the list, or open <a href="advisory-board-onboarding/" style="color:#f0b323">Advisory Board Onboarding</a>.</p></noscript>
+    </section>
+    <footer>Questions about a presentation? Reach the RCAP board through <a href="/">wearercap.org</a>.</footer>
+  </div>
+  <script>
+    (function () {
+      var list = document.getElementById('list');
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+      function when(d) {
+        if (!d) return '';
+        var p = d.split('-');
+        return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+      fetch('presentations.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (data) {
+        var items = (data.presentations || []);
+        if (!items.length) { list.innerHTML = '<p class="empty">No presentations yet.</p>'; return; }
+        list.innerHTML = items.map(function (p) {
+          return '<article class="card">' +
+            '<a class="thumb" href="' + esc(p.url) + '" aria-label="View ' + esc(p.title) + '"><img src="' + esc(p.image) + '" alt="" loading="lazy" /></a>' +
+            '<div class="body">' +
+              '<p class="meta">' + esc(when(p.date)) + (p.slides ? ' · ' + esc(p.slides) + ' slides' : '') + '</p>' +
+              '<h2>' + esc(p.title) + '</h2>' +
+              (p.description ? '<p class="desc">' + esc(p.description) + '</p>' : '') +
+              (p.presenter ? '<p class="who">' + esc(p.presenter) + (p.audience ? ' · For the ' + esc(p.audience) : '') + '</p>' : '') +
+              '<div class="actions">' +
+                '<a class="btn primary" href="' + esc(p.url) + '">View presentation</a>' +
+                (p.pdf ? '<a class="btn" href="' + esc(p.pdf) + '" download>PDF with notes</a>' : '') +
+              '</div>' +
+            '</div>' +
+          '</article>';
+        }).join('');
+      }).catch(function () {
+        list.innerHTML = '<p class="empty">The list did not load. Open <a href="advisory-board-onboarding/" style="color:#f0b323">Advisory Board Onboarding</a>.</p>';
+      });
+    })();
+  </script>
+</body>
+</html>

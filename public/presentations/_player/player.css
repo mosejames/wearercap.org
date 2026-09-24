@@ -1,0 +1,65 @@
+/* RCAP presentation player. Shared by every deck under /presentations/. */
+@font-face { font-family:'Archivo'; font-style:normal; font-weight:400; font-display:swap; src:url(fonts/archivo-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family:'Archivo'; font-style:normal; font-weight:500; font-display:swap; src:url(fonts/archivo-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family:'Archivo'; font-style:normal; font-weight:600; font-display:swap; src:url(fonts/archivo-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family:'Archivo'; font-style:normal; font-weight:700; font-display:swap; src:url(fonts/archivo-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family:'Archivo'; font-style:normal; font-weight:900; font-display:swap; src:url(fonts/archivo-latin-900-normal.woff2) format('woff2'); }
+@font-face { font-family:'Newsreader'; font-style:italic; font-weight:400; font-display:swap; src:url(fonts/newsreader-latin-400-italic.woff2) format('woff2'); }
+@font-face { font-family:'Newsreader'; font-style:italic; font-weight:500; font-display:swap; src:url(fonts/newsreader-latin-500-italic.woff2) format('woff2'); }
+:root { --navy:#0f1a3a; --navy2:#1a2a56; --gold:#f0b323; --orange:#f26a1b; --cream:#faf4ea; --mist:#aab4d0; }
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; background:var(--navy); color:var(--cream); font-family:'Archivo', Arial, sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden; }
+
+.deck-stage { position:fixed; inset:0 0 56px 0; display:grid; place-items:center; overflow:hidden; }
+.deck-canvas { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:center center; }
+.deck-canvas > section { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility 0s linear .45s; }
+.deck-canvas > section.is-active { opacity:1; visibility:visible; transition:opacity .45s ease; }
+.deck-canvas > section > aside { display:none; }
+
+/* Defaults matching the Slides authoring format */
+.deck-canvas section h1, .deck-canvas section h2, .deck-canvas section h3,
+.deck-canvas section p, .deck-canvas section ul, .deck-canvas section ol { margin:0; }
+.deck-canvas section h1 { font-size:96px; font-weight:600; line-height:1.1; }
+.deck-canvas section h2 { font-size:64px; font-weight:600; line-height:1.15; }
+.deck-canvas section h3 { font-size:44px; font-weight:600; line-height:1.2; }
+.deck-canvas section p { font-size:32px; line-height:1.4; }
+.deck-canvas section ul, .deck-canvas section ol { padding-left:1.15em; }
+.deck-canvas section li + li { margin-top:.2em; }
+.deck-canvas section div:not([style*="display"]) { display:flex; flex-direction:column; }
+.deck-canvas section img { display:block; }
+.deck-canvas iframe.deck-embed { border:0; background:transparent; }
+
+/* Click-to-reveal builds */
+.deck-canvas [data-build-in] { transition:opacity .5s ease, transform .5s cubic-bezier(.2,.7,.2,1); }
+.deck-canvas [data-build-in].is-pending { opacity:0; transform:translateY(48px); }
+.deck-canvas [data-build-in="fade"].is-pending { transform:none; }
+.deck-canvas [data-build-in="pop"].is-pending { transform:scale(.85); }
+
+/* Control bar */
+.deck-bar { position:fixed; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; gap:10px; padding:0 14px; background:#0b1430; border-top:1px solid #22325f; font-size:14px; z-index:5; }
+.deck-bar a, .deck-bar button { color:var(--cream); background:transparent; border:1px solid #2e4278; border-radius:999px; padding:8px 14px; font:600 13px/1 'Archivo', Arial, sans-serif; text-decoration:none; cursor:pointer; white-space:nowrap; }
+.deck-bar a:hover, .deck-bar button:hover { border-color:var(--gold); color:var(--gold); }
+.deck-bar button[aria-pressed="true"] { background:var(--gold); color:var(--navy); border-color:var(--gold); }
+.deck-bar .deck-count { min-width:64px; text-align:center; color:var(--mist); font-variant-numeric:tabular-nums; }
+.deck-bar .deck-spacer { flex:1; }
+.deck-bar .deck-title { color:var(--mist); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.deck-progress { position:fixed; left:0; bottom:56px; height:4px; background:linear-gradient(90deg,#f7c23a,#f0b323 45%,#f26a1b); transition:width .3s ease; z-index:5; }
+
+/* Speaker notes panel */
+.deck-notes { position:fixed; left:0; right:0; bottom:56px; max-height:38vh; overflow:auto; padding:18px 22px 22px; background:#fffdf8; color:#1a2a56; font:17px/1.55 'Archivo', Arial, sans-serif; box-shadow:0 -12px 30px rgba(0,0,0,.35); z-index:4; display:none; }
+.deck-notes.is-open { display:block; }
+.deck-notes h2 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#4a5578; }
+.deck-notes p { margin:0; max-width:80ch; }
+
+.deck-help { position:fixed; right:14px; bottom:70px; padding:14px 16px; background:#0b1430; border:1px solid #2e4278; border-radius:12px; color:var(--mist); font-size:13px; line-height:1.7; z-index:6; display:none; }
+.deck-help.is-open { display:block; }
+.deck-help b { color:var(--cream); }
+
+:fullscreen .deck-stage, .is-presenting .deck-stage { inset:0; }
+.is-presenting .deck-bar, .is-presenting .deck-progress { display:none; }
+.is-presenting .deck-notes { bottom:0; }
+
+@media (max-width:700px) {
+  .deck-bar .deck-title, .deck-bar .deck-hide-sm { display:none; }
+}
+@media print { .deck-bar, .deck-progress, .deck-notes, .deck-help { display:none !important; } }
