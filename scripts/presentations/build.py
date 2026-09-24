@@ -43,7 +43,7 @@ def page(meta, slides):
     desc = html.escape(meta["description"])
     t = html.escape(title)
     pdf = meta.get("pdf")
-    pdf_link = f'<a href="{pdf}" download class="deck-hide-sm">Download PDF</a>' if pdf else ""
+    pdf_link = f'<a href="/presentations/{slug}/{pdf}" download class="deck-hide-sm">Download PDF</a>' if pdf else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -59,7 +59,7 @@ def page(meta, slides):
   <meta property="og:url" content="{url}" />
   <meta property="og:image" content="{url}share.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="../_player/player.css" />
+  <link rel="stylesheet" href="/presentations/_player/player.css" />
 </head>
 <body>
   <main class="deck-stage" aria-label="{t} slides">
@@ -71,7 +71,7 @@ def page(meta, slides):
   <section class="deck-notes" aria-live="polite"><h2>Speaker notes</h2><p></p></section>
   <div class="deck-help" role="note"><b>Next</b> Right arrow, Space, click<br><b>Back</b> Left arrow<br><b>Notes</b> N &nbsp; <b>Full screen</b> F<br><b>Hide this bar</b> P &nbsp; <b>Slide 1 to 9</b> number keys</div>
   <nav class="deck-bar">
-    <a href="../">All presentations</a>
+    <a href="/presentations/">All presentations</a>
     <span class="deck-title">{t}</span>
     <span class="deck-spacer"></span>
     <button type="button" data-deck="prev" aria-label="Previous">Back</button>
@@ -82,7 +82,7 @@ def page(meta, slides):
     {pdf_link}
     <button type="button" data-deck="help" class="deck-hide-sm" aria-label="Keyboard shortcuts">?</button>
   </nav>
-  <script src="../_player/player.js"></script>
+  <script src="/presentations/_player/player.js"></script>
 </body>
 </html>
 """
