@@ -1,5 +1,6 @@
 export const STATUS = {
-  submitted: "Awaiting approval",
+  submitted: "Awaiting treasurer",
+  board_review: "Board vote",
   needs_changes: "Changes requested",
   approved: "Approved",
   declined: "Declined",
@@ -45,6 +46,11 @@ export function validateDraft(d) {
     return "Include between 1 and 20 expenses.";
   for (let i = 0; i < d.items.length; i++) {
     const item = d.items[i];
+    if (
+      d.request_type !== "vendor" &&
+      (item.vendor || "").trim().length < 2
+    )
+      return `Enter the store or vendor for expense ${i + 1}.`;
     if (item.description.trim().length < 2) return `Describe expense ${i + 1}.`;
     if (!item.date || item.date > today())
       return `Choose a valid date for expense ${i + 1}.`;
@@ -80,28 +86,151 @@ export function validateFiles(files) {
     return "Each receipt must be between 1 byte and 10 MB.";
   return null;
 }
-export function actionAllowed(r, role, email, action) {
+// Mirrors cr_private.mutate, which is the real gate. The treasurer reviews
+// every request; admins (secretary, manager) watch, send back, and close
+// duplicates; board members vote when the treasurer sends one to the board.
+const ADMINS = ["secretary", "manager"];
+const OPEN = ["submitted", "board_review", "needs_changes"];
+export function actionAllowed(r, role, email, action, opts = {}) {
   const own = r.email === email;
   if (action === "edit") return own && r.status === "needs_changes";
-  if (action === "assign")
+  if (action === "duplicate")
     return (
-      ["secretary", "manager"].includes(role) &&
-      ["submitted", "needs_changes"].includes(r.status)
+      OPEN.includes(r.status) &&
+      (own || ["treasurer", "board", ...ADMINS].includes(role))
     );
   if (own) return false;
-  if (action === "paid") return role === "treasurer" && r.status === "approved";
-  if (r.status !== "submitted") return false;
+  if (action === "paid")
+    return (
+      r.status === "approved" &&
+      (role === "treasurer" ||
+        (ADMINS.includes(role) && !!opts.ownerIsTreasurer))
+    );
+  if (["approved", "declined", "board_review"].includes(action))
+    return role === "treasurer" && r.status === "submitted";
   if (action === "needs_changes")
     return (
-      r.approver_email === email || ["secretary", "manager"].includes(role)
+      ["submitted", "board_review"].includes(r.status) &&
+      ["treasurer", ...ADMINS].includes(role)
     );
-  return (
-    ["approved", "declined"].includes(action) && r.approver_email === email
-  );
+  if (action === "vote")
+    return (
+      r.status === "board_review" &&
+      ["board", "treasurer"].includes(role) &&
+      !!opts.canVote
+    );
+  return false;
+}
+
+// People who may vote on a request: board members and the treasurer, counted
+// once per name (one person can have a cellphone and an email login), never
+// the requester.
+export function voters(staff, r) {
+  const requester = staff.find((s) => s.email === r.email)?.name;
+  return [
+    ...new Set(
+      staff
+        .filter((s) => ["board", "treasurer"].includes(s.role))
+        .map((s) => s.name)
+        .filter((n) => n !== requester),
+    ),
+  ].sort();
+}
+
+// Latest vote per voter since the request last went up for a vote.
+export function tally(history, staff, r) {
+  const eligible = voters(staff, r);
+  const nameOf = (email) => staff.find((s) => s.email === email)?.name;
+  let since = 0;
+  for (const h of history)
+    if (["board_review", "submitted", "resubmitted"].includes(h.action))
+      since = Math.max(since, Date.parse(h.created_at));
+  const latest = {};
+  for (const h of history) {
+    if (!["vote_approve", "vote_decline"].includes(h.action)) continue;
+    if (Date.parse(h.created_at) < since) continue;
+    const name = nameOf(h.actor_email);
+    if (name && eligible.includes(name)) latest[name] = h;
+  }
+  const votes = eligible.map((name) => ({
+    name,
+    vote: latest[name]?.action === "vote_approve"
+      ? "yes"
+      : latest[name]?.action === "vote_decline"
+        ? "no"
+        : null,
+    note: latest[name]?.note || "",
+  }));
+  return {
+    votes,
+    yes: votes.filter((v) => v.vote === "yes").length,
+    no: votes.filter((v) => v.vote === "no").length,
+    need: Math.floor(eligible.length / 2) + 1,
+  };
+}
+
+// The approval trail a treasurer reads top to bottom: submitted, decided,
+// paid. Built from history so it matches the permanent record.
+export function milestones(r, history, staff) {
+  const nameOf = (email) =>
+    staff.find((s) => s.email === email)?.name || email;
+  const last = (actions) =>
+    [...history].reverse().find((h) => actions.includes(h.action));
+  const sent = last(["submitted", "resubmitted"]);
+  const board = last(["board_review"]);
+  const decided = last(["approved", "declined", "duplicate"]);
+  const decidedByVote = decided?.note?.startsWith("Board vote:");
+  const steps = [
+    {
+      key: "submitted",
+      label: "Submitted",
+      done: !!sent,
+      who: r.requester_name,
+      at: sent?.created_at,
+    },
+  ];
+  if (board || r.status === "board_review")
+    steps.push({
+      key: "board",
+      label: "Sent to board vote",
+      done: !!board || r.status === "board_review",
+      who: board ? nameOf(board.actor_email) : "",
+      at: board?.created_at,
+    });
+  steps.push({
+    key: "decision",
+    label:
+      !decided && r.status === "board_review"
+        ? "Board decision"
+        : decided?.action === "declined"
+        ? "Declined"
+        : decided?.action === "duplicate"
+          ? "Closed as duplicate"
+          : decidedByVote
+            ? "Approved by board vote"
+            : "Approved by treasurer",
+    done: ["approved", "declined", "paid"].includes(r.status) && !!decided,
+    who: decided
+      ? decidedByVote
+        ? decided.note
+        : nameOf(decided.actor_email)
+      : "",
+    at: decided?.created_at,
+  });
+  if (decided?.action !== "declined" && decided?.action !== "duplicate")
+    steps.push({
+      key: "paid",
+      label: "Funds released",
+      done: r.status === "paid",
+      who: r.status === "paid" ? `Reference ${r.payment_reference}` : "",
+      at: r.status === "paid" ? r.payment_date : null,
+    });
+  return steps;
 }
 export const newItem = () => ({
   key: crypto.randomUUID(),
   date: "",
+  vendor: "",
   description: "",
   amount: "",
   document_total: "",
@@ -134,6 +263,7 @@ export function fromRecord(r) {
     items: r.items.map((i) => ({
       ...i,
       key: crypto.randomUUID(),
+      vendor: i.vendor || "",
       amount: (i.amount_cents / 100).toFixed(2),
       document_total: (
         (i.document_total_cents || i.amount_cents) / 100

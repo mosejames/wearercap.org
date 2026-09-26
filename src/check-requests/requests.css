@@ -1019,3 +1019,131 @@ p {
     font-size: 13px;
   }
 }
+.badge.board_review {
+  background: #efe7fb;
+  color: #5b3a8c;
+}
+/* Approval trail: submitted, decided, paid. */
+.milestones {
+  list-style: none;
+  margin: 18px 0 6px;
+  padding: 0;
+}
+.milestones li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+.milestones li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  border-left: 2px solid #dbe1e5;
+}
+.milestones li.done:not(:last-child)::before {
+  border-color: #1f7a4d;
+}
+.milestones .dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #c3ccd2;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.milestones li.done .dot {
+  background: #1f7a4d;
+  border-color: #1f7a4d;
+}
+.milestones strong {
+  font-size: 15px;
+}
+.milestones li:not(.done) strong {
+  color: #64747f;
+  font-weight: 600;
+}
+.milestones p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64747f;
+}
+.votes {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 10px 16px;
+  background: #f6f8f9;
+  border-radius: 10px;
+}
+.votes li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.votes li + li {
+  border-top: 1px solid #e3e8eb;
+}
+.votes small {
+  flex-basis: 100%;
+  color: #64747f;
+}
+.vote {
+  font-weight: 700;
+}
+.vote.yes {
+  color: #1f7a4d;
+}
+.vote.no {
+  color: #b3261e;
+}
+.vote.pending {
+  color: #8a97a0;
+  font-weight: 500;
+}
+.duplicate-box {
+  margin-top: 18px;
+  border-top: 1px solid #e3e8eb;
+  padding-top: 14px;
+}
+.duplicate-box summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #245574;
+}
+.duplicate-box .actions {
+  align-items: flex-end;
+}
+.actions.decision {
+  justify-content: flex-start;
+}
+.actions.decision .primary {
+  margin-left: 0;
+}
+.votes li {
+  align-items: baseline;
+}
+.votes li > span:first-child {
+  padding-left: 2px;
+}
+/* .summary-card ul sets flex, gaps and zero padding for its own lists; the
+   votes list needs its own box. */
+.summary-card .votes,
+.summary-card .milestones {
+  gap: 0;
+}
+.summary-card .votes {
+  padding: 10px 16px;
+  margin: 4px 0 8px;
+}
+.summary-card .milestones {
+  margin: 18px 0 6px;
+}

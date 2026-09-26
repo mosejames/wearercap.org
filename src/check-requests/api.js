@@ -50,6 +50,8 @@ export async function submit(d, user, onProgress) {
     }
     items.push({
       date: item.date,
+      vendor:
+        d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
       description: item.description.trim(),
       amount_cents: toCents(item.amount),
       document_total_cents: toCents(item.document_total),

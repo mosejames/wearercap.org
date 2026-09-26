@@ -28,6 +28,9 @@ import {
   newItem,
   fromRecord,
   actionAllowed,
+  voters,
+  tally,
+  milestones,
   phoneIdentity,
   contactOf,
   normalizePhone,
@@ -48,6 +51,14 @@ import Account from "./Account.jsx";
 import PdfDownloads from "./PdfDownloads.jsx";
 import ReceiptThumbs from "./ReceiptThumbs.jsx";
 
+// A bare YYYY-MM-DD (payment date) is a calendar day, not an instant; parsing
+// it as UTC midnight would show the day before in Atlanta.
+const dayLabel = (value) =>
+  new Date(`${value}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 const dateLabel = (value) =>
   new Date(value).toLocaleString("en-US", {
     month: "short",
@@ -56,6 +67,19 @@ const dateLabel = (value) =>
     hour: "numeric",
     minute: "2-digit",
   });
+const HISTORY_LABEL = {
+  submitted: "Submitted",
+  resubmitted: "Resubmitted",
+  approved: "Approved",
+  declined: "Declined",
+  needs_changes: "Sent back for changes",
+  board_review: "Sent to the board",
+  vote_approve: "Voted yes",
+  vote_decline: "Voted no",
+  duplicate: "Closed as duplicate",
+  paid: "Funds released",
+  assigned: "Assigned",
+};
 const Badge = ({ status }) => (
   <span className={`badge ${status}`}>{STATUS[status] || status}</span>
 );
@@ -507,22 +531,6 @@ export function RequestForm({
                     approval. Do not enter card details here.
                   </p>
                 )}
-                <Field label="Overseeing board member (optional)">
-                  <select
-                    value={draft.approver_email}
-                    disabled={!!draft.version}
-                    onChange={(e) => set("approver_email", e.target.value)}
-                  >
-                    <option value="">Let the admin route it</option>
-                    {staff
-                      .filter((s) => s.email !== contactOf(user))
-                      .map((s) => (
-                        <option key={s.email} value={s.email}>
-                          {s.name}
-                        </option>
-                      ))}
-                  </select>
-                </Field>
                 {draft.delivery === "mail" && (
                   <Field full label="Mailing address">
                     <textarea
@@ -636,16 +644,27 @@ export function RequestForm({
                         }
                         placeholder="0.00"
                       />
+                      {draft.request_type !== "vendor" && (
+                        <Field
+                          full
+                          label="Store or vendor"
+                          required
+                          maxLength={150}
+                          value={item.vendor || ""}
+                          onChange={(e) => setItem(i, "vendor", e.target.value)}
+                          placeholder="e.g. Party City, Walmart, Amazon"
+                        />
+                      )}
                       <Field
                         full
-                        label="Merchant, covered items & amounts"
+                        label="Covered items & amounts"
                         required
                         maxLength={300}
                         value={item.description}
                         onChange={(e) =>
                           setItem(i, "description", e.target.value)
                         }
-                        placeholder="e.g. Grocery store, supplies for the event"
+                        placeholder="e.g. Candy and table covers for the social"
                       />
                     </div>
                     <div className="upload">
@@ -784,11 +803,8 @@ export function RequestForm({
                     <dd>{draft.phone}</dd>
                   </div>
                   <div>
-                    <dt>Overseeing board member</dt>
-                    <dd>
-                      {staff.find((s) => s.email === draft.approver_email)
-                        ?.name || "Secretary will assign"}
-                    </dd>
+                    <dt>Reviewed by</dt>
+                    <dd>The RCAP Treasurer</dd>
                   </div>
                   <div className="full">
                     <dt>Purpose</dt>
@@ -1047,7 +1063,7 @@ function Detail({
   const [extra, setExtra] = useState({ history: [], notifications: [] }),
     [loading, setLoading] = useState(true),
     [note, setNote] = useState(""),
-    [approver, setApprover] = useState(r.approver_email || ""),
+    [dupOf, setDupOf] = useState(""),
     [payment, setPayment] = useState(""),
     [paymentDate, setPaymentDate] = useState(today()),
     [busy, setBusy] = useState(false);
@@ -1072,7 +1088,18 @@ function Detail({
       clearInterval(timer);
     };
   }, [r.id, r.version]);
-  const allowed = (a) => actionAllowed(r, role, contactOf(user), a);
+  const me = contactOf(user);
+  const myName = staff.find((s) => s.email === me)?.name;
+  const eligible = voters(staff, r);
+  const votes = tally(extra.history, staff, r);
+  const allowed = (a) =>
+    actionAllowed(r, role, me, a, {
+      canVote: !!myName && eligible.includes(myName),
+      ownerIsTreasurer: staff.some(
+        (s) => s.email === r.email && s.role === "treasurer",
+      ),
+    });
+  const nameOf = (email) => staff.find((s) => s.email === email)?.name || email;
   async function change(a) {
     setBusy(true);
     onError("");
@@ -1081,11 +1108,12 @@ function Detail({
         id: r.id,
         version: r.version,
         note,
-        approver_email: approver,
+        duplicate_of: dupOf,
         payment_reference: payment,
         payment_date: paymentDate,
       });
       setNote("");
+      setDupOf("");
       onUpdate(updated);
     } catch (e) {
       onError(e.message || "The update could not be saved.");
@@ -1157,10 +1185,11 @@ function Detail({
               </dd>
             </div>
             <div>
-              <dt>Overseeing board member</dt>
+              <dt>Reviewed by</dt>
               <dd>
-                {staff.find((s) => s.email === r.approver_email)?.name ||
-                  "Awaiting assignment"}
+                {r.status === "board_review"
+                  ? "The board, by vote"
+                  : "The RCAP Treasurer"}
               </dd>
             </div>
             <div className="full">
@@ -1173,9 +1202,10 @@ function Detail({
             {r.items.map((item, i) => (
               <div className="expense" key={i}>
                 <div className="detail-head">
-                  <strong>{item.description}</strong>
+                  <strong>{item.vendor || item.description}</strong>
                   <strong>{dollars(item.amount_cents)}</strong>
                 </div>
+                {item.vendor && <p>{item.description}</p>}
                 <p className="muted">Purchased {item.date}</p>
                 <ReceiptThumbs receipts={item.receipts} labels />
               </div>
@@ -1199,9 +1229,9 @@ function Detail({
               <ol className="history">
                 {extra.history.map((h) => (
                   <li key={h.id}>
-                    <strong>{h.action.replaceAll("_", " ")}</strong>
+                    <strong>{HISTORY_LABEL[h.action] || h.action.replaceAll("_", " ")}</strong>
                     <p>
-                      {h.actor_email} · {dateLabel(h.created_at)}
+                      {nameOf(h.actor_email)} · {dateLabel(h.created_at)}
                     </p>
                     {h.note && <p>{h.note}</p>}
                   </li>
@@ -1214,73 +1244,100 @@ function Detail({
           <section className="summary-card">
             <h2>
               {r.status === "paid"
-                ? "Payment recorded"
+                ? "Funds released"
                 : r.status === "approved"
-                  ? "Ready for the treasurer"
-                  : r.status === "needs_changes"
-                    ? "A correction is needed"
-                    : r.status === "declined"
-                      ? "Request declined"
-                      : "Review & next steps"}
+                  ? "Approved, ready to pay"
+                  : r.status === "board_review"
+                    ? "Up for a board vote"
+                    : r.status === "needs_changes"
+                      ? "A correction is needed"
+                      : r.status === "declined"
+                        ? "Request closed"
+                        : "Awaiting the treasurer"}
             </h2>
             <p className="muted">
               {r.status === "submitted"
-                ? "The assigned board member reviews the receipts and confirms approval here."
-                : r.status === "approved"
-                  ? "Board approval is complete. Payment is recorded separately by the treasurer."
-                  : r.status === "needs_changes"
-                    ? "Read the reviewer’s note, then update and resubmit this request."
-                    : "The complete record and its receipts remain available here."}
+                ? "The treasurer reviews the receipts, then approves, sends it back, or takes it to the board."
+                : r.status === "board_review"
+                  ? `Board members vote here. ${votes.need} of ${eligible.length} yes votes approve it.`
+                  : r.status === "approved"
+                    ? "Approved. The treasurer sends payment and records it here with the date."
+                    : r.status === "needs_changes"
+                      ? "Read the note, then update and resubmit this request."
+                      : "The complete record and its receipts remain available here."}
             </p>
-            {allowed("assign") && (
-              <>
-                <Field label="Assign overseeing board member">
-                  <select
-                    value={approver}
-                    onChange={(e) => setApprover(e.target.value)}
-                  >
-                    <option value="">Choose a board member</option>
-                    {staff
-                      .filter((s) => s.email !== r.email)
-                      .map((s) => (
-                        <option key={s.email} value={s.email}>
-                          {s.name}
-                        </option>
-                      ))}
-                  </select>
-                </Field>
-                <button
-                  className="secondary"
-                  style={{ marginTop: 12 }}
-                  disabled={busy || !approver}
-                  onClick={() => change("assign")}
-                >
-                  Save assignment
-                </button>
-              </>
+            <ol className="milestones">
+              {milestones(r, extra.history, staff).map((m) => (
+                <li key={m.key} className={m.done ? "done" : ""}>
+                  <span className="dot" aria-hidden="true">
+                    {m.done ? <Check size={13} /> : null}
+                  </span>
+                  <div>
+                    <strong>{m.label}</strong>
+                    {m.done && (m.who || m.at) && (
+                      <p>
+                        {[
+                          m.who,
+                          m.at &&
+                            (/^\d{4}-\d{2}-\d{2}$/.test(m.at)
+                              ? dayLabel(m.at)
+                              : dateLabel(m.at)),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+            {r.status === "board_review" && (
+              <ul className="votes">
+                {votes.votes.map((v) => (
+                  <li key={v.name}>
+                    <span>{v.name}</span>
+                    <span className={`vote ${v.vote || "pending"}`}>
+                      {v.vote === "yes"
+                        ? "Yes"
+                        : v.vote === "no"
+                          ? "No"
+                          : "Not yet"}
+                    </span>
+                    {v.note && <small>{v.note}</small>}
+                  </li>
+                ))}
+              </ul>
             )}
-            {["approved", "needs_changes", "paid"].some(allowed) && (
+            {[
+              "approved",
+              "needs_changes",
+              "paid",
+              "board_review",
+              "vote",
+            ].some(allowed) && (
               <div className="form-section">
-                <Field label="Review note">
+                {["needs_changes", "declined", "vote", "board_review", "approved"].some(allowed) && (
+                <Field label="Note">
                   <textarea
                     maxLength={2000}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Explain any correction or decision."
+                    placeholder="Explain a decision, a correction, or a no vote. The requester sees notes on corrections and declines."
                   />
                 </Field>
+                )}
                 {allowed("paid") && (
                   <div className="fields" style={{ marginTop: 20 }}>
                     <Field
                       full
-                      label="Check or payment reference"
+                      label="Zelle confirmation or check number"
                       value={payment}
                       maxLength={100}
                       onChange={(e) => setPayment(e.target.value)}
                     />
                     <Field
                       full
-                      label="Payment date"
+                      label="Date funds were sent"
                       type="date"
                       max={today()}
                       value={paymentDate}
@@ -1288,7 +1345,7 @@ function Detail({
                     />
                   </div>
                 )}
-                <div className="actions">
+                <div className="actions decision">
                   {allowed("approved") && (
                     <button
                       className="primary"
@@ -1298,13 +1355,40 @@ function Detail({
                       <Check size={16} /> Approve request
                     </button>
                   )}
+                  {allowed("vote") && (
+                    <>
+                      <button
+                        className="primary"
+                        disabled={busy}
+                        onClick={() => change("vote_approve")}
+                      >
+                        <Check size={16} /> Vote yes
+                      </button>
+                      <button
+                        className="danger"
+                        disabled={busy || note.trim().length < 5}
+                        onClick={() => change("vote_decline")}
+                      >
+                        Vote no
+                      </button>
+                    </>
+                  )}
+                  {allowed("board_review") && (
+                    <button
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => change("board_review")}
+                    >
+                      Send to the board
+                    </button>
+                  )}
                   {allowed("needs_changes") && (
                     <button
                       className="secondary"
                       disabled={busy || note.trim().length < 5}
                       onClick={() => change("needs_changes")}
                     >
-                      Request changes
+                      Send back for changes
                     </button>
                   )}
                   {allowed("declined") && (
@@ -1327,10 +1411,49 @@ function Detail({
                   )}
                 </div>
                 <p className="muted">
-                  Changes are recorded with your account and the time of your
-                  decision.
+                  {[
+                    allowed("needs_changes") && "sending back",
+                    allowed("declined") && "declining",
+                    allowed("vote") && "a no vote",
+                  ].filter(Boolean).length
+                    ? `A short note is needed for ${[
+                        allowed("needs_changes") && "sending back",
+                        allowed("declined") && "declining",
+                        allowed("vote") && "a no vote",
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}. `
+                    : ""}
+                  Every action is recorded with your name and the time.
                 </p>
               </div>
+            )}
+            {allowed("duplicate") && (
+              <details className="duplicate-box">
+                <summary>This is a duplicate</summary>
+                <p className="muted">
+                  Closes this request and texts the requester that it
+                  duplicates another one. Nothing is paid.
+                </p>
+                <div className="actions">
+                  <Field
+                    label="Duplicate of request #"
+                    inputMode="numeric"
+                    value={dupOf}
+                    onChange={(e) =>
+                      setDupOf(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                    placeholder="e.g. 11"
+                  />
+                  <button
+                    className="secondary"
+                    disabled={busy || !dupOf || dupOf === String(r.reference)}
+                    onClick={() => change("duplicate")}
+                  >
+                    Close as duplicate
+                  </button>
+                </div>
+              </details>
             )}
           </section>
           <section className="record-card" style={{ marginTop: 20 }}>
@@ -1412,7 +1535,7 @@ function Detail({
 function Staff({ staff, onRefresh, onError }) {
   const [name, setName] = useState(""),
     [email, setEmail] = useState(""),
-    [role, setRole] = useState("approver"),
+    [role, setRole] = useState("board"),
     [busy, setBusy] = useState(false);
   async function save(e) {
     e.preventDefault();
@@ -1435,9 +1558,10 @@ function Staff({ staff, onRefresh, onError }) {
     <section className="form-card admin-panel">
       <h2>Board access</h2>
       <p className="muted">
-        Add the cellphone number each board member uses to sign in. Assigned
-        reviewers see their requests; secretary and treasurer accounts see the
-        full queue.
+        Add the cellphone number each board member uses to sign in. Everyone
+        here sees the full queue. The treasurer approves and pays; board
+        members vote when the treasurer sends a request to the board; admins
+        watch, send requests back, and close duplicates.
       </p>
       <ul className="inline-list">
         {staff.map((s) => (
@@ -1470,9 +1594,9 @@ function Staff({ staff, onRefresh, onError }) {
           />
           <Field label="Board role">
             <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="approver">Overseeing board member</option>
-              <option value="secretary">Secretary</option>
-              <option value="treasurer">Treasurer</option>
+              <option value="board">Board member (votes when asked)</option>
+              <option value="treasurer">Treasurer (approves and pays)</option>
+              <option value="secretary">Admin (watches, sends back)</option>
             </select>
           </Field>
         </div>
@@ -1702,12 +1826,11 @@ export function App() {
             <section className="form-card">
               <h2>Sign in to view this request</h2>
               <p className="muted">
-                Board members: sign in with the email or cellphone number listed
-                in Board access to review this request and its receipts.
-                Requesters: use the cellphone number or email you submitted
-                with.
+                Sign in with your cellphone number. Board members use the number
+                listed in Board access; requesters use the number they
+                submitted with.
               </p>
-              <SignIn onError={setError} preferEmail />
+              <SignIn onError={setError} />
             </section>
             <Guide />
           </div>

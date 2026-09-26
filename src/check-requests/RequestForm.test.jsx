@@ -40,6 +40,7 @@ function setup(receipts) {
           {
             ...d.items[0],
             date: today(),
+            vendor: "Party City",
             description: "Supplies",
             amount: "12.50",
             document_total: "12.50",

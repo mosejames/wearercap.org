@@ -40,8 +40,10 @@ it("asks a signed-out reviewer to sign in instead of showing a blank new request
   root = createRoot(host);
   await act(async () => root.render(<App />));
   expect(host.textContent).toContain("Sign in to view this request");
-  // Email sign-in is offered first on a request link, since board members
-  // reviewing from an email notice usually sign in by email.
-  expect(host.querySelector('input[type="email"]')).not.toBeNull();
+  // Cellphone sign-in comes first on a request link. The treasurer opened an
+  // email link, signed in by email, and landed in a second account; the
+  // cellphone is the identity everyone's access is set up on.
+  expect(host.querySelector('input[type="tel"]')).not.toBeNull();
+  expect(host.textContent).toContain("Use email instead");
   expect(location.hash).toBe("#request/7d40ca03-9127-4f61-a1d8-ca2f1c378454");
 });

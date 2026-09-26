@@ -20,6 +20,25 @@ A request link from an email (`/check-requests/#request/<id>`) opened while sign
 
 The secretary or manager can add or update board cellphone numbers in **Board review > Board access**. Add Latasha's verified cellphone number there for cellphone-based secretary access. Reviewers see only requests assigned to them and their own submissions. Secretary, treasurer, and manager see the full queue. Secretary access does not itself authorize approval: the assigned board member approves, and cannot approve their own request. Only the treasurer records payment, after approval, and cannot record their own payment.
 
+## Who approves (since Sept 26, 2026)
+
+The treasurer approves every request and is the overseeing board member;
+nothing is assigned. Roles in `cr_staff`:
+
+- `treasurer`: approves, declines, sends back, sends to the board, votes,
+  records payment. Any login listed as treasurer works (cellphone or email).
+- `board`: votes when the treasurer sends a request to the board; can close
+  duplicates.
+- `secretary`, `manager`: admins. See the full queue, send requests back,
+  close duplicates, manage Board access. They do not approve or vote.
+
+A board vote passes or fails when a majority of eligible voters (board plus
+treasurer, counted once per name, never the requester) agree. A treasurer's
+own request goes straight to a board vote, and an admin records its payment.
+Any board member or admin can close a request as a duplicate of another
+number; the requester is texted. Migration:
+`20260926180000_check_request_treasurer_approval.sql`.
+
 ## Workflow
 
 1. Parent supplies payee, contact information, committee, purpose, and itemized expenses. Choose reimbursement or direct vendor payment. Reimbursements use Zelle; vendors use Zelle or debit card when Zelle is unavailable. No card credentials are collected. Zelle requires its registered email or cellphone number.

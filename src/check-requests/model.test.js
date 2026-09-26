@@ -5,6 +5,8 @@ import {
   validateDraft,
   validateFiles,
   actionAllowed,
+  voters,
+  tally,
   newDraft,
 } from "./model.js";
 describe("check request validation", () => {
@@ -39,6 +41,7 @@ describe("check request validation", () => {
       items: [
         {
           date: "2026-01-01",
+          vendor: "Party City",
           description: "Supplies",
           amount: "25.00",
           document_total: "25.00",
@@ -84,13 +87,22 @@ describe("finance action visibility", () => {
       actionAllowed({ ...r, status: "approved" }, "treasurer", r.email, "paid"),
     ).toBe(false);
   });
-  it("separates assigned approval from secretary and treasurer work", () => {
+  it("gives approval to the treasurer, not admins or former assignees", () => {
     expect(
       actionAllowed(r, "secretary", "secretary@example.test", "approved"),
     ).toBe(false);
-    expect(actionAllowed(r, "approver", r.approver_email, "approved")).toBe(
-      true,
+    expect(actionAllowed(r, "manager", "chair@example.test", "approved")).toBe(
+      false,
     );
+    expect(actionAllowed(r, "approver", r.approver_email, "approved")).toBe(
+      false,
+    );
+    expect(
+      actionAllowed(r, "treasurer", "+19015550000", "approved"),
+    ).toBe(true);
+    expect(
+      actionAllowed(r, "treasurer", "+19015550000", "board_review"),
+    ).toBe(true);
     expect(
       actionAllowed(r, "secretary", "secretary@example.test", "needs_changes"),
     ).toBe(true);
@@ -114,6 +126,41 @@ describe("finance action visibility", () => {
   });
 });
 
+describe("board votes and duplicates", () => {
+  const staff = [
+    { email: "+19015550000", name: "Treasurer T", role: "treasurer" },
+    { email: "t@example.test", name: "Treasurer T", role: "treasurer" },
+    { email: "+17705550000", name: "Board B", role: "board" },
+    { email: "+16785550000", name: "Board C", role: "board" },
+    { email: "+14045550000", name: "Chair M", role: "manager" },
+  ];
+  const r = { email: "+17705550000", status: "board_review" };
+  it("counts each person once, never the requester or admins", () => {
+    expect(voters(staff, r)).toEqual(["Board C", "Treasurer T"]);
+  });
+  it("counts only each voter's latest vote since the request went to the board", () => {
+    const history = [
+      { action: "vote_approve", actor_email: "+16785550000", created_at: "2026-09-01T10:00:00Z" },
+      { action: "board_review", actor_email: "+19015550000", created_at: "2026-09-02T10:00:00Z" },
+      { action: "vote_decline", actor_email: "+19015550000", created_at: "2026-09-02T11:00:00Z", note: "Too much" },
+      { action: "vote_approve", actor_email: "t@example.test", created_at: "2026-09-02T12:00:00Z" },
+    ];
+    const t = tally(history, staff, r);
+    expect(t).toMatchObject({ yes: 1, no: 0, need: 2 });
+    expect(t.votes.find((v) => v.name === "Board C").vote).toBeNull();
+  });
+  it("lets board and admins close duplicates, and admins send back", () => {
+    const open = { email: "parent@example.test", status: "submitted" };
+    for (const role of ["board", "secretary", "manager", "treasurer"])
+      expect(actionAllowed(open, role, "x", "duplicate")).toBe(true);
+    expect(actionAllowed(open, null, "someone", "duplicate")).toBe(false);
+    expect(actionAllowed(open, "manager", "x", "needs_changes")).toBe(true);
+    expect(actionAllowed(open, "board", "x", "needs_changes")).toBe(false);
+    expect(actionAllowed(r, "board", "x", "vote", { canVote: true })).toBe(true);
+    expect(actionAllowed(r, "manager", "x", "vote", { canVote: false })).toBe(false);
+  });
+});
+
 import { phoneIdentity, contactOf, validZelle } from "./model.js";
 describe("cellphone identity and Zelle", () => {
   it("normalizes phone numbers consistently with verified auth identities", () => {
@@ -129,13 +176,9 @@ describe("cellphone identity and Zelle", () => {
     expect(validZelle("")).toBe(false);
   });
   it("gates actions by verified phone identity", () => {
-    const r = {
-      email: "+14045550123",
-      approver_email: "+14045550124",
-      status: "submitted",
-    };
-    expect(actionAllowed(r, "approver", "+14045550124", "approved")).toBe(true);
-    expect(actionAllowed(r, "approver", "+14045550123", "approved")).toBe(
+    const r = { email: "+14045550123", status: "submitted" };
+    expect(actionAllowed(r, "treasurer", "+14045550124", "approved")).toBe(true);
+    expect(actionAllowed(r, "treasurer", "+14045550123", "approved")).toBe(
       false,
     );
   });
@@ -155,6 +198,7 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
     items: [
       {
         date: "2026-01-01",
+        vendor: "Target",
         description: "Covered supplies",
         amount: "20",
         document_total: "30",
