@@ -1040,7 +1040,7 @@ function App() {
           <h2>Built for RCA families. Pick what you need.</h2>
           <p>
             Things to make our community stronger and, hopefully, your life a
-            little easier.
+            little easier. New to one? <a href="/how-to/">Read the how-to guides</a>.
           </p>
         </div>
 
@@ -1087,6 +1087,7 @@ function App() {
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
           <a href="#tools">Tools</a>
+          <a href="/how-to/">How-to Guides</a>
           <a href="/directory/">The RCAP Collective</a>
           <a href="/uniform-exchange/">Uniform Exchange</a>
           <a href="/carpool/">Carpool</a>
