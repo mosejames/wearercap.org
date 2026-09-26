@@ -1,8 +1,10 @@
 """Builds the static how-to pages in public/how-to/ from one template.
 Run: python3 scripts/build-how-to.py. Edit the copy here, not in the HTML."""
-import html, pathlib
+import html, json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent / "public" / "how-to"
+# Screenshots per guide, made from the real apps with fake test data.
+SHOTS = json.loads((pathlib.Path(__file__).resolve().parent / "how-to-shots.json").read_text())
 
 HEAD = """<!DOCTYPE html>
 <html lang="en">
@@ -49,11 +51,23 @@ def hero(eyebrow, title, lede, tool_href, tool_label, meta, printable=True):
 """
 
 
-def steps(items):
-    out = ['<ol class="steps">']
-    for heading, bullets in items:
+def figures(slug, shots):
+    if not shots:
+        return ""
+    figs = "".join(
+        f'<figure><a href="/how-to/img/{slug}/{s["file"]}"><img src="/how-to/img/{slug}/{s["file"]}" '
+        f'width="{s["w"]}" height="{s["h"]}" loading="lazy" alt="{html.escape(s["caption"])}" /></a>'
+        f'<figcaption>{html.escape(s["caption"])}</figcaption></figure>'
+        for s in shots)
+    return f'<div class="shots">{figs}</div>'
+
+
+def steps(items, slug="", offset=0):
+    out = ['<ol class="steps" start="%d" style="counter-reset: step %d">' % (offset + 1, offset)]
+    for n, (heading, bullets) in enumerate(items, start=offset + 1):
         lis = "".join(f"<li>{b}</li>" for b in bullets)
-        out.append(f'<li class="step"><div><h2>{heading}</h2><ul>{lis}</ul></div></li>')
+        shots = [s for s in SHOTS.get(slug, []) if s["step"] == n]
+        out.append(f'<li class="step"><div><h2>{heading}</h2><ul>{lis}</ul>{figures(slug, shots)}</div></li>')
     out.append("</ol>")
     return "\n".join(out)
 
@@ -72,10 +86,10 @@ def page(slug, *, title, desc, og, eyebrow, lede, tool_href, tool_label, meta,
     if callout:
         body.append(f'<div class="callout">{callout}</div>')
     body.append('<p class="label">Step by step</p>')
-    body.append(steps(step_items))
+    body.append(steps(step_items, slug))
     if extra_steps:
         body.append(f'<p class="label">{extra_label}</p>')
-        body.append(steps(extra_steps))
+        body.append(steps(extra_steps, slug, offset=len(step_items)))
     body.append('<p class="label">Good to know</p>')
     body.append(notes(note_items))
     body.append("</div></main>")
@@ -158,15 +172,15 @@ guide(
             "Tap <b>Into the Capsule</b>.",
         ]),
         ("Find an event", [
-            "The Capsule opens on the latest event. Use <b>Choose album</b> to switch.",
+            "The Capsule opens on the latest event. Tap the album name at the top right to switch.",
             "Tap any photo to see it full size. Swipe to move through, swipe down to close.",
-            "Tap the download icon to <b>Save to Photos</b>.",
+            "Tap the download icon, then <b>Save to Photos</b>.",
         ]),
         ("Add your photos and videos", [
             "Tap <b>Add photos</b> and then <b>Choose photos or videos</b>.",
             "Up to 60 at a time, 50 MB each. Photos and MP4 or MOV videos work.",
             "Copies you already added are skipped automatically.",
-            "Keep the screen open until it finishes. Your phone's originals are not changed.",
+            "Tap <b>Add 5 files to the Capsule</b> (it counts your files). Keep the screen open until it finishes.",
         ]),
         ("Share and say thanks", [
             "Tap <b>Invite</b> to send the album link to your group chat so others add theirs.",
@@ -207,7 +221,7 @@ guide(
         ]),
         ("Find families near you", [
             "Open <b>Explore nearby families</b> to see who lives close and which days you share.",
-            "Use <b>Show families within</b> to widen or narrow the distance.",
+            "To look farther out, open <b>Your account</b> and move <b>Show families within</b>.",
         ]),
         ("Join a group and plan", [
             "Under <b>Groups near you</b>, check the box to share your contact info, then tap <b>Request to join</b>.",
@@ -239,13 +253,13 @@ guide(
     step_items=[
         ("Ask for an item", [
             "Tap <b>I'm looking for an item</b>.",
-            "Pick girl or boy, then <b>Choose your house</b>, your item, and your size.",
-            "Tap <b>Add to my request</b>. Up to 2 items per request.",
+            "Tap <b>For a Girl</b> or <b>For a Boy</b>, then pick your house, the item, and the size.",
+            "Tap <b>Add</b> to add it to your request. Up to 2 items per request.",
             "Enter your name, your student and grade, and your cell number. Tap <b>Send my request</b>.",
         ]),
         ("Choose how it gets to you", [
             "Most pieces go <b>Student to student</b>: the bin holder's student brings it to yours at school.",
-            "Pick the morning that works, or tap <b>Decide later</b>.",
+            "Tap <b>Send it with their student</b>, or <b>Decide later</b>.",
             "If nothing matches yet, you go on the waitlist and get a text when it comes in.",
         ]),
         ("Close it out", [

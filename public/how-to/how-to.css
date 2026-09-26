@@ -65,6 +65,13 @@ main { padding: 36px 0 20px; }
 .step li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; background: var(--orange); border-radius: 2px; transform: rotate(45deg); }
 b, .ui { font-weight: 700; color: var(--navy); }
 
+/* Screenshots under a step: a row on desktop, a swipeable strip on phones. */
+.shots { display: flex; gap: 14px; margin: 16px 0 4px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+.shots figure { margin: 0; flex: 0 0 220px; scroll-snap-align: start; }
+.shots a { display: block; }
+.shots img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(26, 42, 86, .12); background: #fff; }
+.shots figcaption { font-size: 13px; line-height: 1.4; color: var(--muted); margin-top: 8px; }
+
 /* Good to know */
 .notes { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
 .note { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
@@ -92,6 +99,8 @@ b, .ui { font-weight: 700; color: var(--navy); }
   .hero { padding: 34px 0 48px; }
   .card { grid-template-columns: 1fr; }
   .notes { grid-template-columns: 1fr; }
+  .shots { margin-left: -50px; margin-right: -20px; padding-left: 50px; padding-right: 20px; scroll-padding-left: 50px; }
+  .shots figure { flex-basis: 72%; }
 }
 
 /* Print: one clean handout, no dark fills. */
@@ -104,7 +113,12 @@ b, .ui { font-weight: 700; color: var(--navy); }
   .eyebrow { color: var(--gold-deep); }
   .hero h1 { color: var(--navy); font-size: 30pt; }
   main { padding-top: 12px; }
-  .step { break-inside: avoid; padding: 10px 0; }
+  .step { padding: 10px 0; }
+  .step h2, .step ul { break-inside: avoid; }
+  .shots { overflow: visible; flex-wrap: wrap; gap: 10px; }
+  .shots figure { flex: 0 0 1.55in; break-inside: avoid; }
+  .shots img { box-shadow: none; }
+  .shots figcaption { font-size: 8pt; }
   .step::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .callout, .note { break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .meta::after { content: " · wearercap.org/how-to"; }

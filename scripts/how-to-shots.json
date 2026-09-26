@@ -1,0 +1,227 @@
+{
+ "check-requests": [
+  {
+   "file": "01-request-details-top.webp",
+   "step": 1,
+   "caption": "Enter your name and phone, choose Reimbursement, and enter the payee.",
+   "w": 780,
+   "h": 1128
+  },
+  {
+   "file": "02-request-details-payment.webp",
+   "step": 1,
+   "caption": "Pick your committee, enter your Zelle email or cellphone, and say what the expenses were for.",
+   "w": 780,
+   "h": 1198
+  },
+  {
+   "file": "03-expense-and-receipt.webp",
+   "step": 2,
+   "caption": "Enter the date, amount requested, and receipt total, then attach the paid receipt.",
+   "w": 780,
+   "h": 1252
+  },
+  {
+   "file": "04-sign-in-text-me-a-code.webp",
+   "step": 3,
+   "caption": "On the review step, enter your cellphone number and tap Text me a code.",
+   "w": 780,
+   "h": 796
+  },
+  {
+   "file": "05-confirm-and-submit.webp",
+   "step": 3,
+   "caption": "Check both confirmation boxes, then tap Submit request.",
+   "w": 780,
+   "h": 898
+  },
+  {
+   "file": "06-past-requests.webp",
+   "step": 4,
+   "caption": "Past requests shows where each request stands.",
+   "w": 780,
+   "h": 1318
+  },
+  {
+   "file": "07-changes-requested.webp",
+   "step": 4,
+   "caption": "A request marked Changes requested has an Update & resubmit button.",
+   "w": 780,
+   "h": 724
+  },
+  {
+   "file": "09-receipt-lightbox.webp",
+   "step": 4,
+   "caption": "Tap a receipt to see it full size.",
+   "w": 780,
+   "h": 1328
+  }
+ ],
+ "rcap-capsule": [
+  {
+   "file": "01-sign-in-phone.webp",
+   "step": 1,
+   "caption": "Tap Sign in, enter your mobile number, and tap Text me a code.",
+   "w": 780,
+   "h": 722
+  },
+  {
+   "file": "03-profile-who-is-this.webp",
+   "step": 1,
+   "caption": "The first time in, add the name families will see, pick your house, and add your student.",
+   "w": 780,
+   "h": 1214
+  },
+  {
+   "file": "05-gallery-choose-album.webp",
+   "step": 2,
+   "caption": "Tap the album name at the top right to switch events.",
+   "w": 780,
+   "h": 1192
+  },
+  {
+   "file": "07-save-to-photos.webp",
+   "step": 2,
+   "caption": "The download icon opens Save to Photos, or Download file on a computer.",
+   "w": 780,
+   "h": 580
+  },
+  {
+   "file": "08-upload-add-files.webp",
+   "step": 3,
+   "caption": "Tap Add photos, choose photos or videos from your camera roll, then tap Add 5 files to the Capsule.",
+   "w": 780,
+   "h": 1154
+  },
+  {
+   "file": "06-photo-save-share-thanks.webp",
+   "step": 4,
+   "caption": "Tap any photo to open it. Share and download are at the top; tap Thank you, that's my kid! to thank the parent privately.",
+   "w": 780,
+   "h": 1222
+  },
+  {
+   "file": "09-invite-to-upload.webp",
+   "step": 4,
+   "caption": "Tap Invite to copy the album link or a ready-made message for your group chat.",
+   "w": 780,
+   "h": 1188
+  },
+  {
+   "file": "10-my-capsule-thank-yous.webp",
+   "step": 4,
+   "caption": "Thank-yous from other families land privately in My Capsule.",
+   "w": 780,
+   "h": 1048
+  }
+ ],
+ "carpool": [
+  {
+   "file": "01-family-form.webp",
+   "step": 1,
+   "caption": "Tap Continue with Google, or fill in your name, your child, and a spot near you, then pick it from the suggestions.",
+   "w": 780,
+   "h": 1374
+  },
+  {
+   "file": "01b-family-form-contact.webp",
+   "step": 1,
+   "caption": "Choose Morning drop-off and your days, add your phone and email, then tap Continue.",
+   "w": 780,
+   "h": 1232
+  },
+  {
+   "file": "02-email-code.webp",
+   "step": 1,
+   "caption": "Enter the 6-digit code from your email and tap Verify my code.",
+   "w": 780,
+   "h": 1106
+  },
+  {
+   "file": "03-awaiting-approval.webp",
+   "step": 2,
+   "caption": "Your family is saved. A committee admin approves you before other families appear.",
+   "w": 780,
+   "h": 710
+  },
+  {
+   "file": "04-explore-nearby.webp",
+   "step": 3,
+   "caption": "Once approved, Explore nearby families shows each family's area, distance, and the ride times you share.",
+   "w": 780,
+   "h": 976
+  },
+  {
+   "file": "07-your-account.webp",
+   "step": 3,
+   "caption": "Open Your account to edit your family or change how far out families show up.",
+   "w": 780,
+   "h": 1030
+  },
+  {
+   "file": "05-groups-near-you.webp",
+   "step": 4,
+   "caption": "Under Groups near you, tick the sharing box, then tap Request to join.",
+   "w": 780,
+   "h": 1412
+  },
+  {
+   "file": "06-group-accepted.webp",
+   "step": 4,
+   "caption": "Once the organizer accepts, you see every family in the group and how to reach them.",
+   "w": 780,
+   "h": 1176
+  },
+  {
+   "file": "06b-group-handoff.webp",
+   "step": 4,
+   "caption": "Tap Start our group text to plan drivers, a pickup time, and a spot together.",
+   "w": 780,
+   "h": 974
+  }
+ ],
+ "uniform-exchange": [
+  {
+   "file": "02-request-picker.webp",
+   "step": 1,
+   "caption": "Say who it's for, choose your house, then pick the item and size and tap Add to my request.",
+   "w": 780,
+   "h": 928
+  },
+  {
+   "file": "04-send-form.webp",
+   "step": 1,
+   "caption": "Enter your name, your student and grade, and a cell we can text, then tap Send my request.",
+   "w": 780,
+   "h": 1038
+  },
+  {
+   "file": "05-handoff-student.webp",
+   "step": 2,
+   "caption": "Student to student is the default: your bin holder's student brings it to yours at school. Not ready? Tap Decide later.",
+   "w": 780,
+   "h": 920
+  },
+  {
+   "file": "07-my-requests.webp",
+   "step": 3,
+   "caption": "Your private My requests page shows each item's status. Tap Got it once it's in your hands.",
+   "w": 780,
+   "h": 1031
+  },
+  {
+   "file": "08-text-me-my-link.webp",
+   "step": 3,
+   "caption": "Lost your link? Open My requests, enter your cell and tap Text me my link.",
+   "w": 780,
+   "h": 572
+  },
+  {
+   "file": "09-donate.webp",
+   "step": 4,
+   "caption": "Tap \"I have clothes to donate\", say what you have, and tap Offer it up. Your bin holder arranges the pickup.",
+   "w": 780,
+   "h": 976
+  }
+ ]
+}
