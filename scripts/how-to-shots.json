@@ -73,11 +73,18 @@
    "h": 1214
   },
   {
-   "file": "05-gallery-choose-album.webp",
+   "file": "12-capsule-home.webp",
    "step": 2,
-   "caption": "Tap the album name at the top right to switch events.",
+   "caption": "The Capsule home opens on the latest event. Tap Add photos to add yours, or View album to see everyone's.",
    "w": 780,
-   "h": 1192
+   "h": 1030
+  },
+  {
+   "file": "13-all-albums.webp",
+   "step": 2,
+   "caption": "Scroll down to Every album and tap any event to open it.",
+   "w": 780,
+   "h": 1008
   },
   {
    "file": "07-save-to-photos.webp",

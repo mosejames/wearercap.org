@@ -172,12 +172,13 @@ guide(
             "Tap <b>Into the Capsule</b>.",
         ]),
         ("Find an event", [
-            "The Capsule opens on the latest event. Tap the album name at the top right to switch.",
+            "The Capsule home leads with the latest event. Tap <b>View album</b> to see everyone's photos.",
+            "For an older event, scroll to <b>Every album</b> and tap it. <b>Capsule home</b> brings you back.",
             "Tap any photo to see it full size. Swipe to move through, swipe down to close.",
             "Tap the download icon, then <b>Save to Photos</b>.",
         ]),
         ("Add your photos and videos", [
-            "Tap <b>Add photos</b> and then <b>Choose photos or videos</b>.",
+            "Tap <b>Add photos</b> on the home page or in any album, then <b>Choose photos or videos</b>.",
             "Up to 60 at a time, 50 MB each. Photos and MP4 or MOV videos work.",
             "Copies you already added are skipped automatically.",
             "Tap <b>Add 5 files to the Capsule</b> (it counts your files). Keep the screen open until it finishes.",
