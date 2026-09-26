@@ -22,7 +22,7 @@ import {
   dollars,
   today,
   validateDraft,
-  validateFiles,
+  addReceipts,
   toCents,
   newDraft,
   newItem,
@@ -671,9 +671,11 @@ export function RequestForm({
                       <label>
                         <span>
                           <Upload size={16} />{" "}
-                          {draft.request_type === "vendor"
-                            ? "Attach invoice"
-                            : "Attach paid receipts"}
+                          {item.receipts.length
+                            ? "Add another file"
+                            : draft.request_type === "vendor"
+                              ? "Attach invoice"
+                              : "Attach paid receipts"}
                         </span>
                         <input
                           aria-label={`Upload receipts for expense ${i + 1}`}
@@ -681,18 +683,12 @@ export function RequestForm({
                           accept="image/jpeg,image/png,application/pdf"
                           multiple
                           onChange={(e) => {
-                            const files = [...e.target.files];
-                            const error = validateFiles(files);
-                            if (error) onError(error);
+                            const result = addReceipts(item.receipts, [
+                              ...e.target.files,
+                            ]);
+                            if (result.error) onError(result.error);
                             else {
-                              setItem(
-                                i,
-                                "receipts",
-                                files.map((file) => ({
-                                  file,
-                                  name: file.name,
-                                })),
-                              );
+                              setItem(i, "receipts", result.receipts);
                               onError("");
                             }
                             e.target.value = "";

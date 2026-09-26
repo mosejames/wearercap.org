@@ -7,6 +7,7 @@ import {
   actionAllowed,
   voters,
   tally,
+  addReceipts,
   newDraft,
 } from "./model.js";
 describe("check request validation", () => {
@@ -223,4 +224,23 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
   expect(
     validateDraft({ ...d, items: [{ ...d.items[0], amount: "30.01" }] }),
   ).toMatch(/must not exceed/);
+});
+
+describe("adding receipts to an expense", () => {
+  const f = (name, size = 100, type = "image/png") => ({ name, size, type });
+  it("keeps what is already attached, including uploaded receipts", () => {
+    const existing = [{ path: "u/r/a.png", name: "payment.png" }];
+    const out = addReceipts(existing, [f("invoice.pdf", 200, "application/pdf")]);
+    expect(out.receipts.map((r) => r.name)).toEqual(["payment.png", "invoice.pdf"]);
+  });
+  it("skips a file picked twice and holds the total to five", () => {
+    const once = addReceipts([], [f("a.png"), f("b.png")]).receipts;
+    expect(addReceipts(once, [f("a.png"), f("c.png")]).receipts).toHaveLength(3);
+    const four = addReceipts([], [f("1.png"), f("2.png"), f("3.png"), f("4.png")]).receipts;
+    expect(addReceipts(four, [f("5.png"), f("6.png")]).error).toMatch(/already has 4/);
+  });
+  it("still rejects unsupported and oversized files", () => {
+    expect(addReceipts([], [f("x.gif", 10, "image/gif")]).error).toMatch(/PDF, JPG, or PNG/);
+    expect(addReceipts([], [f("big.png", 11 * 1024 * 1024)]).error).toMatch(/10 MB/);
+  });
 });

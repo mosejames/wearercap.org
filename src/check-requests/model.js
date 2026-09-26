@@ -74,6 +74,21 @@ export function validateDraft(d) {
     return "Confirm the reimbursement statement before submitting.";
   return null;
 }
+// Adding files to an expense keeps what is already attached (uploaded or
+// not), skips a file picked twice, and holds the total to five.
+export function addReceipts(existing, files) {
+  const seen = new Set(
+    existing.filter((r) => r.file).map((r) => `${r.file.name}|${r.file.size}`),
+  );
+  const fresh = files.filter((f) => !seen.has(`${f.name}|${f.size}`));
+  const error = validateFiles(fresh);
+  if (error) return { error };
+  if (existing.length + fresh.length > 5)
+    return {
+      error: `Use no more than 5 receipts per expense. This one already has ${existing.length}.`,
+    };
+  return { receipts: [...existing, ...fresh.map((file) => ({ file, name: file.name }))] };
+}
 export function validateFiles(files) {
   if (files.length > 5) return "Use no more than 5 receipts per expense.";
   if (
