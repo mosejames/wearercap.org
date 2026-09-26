@@ -40,13 +40,13 @@ import {
   submit,
   act,
   details,
-  receiptUrl,
   archiveUrl,
 } from "./api.js";
 import "./requests.css";
 import NotificationPreferences from "./NotificationPreferences.jsx";
 import Account from "./Account.jsx";
 import PdfDownloads from "./PdfDownloads.jsx";
+import ReceiptThumbs from "./ReceiptThumbs.jsx";
 
 const dateLabel = (value) =>
   new Date(value).toLocaleString("en-US", {
@@ -1021,6 +1021,12 @@ function RequestList({ records, board, onSelect, onNew, loading, onRefresh }) {
               <strong className="money">{dollars(r.total_cents)}</strong>
               <ArrowRight size={18} />
             </button>
+            {board && (
+              <ReceiptThumbs
+                receipts={r.items.flatMap((item) => item.receipts || [])}
+                limit={6}
+              />
+            )}
             <PdfDownloads requestId={r.id} />
           </article>
         ))
@@ -1085,18 +1091,6 @@ function Detail({
       onError(e.message || "The update could not be saved.");
     } finally {
       setBusy(false);
-    }
-  }
-  async function openReceipt(receipt) {
-    try {
-      const url = await receiptUrl(receipt.path);
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.click();
-    } catch {
-      onError("The receipt could not be opened. Please try again.");
     }
   }
   return (
@@ -1183,18 +1177,7 @@ function Detail({
                   <strong>{dollars(item.amount_cents)}</strong>
                 </div>
                 <p className="muted">Purchased {item.date}</p>
-                <div className="actions">
-                  {item.receipts.map((receipt) => (
-                    <button
-                      key={receipt.path}
-                      className="secondary"
-                      onClick={() => openReceipt(receipt)}
-                    >
-                      <Download size={15} />
-                      {receipt.name}
-                    </button>
-                  ))}
-                </div>
+                <ReceiptThumbs receipts={item.receipts} labels />
               </div>
             ))}
             <div className="total">

@@ -102,3 +102,14 @@ export async function archiveUrl(path) {
   if (error) throw error;
   return data.signedUrl;
 }
+// Inline (not download) signed URLs so receipt images can render as thumbnails.
+export async function receiptPreviewUrls(paths) {
+  if (!paths.length) return {};
+  const { data, error } = await supabase.storage
+    .from("check-receipts")
+    .createSignedUrls(paths, 600);
+  if (error) throw error;
+  return Object.fromEntries(
+    data.filter((d) => d.signedUrl).map((d) => [d.path, d.signedUrl]),
+  );
+}
