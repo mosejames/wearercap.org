@@ -88,12 +88,13 @@ export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 export const PROMO_FIRST = 6;
 export const PROMO_EVERY = 20;
 
-const SCHOOL_ALBUMS = ['bingo-night'];
+const SCHOOL_ALBUMS = ['bingo-night', 'karaoke-night'];
 
 export const PROMOS = IS_SCHOOL ? [
   {
     id: 'karaoke-sept-27',
-    events: SCHOOL_ALBUMS,
+    // Not inside its own album: an RSVP card on the night's photos is a dead end.
+    events: ['bingo-night'],
     until: '2026-09-27',
     cta: 'RSVP',
     href: '/karaoke',

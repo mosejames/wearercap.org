@@ -181,3 +181,95 @@ html[data-vault="rcap"] .promo-cta{max-width:100%}
 html[data-vault="rcap"] .promo-tile img.promo-logo{width:150px;max-width:100%;height:auto;aspect-ratio:auto;object-fit:contain;margin-top:4px;margin-bottom:4px}
 
 html[data-vault="rcap"] .calm-header .mark .rcap-capsule-label{display:block;font-size:9px;letter-spacing:.16em;margin-top:7px;color:#fff}
+
+/* ---------------------------------------------------------- Capsule home
+   A front page, not a single album: latest and next event up top, what
+   families love and are saying beside it, then Everyday RCA and every album.
+   Navy carries the hero and the Everyday band; everything else sits on paper. */
+html[data-vault="rcap"] .capsule-home{padding-bottom:40px}
+html[data-vault="rcap"] .cap-hero{background:var(--red);color:#fff;padding:30px 0 64px}
+html[data-vault="rcap"] .cap-hero h1{font-size:clamp(34px,6vw,60px);line-height:1;letter-spacing:-.02em;font-weight:900;margin:8px 0 10px}
+html[data-vault="rcap"] .cap-lede{margin:0;max-width:560px;font-size:17px;line-height:1.45;color:rgba(255,255,255,.82)}
+html[data-vault="rcap"] .cap-eyebrow{margin:0;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+html[data-vault="rcap"] .cap-grid{display:grid;gap:22px;margin-top:-40px}
+html[data-vault="rcap"] .cap-events{display:grid;gap:16px}
+html[data-vault="rcap"] .cap-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(26,42,86,.10);overflow:hidden;min-width:0}
+html[data-vault="rcap"] .cap-card .cap-eyebrow{color:var(--ink-soft)}
+html[data-vault="rcap"] .cap-card h2{margin:6px 0 6px;font-size:clamp(24px,3.2vw,32px);line-height:1.05;font-weight:900;color:var(--red)}
+html[data-vault="rcap"] .cap-body{margin:0;color:var(--ink-soft);font-size:15px;line-height:1.45}
+html[data-vault="rcap"] .cap-fine{margin:8px 0 0;font-size:13px;color:var(--ink-soft)}
+html[data-vault="rcap"] .cap-link{font-weight:800;color:var(--red);text-decoration:none;font-size:14px}
+html[data-vault="rcap"] .cap-link:hover{text-decoration:underline}
+html[data-vault="rcap"] .cap-link.light{color:#fff}
+html[data-vault="rcap"] .cap-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:16px}
+html[data-vault="rcap"] .btn.gold{background:var(--gold);color:var(--red-deep);font-weight:900}
+
+html[data-vault="rcap"] .cap-latest{display:grid;box-shadow:inset 0 -4px 0 var(--gold),0 12px 30px rgba(26,42,86,.10)}
+html[data-vault="rcap"] .cap-latest-cover{position:relative;display:block;background:var(--red-deep)}
+html[data-vault="rcap"] .cap-latest-cover .cap-cover{aspect-ratio:16/10}
+html[data-vault="rcap"] .cap-latest-body{padding:20px 20px 24px}
+html[data-vault="rcap"] .cap-latest .cap-eyebrow{color:var(--red)}
+
+html[data-vault="rcap"] .cap-next{padding:20px}
+html[data-vault="rcap"] .cap-next-row{display:flex;gap:16px;align-items:flex-start;margin-top:12px}
+html[data-vault="rcap"] .cap-next-row h2{margin-top:0}
+html[data-vault="rcap"] .cap-date{flex:none;width:72px;border-radius:12px;background:var(--red);color:#fff;text-align:center;padding:8px 0 9px;display:flex;flex-direction:column;box-shadow:inset 0 -4px 0 var(--gold)}
+html[data-vault="rcap"] .cap-date small{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+html[data-vault="rcap"] .cap-date b{font-size:32px;line-height:1.05;font-weight:900}
+html[data-vault="rcap"] .cap-next.is-empty h2{color:var(--ink-soft)}
+html[data-vault="rcap"] .cap-next.is-empty .cap-link{display:inline-block;margin-top:12px}
+
+html[data-vault="rcap"] .cap-cover{display:grid;gap:2px;width:100%;height:100%;background:var(--mist);overflow:hidden}
+html[data-vault="rcap"] .cap-cover img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
+html[data-vault="rcap"] .cap-cover.n2{grid-template-columns:1fr 1fr}
+html[data-vault="rcap"] .cap-cover.n3{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr}
+html[data-vault="rcap"] .cap-cover.n3 img:first-child{grid-row:span 2}
+html[data-vault="rcap"] .cap-cover.n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+html[data-vault="rcap"] .cap-cover-empty{display:block;width:100%;height:100%;min-height:120px;background:linear-gradient(135deg,var(--red) 0%,var(--red-deep) 100%)}
+
+html[data-vault="rcap"] .cap-pulse{display:grid;gap:22px;min-width:0}
+html[data-vault="rcap"] .cap-section{min-width:0}
+html[data-vault="rcap"] .cap-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+html[data-vault="rcap"] .cap-head h2{margin:0;font-size:22px;font-weight:900;color:var(--red);letter-spacing:-.01em}
+html[data-vault="rcap"] .cap-empty{margin:0;padding:18px;border:1px dashed var(--line);border-radius:14px;color:var(--ink-soft);font-size:15px;line-height:1.45;background:var(--surface)}
+
+html[data-vault="rcap"] .cap-liked{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+html[data-vault="rcap"] .cap-liked li.first{grid-column:span 2;grid-row:span 2}
+html[data-vault="rcap"] .cap-liked a{position:relative;display:block;border-radius:10px;overflow:hidden;aspect-ratio:1;background:var(--red-deep)}
+html[data-vault="rcap"] .cap-liked li.first a{aspect-ratio:auto;height:100%}
+html[data-vault="rcap"] .cap-liked img{width:100%;height:100%;object-fit:cover;display:block}
+html[data-vault="rcap"] .cap-heart{position:absolute;left:6px;bottom:6px;background:var(--gold);color:var(--red-deep);border-radius:999px;padding:3px 8px;font-size:12px;font-weight:900}
+html[data-vault="rcap"] .cap-liked li.first .cap-heart{font-size:14px;padding:5px 11px;left:10px;bottom:10px}
+html[data-vault="rcap"] .cap-play{position:absolute;right:6px;top:6px;color:#fff;font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+
+html[data-vault="rcap"] .cap-comments{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+html[data-vault="rcap"] .cap-comments a{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+html[data-vault="rcap"] .cap-comments a:hover{border-color:var(--red)}
+html[data-vault="rcap"] .cap-comments img{flex:none;width:52px;height:52px;border-radius:8px;object-fit:cover}
+html[data-vault="rcap"] .cap-comment{display:flex;flex-direction:column;gap:3px;min-width:0}
+html[data-vault="rcap"] .cap-comment-body{font-size:15px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+html[data-vault="rcap"] .cap-comment small{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-vault="rcap"] .cap-comment small b{color:var(--red)}
+
+html[data-vault="rcap"] .cap-everyday{display:grid;gap:18px;align-items:center;background:var(--red);color:#fff;border-radius:18px;padding:24px;box-shadow:inset 0 -4px 0 var(--gold)}
+html[data-vault="rcap"] .cap-everyday h2{margin:6px 0 8px;font-size:clamp(26px,4vw,40px);line-height:1;font-weight:900}
+html[data-vault="rcap"] .cap-everyday p{margin:0;max-width:520px;line-height:1.45;color:rgba(255,255,255,.85)}
+html[data-vault="rcap"] .cap-everyday .cap-eyebrow{color:var(--gold)}
+html[data-vault="rcap"] .cap-everyday-cover{display:block;border-radius:12px;overflow:hidden;aspect-ratio:16/10}
+
+html[data-vault="rcap"] .cap-albums{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+html[data-vault="rcap"] .cap-album{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+html[data-vault="rcap"] .cap-album:hover{border-color:var(--red)}
+html[data-vault="rcap"] .cap-album .cap-cover{aspect-ratio:4/3;height:auto}
+html[data-vault="rcap"] .cap-album-meta{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px}
+html[data-vault="rcap"] .cap-album-meta b{font-size:16px;color:var(--red);line-height:1.2}
+html[data-vault="rcap"] .cap-album-meta small{font-size:12px;color:var(--ink-soft)}
+html[data-vault="rcap"] .cap-race .house-board{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+html[data-vault="rcap"] .gallery-head .crumb{display:inline-block;margin-bottom:8px;font-size:14px;font-weight:700;color:var(--red);text-decoration:none}
+
+@media(min-width:860px){
+  html[data-vault="rcap"] .cap-grid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start;gap:28px}
+  html[data-vault="rcap"] .cap-everyday,html[data-vault="rcap"] .cap-grid > .cap-section{grid-column:1 / -1}
+  html[data-vault="rcap"] .cap-everyday{grid-template-columns:1.1fr 1fr;padding:32px}
+  html[data-vault="rcap"] .cap-pulse{padding-top:52px}
+}

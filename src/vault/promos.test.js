@@ -15,6 +15,7 @@ describe('album promos', () => {
     expect(promosFor('bingo-night', '2026-09-16').map((p) => p.id)).toEqual(['karaoke-sept-27', 'membership-2026', 'collective', 'suggestion-box']);
     expect(promosFor('bingo-night', '2026-09-28').map((p) => p.id)).toEqual(['membership-2026', 'collective', 'suggestion-box']);
     expect(promosFor('everyday-rca', '2026-09-16')).toEqual([]);
+    expect(promosFor('karaoke-night', '2026-09-27').map((p) => p.id)).toEqual(['membership-2026', 'collective', 'suggestion-box']);
   });
 
   it('take turns so the same card never follows itself, one per 20 photos', async () => {

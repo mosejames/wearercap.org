@@ -14,6 +14,7 @@ import {
 } from './data.js';
 import { ThankYouButton, PostUploadShare, CapsuleInbox, ThanksIndicator } from './CapsuleCommunity.jsx';
 import { HouseBoard, MostLoved, ContributorBoard } from './School.jsx';
+import { CapsuleHome } from './CapsuleHome.jsx';
 import { SaveMedia } from './SaveMedia.jsx';
 import { ACTIVITIES, SuggestionForm, SuggestionReview, GalleryVisibility } from './Categories.jsx';
 import { StaffPanel } from './AdminTools.jsx';
@@ -839,7 +840,7 @@ function TopBar({ profile, admin, onName, onProfile, route, reportCount }) {
           <small>{YEAR.label} · {WORDS.topSub}</small>
         </a>
         <nav className="nav">
-          <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>{IS_SCHOOL ? 'Gallery' : 'Timeline'}</a>
+          <a href="#/" className={`nav-home${route === 'home' ? ' on' : ''}`}>{IS_SCHOOL ? 'Home' : 'Timeline'}</a>
           {!IS_SCHOOL && <a href="#/community" className={route === 'community' ? 'on' : ''}>Leaders</a>}
           {!IS_SCHOOL && <a href="#/top" className={route === 'top' ? 'on' : ''}>Most loved</a>}
           {admin && <a href="#/admin" className={route === 'admin' ? 'on' : ''}>Admin{reportCount > 0 ? ` (${reportCount})` : ''}</a>}
@@ -1161,6 +1162,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
       )}
       {IS_SCHOOL ? <div className="ev-head gallery-head">
         <div className="shell">
+          {!homeMode && <a href="#/" className="crumb">← Capsule home</a>}
           <div className="gallery-heading">
             <div><p className="gallery-date">{event.ongoing ? 'All year' : fmtRange(event.startsOn, event.endsOn)}{photos && <> · {plural(visible.length, 'photo')}</>}</p><h1>{event.title}</h1></div>
             <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>
@@ -1742,7 +1744,7 @@ export default function App() {
         <Home onSuggest={() => setSuggesting(true)} events={events} requests={requests} recent={recent} covers={allCovers} totals={totals}
           onAdd={onAdd} today={today} admin={admin} onInvite={setInvite} />
       )}
-      {route.name === 'home' && IS_SCHOOL && <SchoolGallery events={events} loading={!totals} canMove={admin} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd} onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} today={today} showToast={showToast} />}
+      {route.name === 'home' && IS_SCHOOL && <CapsuleHome events={events} covers={allCovers} totals={totals} today={today} onAdd={onAdd} />}
       {route.name === 'event' && (events.length ? (
         <EventPage key={route.slug} events={events} canMove={admin} event={currentEvent} owner={owner} profile={profile} admin={admin && staffRole !== 'moderator'} pass={pass} onAdd={onAdd}
           onNeedName={needName} onInvite={setInvite} refreshEvents={refresh} initialPhotoId={route.photoId} today={today} showToast={showToast} />

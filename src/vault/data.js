@@ -287,6 +287,17 @@ export async function mostLoved(eventId = null) {
   const top = await listTopPhotos(1, eventId);
   return top[0] || null;
 }
+// The newest visible comments across this vault, each with the photo it sits
+// on, for the Capsule home.
+export async function latestComments(limit = 5) {
+  const { data, error } = await supabase.rpc('vault_latest_comments', { p_house: HOUSE.id, p_limit: limit });
+  if (error) throw error;
+  return (data || []).map((r) => ({
+    id: r.id, body: r.body, authorName: r.author_name || '', owner: r.owner, createdAt: r.created_at,
+    photoId: r.photo_id, storage: r.storage, thumbKey: r.thumb_key, webKey: r.web_key, contentType: r.content_type,
+    eventSlug: r.event_slug, eventTitle: r.event_title,
+  }));
+}
 export async function removeUpload(id, pass = '') {
   const response = await fetch('/api/vault-remove', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeaders() },
