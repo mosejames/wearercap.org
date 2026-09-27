@@ -14,13 +14,15 @@ function cell(v) {
   return '"' + s.replace(/"/g, '""') + '"';
 }
 
-export function toCsv(rows) {
+export function toCsv(rows, slug) {
   const head = ['RSVP', 'Status', 'Name', 'Phone', 'Email', 'House', 'Grades', 'Coming with', 'Photo', 'Confirmation email'];
+  const reminders = slug === 'karaoke-sept-27';
+  if (reminders) head.push('Tonight reminder link');
   const body = rows.map((r) => [
     fmt(r.created_at), r.status, r.full_name, r.phone, r.email, houseNames(r),
     (r.grades || []).join('; '), r.plus_one_name, r.photo_url ? 'yes' : '',
     r.confirm_sent_at ? fmt(r.confirm_sent_at) : r.confirm_error ? `FAILED: ${r.confirm_error}` : 'not sent',
-  ].map(cell).join(','));
+  ].concat(reminders ? [r.status === 'going' ? `https://wearercap.org/tonight#name=${encodeURIComponent((r.full_name || '').trim().split(/\s+/)[0])}` : ''] : []).map(cell).join(','));
   return [head.map(cell).join(','), ...body].join('\r\n');
 }
 
@@ -39,7 +41,7 @@ export default function Admin({ slug }) {
   };
 
   const download = () => {
-    const blob = new Blob(['﻿' + toCsv(data.rsvps)], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob(['﻿' + toCsv(data.rsvps, slug)], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `rcap-rsvp-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
