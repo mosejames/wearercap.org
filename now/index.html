@@ -153,8 +153,8 @@
         if (intro.contains(document.activeElement)) document.querySelector('.button.primary')?.focus({preventScroll:true});
         setTimeout(() => intro.remove(), 550);
       };
-      const fallback = setTimeout(finish, 5000);
-      gif.onload = () => { if (!ended) hold = setTimeout(finish, 2000); };
+      const fallback = setTimeout(finish, 8000);
+      gif.onload = () => { if (!ended) hold = setTimeout(finish, 4000); };
       gif.onerror = finish;
       skip.onclick = finish;
       gif.src = '/brand/now-intro.gif';
