@@ -120,7 +120,11 @@ async function download(url) {
   const t = setTimeout(() => ctrl.abort(), 12_000);
   try {
     const r = await fetch(url, { redirect: 'follow', signal: ctrl.signal });
-    if (!r.ok) throw new Error(`download failed (${r.status})`);
+    if (!r.ok) {
+      const source = new URL(url);
+      console.error('booth-ingest: media download failed', r.status, source.origin + source.pathname);
+      throw new Error(`download failed (${r.status})`);
+    }
     const buf = Buffer.from(await r.arrayBuffer());
     if (buf.length > MAX_BYTES) throw new Error('file over 50MB');
     return { buf, contentType: (r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase() };
