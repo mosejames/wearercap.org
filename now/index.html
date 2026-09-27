@@ -102,7 +102,8 @@
     @media (prefers-reduced-motion:reduce) { *, *:before, *:after { animation:none !important; transition:none !important; } }
     @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .button { transition:none; } }
     .intro { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; background:#0b213d; opacity:1; transition:opacity .55s ease; }
-    .intro img { display:block; width:min(100vw,650px); max-height:calc(100svh - 110px); object-fit:contain; }
+    .intro-caption { flex:none; width:min(100% - 40px,560px); margin:0; text-align:center; color:white; font-size:clamp(1.4rem,5.5vw,2.2rem); line-height:1.12; font-weight:900; letter-spacing:-.035em; text-wrap:balance; }
+    .intro img { display:block; width:min(100vw,650px); max-height:calc(100svh - 230px); object-fit:contain; }
     .intro.leaving { opacity:0; pointer-events:none; }
     body.intro-playing { overflow:hidden; }
     .intro-playing .page *, .intro-playing .page *:before, .intro-playing .page *:after { animation-play-state:paused; }
@@ -127,12 +128,15 @@
       const intro = document.createElement('div');
       intro.className = 'intro';
       intro.setAttribute('aria-label', 'Welcome to RCAP');
+      const caption = document.createElement('p');
+      caption.className = 'intro-caption';
+      caption.textContent = 'Your $25 RCAP membership donation called.';
       const gif = new Image();
       gif.alt = '';
       const skip = document.createElement('button');
       skip.className = 'intro-skip';
       skip.textContent = 'Skip';
-      intro.append(gif, skip);
+      intro.append(caption, gif, skip);
       document.body.prepend(intro);
       document.body.classList.add('intro-playing');
       page.inert = true;
