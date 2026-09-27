@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b4e">
+  <meta name="description" content="Make your RCAP membership donation and share tonight’s memories.">
+  <title>RCAP Now | We Are RCAP.</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23102b4e'/%3E%3Ctext x='9' y='45' fill='white' font-family='Arial,sans-serif' font-weight='900' font-size='37'%3ERP%3C/text%3E%3Ccircle cx='55' cy='47' r='4' fill='%23ffbc33'/%3E%3C/svg%3E">
+  <style>
+    :root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; --navy:#102b4e; --navy2:#0b213d; --gold:#ffbc33; --white:#fff; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-width:280px; background:var(--navy2); color:var(--white); }
+    a { color:inherit; }
+    .page { min-height:100svh; overflow:hidden; background: radial-gradient(ellipse 80% 55% at 96% 3%, #203f63 0%, transparent 65%), linear-gradient(145deg,var(--navy) 0%,var(--navy2) 88%); }
+    .shell { width:min(100% - 44px, 1100px); margin:auto; position:relative; }
+    .hero { position:relative; isolation:isolate; min-height:min(830px, 100svh); padding:36px 0 70px; display:flex; flex-direction:column; }
+    .hero:after { content:"P."; position:absolute; z-index:-1; right:-.26em; top:25%; font-weight:900; font-size:clamp(310px, 60vw, 850px); letter-spacing:-.14em; line-height:.75; color:rgba(255,188,51,.045); pointer-events:none; }
+    .brand { display:block; width:154px; height:auto; }
+    .hero-content { flex:1; display:flex; flex-direction:column; justify-content:center; padding:72px 0 24px; max-width:930px; }
+    .eyebrow { margin:0 0 19px; color:var(--gold); font-size:.82rem; font-weight:800; letter-spacing:.19em; text-transform:uppercase; }
+    h1,h2,p { margin-top:0; }
+    h1 { max-width:900px; margin-bottom:25px; font-size:clamp(3.2rem, 8.2vw, 7.9rem); line-height:.97; letter-spacing:-.067em; font-weight:900; text-wrap:balance; }
+    .support { font-size:clamp(1.35rem, 3.5vw, 2.45rem); font-weight:800; letter-spacing:-.035em; line-height:1.16; margin-bottom:31px; }
+    .support strong { color:var(--gold); font-weight:900; }
+    .support span { display:block; margin-top:7px; font-size:clamp(1.03rem, 2vw, 1.35rem); font-weight:500; letter-spacing:0; color:#d6e2ef; }
+    .button { display:inline-flex; align-items:center; justify-content:center; gap:13px; width:fit-content; min-height:74px; padding:19px 29px; border-radius:18px; text-align:center; text-decoration:none; font-size:clamp(1rem, 2.6vw, 1.25rem); font-weight:900; line-height:1.12; letter-spacing:-.015em; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
+    .button:hover { transform:translateY(-3px); }
+    .button:focus-visible { outline:3px solid white; outline-offset:5px; }
+    .button.primary { color:#102b4e; background:var(--gold); box-shadow:0 13px 35px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.35); }
+    .button.primary:hover { background:#ffca59; box-shadow:0 17px 42px rgba(0,0,0,.3); }
+    .button.secondary { min-height:58px; border:1.5px solid var(--gold); color:var(--white); background:rgba(255,255,255,.025); }
+    .button.secondary:hover { background:rgba(255,188,51,.11); }
+    .arrow { font-size:1.4em; line-height:.6; font-weight:500; flex:none; }
+    .secondary-section { border-top:1px solid rgba(255,255,255,.16); padding:62px 0 74px; background:rgba(2,15,31,.28); }
+    .secondary-inner { display:grid; grid-template-columns:1fr auto; gap:38px; align-items:center; }
+    .secondary-section .eyebrow { margin-bottom:14px; }
+    h2 { margin:0 0 9px; max-width:730px; font-size:clamp(2.25rem,5vw,4.25rem); line-height:1.04; font-weight:900; letter-spacing:-.055em; text-wrap:balance; }
+    .secondary-copy { color:#d6e2ef; font-size:1.12rem; line-height:1.45; margin:0; }
+    footer { padding:26px 0 35px; color:#b2c5d8; font-size:.83rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+    @media (max-width:720px) {
+      .shell { width:min(100% - 40px, 520px); }
+      .hero { min-height:100svh; padding-top:28px; padding-bottom:48px; }
+      .brand { width:120px; }
+      .hero-content { padding-top:55px; padding-bottom:0; }
+      .eyebrow { font-size:.74rem; margin-bottom:15px; }
+      h1 { font-size:clamp(3rem, 11vw, 4.7rem); margin-bottom:25px; }
+      .support { margin-bottom:32px; }
+      .button.primary { width:100%; min-height:78px; padding-inline:15px; }
+      .secondary-inner { display:block; }
+      .secondary-section { padding:53px 0 64px; }
+      .secondary-copy { margin-bottom:25px; }
+      .button.secondary { width:100%; }
+    }
+    @media (max-height:700px) and (max-width:720px) {
+      .hero { min-height:700px; }
+      .hero-content { padding-top:35px; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .button { transition:none; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero shell" aria-labelledby="primary-heading">
+      <img class="brand" src="/brand/we-are-rcap-reversed.svg" alt="WE ARE RCAP." width="426" height="193">
+      <div class="hero-content" id="primary-action"></div>
+    </section>
+    <section class="secondary-section" aria-labelledby="secondary-heading">
+      <div class="shell secondary-inner" id="secondary-action"></div>
+    </section>
+    <footer class="shell">WE ARE RCAP.</footer>
+  </main>
+  <script>
+    // Edit this block to reuse /now for another featured action or event.
+    const featured = {
+      primary: {
+        eyebrow: 'Your RCAP membership',
+        heading: 'Have you made your RCAP membership donation?',
+        amount: '$25 per family.',
+        prompt: 'If not, now’s the perfect time.',
+        button: 'Make My $25 Membership Donation',
+        url: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A'
+      },
+      secondary: {
+        eyebrow: 'From tonight to the whole RCAP family',
+        heading: 'Tonight was a vibe. Help us capture it.',
+        copy: 'Got a good one? Share your photos and videos from tonight with RCAP.',
+        button: 'Share Tonight’s Photos',
+        url: 'https://wearercap.org/rcap-capsule/'
+      }
+    };
+
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const safeURL = value => {
+      const url = new URL(value, location.href);
+      if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Invalid action URL');
+      return escapeHTML(url.href);
+    };
+    const a = featured.primary, b = featured.secondary;
+    document.querySelector('#primary-action').innerHTML = `
+      <p class="eyebrow">${escapeHTML(a.eyebrow)}</p>
+      <h1 id="primary-heading">${escapeHTML(a.heading)}</h1>
+      <p class="support"><strong>${escapeHTML(a.amount)}</strong><span>${escapeHTML(a.prompt)}</span></p>
+      <a class="button primary" href="${safeURL(a.url)}">${escapeHTML(a.button)} <span class="arrow" aria-hidden="true">↗</span></a>`;
+    document.querySelector('#secondary-action').innerHTML = `
+      <div><p class="eyebrow">${escapeHTML(b.eyebrow)}</p><h2 id="secondary-heading">${escapeHTML(b.heading)}</h2><p class="secondary-copy">${escapeHTML(b.copy)}</p></div>
+      <a class="button secondary" href="${safeURL(b.url)}">${escapeHTML(b.button)} <span class="arrow" aria-hidden="true">↗</span></a>`;
+  </script>
+</body>
+</html>
