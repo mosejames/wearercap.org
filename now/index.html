@@ -101,12 +101,12 @@
     }
     @media (prefers-reduced-motion:reduce) { *, *:before, *:after { animation:none !important; transition:none !important; } }
     @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .button { transition:none; } }
-    .intro { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:#0b213d; opacity:1; transition:opacity .55s ease; }
-    .intro img { display:block; width:min(100vw,650px); max-height:100svh; object-fit:contain; }
+    .intro { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; background:#0b213d; opacity:1; transition:opacity .55s ease; }
+    .intro img { display:block; width:min(100vw,650px); max-height:calc(100svh - 110px); object-fit:contain; }
     .intro.leaving { opacity:0; pointer-events:none; }
     body.intro-playing { overflow:hidden; }
     .intro-playing .page *, .intro-playing .page *:before, .intro-playing .page *:after { animation-play-state:paused; }
-    .intro-skip { position:absolute; bottom:max(25px,env(safe-area-inset-bottom)); right:24px; border:1px solid #ffffff70; border-radius:30px; padding:10px 18px; color:white; background:#102b4e; font:700 14px Arial,sans-serif; cursor:pointer; }
+    .intro-skip { flex:none; border:1px solid #ffffff70; border-radius:30px; padding:10px 18px; color:white; background:#102b4e; font:700 14px Arial,sans-serif; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -131,7 +131,7 @@
       gif.alt = '';
       const skip = document.createElement('button');
       skip.className = 'intro-skip';
-      skip.textContent = 'Skip intro';
+      skip.textContent = 'Skip';
       intro.append(gif, skip);
       document.body.prepend(intro);
       document.body.classList.add('intro-playing');
