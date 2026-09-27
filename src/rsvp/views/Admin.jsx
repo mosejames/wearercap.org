@@ -22,7 +22,7 @@ export function toCsv(rows, slug) {
     fmt(r.created_at), r.status, r.full_name, r.phone, r.email, houseNames(r),
     (r.grades || []).join('; '), r.plus_one_name, r.photo_url ? 'yes' : '',
     r.confirm_sent_at ? fmt(r.confirm_sent_at) : r.confirm_error ? `FAILED: ${r.confirm_error}` : 'not sent',
-  ].concat(reminders ? [r.status === 'going' ? `https://wearercap.org/tonight#name=${encodeURIComponent((r.full_name || '').trim().split(/\s+/)[0])}` : ''] : []).map(cell).join(','));
+  ].concat(reminders ? [r.status === 'going' ? `https://wearercap.org/karaoke/tonight#name=${encodeURIComponent((r.full_name || '').trim().split(/\s+/)[0])}` : ''] : []).map(cell).join(','));
   return [head.map(cell).join(','), ...body].join('\r\n');
 }
 

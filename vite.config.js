@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        tonight: resolve(__dirname, 'tonight/index.html'),
+        tonight: resolve(__dirname, 'karaoke/tonight/index.html'),
         now: resolve(__dirname, 'now/index.html'),
         septembernewsletter: resolve(__dirname, 'newsletter/september-20/index.html'),
         karaokevideo: resolve(__dirname, 'this-is-how-we-do-it/index.html'),
