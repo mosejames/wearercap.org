@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>RCAP Grab and Go</title>
+<meta name="description" content="Took something from the RCAP table? Tell us what you grabbed. Ten seconds." />
+<meta property="og:title" content="RCAP Grab and Go" />
+<meta property="og:description" content="Took something from the table? Tell us what you grabbed." />
+<meta property="og:url" content="https://wearercap.org/grab/" />
+<meta name="theme-color" content="#0e1a33" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root{--navy:#0e1a33;--navy2:#16264a;--line:rgba(255,255,255,.14);--gold:#f7a81c;--orange:#f26a1b;--paper:#faf4ea;--mute:rgba(250,244,234,.66);}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;background:var(--navy);color:var(--paper);}
+  body{font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;
+    background:radial-gradient(120% 60% at 100% 0%,rgba(247,168,28,.16),transparent 60%),var(--navy);min-height:100svh;}
+  .wrap{max-width:560px;margin:0 auto;padding:28px 16px calc(120px + env(safe-area-inset-bottom));}
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px;}
+  .brand img{height:26px;}
+  .event{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    border:1px solid rgba(247,168,28,.4);border-radius:99px;padding:6px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;}
+  h1{font-size:clamp(36px,11vw,56px);font-weight:900;letter-spacing:-.035em;line-height:.98;margin:0 0 12px;}
+  h1 span{color:var(--gold);}
+  .lede{color:var(--mute);font-size:17px;margin:0 0 28px;}
+  h2{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:30px 0 12px;}
+  h2 small{color:var(--mute);letter-spacing:.06em;font-weight:600;text-transform:none;font-size:13px;margin-left:6px;}
+  .adds{display:grid;grid-template-columns:1fr;gap:10px;}
+  .add{display:flex;align-items:center;justify-content:space-between;width:100%;padding:18px 18px;border-radius:16px;
+    border:1.5px solid var(--line);background:var(--navy2);color:var(--paper);font:inherit;font-size:18px;font-weight:800;cursor:pointer;text-align:left;}
+  .add:active{transform:scale(.985);}
+  .add .plus{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;font-size:24px;font-weight:900;line-height:1;flex:none;}
+  .add em{display:block;font-style:normal;font-weight:600;font-size:13px;color:var(--mute);margin-top:2px;}
+  .items{display:grid;gap:12px;margin-top:4px;}
+  .card{border-radius:16px;background:var(--paper);color:var(--navy);padding:16px;animation:pop .22s ease-out;}
+  .card.missing{box-shadow:0 0 0 3px var(--orange);}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .card-top b{font-size:17px;font-weight:900;}
+  .x{border:0;background:transparent;color:rgba(14,26,51,.55);font:inherit;font-size:14px;font-weight:700;padding:6px;cursor:pointer;}
+  .grp{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,26,51,.55);margin:10px 0 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{border:1.5px solid rgba(14,26,51,.18);background:#fff;color:var(--navy);border-radius:11px;padding:10px 12px;min-width:48px;
+    font:inherit;font-size:15px;font-weight:700;cursor:pointer;}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:var(--gold);}
+  .qty{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(14,26,51,.12);}
+  .qty span{font-size:14px;font-weight:700;color:rgba(14,26,51,.7);flex:1;}
+  .qty button{width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(14,26,51,.2);background:#fff;font:inherit;font-size:20px;font-weight:800;color:var(--navy);cursor:pointer;}
+  .qty output{font-size:20px;font-weight:900;min-width:22px;text-align:center;}
+  .houses{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .house{padding:15px 10px;border-radius:14px;border:1.5px solid var(--line);background:var(--navy2);color:var(--paper);font:inherit;font-size:16px;font-weight:800;cursor:pointer;}
+  .house.on{background:var(--gold);border-color:var(--gold);color:var(--navy);}
+  input[type=text]{width:100%;padding:16px;border-radius:14px;border:1.5px solid var(--line);background:var(--navy2);color:var(--paper);font:inherit;font-size:17px;}
+  input[type=text]::placeholder{color:rgba(250,244,234,.4);}
+  input[type=text]:focus{outline:none;border-color:var(--gold);}
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(14,26,51,0),var(--navy) 30%);}
+  .bar-in{max-width:560px;margin:0 auto;}
+  .go{width:100%;padding:18px;border:0;border-radius:16px;background:var(--gold);color:var(--navy);font:inherit;font-size:18px;font-weight:900;cursor:pointer;}
+  .go:disabled{background:rgba(250,244,234,.18);color:rgba(250,244,234,.5);}
+  .err{color:#ffb38a;font-size:14px;font-weight:700;text-align:center;margin:0 0 8px;min-height:0;}
+  .empty{color:var(--mute);font-size:14px;margin:4px 0 0;}
+  .done{text-align:center;padding-top:12vh;}
+  .done .check{width:84px;height:84px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;margin:0 auto 22px;font-size:44px;font-weight:900;}
+  .done p{color:var(--mute);font-size:17px;}
+  .ghost{margin-top:22px;padding:14px 20px;border-radius:14px;border:1.5px solid var(--line);background:transparent;color:var(--paper);font:inherit;font-size:16px;font-weight:800;cursor:pointer;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<main class="wrap" id="form">
+  <div class="brand">
+    <img src="/brand/we-are-rcap-reversed.svg" alt="RCAP" onerror="this.style.display='none'" />
+    <div class="event" id="eventLabel">Grab and Go</div>
+  </div>
+  <h1>Take what fits.<br /><span>Tell us what.</span></h1>
+  <p class="lede">Ten seconds. It helps us see what families actually need.</p>
+
+  <h2>What did you grab?</h2>
+  <div class="adds" id="adds"></div>
+  <div class="items" id="items" style="margin-top:14px"></div>
+
+  <h2>Your house <small>optional</small></h2>
+  <div class="houses" id="houses"></div>
+
+  <h2>Your first name <small>optional</small></h2>
+  <input type="text" id="name" autocomplete="given-name" maxlength="60" placeholder="First name" />
+</main>
+
+<main class="wrap done" id="thanks" hidden>
+  <div class="check">&#10003;</div>
+  <h1>Got it.<br /><span>Enjoy.</span></h1>
+  <p id="thanksLine">Thank you for telling us.</p>
+  <button class="ghost" id="again" type="button">Log another family</button>
+</main>
+
+<div class="bar" id="bar">
+  <div class="bar-in">
+    <p class="err" id="err"></p>
+    <button class="go" id="go" type="button" disabled>Add an item above</button>
+  </div>
+</div>
+
+<script>
+const SB = 'https://kcsrtwwpnekqdrfgcfys.supabase.co';
+const KEY = 'sb_publishable_OuUa2f9ep3dnPk1OpG_ocg_KeBAXdvG';
+const rpc = async (fn, body) => {
+  const r = await fetch(`${SB}/rest/v1/rpc/${fn}`, {
+    method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}),
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Error(t || r.statusText);
+  return t ? JSON.parse(t) : null;
+};
+
+const ITEMS = [
+  { id: 'Girls Khaki Pants', note: 'Girls and juniors sizes', groups: [
+    ['Girls', ['7','8','10','12','14','16']],
+    ['Juniors', ['Jr 0','Jr 1','Jr 3','Jr 5','Jr 7','Jr 9','Jr 11']],
+    ['', ['Not sure']] ] },
+  { id: 'Boys Khaki Pants', note: 'Boys and waist sizes', groups: [
+    ['Boys', ['8','10','12','14','16','18','20']],
+    ['Waist', ['28','29','30','31','32','34','36']],
+    ['', ['Not sure']] ] },
+  { id: 'RCA Spirit Shirt', note: 'Any spirit tee on the table', groups: [
+    ['Kids', ['Kids S','Kids M','Kids L','Kids XL']],
+    ['Adult', ['XS','S','M','L','XL','2XL']],
+    ['', ['Not sure']] ] },
+];
+const HOUSES = ['Amistad','Altruismo','Isibindi','Rêveur'];
+
+const params = new URLSearchParams(location.search);
+const urlEvent = params.get('e');
+let lines = []; let house = null; let seq = 0; let busy = false;
+const $ = (id) => document.getElementById(id);
+
+if (urlEvent) $('eventLabel').textContent = urlEvent;
+else rpc('gg_current_event').then((e) => { if (e) $('eventLabel').textContent = e; }).catch(() => {});
+
+function renderAdds() {
+  $('adds').innerHTML = '';
+  ITEMS.forEach((it) => {
+    const b = document.createElement('button');
+    b.className = 'add'; b.type = 'button';
+    b.innerHTML = `<span>${it.id}<em>${it.note}</em></span><span class="plus">+</span>`;
+    b.onclick = () => { lines.push({ key: ++seq, item: it.id, size: null, qty: 1 }); renderItems(true); };
+    $('adds').appendChild(b);
+  });
+}
+
+function renderItems(scroll) {
+  const box = $('items'); box.innerHTML = '';
+  lines.forEach((ln) => {
+    const it = ITEMS.find((i) => i.id === ln.item);
+    const c = document.createElement('div');
+    c.className = 'card' + (ln.flag && !ln.size ? ' missing' : '');
+    let html = `<div class="card-top"><b>${ln.item}</b><button class="x" type="button" data-rm>Remove</button></div>`;
+    it.groups.forEach(([g, sizes]) => {
+      if (g) html += `<div class="grp">${g}</div>`; else html += '<div style="height:8px"></div>';
+      html += '<div class="chips">' + sizes.map((s) =>
+        `<button type="button" class="chip${ln.size === s ? ' on' : ''}" data-size="${s}">${s}</button>`).join('') + '</div>';
+    });
+    html += `<div class="qty"><span>How many?</span><button type="button" data-q="-1">&minus;</button><output>${ln.qty}</output><button type="button" data-q="1">+</button></div>`;
+    c.innerHTML = html;
+    c.querySelector('[data-rm]').onclick = () => { lines = lines.filter((l) => l.key !== ln.key); renderItems(); };
+    c.querySelectorAll('[data-size]').forEach((b) => b.onclick = () => { ln.size = b.dataset.size; renderItems(); });
+    c.querySelectorAll('[data-q]').forEach((b) => b.onclick = () => { ln.qty = Math.max(1, Math.min(20, ln.qty + Number(b.dataset.q))); renderItems(); });
+    box.appendChild(c);
+  });
+  if (scroll && box.lastElementChild) box.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  updateGo();
+}
+
+function renderHouses() {
+  $('houses').innerHTML = '';
+  HOUSES.forEach((h) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'house' + (house === h ? ' on' : ''); b.textContent = h;
+    b.onclick = () => { house = house === h ? null : h; renderHouses(); };
+    $('houses').appendChild(b);
+  });
+}
+
+function updateGo() {
+  const n = lines.reduce((a, l) => a + l.qty, 0);
+  $('go').disabled = busy || n === 0;
+  $('go').textContent = busy ? 'Saving' : n === 0 ? 'Add an item above' : `Log ${n} item${n === 1 ? '' : 's'}`;
+}
+
+$('go').onclick = async () => {
+  $('err').textContent = '';
+  const missing = lines.filter((l) => !l.size);
+  if (missing.length) {
+    lines.forEach((l) => l.flag = true); renderItems();
+    $('err').textContent = 'Pick a size for each item. "Not sure" works.';
+    document.querySelector('.card.missing')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  busy = true; updateGo();
+  try {
+    await rpc('gg_submit', {
+      p_event: urlEvent || null, p_name: $('name').value.trim() || null, p_house: house,
+      p_items: lines.map((l) => ({ item: l.item, size: l.size, qty: l.qty })),
+    });
+    const n = lines.reduce((a, l) => a + l.qty, 0);
+    const who = $('name').value.trim();
+    $('thanksLine').textContent = `${n} item${n === 1 ? '' : 's'} logged${who ? ', ' + who : ''}. Thank you for telling us.`;
+    $('form').hidden = true; $('bar').hidden = true; $('thanks').hidden = false; window.scrollTo(0, 0);
+  } catch (e) {
+    $('err').textContent = 'That did not go through. Check your signal and tap again.';
+  } finally { busy = false; updateGo(); }
+};
+
+$('again').onclick = () => {
+  lines = []; house = null; $('name').value = '';
+  renderItems(); renderHouses();
+  $('thanks').hidden = true; $('form').hidden = false; $('bar').hidden = false; window.scrollTo(0, 0);
+};
+
+renderAdds(); renderItems(); renderHouses();
+</script>
+</body>
+</html>

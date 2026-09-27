@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grab and Go Stats</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#0e1a33" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root{--navy:#0e1a33;--navy2:#16264a;--line:rgba(255,255,255,.14);--gold:#f7a81c;--paper:#faf4ea;--mute:rgba(250,244,234,.66);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--navy);color:var(--paper);font-family:'Archivo',system-ui,-apple-system,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 16px 60px;}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 8px;}
+  h1{font-size:clamp(30px,8vw,48px);font-weight:900;letter-spacing:-.03em;line-height:1;margin:0 0 20px;}
+  h2{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:32px 0 12px;}
+  input,select{padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--navy2);color:var(--paper);font:inherit;font-size:16px;}
+  button{padding:13px 16px;border-radius:12px;border:0;background:var(--gold);color:var(--navy);font:inherit;font-size:15px;font-weight:900;cursor:pointer;}
+  button.ghost{background:transparent;border:1.5px solid var(--line);color:var(--paper);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .row input{flex:1;min-width:0;}
+  .big{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(min-width:640px){.big{grid-template-columns:repeat(4,1fr);}}
+  .stat{background:var(--navy2);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .stat b{display:block;font-size:36px;font-weight:900;letter-spacing:-.03em;line-height:1;color:var(--gold);}
+  .stat span{font-size:13px;color:var(--mute);font-weight:700;}
+  .panel{background:var(--paper);color:var(--navy);border-radius:16px;padding:16px;margin-bottom:10px;}
+  .panel h3{margin:0 0 10px;font-size:17px;font-weight:900;display:flex;justify-content:space-between;}
+  .bars{display:grid;gap:6px;}
+  .b{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;font-size:14px;font-weight:700;}
+  .b i{display:block;height:14px;border-radius:7px;background:var(--navy);min-width:4px;}
+  .b em{font-style:normal;text-align:right;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);}
+  .tbl{overflow-x:auto;}
+  .note{color:var(--mute);font-size:14px;}
+  .err{color:#ffb38a;font-weight:700;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">RCAP Grab and Go</p>
+  <h1>What went out.</h1>
+
+  <section id="lock">
+    <div class="row"><input type="password" id="pass" placeholder="Admin passcode" /><button id="unlock">Open</button></div>
+    <p class="err" id="lockErr"></p>
+  </section>
+
+  <section id="app" hidden>
+    <h2>Now logging to</h2>
+    <div class="row"><input type="text" id="curEvent" maxlength="80" /><button id="setEvent">Switch event</button></div>
+    <p class="note" id="eventNote">Every scan of the QR code logs to this event. Change it before the next table goes out.</p>
+
+    <h2>Showing</h2>
+    <div class="row"><select id="filter"></select><button class="ghost" id="refresh">Refresh</button><button class="ghost" id="csv">Download CSV</button></div>
+
+    <h2>Totals</h2>
+    <div class="big" id="big"></div>
+
+    <h2>By item and size</h2>
+    <div id="byItem"></div>
+
+    <h2>By house</h2>
+    <div class="panel"><div class="bars" id="byHouse"></div></div>
+
+    <h2>Every entry</h2>
+    <div class="tbl"><table><thead><tr><th>Time</th><th>Event</th><th>Item</th><th>Size</th><th>Qty</th><th>House</th><th>Name</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+</div>
+<script>
+const SB = 'https://kcsrtwwpnekqdrfgcfys.supabase.co';
+const KEY = 'sb_publishable_OuUa2f9ep3dnPk1OpG_ocg_KeBAXdvG';
+const rpc = async (fn, body) => {
+  const r = await fetch(`${SB}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  const t = await r.text(); if (!r.ok) throw new Error(t); return t ? JSON.parse(t) : null;
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let pass = ''; let data = null;
+try { pass = sessionStorage.getItem('ggpass') || ''; } catch (e) {}
+
+async function load() {
+  data = await rpc('gg_admin', { p_pass: pass });
+  try { sessionStorage.setItem('ggpass', pass); } catch (e) {}
+  $('lock').hidden = true; $('app').hidden = false;
+  if (document.activeElement !== $('curEvent')) $('curEvent').value = data.current_event;
+  const events = [...new Set(data.rows.map((r) => r.event))];
+  const keep = $('filter').value;
+  $('filter').innerHTML = '<option value="">All events</option>' + events.map((e) => `<option>${esc(e)}</option>`).join('');
+  if (keep && events.includes(keep)) $('filter').value = keep;
+  render();
+}
+
+function bars(map, order) {
+  const entries = (order || Object.keys(map)).filter((k) => map[k]).map((k) => [k, map[k]]);
+  const max = Math.max(1, ...entries.map((e) => e[1]));
+  return entries.map(([k, v]) => `<div class="b"><span>${esc(k)}</span><i style="width:${(v / max) * 100}%"></i><em>${v}</em></div>`).join('') || '<p style="margin:0;opacity:.6">Nothing yet.</p>';
+}
+
+function render() {
+  const f = $('filter').value;
+  const rows = data.rows.filter((r) => !f || r.event === f);
+  const fams = new Set(rows.map((r) => r.created_at)).size;
+  const total = rows.reduce((a, r) => a + r.qty, 0);
+  const sum = (item) => rows.filter((r) => r.item.includes(item)).reduce((a, r) => a + r.qty, 0);
+  $('big').innerHTML = [
+    [total, 'Items given'], [fams, 'Families logged'], [sum('Pants'), 'Khaki pants'], [sum('Shirt'), 'Spirit shirts'],
+  ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+
+  const items = ['Girls Khaki Pants', 'Boys Khaki Pants', 'RCA Spirit Shirt'];
+  $('byItem').innerHTML = items.map((it) => {
+    const m = {}; rows.filter((r) => r.item === it).forEach((r) => { m[r.size] = (m[r.size] || 0) + r.qty; });
+    const t = Object.values(m).reduce((a, b) => a + b, 0);
+    return `<div class="panel"><h3><span>${it}</span><span>${t}</span></h3><div class="bars">${bars(m)}</div></div>`;
+  }).join('');
+
+  const h = {}; rows.forEach((r) => { const k = r.house || 'Skipped'; h[k] = (h[k] || 0) + r.qty; });
+  $('byHouse').innerHTML = bars(h, ['Amistad', 'Altruismo', 'Isibindi', 'Rêveur', 'Skipped']);
+
+  $('rows').innerHTML = rows.map((r) => `<tr><td>${new Date(r.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td><td>${esc(r.event)}</td><td>${esc(r.item)}</td><td>${esc(r.size)}</td><td>${r.qty}</td><td>${esc(r.house || '')}</td><td>${esc(r.parent_name || '')}</td></tr>`).join('');
+}
+
+$('unlock').onclick = async () => { pass = $('pass').value.trim(); $('lockErr').textContent = ''; try { await load(); } catch (e) { $('lockErr').textContent = 'That passcode did not work.'; } };
+$('pass').onkeydown = (e) => { if (e.key === 'Enter') $('unlock').click(); };
+$('filter').onchange = render;
+$('refresh').onclick = () => load().catch(() => {});
+$('setEvent').onclick = async () => {
+  const v = $('curEvent').value.trim(); if (!v) return;
+  try {
+    await rpc('gg_set_event', { p_pass: pass, p_event: v });
+    $('eventNote').textContent = `Switched. New scans now log to "${v}".`;
+    load();
+  } catch (e) { $('eventNote').textContent = 'Could not switch the event. Try again.'; }
+};
+$('csv').onclick = () => {
+  const f = $('filter').value; const rows = data.rows.filter((r) => !f || r.event === f);
+  const head = ['time', 'event', 'item', 'size', 'qty', 'house', 'name'];
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [head.join(','), ...rows.map((r) => [r.created_at, r.event, r.item, r.size, r.qty, r.house, r.parent_name].map(q).join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `grab-and-go${f ? '-' + f.replace(/\W+/g, '-').toLowerCase() : ''}.csv`; a.click();
+};
+setInterval(() => { if (!$('app').hidden) load().catch(() => {}); }, 30000);
+if (pass) load().catch(() => { $('lock').hidden = false; $('app').hidden = true; });
+</script>
+</body>
+</html>
