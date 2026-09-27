@@ -101,6 +101,12 @@
     }
     @media (prefers-reduced-motion:reduce) { *, *:before, *:after { animation:none !important; transition:none !important; } }
     @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .button { transition:none; } }
+    .intro { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:#0b213d; opacity:1; transition:opacity .55s ease; }
+    .intro img { display:block; width:min(100vw,650px); max-height:100svh; object-fit:contain; }
+    .intro.leaving { opacity:0; pointer-events:none; }
+    body.intro-playing { overflow:hidden; }
+    .intro-playing .page *, .intro-playing .page *:before, .intro-playing .page *:after { animation-play-state:paused; }
+    .intro-skip { position:absolute; bottom:max(25px,env(safe-area-inset-bottom)); right:24px; border:1px solid #ffffff70; border-radius:30px; padding:10px 18px; color:white; background:#102b4e; font:700 14px Arial,sans-serif; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -115,6 +121,41 @@
     <footer class="shell">WE ARE RCAP.</footer>
   </main>
   <script>
+    // The page stays usable if the GIF fails, loads slowly, or scripting is disabled.
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const page = document.querySelector('.page');
+      const intro = document.createElement('div');
+      intro.className = 'intro';
+      intro.setAttribute('aria-label', 'Welcome to RCAP');
+      const gif = new Image();
+      gif.alt = '';
+      const skip = document.createElement('button');
+      skip.className = 'intro-skip';
+      skip.textContent = 'Skip intro';
+      intro.append(gif, skip);
+      document.body.prepend(intro);
+      document.body.classList.add('intro-playing');
+      page.inert = true;
+      let ended = false;
+      let hold;
+      const finish = () => {
+        if (ended) return;
+        ended = true;
+        clearTimeout(fallback);
+        clearTimeout(hold);
+        intro.classList.add('leaving');
+        document.body.classList.remove('intro-playing');
+        page.inert = false;
+        if (intro.contains(document.activeElement)) document.querySelector('.button.primary')?.focus({preventScroll:true});
+        setTimeout(() => intro.remove(), 550);
+      };
+      const fallback = setTimeout(finish, 5000);
+      gif.onload = () => { if (!ended) hold = setTimeout(finish, 2000); };
+      gif.onerror = finish;
+      skip.onclick = finish;
+      gif.src = '/brand/now-intro.gif';
+    }
+
     // Edit this block to reuse /now for another featured action or event.
     const featured = {
       primary: {
