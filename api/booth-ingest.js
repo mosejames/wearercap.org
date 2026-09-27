@@ -69,6 +69,12 @@ export function parseSession(body) {
   return { directUrl, id, type };
 }
 
+// Snappic's dashboard sends this reserved example-domain URL when verifying
+// an endpoint. It is a signed connectivity probe, not a downloadable capture.
+export function isVerificationSample(directUrl) {
+  return directUrl === 'https://example.com/session/abc123.gif';
+}
+
 async function readRawBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
@@ -177,6 +183,9 @@ export default async function handler(req, res) {
   catch { return res.status(200).json({ ok: false, skipped: 'not-json' }); }
 
   const { directUrl, id: sessionId, type } = parseSession(body);
+  if (isVerificationSample(directUrl)) {
+    return res.status(200).json({ ok: true, skipped: 'verification-sample' });
+  }
   if (!directUrl || !sessionId) {
     console.warn('booth-ingest: unrecognized payload shape', Object.keys(body || {}));
     return res.status(200).json({ ok: false, skipped: 'unknown-shape' });

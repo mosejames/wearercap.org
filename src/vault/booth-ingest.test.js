@@ -1,9 +1,61 @@
 // @vitest-environment node
 import crypto from 'node:crypto';
-import { expect, it } from 'vitest';
-import { photoIdFor, parseSession, verifySignature } from '../../api/booth-ingest.js';
+import { afterEach, expect, it, vi } from 'vitest';
+import { photoIdFor, parseSession, verifySignature, isVerificationSample } from '../../api/booth-ingest.js';
 
 const SECRET = 'test-webhook-secret';
+
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+async function invoke(body, validSignature = true) {
+  vi.stubEnv('VITE_SUPABASE_URL', 'https://project.supabase.co');
+  vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon');
+  vi.stubEnv('SNAPPIC_WEBHOOK_SECRET', SECRET);
+  vi.stubEnv('SUPABASE_BOOTH_REFRESH_TOKEN', 'test-refresh');
+  vi.resetModules();
+  const { default: handler } = await import('../../api/booth-ingest.js');
+  const raw = Buffer.from(JSON.stringify(body));
+  const req = {
+    method: 'POST', headers: { 'x-signature': validSignature ? crypto.createHmac('sha256', SECRET).update(raw).digest('hex') : 'bad', host: 'wearercap.org' },
+    async *[Symbol.asyncIterator]() { yield raw; },
+  };
+  const res = { setHeader() {}, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
+  await handler(req, res);
+  return res;
+}
+
+it('recognizes only the observed reserved verification URL', () => {
+  expect(isVerificationSample('https://example.com/session/abc123.gif')).toBe(true);
+  for (const url of ['https://capture.omgbooth.com/session/abc123.gif', 'https://example.com/session/real.gif', 'https://example.com/session/abc123.gif?real=1', undefined]) {
+    expect(isVerificationSample(url)).toBe(false);
+  }
+});
+
+it('acknowledges a signed dashboard probe without downloading or uploading', async () => {
+  const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+  const res = await invoke({ session: { id: 'probe', direct_url: 'https://example.com/session/abc123.gif', type: 'gif' } });
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toEqual({ ok: true, skipped: 'verification-sample' });
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it('still rejects an unsigned verification sample', async () => {
+  const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+  const res = await invoke({ session: { direct_url: 'https://example.com/session/abc123.gif' } }, false);
+  expect(res.statusCode).toBe(401);
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it('keeps a missing real capture retryable instead of accepting it as a probe', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.stubGlobal('fetch', vi.fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => [] })
+    .mockResolvedValueOnce({ ok: true, json: async () => [{ id: 'event', slug: 'karaoke-night' }] })
+    .mockResolvedValueOnce({ ok: false, status: 404 }));
+  const res = await invoke({ session: { id: 'real', direct_url: 'https://capture.omgbooth.com/missing.jpg', type: 'still' } });
+  expect(res.statusCode).toBe(500);
+  expect(res.body).toEqual({ ok: false, error: 'ingest failed' });
+});
 
 it('derives a stable, valid UUID v5 per Snappic session id', () => {
   const a = photoIdFor('sess-123');
