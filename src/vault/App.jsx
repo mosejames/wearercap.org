@@ -766,7 +766,7 @@ function PromoCard({ promo }) {
 
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [] }) {
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos }) {
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
     return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
@@ -790,6 +790,19 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
           )}
         </button></div>
         {at(i + 1).map((s) => <PromoCard key={s.key} promo={s.card} />)}
+        {onAddPhotos && (i + 1 === Math.min(16, photos.length) || (i + 1 > 16 && (i + 1 - 16) % 40 === 0)) && (
+          <div className="tile-wrap promo-wrap">
+            <button type="button" className="promo-tile upload-promo" onClick={onAddPhotos}>
+              <span className="promo-body">
+                <span className="upload-promo-plus" aria-hidden="true">+</span>
+                <span className="promo-eyebrow">Your memories belong here</span>
+                <b>Add your photos here.</b>
+                <span className="promo-copy">Have a moment on your phone? Share it with our school community.</span>
+                <span className="promo-cta">Add your photos →</span>
+              </span>
+            </button>
+          </div>
+        )}
       </Fragment>))}
     </div>
   );
@@ -1284,6 +1297,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
             promos={selecting ? [] : promosFor(event.slug, today)}
+            onAddPhotos={IS_SCHOOL && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
