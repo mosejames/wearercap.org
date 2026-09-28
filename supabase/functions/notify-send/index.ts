@@ -46,11 +46,12 @@ async function sendEmail(row: { to: string; subject: string; body: string }) {
   }
 }
 
-async function sendOne(row: { id: string; phone: string; body: string }) {
+async function sendOne(row: { id: string; phone: string; body: string; media_url?: string | null }) {
   if (!SID || !TOKEN || (!FROM && !MSG_SID)) {
     return { ok: false, detail: 'Twilio not configured' };
   }
   const form = new URLSearchParams({ To: row.phone, Body: row.body });
+  if (row.media_url) form.set('MediaUrl', row.media_url);
   if (MSG_SID) form.set('MessagingServiceSid', MSG_SID);
   else form.set('From', FROM);
 
@@ -85,11 +86,11 @@ Deno.serve(async (req) => {
   }
 
   const id = (payload.id as string) || url.searchParams.get('id') || '';
-  const sel = 'id,phone,body,attempts,channel,email,subject';
+  const sel = 'id,phone,body,attempts,channel,email,subject,media_url';
 
   type Row = {
     id: string; phone: string; body: string; attempts?: number;
-    channel?: string; email?: string; subject?: string;
+    channel?: string; email?: string; subject?: string; media_url?: string | null;
   };
   let rows: Row[] = [];
   if (id) {
