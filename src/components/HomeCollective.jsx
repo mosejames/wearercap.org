@@ -12,11 +12,5 @@ export default function HomeCollective() {
       <img src="/images/collective-community.webp" alt="A computer-screen collage of the RCAP Collective featuring Donna Jenkins Realty, Max Rentals, OMG Booth, The LinkedIn Pros, and Walker Law LLC" width="1600" height="1200" loading="lazy" />
       <span>Take a look inside <ArrowUpRight size={18} aria-hidden="true" /></span>
     </a>
-    <div className="home-collective-invite">
-      <p className="section-label">You’re part of it, too</p>
-      <h4>Haven’t added your business yet?</h4>
-      <p>This is your invitation. Share what you do and help our community get to know the resources right here among us.</p>
-      <a className="home-collective-join" href="/directory/?view=new">Add your business <ArrowUpRight size={18} aria-hidden="true" /></a>
-    </div>
   </article>;
 }
