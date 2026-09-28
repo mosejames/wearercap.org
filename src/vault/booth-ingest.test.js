@@ -1,7 +1,7 @@
 // @vitest-environment node
 import crypto from 'node:crypto';
 import { afterEach, expect, it, vi } from 'vitest';
-import { photoIdFor, parseSession, verifySignature, isVerificationSample, createBoothTokenProvider } from '../../api/booth-ingest.js';
+import { photoIdFor, parseSession, verifySignature, isVerificationSample, createBoothTokenProvider, boothEventPath } from '../../api/booth-ingest.js';
 
 const SECRET = 'test-webhook-secret';
 
@@ -127,4 +127,17 @@ it('does not cache malformed authentication responses', async () => {
   await expect(token()).rejects.toThrow('invalid session');
   await expect(token()).rejects.toThrow('invalid session');
   expect(request).toHaveBeenCalledTimes(2);
+});
+
+
+it('routes a mapped Snappic event to its dedicated open album after midnight', () => {
+  const mapping = JSON.stringify({ '1211147': 'rcap-karaoke-photo-booth' });
+  expect(boothEventPath(1211147, mapping, '2026-09-28')).toBe('vault_events?house=eq.rcap&open=eq.true&hidden=eq.false&slug=eq.rcap-karaoke-photo-booth&select=id,slug,title');
+  expect(boothEventPath('another-event', mapping)).toBeNull();
+  expect(boothEventPath(undefined, mapping)).toBeNull();
+});
+
+it('retains the single-date fallback only when no event mapping is configured', () => {
+  expect(boothEventPath('any', '', '2026-09-27')).toContain('starts_on=eq.2026-09-27');
+  expect(() => boothEventPath('any', 'broken')).toThrow();
 });

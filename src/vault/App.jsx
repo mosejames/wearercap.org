@@ -1,7 +1,7 @@
 import Brand from '../components/Brand.jsx';
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES,
+  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -1082,7 +1082,7 @@ function Home({ events, requests, recent, covers, totals, onAdd, today, admin, o
 
 export function SchoolGallery({ events, loading, today, ...props }) {
   const available = events.filter(e => !e.hidden && e.startsOn <= today && e.kind !== 'everyday')
-    .sort((a,b) => Number(b.featured) - Number(a.featured) || b.startsOn.localeCompare(a.startsOn));
+    .sort((a,b) => Number(b.featured) - Number(a.featured) || b.startsOn.localeCompare(a.startsOn) || Number(ALBUM_PAIRS.some(pair => pair.booth === a.slug)) - Number(ALBUM_PAIRS.some(pair => pair.booth === b.slug)));
   const event = available[0] || events.find(e => !e.hidden && e.kind === 'everyday') || events.find(e => !e.hidden);
   if (loading) return <main className="shell page"><p role="status">Loading photos…</p></main>;
   if (!event) return <main className="shell page"><h1>RCAP photos</h1><p>Our first album is on its way.</p></main>;
@@ -1148,6 +1148,8 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
 
   if (!event) return <div className="shell page"><p className="empty">That event is not in the {WORDS.placeLower}. <a href="#/">Back to the year.</a></p></div>;
 
+  const pair = ALBUM_PAIRS.find(pair => pair.main === event.slug || pair.booth === event.slug);
+  const companion = pair && events.find(e => !e.hidden && e.slug === (event.slug === pair.main ? pair.booth : pair.main));
   const status = eventStatus(event, today);
   const kind = KINDS[event.kind] || KINDS.school;
   const visible = sorted.filter((p) => !p.hidden);
@@ -1169,6 +1171,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <div><p className="gallery-date">{event.ongoing ? 'All year' : fmtRange(event.startsOn, event.endsOn)}{photos && <> · {plural(visible.length, 'photo')}</>}</p><h1>{event.title}</h1></div>
             <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>
           </div>
+          {companion && <p className="ev-blurb"><a href={`#/e/${companion.slug}`}>{event.slug === pair.main ? 'Looking for your booth photos?' : 'See the rest of the night and add your own photos:'} {companion.title} →</a></p>}
           <div className="gallery-actions">
             {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
             <button className="btn ghost" onClick={() => setLeaderboard(true)}>Leaderboard</button>

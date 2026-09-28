@@ -18,6 +18,12 @@ const HOUSES_BY_VAULT = {
 };
 export const HOUSE = HOUSES_BY_VAULT[VAULT_ID] || HOUSES_BY_VAULT.amistad;
 
+// Companion albums keep booth captures separate from family event uploads.
+export const ALBUM_PAIRS = VAULT_ID === 'rcap' ? [
+  { main: 'karaoke-night', booth: 'rcap-karaoke-photo-booth' },
+] : [];
+
+
 // The four RCA houses, for the school-wide leaderboard. Colors are the
 // official ones Mose confirmed in July 2026 (see src/recap/config.js).
 export const RCA_HOUSES = [

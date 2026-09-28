@@ -5,12 +5,14 @@
 // downloads the capture, builds the same three renditions the browser client
 // makes (original, 1800px web JPEG, 560px thumb JPEG), stores them through
 // the existing /api/vault-sign flow as the booth contributor, and inserts the
-// photo row into tonight's open RCAP event. Photos land in the album live.
+// photo row into the configured open RCAP album. Photos land in the album live.
 //
 //   POST /api/booth-ingest   (Snappic webhook target)
 //
 // Env: SNAPPIC_WEBHOOK_SECRET, SUPABASE_BOOTH_PHONE, SUPABASE_BOOTH_PASSWORD,
 //      VITE_SUPABASE_URL / SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
+// Optional SNAPPIC_EVENT_ALBUMS maps Snappic event IDs to Capsule slugs.
+// Configured events route by ID, including delayed deliveries after midnight.
 //
 // The booth is a real vault contributor (phone-verified Supabase user whose
 // server-only password lives in env). Acting as a user keeps every existing gate:
@@ -126,11 +128,23 @@ function rest(path, token, init = {}) {
   });
 }
 
-async function findTonightsEvent() {
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-  const r = await rest(
-    `vault_events?house=eq.${HOUSE}&open=eq.true&hidden=eq.false&starts_on=eq.${today}&select=id,slug,title`,
-  );
+export function boothEventPath(eventId, mappings = process.env.SNAPPIC_EVENT_ALBUMS || '', today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })) {
+  let filter = `starts_on=eq.${today}`;
+  if (mappings) {
+    const albums = JSON.parse(mappings);
+    if (!albums || typeof albums !== 'object' || Array.isArray(albums)) throw new Error('Invalid booth album configuration');
+    const slug = Object.hasOwn(albums, String(eventId)) ? albums[String(eventId)] : null;
+    if (!slug) return null;
+    if (typeof slug !== 'string') throw new Error('Invalid booth album slug');
+    filter = `slug=eq.${encodeURIComponent(slug)}`;
+  }
+  return `vault_events?house=eq.${HOUSE}&open=eq.true&hidden=eq.false&${filter}&select=id,slug,title`;
+}
+
+async function findBoothEvent(body) {
+  const path = boothEventPath(body?.event_id ?? body?.event?.id ?? body?.session?.event_id);
+  if (!path) return null;
+  const r = await rest(path);
   if (!r.ok) throw new Error(`event lookup failed (${r.status})`);
   const events = await r.json();
   return events.length === 1 ? events[0] : null;
@@ -218,10 +232,10 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, duplicate: true, photoId });
     }
 
-    // 2. Tonight's album. Nothing open means nothing to do; 200 stops retries.
-    const event = await findTonightsEvent();
+    // 2. Configured album, or today's single album when no mapping is set.
+    const event = await findBoothEvent(body);
     if (!event) {
-      console.warn('booth-ingest: no single open rcap event today');
+      console.warn('booth-ingest: no matching open rcap album');
       return res.status(200).json({ ok: false, skipped: 'no-open-event' });
     }
 
