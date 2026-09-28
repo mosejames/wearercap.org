@@ -3,7 +3,7 @@ begin;
 insert into feedback_private.organizers(id,token_hash,label) values ('11111111-1111-4111-8111-111111111111',encode(extensions.digest('feedback-test-organizer','sha256'),'hex'),'Rollback-only organizer');
 create function pg_temp.assert(p boolean, label text) returns void language plpgsql as $$ begin if p is distinct from true then raise exception 'Failed: %',label; end if; end $$;
 do $$
-declare qs jsonb; a jsonb := '{"enjoyment":5,"experiences":{"food":4,"dj":5,"karaoke":3,"dancing":"na","booth":2},"comfort":"some_seating","length":"right","future":{"choices":["games","other"],"other":"Museum"}}';
+declare qs jsonb; a jsonb := '{"enjoyment":5,"experiences":{"food":4,"dj":5,"karaoke":3,"dancing":"na","atmosphere":2},"connection":"somewhat","connection_help":"time","future":{"choices":["games","other"],"other":"Museum"}}';
 begin
  select questions into qs from feedback_private.surveys where slug='rb-karaoke';
  perform pg_temp.assert(feedback_private.valid_questions(qs),'question schema');
@@ -21,12 +21,12 @@ select pg_temp.assert(public.rcap_feedback('get','{"slug":"rb-karaoke"}')->>'tit
 do $$
 declare payload jsonb; got_error boolean:=false; s jsonb; out jsonb;
 begin
- payload:='{"survey":"6b0fb341-9c4d-4ee3-992a-74f6bc9fd396","id":"22222222-2222-4222-8222-222222222222","answers":{"enjoyment":5,"experiences":{"food":4,"dj":5,"karaoke":3,"dancing":"na","booth":2},"comfort":"some_seating","length":"right","future":{"choices":["games"]}}}';
+ payload:='{"survey":"7cd40195-1428-45cd-8192-b56dd4ad9106","id":"22222222-2222-4222-8222-222222222222","answers":{"enjoyment":5,"experiences":{"food":4,"dj":5,"karaoke":3,"dancing":"na","atmosphere":2},"connection":"somewhat","connection_help":"time","future":{"choices":["games"]}}}';
  perform public.rcap_feedback('submit',payload);
  perform public.rcap_feedback('submit',payload);
  begin perform public.rcap_feedback('dashboard','{}'); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'anonymous dashboard denied');got_error:=false;
- begin perform public.rcap_feedback('results','{"survey":"6b0fb341-9c4d-4ee3-992a-74f6bc9fd396","token":"feedback-test-organizer"}'); exception when others then got_error:=true; end;
+ begin perform public.rcap_feedback('results','{"survey":"7cd40195-1428-45cd-8192-b56dd4ad9106","token":"feedback-test-organizer"}'); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'organizer cannot read another event');got_error:=false;
  begin perform public.rcap_feedback('submit',jsonb_set(payload,'{answers,enjoyment}','null')); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'server rejects missing rating');got_error:=false;
@@ -42,11 +42,11 @@ begin
  perform public.rcap_feedback('status','{"token":"feedback-test-organizer","survey":"33333333-3333-4333-8333-333333333333","status":"closed"}');
  begin perform public.rcap_feedback('get','{"slug":"rollback-test-survey"}'); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'closed survey hidden');got_error:=false;
- begin perform public.rcap_feedback('voice','{"survey":"6b0fb341-9c4d-4ee3-992a-74f6bc9fd396","id":"44444444-4444-4444-8444-444444444444","duration":31,"mime":"audio/webm","permission":"private"}'); exception when others then got_error:=true; end;
+ begin perform public.rcap_feedback('voice','{"survey":"7cd40195-1428-45cd-8192-b56dd4ad9106","id":"44444444-4444-4444-8444-444444444444","duration":31,"mime":"audio/webm","permission":"private"}'); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'voice duration capped');got_error:=false;
- begin perform public.rcap_feedback('voice','{"survey":"6b0fb341-9c4d-4ee3-992a-74f6bc9fd396","id":"44444444-4444-4444-8444-444444444444","duration":10,"mime":"audio/webm"}'); exception when others then got_error:=true; end;
+ begin perform public.rcap_feedback('voice','{"survey":"7cd40195-1428-45cd-8192-b56dd4ad9106","id":"44444444-4444-4444-8444-444444444444","duration":10,"mime":"audio/webm"}'); exception when others then got_error:=true; end;
  perform pg_temp.assert(got_error,'voice permission required');
- perform public.rcap_feedback('voice','{"survey":"6b0fb341-9c4d-4ee3-992a-74f6bc9fd396","id":"44444444-4444-4444-8444-444444444444","duration":10,"mime":"audio/webm","permission":"private"}');
+ perform public.rcap_feedback('voice','{"survey":"7cd40195-1428-45cd-8192-b56dd4ad9106","id":"44444444-4444-4444-8444-444444444444","duration":10,"mime":"audio/webm","permission":"private"}');
  perform pg_temp.assert(not feedback_private.voice_access('44444444-4444-4444-8444-444444444444/recording',true),'upload needs capability');
  perform set_config('request.headers','{"x-feedback-token":"44444444-4444-4444-8444-444444444444"}',true);
  perform pg_temp.assert(feedback_private.voice_access('44444444-4444-4444-8444-444444444444/recording',true),'correct upload capability');

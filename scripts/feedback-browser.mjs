@@ -62,8 +62,8 @@ try {
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("alert").waitFor();
     await page
-      .getByRole("button", { name: "5: Loved it", exact: true })
-      .click();
+      .getByRole("slider", { name: "How was your night?", exact: true })
+      .press("End");
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("alert").waitFor();
@@ -74,12 +74,15 @@ try {
       "Dancing / party portion",
     ])
       await page
-        .getByRole("group", { name: label, exact: true })
-        .getByRole("button", { name: "4: Really enjoyed it", exact: true })
-        .click();
+        .getByRole("slider", { name: label, exact: true })
+        .press("Space");
     await page
       .locator("fieldset")
-      .filter({ has: page.locator("legend", { hasText: "Photo booth" }) })
+      .filter({
+        has: page.locator("legend", {
+          hasText: "The atmosphere & community feel",
+        }),
+      })
       .getByRole("button", { name: "Didn’t try / Not applicable" })
       .click();
     await page.screenshot({
@@ -91,13 +94,13 @@ try {
     await page.getByRole("alert").waitFor();
     await page
       .getByRole("button", {
-        name: "Mostly comfortable, but some seating would help",
+        name: "Somewhat easy. I connected a little.",
       })
       .click();
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("alert").waitFor();
-    await page.getByRole("button", { name: "About right" }).click();
+    await page.getByRole("button", { name: "More time to mingle" }).click();
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("button", { name: "Next →", exact: true }).click();
     await page.getByRole("alert").waitFor();

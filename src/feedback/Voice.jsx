@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Mic, Square } from "lucide-react";
 import { sendVoice } from "./api.js";
 export default function Voice({ survey }) {
   const [status, setStatus] = useState("idle"),
@@ -187,8 +188,11 @@ export default function Voice({ survey }) {
     );
   return (
     <section className="card voice">
+      <div className="microphone-mark" aria-hidden="true">
+        <Mic size={42} strokeWidth={1.6} />
+      </div>
       <p className="eyebrow">Voices of RCAP · Optional</p>
-      <h2>Sometimes it’s easier to say it.</h2>
+      <h2>Say it in your own voice.</h2>
       <p>
         Share a favorite moment, encourage another parent, or tell us what could
         be better. Up to 30 seconds.
@@ -198,9 +202,20 @@ export default function Voice({ survey }) {
         voice may be recognizable, so recordings should not be treated as
         anonymous. Audio is stored separately from your answers.
       </p>
-      <canvas ref={canvas} width="600" height="90" aria-hidden="true" />
-      <div className="timer" aria-live="off">
-        {Math.floor(seconds).toString().padStart(2, "0")} / 30 sec
+      {(status === "idle" || status === "requesting") && (
+        <p className="mic-permission">
+          When you tap Record, your phone or browser may ask to use your
+          microphone. Choose <strong>Allow</strong> to begin. You can listen
+          back or start over before sending.
+        </p>
+      )}
+      <div
+        className={`recording-display ${status === "recording" ? "is-recording" : ""}`}
+      >
+        <canvas ref={canvas} width="600" height="90" aria-hidden="true" />
+        <div className="timer" aria-live="off">
+          {Math.floor(seconds).toString().padStart(2, "0")} / 30 sec
+        </div>
       </div>
       {(status === "idle" || status === "requesting") && (
         <button
@@ -208,14 +223,16 @@ export default function Voice({ survey }) {
           disabled={status === "requesting"}
           onClick={record}
         >
+          <Mic size={21} aria-hidden="true" />
           {status === "requesting"
             ? "Opening microphone…"
-            : "● Record a voice note"}
+            : "Record a voice note"}
         </button>
       )}
       {status === "recording" && (
         <button className="record recording" onClick={stop}>
-          ■ Stop recording
+          <Square size={18} fill="currentColor" aria-hidden="true" /> Stop
+          recording
         </button>
       )}
       {clip && (

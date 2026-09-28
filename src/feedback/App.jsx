@@ -1,30 +1,71 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Hand, MoveHorizontal, Image as ImageIcon } from "lucide-react";
 import Brand from "../components/Brand.jsx";
 import { call } from "./api.js";
 import { ratingLabels, validateQuestion } from "./model.js";
 import Voice from "./Voice.jsx";
 const Dashboard = React.lazy(() => import("./Dashboard.jsx"));
-export function Rating({ value, onChange, label }) {
+export function Rating({ value, onChange, label, hint = false }) {
+  const selected = Number.isInteger(value);
+  const position = selected ? value : 4;
   return (
-    <div className="rating">
-      <div className="bubbles" role="group" aria-label={label}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            type="button"
-            key={n}
-            aria-label={`${n}: ${ratingLabels[n - 1]}`}
-            aria-pressed={value === n}
-            className={value === n ? "selected" : ""}
-            onClick={() => onChange(n)}
+    <div
+      className={`rating drag-rating ${hint && value == null ? "show-drag-hint" : ""} ${value === "na" ? "not-rated" : ""}`}
+    >
+      <div className="slider-control">
+        <div className="slider-rail" aria-hidden="true">
+          <div
+            className="slider-fill"
+            style={{ width: `${(position - 1) * 25}%` }}
+          />
+          {[1, 2, 3, 4, 5].map((n) => (
+            <span
+              className="slider-tick"
+              key={n}
+              style={{ left: `${(n - 1) * 25}%` }}
+            />
+          ))}
+          <span
+            className="slider-dot"
+            style={{ left: `${(position - 1) * 25}%` }}
           >
-            {n}
-          </button>
+            {position}
+          </span>
+        </div>
+        <input
+          type="range"
+          min="1"
+          max="5"
+          step="1"
+          value={position}
+          aria-label={label}
+          aria-valuetext={`${position}: ${ratingLabels[position - 1]}${selected ? "" : ", touch to choose"}`}
+          onChange={(e) => onChange(Number(e.target.value))}
+          onPointerUp={(e) => onChange(Number(e.currentTarget.value))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onChange(position);
+            }
+          }}
+        />
+      </div>
+      <div className="slider-numbers" aria-hidden="true">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span key={n}>{n}</span>
         ))}
       </div>
       <div className="range-labels">
         <span>Not for me</span>
         <span>Loved it</span>
       </div>
+      {hint && (
+        <div className="drag-instruction">
+          <Hand size={23} strokeWidth={1.8} aria-hidden="true" />
+          <span>Touch and drag{!selected ? " to choose" : ""}</span>
+          <MoveHorizontal size={20} aria-hidden="true" />
+        </div>
+      )}
     </div>
   );
 }
@@ -32,21 +73,23 @@ export function Question({ q, value, onChange }) {
   if (q.type === "rating")
     return (
       <>
-        <div className="big-rating">{value || "?"}</div>
-        <Rating value={value} onChange={onChange} label={q.title} />
+        <Rating value={value} onChange={onChange} label={q.title} hint />
         <p className="rating-caption" aria-live="polite">
-          {value ? ratingLabels[value - 1] : "Tap a bubble to choose"}
+          {value
+            ? ratingLabels[value - 1]
+            : "Starts at 4. Your touch makes it your answer."}
         </p>
       </>
     );
   if (q.type === "matrix")
     return (
       <div className="matrix">
-        {q.items.map((i) => (
+        {q.items.map((i, index) => (
           <fieldset key={i.id}>
             <legend>{i.label}</legend>
             <Rating
               label={i.label}
+              hint={index === 0}
               value={value?.[i.id]}
               onChange={(v) => onChange({ ...value, [i.id]: v })}
             />
@@ -253,6 +296,28 @@ export function SurveyFlow({ survey, preview = false }) {
   if (step === -1)
     return (
       <section className="card intro">
+        {(survey.cover_url || survey.slug.startsWith("rb-karaoke")) && (
+          <div className={`event-cover ${survey.cover_url ? "has-photo" : ""}`}>
+            {survey.cover_url ? (
+              <img
+                src={survey.cover_url}
+                alt="Parents sharing a moment at R&B Karaoke Night"
+              />
+            ) : (
+              <div className="cover-placeholder">
+                <ImageIcon size={26} strokeWidth={1.5} aria-hidden="true" />
+                <span>R&B KARAOKE NIGHT</span>
+                <strong>
+                  Good music.
+                  <br />
+                  Great company.
+                </strong>
+                <small>One night. Our community.</small>
+              </div>
+            )}
+          </div>
+        )}
+
         <p className="eyebrow">
           RCAP Feedback ·{" "}
           {new Date(survey.event_date + "T12:00:00").toLocaleDateString(

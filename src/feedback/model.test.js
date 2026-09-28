@@ -20,14 +20,14 @@ describe("anonymous feedback validation", () => {
     expect(validateQuestion(questions[0], 1)).toBe(true);
   });
   it("requires every compact rating and accepts N/A", () => {
-    const v = { food: 1, dj: 2, karaoke: 3, dancing: 4, booth: "na" };
+    const v = { food: 1, dj: 2, karaoke: 3, dancing: 4, atmosphere: "na" };
     expect(validateQuestion(questions[1], v)).toBe(true);
-    delete v.booth;
+    delete v.atmosphere;
     expect(validateQuestion(questions[1], v)).toBe(false);
   });
-  it("validates comfort and two-hour options", () => {
-    expect(validateQuestion(questions[2], "more_seating")).toBe(true);
-    expect(validateQuestion(questions[3], "right")).toBe(true);
+  it("validates connection and practical improvement choices", () => {
+    expect(validateQuestion(questions[2], "somewhat")).toBe(true);
+    expect(validateQuestion(questions[3], "time")).toBe(true);
     expect(validateQuestion(questions[3], "whatever")).toBe(false);
   });
   it("limits future choices to two unique options and asks for Other text", () => {

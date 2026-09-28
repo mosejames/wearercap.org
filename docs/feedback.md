@@ -13,7 +13,7 @@ reuse Capsule authentication, persist sessions, or collect visitor identity.
 ## Authoring
 
 Create or duplicate a survey, edit 1–12 questions, choose whether to offer Voices
-of RCAP, and preview before publishing. The five answer styles are rating,
+of RCAP, and preview before publishing. The five answer styles are draggable rating,
 compact ratings, choose one, choose a few, and written response. Multi-choice
 `other` requests a short explanation. Published definitions are frozen; duplicate
 to revise them without changing the meaning of existing answers. Surveys can be
@@ -72,3 +72,21 @@ neutralization. No combined event score exists. Fundraising is separate.
 
 Main code: `src/feedback/`, `api/feedback-draft.js`, `feedback/index.html`.
 Routing/build entries: `vercel.json`, `vite.config.js`.
+
+## Karaoke flow revision
+
+The revised publication has a new survey ID at the same `/feedback/rb-karaoke`
+URL. Rating dots start visually at 4 and require touch or keyboard interaction
+before being saved. Native range controls support finger dragging and keyboard
+arrows; the first slider on each ratings page gives a short motion hint, honoring
+reduced-motion preferences. Photo booth was replaced by atmosphere/community;
+the middle questions ask about connecting and practical ways to improve it.
+
+An optional `surveys.cover_url` holds a supplied event photo. Until the Karaoke
+Night photo is supplied, the reserved 16:9/16:10 header uses a branded graphic.
+Microphone instructions precede the first browser permission request. The idle
+recorder no longer shows an empty waveform; it appears during recording.
+
+Run `node scripts/feedback-touch.mjs` with `FEEDBACK_BASE` to verify native mobile
+touch dragging and desktop keyboard operation. It reads the public survey but
+intercepts submissions, so no answers or recordings are stored.

@@ -3,14 +3,14 @@
     "id": "enjoyment",
     "type": "rating",
     "title": "How was your night?",
-    "help": "Think about your overall experience at R&B Karaoke Night.",
+    "help": "Touch the dot and drag. How much did you enjoy R&B Karaoke Night?",
     "required": true
   },
   {
     "id": "experiences",
     "type": "matrix",
     "title": "What did you enjoy?",
-    "help": "Rate each part, or choose Didn\u2019t try / Not applicable.",
+    "help": "Touch and drag each dot, or choose Didn’t try / Not applicable.",
     "required": true,
     "items": [
       {
@@ -30,53 +30,74 @@
         "label": "Dancing / party portion"
       },
       {
-        "id": "booth",
-        "label": "Photo booth"
+        "id": "atmosphere",
+        "label": "The atmosphere & community feel"
       }
     ]
   },
   {
-    "id": "comfort",
+    "id": "connection",
     "type": "choice",
-    "title": "How comfortable was the space?",
-    "help": "Think about the standing-only setup and the availability of tables and seating.",
+    "title": "How easy was it to connect with other parents?",
+    "help": "Think about meeting someone new or getting to know someone better.",
     "required": true,
     "options": [
       {
-        "id": "comfortable",
-        "label": "Comfortable as it was"
+        "id": "easy",
+        "label": "Easy. I had some great conversations."
       },
       {
-        "id": "some_seating",
-        "label": "Mostly comfortable, but some seating would help"
+        "id": "somewhat",
+        "label": "Somewhat easy. I connected a little."
       },
       {
-        "id": "more_seating",
-        "label": "Uncomfortable. We needed more tables and seating"
+        "id": "difficult",
+        "label": "A little difficult. I wanted more chances."
       },
       {
-        "id": "unsure",
-        "label": "Not sure / no opinion"
+        "id": "not_happened",
+        "label": "I didn’t get the chance to connect."
+      },
+      {
+        "id": "not_goal",
+        "label": "I came to enjoy the night, and that was enough."
       }
     ]
   },
   {
-    "id": "length",
+    "id": "connection_help",
     "type": "choice",
-    "title": "How did two hours feel?",
+    "title": "What would help connections happen more naturally?",
+    "help": "Choose the one change that would help you most. You can share more in the last question.",
     "required": true,
     "options": [
       {
-        "id": "short",
-        "label": "Too short"
+        "id": "introductions",
+        "label": "A few easy introductions or conversation starters"
       },
       {
-        "id": "right",
-        "label": "About right"
+        "id": "mixing",
+        "label": "An activity that mixes people into small groups"
       },
       {
-        "id": "long",
-        "label": "Too long"
+        "id": "time",
+        "label": "More time to mingle"
+      },
+      {
+        "id": "quiet",
+        "label": "A quieter spot for conversation"
+      },
+      {
+        "id": "gathering",
+        "label": "More places to sit or gather"
+      },
+      {
+        "id": "good",
+        "label": "The setup worked well for me"
+      },
+      {
+        "id": "other",
+        "label": "Something else. I’ll share it at the end."
       }
     ]
   },
