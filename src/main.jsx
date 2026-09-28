@@ -141,14 +141,6 @@ const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestb
 const MEETING_TAKEOVER = false;
 const MEETING_STARTS = new Date('2026-09-14T19:00:00-04:00');
 
-// The most recent general meeting, walked through slide by slide at its own
-// address. Update all three when the next one has a page.
-const MEETING_RECAP = {
-  href: '/meeting/sept-14/',
-  title: 'Missed the September 14 meeting?',
-  body: 'The room hit its limit before 7:00. Every slide, what was said, the recording, and every link from the night, in one scroll.',
-};
-
 const heroImage = '/images/rcap-hero-welcome.jpg';
 const videoPoster = '/images/rcap-video-hero.jpg';
 
@@ -289,9 +281,7 @@ const tools = [
 // second card points at, so the chips stay a short list of what is actually
 // close enough to plan around.
 const expDates = [
-  { label: 'Sept 17 & 18', next: true },
-  { label: 'Sept 24 & 25' },
-  { label: 'Nov 5 & 6' },
+  { label: 'Nov 5 & 6', next: true },
   { label: 'Nov 19 & 20' },
   { label: 'Dec 10 & 11' },
 ];
@@ -831,43 +821,27 @@ function App() {
           ))}
         </div>
 
-        {/* Three side by side rather than stacked full-width bars. Each is a
-            different kind of ask (come, add, read), so they compete less as
-            columns than they did as three rules across the page. They stack
-            back to full width on a phone. */}
         <div className="callouts">
           <a className="callout callout-social has-photo" href="/feedback/rb-karaoke">
-            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="671" />
-            <span className="callout-kicker">Your voice matters</span>
+            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="800" />
+            <span className="callout-kicker">RCAP Karaoke Survey</span>
             <strong>About Last Night</strong>
-            <span className="callout-body">Share your honest take on Karaoke Night, then enjoy the photos and add yours.</span>
-            <span className="callout-go">Share your thoughts <ArrowRight size={17} aria-hidden="true" /></span>
+            <span className="callout-body">What did you love? What would you change? Share your honest take in our quick, anonymous survey.</span>
+            <span className="callout-go">Take the survey <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
-
-          {/* The photo sits behind the copy rather than above it, so the card
-              keeps the same height as the other two. A scrim carries the text;
-              without it the white type disappears into the bright tablecloth. */}
-          <a className="callout callout-capsule has-photo" href="/rcap-capsule/">
-            <img
-              className="callout-photo"
-              src="/images/rcap-bingo-night.jpg"
-              alt=""
-              loading="lazy"
-              width="1200"
-              height="675"
-            />
-            <span className="callout-kicker">Add your photos</span>
-            <strong>Bingo Night</strong>
-            <span className="callout-body">Were you there? Grab the pictures of yourself and everybody else and share them, so the whole school can see the night.</span>
-            <span className="callout-go">Open the capsule <ArrowRight size={17} aria-hidden="true" /></span>
+          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/karaoke-night">
+            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="800" />
+            <span className="callout-kicker">The RCAP Capsule</span>
+            <strong>Add your Karaoke Night photos</strong>
+            <span className="callout-body">We’ve got some of the pictures. You’ve got the rest. Enjoy the memories and add your moments to the mix.</span>
+            <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
-
-          <a className="callout has-photo" href={MEETING_RECAP.href}>
-            <img className="callout-photo" src="/images/rcap-meeting-call.jpg" alt="" loading="lazy" width="1200" height="671" />
-            <span className="callout-kicker">Sept 14 meeting</span>
-            <strong>{MEETING_RECAP.title}</strong>
-            <span className="callout-body">{MEETING_RECAP.body}</span>
-            <span className="callout-go">Read the recap <ArrowRight size={17} aria-hidden="true" /></span>
+          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/bingo-night">
+            <img className="callout-photo" src="/images/rcap-bingo-night.jpg" alt="" loading="lazy" width="1200" height="675" />
+            <span className="callout-kicker">The RCAP Capsule</span>
+            <strong>Add your Bingo Night photos</strong>
+            <span className="callout-body">Your camera roll holds part of the night. Find your people, revisit the fun, and share your photos with the community.</span>
+            <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
         </div>
       </section>
