@@ -1553,6 +1553,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       </div>
 
       <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],...(IS_SCHOOL?[]:[['suggestions','Suggestions']]),...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
+      {IS_SCHOOL&&<p><a className="btn small ghost" href="/feedback/admin">Feedback Studio: surveys &amp; results ↗</a></p>}
       {tab==='team'&&staffRole==='owner'&&<StaffPanel key="team" />}
       {tab==='members'&&staffRole==='owner'&&<StaffPanel key="members" directory />}
       {tab==='suggestions'&&<SuggestionReview events={events} pass={pass} onChanged={changed} />}

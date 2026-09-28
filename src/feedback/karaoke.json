@@ -1,0 +1,128 @@
+[
+  {
+    "id": "enjoyment",
+    "type": "rating",
+    "title": "How was your night?",
+    "help": "Think about your overall experience at R&B Karaoke Night.",
+    "required": true
+  },
+  {
+    "id": "experiences",
+    "type": "matrix",
+    "title": "What did you enjoy?",
+    "help": "Rate each part, or choose Didn\u2019t try / Not applicable.",
+    "required": true,
+    "items": [
+      {
+        "id": "food",
+        "label": "Food"
+      },
+      {
+        "id": "dj",
+        "label": "DJ / hosting"
+      },
+      {
+        "id": "karaoke",
+        "label": "Karaoke"
+      },
+      {
+        "id": "dancing",
+        "label": "Dancing / party portion"
+      },
+      {
+        "id": "booth",
+        "label": "Photo booth"
+      }
+    ]
+  },
+  {
+    "id": "comfort",
+    "type": "choice",
+    "title": "How comfortable was the space?",
+    "help": "Think about the standing-only setup and the availability of tables and seating.",
+    "required": true,
+    "options": [
+      {
+        "id": "comfortable",
+        "label": "Comfortable as it was"
+      },
+      {
+        "id": "some_seating",
+        "label": "Mostly comfortable, but some seating would help"
+      },
+      {
+        "id": "more_seating",
+        "label": "Uncomfortable. We needed more tables and seating"
+      },
+      {
+        "id": "unsure",
+        "label": "Not sure / no opinion"
+      }
+    ]
+  },
+  {
+    "id": "length",
+    "type": "choice",
+    "title": "How did two hours feel?",
+    "required": true,
+    "options": [
+      {
+        "id": "short",
+        "label": "Too short"
+      },
+      {
+        "id": "right",
+        "label": "About right"
+      },
+      {
+        "id": "long",
+        "label": "Too long"
+      }
+    ]
+  },
+  {
+    "id": "future",
+    "type": "multi",
+    "title": "What should we do next?",
+    "help": "Choose up to two parent experiences you would enjoy.",
+    "required": true,
+    "max": 2,
+    "options": [
+      {
+        "id": "music",
+        "label": "More music, karaoke & dancing"
+      },
+      {
+        "id": "games",
+        "label": "Game or trivia night"
+      },
+      {
+        "id": "dinner",
+        "label": "A relaxed meal together"
+      },
+      {
+        "id": "creative",
+        "label": "A creative class or workshop"
+      },
+      {
+        "id": "outdoors",
+        "label": "An outdoor outing or activity"
+      },
+      {
+        "id": "service",
+        "label": "A community service project"
+      },
+      {
+        "id": "other",
+        "label": "Other"
+      }
+    ]
+  },
+  {
+    "id": "reflection",
+    "type": "text",
+    "title": "What should we keep or change?",
+    "help": "A favorite moment, an honest criticism, or one idea for next time. We want to hear it.",
+    "required": false
+  }
+]

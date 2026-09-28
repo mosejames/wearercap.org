@@ -1,7 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    {"source": "/karaoke/tonight", "destination": "/karaoke/tonight/index.html"},
+    {
+      "source": "/feedback/:path*",
+      "destination": "/feedback/index.html"
+    },
+    {
+      "source": "/karaoke/tonight",
+      "destination": "/karaoke/tonight/index.html"
+    },
     {
       "source": "/now",
       "destination": "/now/index.html"
