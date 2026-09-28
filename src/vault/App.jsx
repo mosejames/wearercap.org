@@ -489,13 +489,17 @@ function DownloadSheet({ event, photos, onClose }) {
     try {
       const pad = String(photos.length).length;
       const entries = photos.map((p, i) => {
-        const ext = which === 'orig' || isVideo(p) ? (p.key.split('.').pop() || 'jpg') : 'jpg';
+        const ext = IS_SCHOOL && isGif(p) ? 'mp4' : which === 'orig' || isVideo(p) ? (p.key.split('.').pop() || 'jpg') : 'jpg';
         const who = (p.uploaderName || WORDS.zip).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
         const when = p.takenAt ? p.takenAt.slice(0, 10) : p.createdAt.slice(0, 10);
         return {
           name: `${event.slug}/${String(i + 1).padStart(pad, '0')}-${when}-${who}.${ext}`,
           date: p.takenAt || p.createdAt,
           open: async () => {
+            if (IS_SCHOOL && isGif(p)) {
+              const { prepareSaveFile } = await import('./saveMedia.js');
+              return new Response(await prepareSaveFile(p, mediaUrl(p, 'orig')));
+            }
             const r = await fetch(mediaUrl(p, isVideo(p) ? 'orig' : which));
             if (!r.ok) throw new Error(`Could not fetch ${p.id}`);
             return r;
@@ -557,7 +561,7 @@ function InviteSheet({ event, onClose }) {
     setTimeout(() => setCopied(''), 1800);
   };
   const share = async () => {
-    if (navigator.share) { try { await navigator.share({ title: event.title, text: message }); return; } catch { /* cancelled */ } }
+    if (navigator.share) { try { await navigator.share({ title: event.title, text: message }); return; } catch (e) { if (e.name === 'AbortError') return; } }
     copy(message, 'message');
   };
 
@@ -665,7 +669,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 
   const share = async () => {
     const url = `${inviteUrl(encodeURIComponent(event.slug))}/p/${p.id}`;
-    if (navigator.share) { try { await navigator.share({ title: `${event.title} · ${SITE.title}`, url }); return; } catch { /* cancelled */ } }
+    if (navigator.share) { try { await navigator.share({ title: `${event.title} · ${SITE.title}`, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
     try { await navigator.clipboard.writeText(url); alert('Link copied.'); } catch { prompt('Copy this link', url); }
   };
 
@@ -678,7 +682,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
         <button className="icon-btn" onClick={onClose} aria-label="Close">{I.close}</button>
         <span className="lb-count">{index + 1} / {photos.length}</span>
         <div className="lb-top-actions">
-          <button className="icon-btn" onClick={share} aria-label="Share">{I.share}</button>
+          <button className="icon-btn" onClick={share} aria-label="Share photo link">{I.share}</button>
           <button className="icon-btn" onClick={() => setSaving(true)} aria-label="Download or save to Photos">{I.down}</button>
         </div>
       </div>

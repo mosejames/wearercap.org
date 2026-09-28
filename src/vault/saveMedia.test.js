@@ -1,8 +1,24 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { prepareSaveFile, canSaveToPhotos } from './saveMedia.js';
-afterEach(()=>vi.unstubAllGlobals());
+vi.mock('./gifVideo.js', () => ({ gifToVideo: vi.fn() }));
+import { gifToVideo } from './gifVideo.js';
+afterEach(()=>{vi.unstubAllGlobals();vi.clearAllMocks();});
 describe('saving gallery media',()=>{
+ it('saves a booth GIF as an MP4 with matching MIME type and filename',async()=>{
+  const original=new Blob(['gif'],{type:'image/gif'});
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,blob:async()=>original}));
+  gifToVideo.mockResolvedValue(new Blob(['mp4'],{type:'video/mp4'}));
+  const signal=new AbortController().signal;
+  const file=await prepareSaveFile({id:'booth',contentType:'image/gif',key:'rcap/booth/orig.gif'},'url',signal);
+  expect(file.name).toBe('rcap-capsule-booth.mp4');expect(file.type).toBe('video/mp4');
+  expect(gifToVideo).toHaveBeenCalledWith(original,signal);
+ });
+ it('does not silently save a GIF when video conversion fails',async()=>{
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,blob:async()=>new Blob(['gif'],{type:'image/gif'})}));
+  gifToVideo.mockRejectedValue(new Error('Video encoding unavailable'));
+  await expect(prepareSaveFile({contentType:'image/gif'},'url')).rejects.toThrow('Video encoding unavailable');
+ });
  it('prepares an actual video file with its original format',async()=>{
   const fetch=vi.fn().mockResolvedValue({ok:true,blob:async()=>new Blob(['video'],{type:'application/octet-stream'})});vi.stubGlobal('fetch',fetch);
   const signal=new AbortController().signal;
