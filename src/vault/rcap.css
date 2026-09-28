@@ -278,13 +278,3 @@ html[data-vault="rcap"] .gallery-order{margin-top:16px}
 html[data-vault="rcap"] .gallery-order label{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;font-weight:600}
 html[data-vault="rcap"] .gallery-order select{max-width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:inherit;font:inherit}
 html[data-vault="rcap"] .gallery-order p{margin:8px 0 0;font-size:12px;color:var(--muted)}
-
-/* Keep the two main invitations visible before families start browsing. */
-html[data-vault="rcap"] .featured-promos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 24px}
-html[data-vault="rcap"] .featured-promos .tile-wrap{margin:0;min-width:0}
-html[data-vault="rcap"] .featured-promos .promo-tile{height:100%;border-radius:14px}
-html[data-vault="rcap"] .featured-promos .promo-body{padding:22px;flex:1}
-html[data-vault="rcap"] .featured-promos .promo-body b{font-size:28px}
-html[data-vault="rcap"] .featured-promos .promo-copy{font-size:17px}
-html[data-vault="rcap"] .featured-promos .promo-cta{margin-top:auto;min-height:44px;display:flex;align-items:center}
-@media(max-width:540px){html[data-vault="rcap"] .featured-promos{grid-template-columns:1fr}}
