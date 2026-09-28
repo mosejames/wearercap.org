@@ -1,4 +1,5 @@
 import Brand from '../components/Brand.jsx';
+import { sortGallery } from './gallerySort.js';
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
@@ -1151,13 +1152,24 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
 
   useEffect(() => { load().catch((e) => showToast(e.message)); }, [load, showToast]);
 
-  const sorted = useMemo(() => {
-    if (!photos) return [];
-    const list = photos.filter((p) => !p.hidden && !p.removedAt);
-    if (sort === 'loved') return [...list].sort((a, b) => b.likes - a.likes || (a.createdAt < b.createdAt ? -1 : 1));
-    if (sort === 'new') return [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    return list;
-  }, [photos, sort, admin, owner]);
+  // Refresh incoming uploads without moving a photo someone is viewing or selecting.
+  useEffect(() => {
+    if (!event || open !== null || selecting || moving || deleting) return;
+    let cancelled = false, busy = false;
+    const refresh = async () => {
+      if (document.visibilityState === 'hidden' || busy) return;
+      busy = true;
+      try {
+        const ps = await listPhotos(event.id);
+        if (!cancelled) setPhotos(ps);
+      } catch { /* Keep the current gallery if a background refresh fails. */ }
+      finally { busy = false; }
+    };
+    const timer = setInterval(refresh, 30000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [event, open, selecting, moving, deleting]);
+
+  const sorted = useMemo(() => sortGallery(photos || [], sort), [photos, sort]);
 
   // Deep link straight to a photo, once per link.
   const linked = useRef(null);
@@ -1203,6 +1215,15 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           <div className="gallery-heading">
             <div><p className="gallery-date">{event.ongoing ? 'All year' : fmtRange(event.startsOn, event.endsOn)}{photos && <> · {plural(visible.length, 'photo')}</>}</p><h1>{event.title}</h1></div>
             <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>
+          </div>
+          <div className="gallery-order">
+            <label>Arrange by <select aria-label="Arrange photos by" value={sort} onChange={e => setSort(e.target.value)}>
+              <option value="time">Date taken: oldest first</option>
+              <option value="taken-new">Date taken: newest first</option>
+              <option value="new">Recently uploaded</option>
+              <option value="loved">Most liked</option>
+            </select></label>
+            <p>Across everyone's uploads. If the original date is unavailable, the saved file or upload date is used.</p>
           </div>
           {companion && <p className="ev-blurb"><a href={`#/e/${companion.slug}`}>{event.slug === pair.main ? 'Looking for your booth photos?' : 'See the rest of the night and add your own photos:'} {companion.title} →</a></p>}
           <div className="gallery-actions">

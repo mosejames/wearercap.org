@@ -273,3 +273,8 @@ html[data-vault="rcap"] .gallery-head .crumb{display:inline-block;margin-bottom:
   html[data-vault="rcap"] .cap-everyday{grid-template-columns:1.1fr 1fr;padding:32px}
   html[data-vault="rcap"] .cap-pulse{padding-top:52px}
 }
+
+html[data-vault="rcap"] .gallery-order{margin-top:16px}
+html[data-vault="rcap"] .gallery-order label{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;font-weight:600}
+html[data-vault="rcap"] .gallery-order select{max-width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:inherit;font:inherit}
+html[data-vault="rcap"] .gallery-order p{margin:8px 0 0;font-size:12px;color:var(--muted)}

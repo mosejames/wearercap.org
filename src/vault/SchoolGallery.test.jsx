@@ -34,6 +34,10 @@ it('opens the event gallery first and keeps house standings and ranked photos be
     await act(async()=>root.render(<SchoolGallery events={[event,{...event,id:'future',slug:'future',startsOn:'2026-10-01'}]} today="2026-09-16" onAdd={onAdd} showToast={vi.fn()} />));
     expect(listPhotos).toHaveBeenCalledWith('bingo');
     expect(host.querySelectorAll('.grid .tile')).toHaveLength(2);
+    const arrange = host.querySelector('[aria-label="Arrange photos by"]');
+    expect(arrange.value).toBe('time');
+    await act(async () => { arrange.value = 'loved'; arrange.dispatchEvent(new Event('change', { bubbles: true })); });
+    expect(host.querySelector('.grid .tile').getAttribute('aria-label')).toContain('Favorite family');
     expect(host.querySelector('.house-board')).toBeNull();
     expect(host.querySelector('.home-intro')).toBeNull();
     await act(async()=>host.querySelector('[aria-label="Add photos or videos"]').click());
@@ -72,4 +76,23 @@ it('offers bulk deletion to admins and selects only visible uploads', async () =
     expect(host.querySelector('.move-toolbar').textContent).toContain('2 selected');
     expect(button('Move selected')).toBeTruthy();
   } finally {await act(async()=>root.unmount());host.remove();}
+});
+
+it('refreshes incoming photos in date order but pauses during selection', async () => {
+  vi.useFakeTimers();
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement('div'); document.body.append(host); const root = createRoot(host);
+  const event = {id:'dates',slug:'dates',title:'Dates',startsOn:'2026-09-15',kind:'school',open:true};
+  const late = {id:'late',owner:'a',uploaderName:'Late photo',takenAt:'2026-09-27T23:00:00Z',thumbKey:'late.jpg'};
+  const early = {...late,id:'early',owner:'b',uploaderName:'Early photo',takenAt:'2026-09-27T22:00:00Z'};
+  listPhotos.mockResolvedValueOnce([late]).mockResolvedValueOnce([late,early]);
+  try {
+    await act(async () => root.render(<SchoolGallery events={[event]} today="2026-09-16" canMove admin showToast={vi.fn()} />));
+    await act(async () => vi.advanceTimersByTimeAsync(30000));
+    expect(host.querySelector('.grid .tile').getAttribute('aria-label')).toContain('Early photo');
+    await act(async () => [...host.querySelectorAll('button')].find(b => b.textContent === 'Select uploads').click());
+    const calls = listPhotos.mock.calls.length;
+    await act(async () => vi.advanceTimersByTimeAsync(60000));
+    expect(listPhotos.mock.calls.length).toBe(calls);
+  } finally { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); }
 });
