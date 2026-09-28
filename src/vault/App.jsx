@@ -718,7 +718,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
             {admin && !mine && <button className="lb-action" onClick={async () => { if (!confirm('Ban this uploader’s verified number from contributing?')) return; try { await banUploader(p.id, pass); alert('Contributor banned.'); } catch(e) { alert(e.message); } }}>Ban contributor</button>}
           </div>
         </div>
-        {IS_SCHOOL && !mine && !isVideo(p) && <ThankYouButton key={`${p.id}:${owner || 'guest'}`} photoId={p.id} owner={owner} onSignIn={onNeedName} />}
+        {IS_SCHOOL && !mine && !isVideo(p) && <ThankYouButton key={`${p.id}:${owner || 'guest'}`} photoId={p.id} owner={owner} eventSlug={event.slug} onSignIn={onNeedName} />}
         {videoError && <p className="fine">This browser cannot play this video. <a href={mediaUrl(p, 'orig')} download target="_blank" rel="noopener">Download the original</a> to watch it.</p>}
         {p.caption && <p className="lb-cap">{p.caption}</p>}
         <div className="lb-comments">

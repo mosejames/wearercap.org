@@ -6,8 +6,9 @@ import { BadgeIcon } from './BadgeIcon.jsx';
 
 export const capsuleCommunity = (action, args = {}) => rewardCall('capsule_community', { p_action: action, ...args });
 const READ_EVENT = 'capsule-thanks-read';
+const thankYouLabel = slug => ['karaoke-night', 'rcap-karaoke-photo-booth'].includes(slug) ? 'Thank you. That’s me!' : 'Thank you, that’s my kid!';
 
-export function ThankYouButton({ photoId, owner, onSignIn }) {
+export function ThankYouButton({ photoId, owner, onSignIn, eventSlug }) {
   const [thanked, setThanked] = useState(false);
   const [loading, setLoading] = useState(!!owner);
   const [busy, setBusy] = useState(false);
@@ -30,7 +31,7 @@ export function ThankYouButton({ photoId, owner, onSignIn }) {
   };
   return <div className="capsule-thank">
     <button className={`lb-action${thanked ? ' on' : ''}`} disabled={loading || busy} aria-pressed={thanked} onClick={send}>
-      <span aria-hidden="true">♡</span><span>{busy ? 'Saving…' : thanked ? 'Thank-you sent ✓' : 'Thank you, that’s my kid!'}</span>
+      <span aria-hidden="true">♡</span><span>{busy ? 'Saving…' : thanked ? 'Thank-you sent ✓' : thankYouLabel(eventSlug)}</span>
     </button>
     <small>{thanked ? 'Shared privately with the contributor. Tap again to undo.' : 'Only you and the contributor can see this. No leaderboard points.'}</small>
     {error && <p className="err" role="alert">{error} <button className="link" onClick={() => setRetry(n => n + 1)}>Try again</button></p>}
@@ -123,7 +124,7 @@ export function CapsuleInbox({ owner, refresh }) {
     {data && <>{!data.total ? <p>When a parent taps “Thank you, that’s my kid!” on your photo, you’ll see it here.</p> : <>
       <ul className="capsule-thanks-list">{data.items.map(item => <li key={item.id} className={!item.read_at ? 'unread' : ''}>
         <a href={`#/e/${item.slug}/p/${item.photo_id}`}><img src={mediaUrl({ storage: item.storage, thumbKey: item.thumb_key }, 'thumb')} alt="" loading="lazy" />
-          <span><b>{item.sender}</b><span>“Thank you, that’s my kid!”</span><small>{item.title}{!item.read_at ? ' · New' : ''}</small></span>
+          <span><b>{item.sender}</b><span>“{thankYouLabel(item.slug)}”</span><small>{item.title}{!item.read_at ? ' · New' : ''}</small></span>
         </a>
       </li>)}</ul>
       {data.items.some(i => !i.read_at) && <button className="btn small ghost" disabled={busy} onClick={markRead}>{busy ? 'Saving…' : 'Mark these as read'}</button>}
