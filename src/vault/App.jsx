@@ -772,8 +772,13 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
     return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
   }
   const slots = promoSlots(promos, photos.length);
+  const featured = promos.filter((promo) => promo.featured);
   const at = (i) => slots.filter((s) => s.at === i);
   return (
+    <>
+    {featured.length > 0 && <div className="featured-promos" aria-label="Support and share your feedback">
+      {featured.map((promo) => <PromoCard key={promo.id} promo={{ ...promo, ...promo.variants[0] }} />)}
+    </div>}
     <div className="grid">
       {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
       {photos.map((p, i) => (<Fragment key={p.id}>
@@ -792,6 +797,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
         {at(i + 1).map((s) => <PromoCard key={s.key} promo={s.card} />)}
       </Fragment>))}
     </div>
+    </>
   );
 }
 

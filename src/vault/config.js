@@ -98,6 +98,17 @@ const SCHOOL_ALBUMS = ['bingo-night', 'karaoke-night'];
 
 export const PROMOS = IS_SCHOOL ? [
   {
+    id: 'karaoke-feedback',
+    events: ['karaoke-night'],
+    featured: true,
+    until: '2027-05-28',
+    cta: 'Take the survey',
+    href: '/feedback/rb-karaoke',
+    variants: [
+      { eyebrow: 'Your voice matters', title: 'About Last Night', body: 'Loved it? Would change something? Share your honest take on R&B Karaoke Night. Anonymous. About 2 minutes.' },
+    ],
+  },
+  {
     id: 'karaoke-sept-27',
     // Not inside its own album: an RSVP card on the night's photos is a dead end.
     events: ['bingo-night'],
@@ -112,13 +123,14 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'membership-2026',
+    featured: true,
     events: SCHOOL_ALBUMS,
     until: '2027-05-28',
-    cta: 'Join the team',
+    cta: 'Make a donation',
     href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
     external: true,
     variants: [
-      { eyebrow: 'RCAP membership', title: 'We Are RCAP', logo: '/brand/we-are-rcap-reversed.svg', body: 'Be part of the team of families supporting a school that gives our kids so much.' },
+      { eyebrow: 'Support our school', title: 'We Are RCAP', logo: '/brand/we-are-rcap-reversed.svg', body: 'Help make more moments like these possible. Your donation supports our school community.' },
       { eyebrow: 'RCAP membership', title: 'Be part of the team.', body: 'Every RCA family, pulling together for the school that pours into our children.' },
       { eyebrow: 'RCAP membership', title: 'This school gives us so much.', body: 'Your membership donation is how we give back, together.' },
     ],
