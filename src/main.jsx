@@ -804,8 +804,8 @@ function App() {
       <section id="events" className="content-section events-section">
         <div className="section-heading">
           <p className="section-label">Our community, connected</p>
-          <h2>Support the people behind the possibilities.</h2>
-          <p>Useful connections. Familiar faces. A community with so much to offer.</p>
+          <h2>Good things are happening in-house.</h2>
+          <p>Get to know the resources and talents within our RCA family.</p>
         </div>
         <HomeCollective />
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
