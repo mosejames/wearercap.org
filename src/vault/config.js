@@ -99,7 +99,7 @@ const SCHOOL_ALBUMS = ['bingo-night', 'karaoke-night'];
 export const PROMOS = IS_SCHOOL ? [
   {
     id: 'karaoke-feedback',
-    events: ['karaoke-night'],
+    events: ['karaoke-night', 'rcap-karaoke-photo-booth'],
     featured: true,
     until: '2027-05-28',
     cta: 'Take the survey',
@@ -124,7 +124,7 @@ export const PROMOS = IS_SCHOOL ? [
   {
     id: 'membership-2026',
     featured: true,
-    events: SCHOOL_ALBUMS,
+    events: [...SCHOOL_ALBUMS, 'rcap-karaoke-photo-booth'],
     until: '2027-05-28',
     cta: 'Make a donation',
     href: 'https://www.paypal.com/ncp/payment/EWP8R298MW83A',
