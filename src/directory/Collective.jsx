@@ -353,19 +353,18 @@ export default function Collective({
               ? "Discover the imagination, ambition, and ventures of our students. Every big idea deserves someone in its corner."
               : "The coach. The caterer. The next great read. Discover the businesses, talents, and big ideas in our own RCA community."}
           </p>
+          <div className="collective-join-prompt">
+            <strong>{studentMode ? "Have a student venture to share?" : "Have a business? You belong here."}</strong>
+            <p>{studentMode ? "Add a parent-managed listing and share what they’re creating." : "Add your business, service, or creative work so our RCA community can find you."}</p>
+          </div>
           <div className="collective-hero-actions">
-            <button className="dir-button" onClick={scrollToBrowse}>
-              {studentMode
-                ? "Explore student ventures"
-                : "Explore the Collective"}
-              <ArrowRight size={18} />
+            <button className="dir-button collective-add-business" onClick={() => go(studentMode ? "new-student" : "new")}>
+              {studentMode ? "Add a student venture" : "Add your business"}
+              <ArrowUpRight size={18} />
             </button>
-            <button
-              className="dir-text-button collective-small-join"
-              onClick={() => go(studentMode ? "new-student" : "new")}
-            >
-              Add your listing
-              <ArrowUpRight size={17} />
+            <button className="dir-button dir-secondary" onClick={scrollToBrowse}>
+              {studentMode ? "Explore student ventures" : "Explore the Collective"}
+              <ArrowRight size={18} />
             </button>
           </div>
           <div className="collective-hero-footnote">

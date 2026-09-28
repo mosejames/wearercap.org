@@ -909,7 +909,7 @@ export default function App() {
             <ArrowUpRight size={13} />
           </a>
           <a
-            className="dir-button dir-secondary"
+            className="dir-text-button"
             href="?view=manage"
             onClick={(e) => {
               e.preventDefault();
@@ -917,6 +917,9 @@ export default function App() {
             }}
           >
             My listings
+          </a>
+          <a className="dir-button collective-nav-add" href="?view=new" onClick={(e) => { e.preventDefault(); go("new"); }}>
+            Add your business <ArrowUpRight size={15} />
           </a>
           {user && (
             <button className="dir-text-button" onClick={signOut}>

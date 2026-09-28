@@ -2268,3 +2268,11 @@ textarea:focus-visible {
 
 /* Give the stacked parent wordmark room above the Collective name. */
 @media (min-width: 561px) { .dir-header { padding-top: 18px; padding-bottom: 18px; } }
+
+/* Make contributing to the Collective visible before browsing. */
+.collective-join-prompt{margin-top:24px;padding-left:16px;border-left:3px solid var(--dir-gold,#e8c66f)}
+.collective-join-prompt strong{font-size:20px;color:#fff}
+.collective-join-prompt p{font-size:15px;line-height:1.5;margin:8px 0 0;color:#c9cbd1;max-width:470px}
+.dir-header nav .collective-nav-add{display:inline-flex;white-space:nowrap}
+@media(max-width:560px){.dir-header nav{flex-wrap:wrap}.dir-header nav .collective-nav-add{display:inline-flex;min-height:44px;padding:10px 14px}.collective-hero-actions{flex-wrap:wrap}.collective-hero-actions .dir-button{width:100%;justify-content:center}.collective-join-prompt strong{font-size:18px}}
+.dir-header nav .collective-nav-add,.dir-header nav .collective-nav-add:hover{color:#15141b}
