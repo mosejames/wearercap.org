@@ -71,6 +71,7 @@ function useLockScroll(on) {
 }
 
 const fmtBytes = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n >= 1e6 ? `${Math.round(n / 1e6)} MB` : `${Math.round(n / 1e3)} KB`);
+const isGif = (photo) => /^image\/gif$/i.test(photo.contentType || '') || /\.gif$/i.test(photo.key || '');
 
 const eventStatus = (e, today) => {
   if (e.ongoing || e.kind === 'everyday') return 'open';
@@ -684,7 +685,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
         {index > 0 && <button className="lb-nav prev" onClick={() => onIndex(index - 1)} aria-label="Previous">{I.left}</button>}
         {isVideo(p) ? <video key={p.id} onLoadedData={() => setViewReadyId(p.id)} className="vault-video" onError={() => setVideoError(true)} controls playsInline preload="metadata" poster={mediaUrl(p, 'web')} src={mediaUrl(p, 'orig')} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
           Your browser cannot play this video. Download the original to watch it.
-        </video> : <img key={p.id} onLoad={() => setViewReadyId(p.id)} src={mediaUrl(p, 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />}
+        </video> : <img key={p.id} onLoad={() => setViewReadyId(p.id)} src={mediaUrl(p, isGif(p) ? 'orig' : 'web')} alt={p.caption || ''} width={p.width || undefined} height={p.height || undefined} />}
         {index < photos.length - 1 && <button className="lb-nav next" onClick={() => onIndex(index + 1)} aria-label="Next">{I.right}</button>}
       </div>
       <div className="lb-panel">
@@ -775,9 +776,10 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
     <div className="grid">
       {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
       {photos.map((p, i) => (<Fragment key={p.id}>
-        <div className="tile-wrap"><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
+        <div className="tile-wrap"><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : isGif(p) ? 'GIF' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
+          {isGif(p) && <span className="video-badge" aria-hidden="true">GIF</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
           {(p.likes > 0 || (counts && counts.get(p.id))) && (
             <span className="tile-meta">
