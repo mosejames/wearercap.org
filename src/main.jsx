@@ -35,6 +35,9 @@ const committeeNames = COMMITTEES.map((c) => c.name);
 // the browser and is readable via view-source or with CSS disabled.
 const COMING_SOON = false;
 
+// Flip to true to restore the floating membership thermometer on the homepage.
+const HOMEPAGE_THERMOMETER_ENABLED = false;
+
 // Entry gate. Flip to true to put the question in front of the homepage.
 //
 // READ THIS BEFORE RELYING ON IT. This is a front door, not a lock. The answers
@@ -1104,7 +1107,7 @@ function App() {
         </div>
       </footer>
 
-      {!isPopOpen && <MembershipThermometer />}
+      {HOMEPAGE_THERMOMETER_ENABLED && !isPopOpen && <MembershipThermometer />}
 
       {isPopOpen ? (
         <div className="pop-scrim">
