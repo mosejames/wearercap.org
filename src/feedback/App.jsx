@@ -1,3 +1,4 @@
+import GalleryInvite from "./GalleryInvite.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { Hand, MoveHorizontal, Image as ImageIcon } from "lucide-react";
 import Brand from "../components/Brand.jsx";
@@ -272,9 +273,7 @@ export function SurveyFlow({ survey, preview = false }) {
             )}
           </div>
         )}
-        <a className="text-link" href={survey.gallery_url}>
-          Back to the RCAP Capsule ↗
-        </a>
+        <GalleryInvite survey={survey} />
       </section>
     );
   if (duplicate)

@@ -915,3 +915,14 @@ blockquote {
     animation: none;
   }
 }
+
+.gallery-invite{display:block;margin-top:32px;padding-top:28px;border-top:1px solid #14224720;color:#142247;text-decoration:none;text-align:left}
+.gallery-invite h2{font-size:clamp(23px,5vw,32px);line-height:1.1;margin:0 0 20px}
+.gallery-preview{display:grid;grid-template-columns:1.3fr 1fr;grid-template-rows:1fr 1fr;gap:6px;aspect-ratio:1.6;border-radius:16px;overflow:hidden;background:#1422470a;margin-bottom:18px}
+.gallery-preview img{width:100%;height:100%;min-height:0;object-fit:cover}
+.gallery-preview.photos-3 img:first-child{grid-row:span 2}
+.gallery-preview.photos-1{display:block;aspect-ratio:1.5}
+.gallery-preview.photos-2{grid-template-rows:1fr}
+.gallery-invite-cta{display:inline-flex;gap:24px;align-items:center;min-height:48px;padding:12px 20px;background:#f0b323;border-radius:14px;font-weight:800}
+.gallery-invite:hover .gallery-invite-cta{background:#e5a718}
+.gallery-invite:focus-visible{outline:3px solid #f0b323;outline-offset:6px;border-radius:12px}

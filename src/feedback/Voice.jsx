@@ -1,3 +1,4 @@
+import GalleryInvite from "./GalleryInvite.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { Mic, Square } from "lucide-react";
 import { sendVoice } from "./api.js";
@@ -181,9 +182,7 @@ export default function Voice({ survey }) {
             ? "Your note is private to RCAP leadership."
             : "Your note may be shared with the RCA school community as part of Voices of RCAP."}
         </p>
-        <a className="primary" href={survey.gallery_url}>
-          Back to the RCAP Capsule ↗
-        </a>
+        <GalleryInvite survey={survey} />
       </section>
     );
   return (
@@ -299,9 +298,7 @@ export default function Voice({ survey }) {
           {error}
         </p>
       )}
-      <a className="text-link" href={survey.gallery_url}>
-        Back to the RCAP Capsule ↗
-      </a>
+      <GalleryInvite survey={survey} />
     </section>
   );
 }
