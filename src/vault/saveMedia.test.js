@@ -23,7 +23,7 @@ describe('saving gallery media',()=>{
   const fetch=vi.fn().mockResolvedValue({ok:true,blob:async()=>new Blob(['video'],{type:'application/octet-stream'})});vi.stubGlobal('fetch',fetch);
   const signal=new AbortController().signal;
   const f=await prepareSaveFile({id:'one',contentType:'video/quicktime'},'https://example.test/orig.mov',signal);
-  expect(f.name).toBe('ami-vault-one.mov');expect(f.type).toBe('video/quicktime');expect(f.size).toBe(5);expect(fetch).toHaveBeenCalledWith('https://example.test/orig.mov',{signal});
+  expect(f.name).toBe('ami-vault-one.mov');expect(f.type).toBe('video/quicktime');expect(f.size).toBe(5);expect(fetch).toHaveBeenCalledWith('https://example.test/orig.mov',{signal,cache:'no-store'});
  });
  it('checks file sharing support, not just URL sharing',()=>{
   const f=new File(['photo'],'photo.jpg',{type:'image/jpeg'});const canShare=vi.fn().mockReturnValue(true);

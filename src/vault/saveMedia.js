@@ -1,6 +1,6 @@
 const EXTENSIONS = { 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/heic':'heic','image/heif':'heif','video/mp4':'mp4','video/quicktime':'mov','video/webm':'webm' };
 export async function prepareSaveFile(photo, url, signal) {
-  const response = await fetch(url, { signal });
+  const response = await fetch(url, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error('Could not prepare this file. Try downloading the original below.');
   let blob = await response.blob();
   if (!blob.size) throw new Error('This file is empty. Please try again.');
