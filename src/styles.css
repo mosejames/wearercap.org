@@ -2600,3 +2600,17 @@ button {
 .home-dates-heading h3{margin:0;font-size:24px}
 .homepage-refresh .events-section .event-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:760px){.home-collective{grid-template-columns:1fr}.home-dates-heading{align-items:flex-start;flex-direction:column;gap:10px}.homepage-refresh .events-section .event-grid{grid-template-columns:1fr}}
+
+.home-collective{grid-template-columns:1fr 1.15fr;align-items:center;gap:32px}
+.home-collective-visual{display:block;position:relative;border-radius:12px;overflow:hidden;background:#f7f3ea;box-shadow:0 16px 40px #0003;transform:rotate(1deg);transition:transform .2s ease;color:var(--navy)}
+.home-collective-visual:hover{transform:rotate(0deg) translateY(-3px)}
+.home-collective-visual:focus-visible{outline:3px solid var(--gold);outline-offset:5px}
+.home-collective-visual img{display:block;width:100%;height:auto}
+.home-collective-visual>span{display:flex;justify-content:center;align-items:center;gap:10px;padding:14px;background:var(--gold);font-weight:800}
+.home-collective-invite{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;column-gap:32px;padding:24px 28px;width:100%;box-sizing:border-box}
+.home-collective-invite .section-label{grid-column:1;margin:0}
+.home-collective-invite h4{grid-column:1;font-size:26px;margin:10px 0}
+.home-collective-invite>p:not(.section-label){grid-column:1;margin:0;max-width:700px}
+.home-collective-invite .home-collective-join{grid-column:2;grid-row:1/4;align-self:center;margin:0;white-space:nowrap}
+@media(max-width:760px){.home-collective{grid-template-columns:1fr}.home-collective-invite{display:block}.home-collective-invite .home-collective-join{margin-top:18px}.home-collective-visual{transform:none}}
+@media(prefers-reduced-motion:reduce){.home-collective-visual{transition:none;transform:none}.home-collective-visual:hover{transform:none}}
