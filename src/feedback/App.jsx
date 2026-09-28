@@ -341,9 +341,11 @@ export function SurveyFlow({ survey, preview = false }) {
           No login. No names, email addresses or phone numbers. Just your honest
           experience.
         </p>
-        <a className="text-link" href={survey.gallery_url}>
-          Visit the RCAP Capsule ↗
-        </a>
+        <div className="photos-shortcut">
+          <h2>Just here for the photos?</h2>
+          <p>Couldn’t make it? You’re still part of the community. Enjoy the photos, no survey needed.</p>
+          <a className="text-link" href={survey.gallery_url}>Skip to the photos ↗</a>
+        </div>
       </section>
     );
   return (

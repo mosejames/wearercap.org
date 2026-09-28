@@ -104,7 +104,7 @@ export const PROMOS = IS_SCHOOL ? [
     cta: 'Take the survey',
     href: '/feedback/rb-karaoke',
     variants: [
-      { eyebrow: 'Your voice matters', title: 'About Last Night', body: 'Loved it? Would change something? Share your honest take on R&B Karaoke Night. Anonymous. About 2 minutes.' },
+      { eyebrow: 'Your voice matters', title: 'About Last Night', body: 'Loved it? Would change something? Share your honest take on R&B Karaoke Night. Anonymous. About 3 minutes.' },
     ],
   },
   {
@@ -131,6 +131,26 @@ export const PROMOS = IS_SCHOOL ? [
       { eyebrow: 'Support our school', title: 'We Are RCAP', logo: '/brand/we-are-rcap-reversed.svg', body: 'Help make more moments like these possible. Your donation supports our school community.' },
       { eyebrow: 'RCAP membership', title: 'Be part of the team.', body: 'Every RCA family, pulling together for the school that pours into our children.' },
       { eyebrow: 'RCAP membership', title: 'This school gives us so much.', body: 'Your membership donation is how we give back, together.' },
+    ],
+  },
+  {
+    id: 'karaoke-booth-gallery',
+    events: ['karaoke-night'],
+    until: '2099-12-31',
+    cta: 'See the photo booth photos',
+    href: '#/e/rcap-karaoke-photo-booth',
+    variants: [
+      { eyebrow: 'Keep the memories going', title: 'Strike a pose.', body: 'The photo booth had a night of its own. Find your poses, your people, and a few new favorites.' },
+    ],
+  },
+  {
+    id: 'karaoke-event-gallery',
+    events: ['rcap-karaoke-photo-booth'],
+    until: '2099-12-31',
+    cta: 'See more Karaoke Night photos',
+    href: '#/e/karaoke-night',
+    variants: [
+      { eyebrow: 'More from the night', title: 'Beyond the photo booth.', body: 'See more moments from Karaoke Night: the singing, the dancing, and the time together.' },
     ],
   },
   {

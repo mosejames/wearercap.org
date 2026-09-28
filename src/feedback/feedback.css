@@ -926,3 +926,8 @@ blockquote {
 .gallery-invite-cta{display:inline-flex;gap:24px;align-items:center;min-height:48px;padding:12px 20px;background:#f0b323;border-radius:14px;font-weight:800}
 .gallery-invite:hover .gallery-invite-cta{background:#e5a718}
 .gallery-invite:focus-visible{outline:3px solid #f0b323;outline-offset:6px;border-radius:12px}
+
+.photos-shortcut{margin-top:28px;padding-top:24px;border-top:1px solid #14224720}
+.photos-shortcut h2{font-size:23px;margin:0 0 10px}
+.photos-shortcut p{font-size:16px;line-height:1.5;margin:0 0 12px}
+.photos-shortcut .text-link{display:inline-flex;align-items:center;min-height:48px}
