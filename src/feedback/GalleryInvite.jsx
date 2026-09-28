@@ -30,11 +30,12 @@ export default function GalleryInvite({ survey }) {
   const images = photos.length ? photos : survey.cover_url ? [{ id: "cover", src: survey.cover_url }] : [];
   return (
     <a className="gallery-invite" href={survey.gallery_url}>
-      <h2>{slug === "karaoke-night" ? "Want to see photos from last night?" : "Want to see photos from the event?"}</h2>
+      <h2>{slug === "karaoke-night" ? "We’ve got some of the pictures. You’ve got the rest." : "Want to see photos from the event?"}</h2>
+      <p>Your camera roll holds a part of the {slug === "karaoke-night" ? "night" : "event"} we haven’t seen. Find your people, enjoy the memories, and add your moments to the mix.</p>
       {images.length > 0 && <div className={`gallery-preview photos-${images.length}`} aria-hidden="true">
         {images.map(photo => <img key={photo.id} src={photo.src} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = "hidden"; }} />)}
       </div>}
-      <span className="gallery-invite-cta">See the photos <span aria-hidden="true">↗</span></span>
+      <span className="gallery-invite-cta">See the photos &amp; add yours <span aria-hidden="true">↗</span></span>
     </a>
   );
 }
