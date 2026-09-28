@@ -781,6 +781,13 @@ blockquote {
   object-fit: cover;
   display: block;
 }
+.event-cover.has-photo {
+  aspect-ratio: auto;
+}
+.event-cover.has-photo img {
+  height: auto;
+  object-fit: contain;
+}
 .cover-placeholder {
   height: 100%;
   padding: 25px 32px;
