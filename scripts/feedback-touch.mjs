@@ -121,6 +121,11 @@ try {
     true,
   );
   await page.getByRole("button", { name: "Next →", exact: true }).click();
+  await page.getByRole("button", {name:"Just right", exact:true}).click();
+  await page.getByRole("button", {name:"Next →", exact:true}).click();
+  await page.getByRole("button", {name:"GroupMe", exact:true}).click();
+  await page.getByRole("button", {name:"Email", exact:true}).click();
+  await page.getByRole("button", {name:"Next →", exact:true}).click();
   await page
     .getByRole("button", { name: "Send feedback", exact: true })
     .click();
@@ -177,7 +182,7 @@ try {
   await desktop.getByRole("heading", { name: "What did you enjoy?" }).waitFor();
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: native finger dragging 1–5, untouched defaults blocked, tap confirmation, keyboard access, six revised questions, microphone guidance, recording/playback and consent. No data stored.",
+    "PASS: native finger dragging 1–5, untouched defaults blocked, tap confirmation, keyboard access, eight revised questions, microphone guidance, recording/playback and consent. No data stored.",
   );
 } finally {
   await browser.close();

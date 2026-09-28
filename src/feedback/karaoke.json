@@ -140,6 +140,57 @@
     ]
   },
   {
+    "id": "communication",
+    "type": "choice",
+    "title": "How was the communication leading up to the event?",
+    "help": "Think about the number of messages and reminders.",
+    "required": false,
+    "options": [
+      {
+        "id": "too_much",
+        "label": "Too much"
+      },
+      {
+        "id": "too_little",
+        "label": "Too little"
+      },
+      {
+        "id": "just_right",
+        "label": "Just right"
+      }
+    ]
+  },
+  {
+    "id": "heard_about",
+    "type": "multi",
+    "title": "Where did you hear about the event?",
+    "help": "Choose all that apply.",
+    "required": false,
+    "max": 5,
+    "options": [
+      {
+        "id": "groupme",
+        "label": "GroupMe"
+      },
+      {
+        "id": "email",
+        "label": "Email"
+      },
+      {
+        "id": "in_person",
+        "label": "In person"
+      },
+      {
+        "id": "instagram",
+        "label": "Instagram"
+      },
+      {
+        "id": "other",
+        "label": "Other"
+      }
+    ]
+  },
+  {
     "id": "reflection",
     "type": "text",
     "title": "What should we keep or change?",

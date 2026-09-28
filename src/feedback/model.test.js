@@ -3,14 +3,16 @@ import questions from "./karaoke.json";
 import { validateQuestion, distribution, toCsv } from "./model.js";
 import { importDraft, newSurvey, surveyError } from "./builder.js";
 describe("anonymous feedback validation", () => {
-  it("keeps exactly six karaoke questions, with only the written answer optional", () => {
-    expect(questions).toHaveLength(6);
+  it("keeps eight karaoke questions with optional communication additions", () => {
+    expect(questions).toHaveLength(8);
     expect(questions.map((q) => q.required)).toEqual([
       true,
       true,
       true,
       true,
       true,
+      false,
+      false,
       false,
     ]);
   });
@@ -45,10 +47,10 @@ describe("anonymous feedback validation", () => {
     ).toBe(true);
   });
   it("permits an empty optional response but caps text length", () => {
-    expect(validateQuestion(questions[5], undefined)).toBe(true);
-    expect(validateQuestion(questions[5], "")).toBe(true);
-    expect(validateQuestion(questions[5], "x".repeat(2001))).toBe(false);
-    expect(validateQuestion({ ...questions[5], required: true }, "  ")).toBe(
+    expect(validateQuestion(questions[7], undefined)).toBe(true);
+    expect(validateQuestion(questions[7], "")).toBe(true);
+    expect(validateQuestion(questions[7], "x".repeat(2001))).toBe(false);
+    expect(validateQuestion({ ...questions[7], required: true }, "  ")).toBe(
       false,
     );
   });
