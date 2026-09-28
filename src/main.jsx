@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { COMMITTEES } from './committee/data.js';
 import './styles.css';
+import HomeCollective from './components/HomeCollective.jsx';
 import MembershipThermometer from './membership/MembershipThermometer.jsx';
 
 // Pulled straight from the Find Your Place data so the two can never drift.
@@ -172,15 +173,11 @@ const navLinks = [
 // Split into month / day / weekday so each date can be set like a calendar
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
-// The first entry is the featured card at the top of the section; the rest are
-// the tiles beneath it. Delete a row once its date has passed and the next one
-// is promoted automatically. Parent Orientation came out on Sept 11.
+// School dates remain below the Collective feature.
 const upcomingEvents = [
-  // The first row is the featured card and needs time, description and image.
-  { month: 'Sept', year: '2026', weekday: 'Sun', day: '27', label: 'R&B Karaoke Night', time: '5 to 7 p.m. at RCA · Adults only', description: 'Grab your crew for an evening of R&B favorites and good company. Add your name and get ready to sing along.', image: '/images/rcap-karaoke-mic.jpg', cta: { href: '/karaoke', label: 'RSVP for R&B Karaoke' } },
-  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed', href: volunteerHref, cta: 'Sign up for EXP' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
   { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
+  { month: 'Oct', year: '2026', weekday: 'Mon', day: '5', label: 'Holiday Raffle' },
 ];
 
 
@@ -806,47 +803,14 @@ function App() {
           pass and pull the next few forward. */}
       <section id="events" className="content-section events-section">
         <div className="section-heading">
-          <p className="section-label">Happening Now</p>
-          <h2>Make room for a little RCA.</h2>
-          <p>Come connect, cheer someone on, or lend a hand. Here is what is next.</p>
-          <a className="text-link heading-link" href={calendarHref} target="_blank" rel="noopener noreferrer">
-            Open the full school calendar
-            <ArrowUpRight size={15} aria-hidden="true" />
-          </a>
+          <p className="section-label">Our community, connected</p>
+          <h2>Support the people behind the possibilities.</h2>
+          <p>Useful connections. Familiar faces. A community with so much to offer.</p>
         </div>
-        <article className="featured-event">
-          <div className="featured-event-photo">
-            <img src={upcomingEvents[0].image} alt="Parents gathered at RCA" loading="lazy" width="1800" height="1200" />
-            <span className="featured-event-tag">The parent social</span>
-          </div>
-          <div className="featured-event-copy">
-            <p className="section-label">{upcomingEvents[0].weekday}, {upcomingEvents[0].month} {upcomingEvents[0].day} · {upcomingEvents[0].year}</p>
-            <h3>{upcomingEvents[0].label}</h3>
-            <p className="featured-event-time"><Clock size={18} aria-hidden="true" />{upcomingEvents[0].time}</p>
-            <p>{upcomingEvents[0].description}</p>
-            {/* Three cases, in order: a live join link, an event that carries
-                its own call to action, and otherwise the school calendar. Each
-                lives on the event row, so the button follows whatever is
-                featured without anyone editing this markup. */}
-            {upcomingEvents[0].join ? (
-              <a className="button primary" href={upcomingEvents[0].join} target="_blank" rel="noopener noreferrer">Join the meeting <ArrowUpRight size={18} aria-hidden="true" /></a>
-            ) : upcomingEvents[0].cta ? (
-              <a
-                className="button primary"
-                href={upcomingEvents[0].cta.href}
-                {...(upcomingEvents[0].cta.external
-                  ? { target: '_blank', rel: 'noopener noreferrer' }
-                  : {})}
-              >
-                {upcomingEvents[0].cta.label} <ArrowUpRight size={18} aria-hidden="true" />
-              </a>
-            ) : (
-              <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
-            )}
-          </div>
-        </article>
+        <HomeCollective />
+        <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
         <div className="event-grid" aria-label="More upcoming RCAP dates">
-          {upcomingEvents.slice(1).map(({ month, year, weekday, day, label, href, cta }) => (
+          {upcomingEvents.map(({ month, year, weekday, day, label, href, cta }) => (
             <article
               className={`event-card${day.length > 2 ? ' is-range' : ''}`}
               key={`${month}-${day}-${label}`}
@@ -869,12 +833,12 @@ function App() {
             columns than they did as three rules across the page. They stack
             back to full width on a phone. */}
         <div className="callouts">
-          <a className="callout callout-social has-photo" href="/karaoke">
-            <img className="callout-photo" src="/images/rcap-karaoke-mic.jpg" alt="" loading="lazy" width="1200" height="671" />
-            <span className="callout-kicker">Sun, Sept 27</span>
-            <strong>Parent Social: R&amp;B Karaoke</strong>
-            <span className="callout-body">5 to 7pm at RCA. Adults only. See who is coming.</span>
-            <span className="callout-go">RSVP <ArrowRight size={17} aria-hidden="true" /></span>
+          <a className="callout callout-social has-photo" href="/feedback/rb-karaoke">
+            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="671" />
+            <span className="callout-kicker">Your voice matters</span>
+            <strong>About Last Night</strong>
+            <span className="callout-body">Share your honest take on Karaoke Night, then enjoy the photos and add yours.</span>
+            <span className="callout-go">Share your thoughts <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
 
           {/* The photo sits behind the copy rather than above it, so the card
