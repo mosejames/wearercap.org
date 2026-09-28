@@ -9,14 +9,14 @@
 //
 //   POST /api/booth-ingest   (Snappic webhook target)
 //
-// Env: SNAPPIC_WEBHOOK_SECRET, SUPABASE_BOOTH_REFRESH_TOKEN,
+// Env: SNAPPIC_WEBHOOK_SECRET, SUPABASE_BOOTH_PHONE, SUPABASE_BOOTH_PASSWORD,
 //      VITE_SUPABASE_URL / SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
 //
 // The booth is a real vault contributor (phone-verified Supabase user whose
-// refresh token lives in env). Acting as a user keeps every existing gate:
+// server-only password lives in env). Acting as a user keeps every existing gate:
 // vault_reserve_uploads, the 200/hour limit, the open-album check, and the
-// house stamping trigger. Turn OFF refresh-token rotation in the Supabase
-// dashboard so the stored refresh token stays valid.
+// house stamping trigger. Password sign-in creates fresh sessions without
+// reusing rotated refresh tokens or disabling replay protection.
 //
 // Idempotency: the photo id is a deterministic UUID v5 of the Snappic
 // session id, so a Snappic retry (it retries on non-2xx) can never double
@@ -31,7 +31,8 @@ export const config = { api: { bodyParser: false } };
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 const WEBHOOK_SECRET = process.env.SNAPPIC_WEBHOOK_SECRET || '';
-const BOOTH_REFRESH_TOKEN = process.env.SUPABASE_BOOTH_REFRESH_TOKEN || '';
+const BOOTH_PHONE = process.env.SUPABASE_BOOTH_PHONE || '';
+const BOOTH_PASSWORD = process.env.SUPABASE_BOOTH_PASSWORD || '';
 
 const HOUSE = 'rcap';
 const WEB_MAX = 1800;   // long edge, px — matches src/vault/config.js
@@ -83,21 +84,35 @@ async function readRawBody(req) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Booth session, refreshed from the stored refresh token and cached in memory
-// for the life of the serverless container.
-let boothSession = null;
-async function boothToken() {
-  if (boothSession && boothSession.expiresAt > Date.now() + 60_000) return boothSession.accessToken;
-  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-    method: 'POST',
-    headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: BOOTH_REFRESH_TOKEN }),
-  });
-  if (!r.ok) throw new Error(`booth session refresh failed (${r.status})`);
-  const j = await r.json();
-  boothSession = { accessToken: j.access_token, expiresAt: Date.now() + (j.expires_in || 3600) * 1000 };
-  return boothSession.accessToken;
+// Each container shares one pending sign-in and caches its short-lived access
+// token. Cold starts and expiry use a fresh password grant; no rotating refresh
+// token is persisted in an immutable environment variable.
+export function createBoothTokenProvider({ url, key, phone, password, request = (...args) => fetch(...args), now = Date.now }) {
+  let session = null;
+  let pending = null;
+  return async function token() {
+    if (session && session.expiresAt > now() + 60_000) return session.accessToken;
+    if (!pending) {
+      pending = (async () => {
+        const r = await request(`${url}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { apikey: key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, password }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!r.ok) throw new Error(`booth sign-in failed (${r.status})`);
+        const j = await r.json();
+        if (!j.access_token || !Number.isFinite(j.expires_in) || j.expires_in <= 60) {
+          throw new Error('booth sign-in returned an invalid session');
+        }
+        session = { accessToken: j.access_token, expiresAt: now() + j.expires_in * 1000 };
+        return session.accessToken;
+      })().finally(() => { pending = null; });
+    }
+    return pending;
+  };
 }
+const boothToken = createBoothTokenProvider({ url: SUPABASE_URL, key: ANON_KEY, phone: BOOTH_PHONE, password: BOOTH_PASSWORD });
 
 function rest(path, token, init = {}) {
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -163,8 +178,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!SUPABASE_URL || !ANON_KEY || !WEBHOOK_SECRET || !BOOTH_REFRESH_TOKEN) {
-    console.error('booth-ingest: missing env (SNAPPIC_WEBHOOK_SECRET / SUPABASE_BOOTH_REFRESH_TOKEN / Supabase pair)');
+  if (!SUPABASE_URL || !ANON_KEY || !WEBHOOK_SECRET || !BOOTH_PHONE || !BOOTH_PASSWORD) {
+    console.error('booth-ingest: missing env (SNAPPIC_WEBHOOK_SECRET / booth phone and password / Supabase pair)');
     return res.status(500).json({ error: 'Ingest not configured' });
   }
 

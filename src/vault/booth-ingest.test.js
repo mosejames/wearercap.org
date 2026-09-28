@@ -1,7 +1,7 @@
 // @vitest-environment node
 import crypto from 'node:crypto';
 import { afterEach, expect, it, vi } from 'vitest';
-import { photoIdFor, parseSession, verifySignature, isVerificationSample } from '../../api/booth-ingest.js';
+import { photoIdFor, parseSession, verifySignature, isVerificationSample, createBoothTokenProvider } from '../../api/booth-ingest.js';
 
 const SECRET = 'test-webhook-secret';
 
@@ -11,7 +11,8 @@ async function invoke(body, validSignature = true) {
   vi.stubEnv('VITE_SUPABASE_URL', 'https://project.supabase.co');
   vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon');
   vi.stubEnv('SNAPPIC_WEBHOOK_SECRET', SECRET);
-  vi.stubEnv('SUPABASE_BOOTH_REFRESH_TOKEN', 'test-refresh');
+  vi.stubEnv('SUPABASE_BOOTH_PHONE', '+15555550100');
+  vi.stubEnv('SUPABASE_BOOTH_PASSWORD', 'test-password');
   vi.resetModules();
   const { default: handler } = await import('../../api/booth-ingest.js');
   const raw = Buffer.from(JSON.stringify(body));
@@ -90,4 +91,40 @@ it('parses the nested session shape and tolerates flat shapes', () => {
     .toEqual({ directUrl: 'https://x/y.jpg', id: 's1', type: 'photo' });
   expect(parseSession({ session_id: 's2', direct_url: 'https://x/z.gif' }).id).toBe('s2');
   expect(parseSession(null)).toEqual({ directUrl: undefined, id: undefined, type: 'photo' });
+});
+
+
+it('renews expired access with a fresh login instead of reusing a rotated refresh token', async () => {
+  let now = 0;
+  const request = vi.fn().mockImplementation(async () => ({ ok: true, json: async () => ({ access_token: `access-${request.mock.calls.length}`, expires_in: 3600, refresh_token: 'single-use' }) }));
+  const token = createBoothTokenProvider({ url: 'https://project.supabase.co', key: 'anon', phone: '+15555550100', password: 'secret', request, now: () => now });
+  expect(await token()).toBe('access-1');
+  now = 3_500_000;
+  expect(await token()).toBe('access-1');
+  now = 3_550_000;
+  expect(await token()).toBe('access-2');
+  expect(request).toHaveBeenCalledTimes(2);
+  for (const [url, init] of request.mock.calls) {
+    expect(url.endsWith('/token?grant_type=password')).toBe(true);
+    expect(JSON.parse(init.body)).toEqual({ phone: '+15555550100', password: 'secret' });
+  }
+});
+
+it('shares sign-in across simultaneous captures and retries after an auth failure', async () => {
+  const request = vi.fn().mockResolvedValueOnce({ ok: false, status: 503 })
+    .mockResolvedValue({ ok: true, json: async () => ({ access_token: 'recovered', expires_in: 3600 }) });
+  const token = createBoothTokenProvider({ url: 'https://project.supabase.co', key: 'anon', phone: 'phone', password: 'secret', request });
+  const failed = await Promise.allSettled([token(), token(), token()]);
+  expect(failed.every(r => r.status === 'rejected')).toBe(true);
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(await Promise.all([token(), token(), token()])).toEqual(['recovered', 'recovered', 'recovered']);
+  expect(request).toHaveBeenCalledTimes(2);
+});
+
+it('does not cache malformed authentication responses', async () => {
+  const request = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ expires_in: 3600 }) });
+  const token = createBoothTokenProvider({ url: 'https://project.supabase.co', request });
+  await expect(token()).rejects.toThrow('invalid session');
+  await expect(token()).rejects.toThrow('invalid session');
+  expect(request).toHaveBeenCalledTimes(2);
 });
