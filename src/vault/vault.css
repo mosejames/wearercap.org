@@ -915,3 +915,6 @@ to{opacity:1}
   .memory-five { grid-template-columns: repeat(3, 1fr); }
   .memory-five a:nth-child(n + 4) { display: none; }
 }
+
+.btn.danger{background:#b42318;border-color:#b42318;color:#fff}
+.btn.danger:hover{background:#912018;border-color:#912018}

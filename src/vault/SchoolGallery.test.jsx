@@ -54,3 +54,22 @@ it('opens the event gallery first and keeps house standings and ranked photos be
     expect(contributors[0].querySelector('.leader-name').getAttribute('href')).toBe('#/person/large');
   } finally {await act(async()=>root.unmount());host.remove();}
 });
+
+it('offers bulk deletion to admins and selects only visible uploads', async () => {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const host=document.createElement('div'); document.body.append(host); const root=createRoot(host);
+  const event={id:'bingo',slug:'bingo-night',title:'Bingo Night',startsOn:'2026-09-15',kind:'school',open:true};
+  const button = text => [...host.querySelectorAll('button')].find(b=>b.textContent===text);
+  try {
+    await act(async()=>root.render(<SchoolGallery events={[event]} today="2026-09-16" canMove admin showToast={vi.fn()} refreshEvents={vi.fn()} />));
+    await act(async()=>button('Select uploads').click());
+    expect(button('Delete selected').disabled).toBe(true);
+    await act(async()=>button('Select all (up to 500)').click());
+    expect(host.querySelector('.move-toolbar').textContent).toContain('2 selected');
+    await act(async()=>button('Delete selected').click());
+    expect(host.querySelector('.sheet').textContent).toContain('Delete 2 selected uploads');
+    await act(async()=>button('Cancel').click());
+    expect(host.querySelector('.move-toolbar').textContent).toContain('2 selected');
+    expect(button('Move selected')).toBeTruthy();
+  } finally {await act(async()=>root.unmount());host.remove();}
+});

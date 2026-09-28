@@ -1089,6 +1089,38 @@ export function SchoolGallery({ events, loading, today, ...props }) {
   return <EventPage key={event.id} event={event} events={events} today={today} homeMode {...props} />;
 }
 
+export function BulkDeleteSheet({ ids, pass, onRemoved, onClose }) {
+  const [remaining, setRemaining] = useState(ids);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(0);
+  const [error, setError] = useState('');
+  const running = useRef(false);
+  const remove = async () => {
+    if (running.current) return;
+    running.current = true;
+    setBusy(true); setError('');
+    const failed = [];
+    for (const id of remaining) {
+      try { await removeUpload(id, pass); setDone(n => n + 1); onRemoved(id); }
+      catch (e) { failed.push(id); setError(e.message || 'Could not delete an upload.'); }
+    }
+    setRemaining(failed); setBusy(false); running.current = false;
+    if (!failed.length) onClose();
+  };
+  return <Sheet title="Delete selected uploads" onClose={() => { if (!running.current) onClose(); }}>
+    <div className="stack">
+      <p>Delete {plural(remaining.length, 'selected upload')} and their stored files? This cannot be undone.</p>
+      <p className="fine">Only the selected uploads will be deleted. Keep this page open until deletion finishes.</p>
+      {(busy || done > 0) && <p role="status">{done} of {ids.length} uploads deleted{busy ? '…' : '.'}</p>}
+      {error && <p className="err" role="alert">{remaining.length} uploads still need deletion or file cleanup. {error} Retry to finish only those uploads.</p>}
+      <div className="row">
+        <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>
+        <button className="btn danger" disabled={busy} onClick={remove}>{busy ? 'Deleting…' : error ? `Retry ${plural(remaining.length, 'upload')}` : `Delete ${plural(remaining.length, 'upload')}`}</button>
+      </div>
+    </div>
+  </Sheet>;
+}
+
 /* --------------------------------------------------------------- event */
 
 function EventPage({ event, events, homeMode = false, canMove, owner, profile, admin, pass, onAdd, onNeedName, onInvite, refreshEvents, initialPhotoId, today, showToast }) {
@@ -1103,6 +1135,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [dl, setDl] = useState(false);
   const [leaderboard, setLeaderboard] = useState(false);
   const [leaderTab, setLeaderTab] = useState('houses');
+  const [deleting, setDeleting] = useState(null);
   const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
 
@@ -1201,7 +1234,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a
                 time stays open to everyone, in the lightbox. */}
-            {canMove&&visible.length>0&&<button className="btn ghost" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting?'Cancel selection':'Select uploads to move'}</button>}
+            {canMove&&visible.length>0&&<button className="btn ghost" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting?'Cancel selection':'Select uploads'}</button>}
             {admin && visible.length > 0 && (
               <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
             )}
@@ -1225,7 +1258,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         {leaderTab === 'houses' ? <HouseBoard eventId={event.id} version={visible.length} title="House uploads" /> : leaderTab === 'people' ? <ContributorBoard eventId={event.id} version={visible.length} owner={owner} /> : <PhotoGrid photos={[...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes)} rank likedSet={liked} emptyText="No likes yet. Heart a photo to start." onOpen={i => { const ranked = [...visible].filter(p => p.likes > 0).sort((a,b) => b.likes - a.likes); setLeaderboard(false); setIndex(sorted.findIndex(p => p.id === ranked[i].id)); }} />}
       </Sheet>}
       <div className="shell">
-        {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(sorted.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button></div>}
+        {selecting&&<div className="move-toolbar"><b>{selected.size} selected</b><button className="link" onClick={()=>setSelected(new Set(visible.slice(0,500).map(p=>p.id)))}>Select all (up to 500)</button><button className="btn small primary" disabled={!selected.size} onClick={()=>{setMoving([...selected]);setTarget('');setMoveError('');}}>Move selected</button>{(admin || (selected.size > 0 && [...selected].every(id => ownsUpload(photos.find(p => p.id === id)?.owner)))) && <button className="btn small danger" disabled={!selected.size} onClick={() => setDeleting([...selected])}>Delete selected</button>}</div>}
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
@@ -1247,6 +1280,9 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           onHidden={(p, hidden) => { setPhotos((ps) => ps.map((x) => (x.id === p.id ? { ...x, hidden } : x))); refreshEvents(); }}
         />
       )}
+      {deleting && <BulkDeleteSheet ids={deleting} pass={pass}
+        onRemoved={id => { setPhotos(ps => ps.filter(p => p.id !== id)); setSelected(previous => { const next = new Set(previous); next.delete(id); return next; }); }}
+        onClose={() => { setDeleting(null); refreshEvents(); }} />}
       {moving&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMoving(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:moving,p_from:event.id,p_to:target,p_pass:pass});setPhotos(ps=>ps.filter(p=>!moving.includes(p.id)));setMoving(null);setSelected(new Set());setSelecting(false);refreshEvents();showToast('Uploads moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move {moving.length} {moving.length===1?'upload':'uploads'} from {event.title}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required value={target} disabled={moveBusy} onChange={e=>setTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==event.id&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!target||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
       {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
