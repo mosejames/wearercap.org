@@ -158,3 +158,14 @@ to the private request. Replies use the existing shared officers inbox.
 coverage, notifications, correction, exact amounts, approval circulation,
 idempotency, stale decisions, reminder suppression, payment gates and existing
 treasurer routing in a rollback-only transaction. No test emails are sent.
+
+## Isolated approval simulations
+
+Operator-created fixtures are registered in `cr_private.test_requests`, which
+has no client grants. Their notifications are clearly marked TEST, deduplicated
+per request version, and routed only to the registered test recipient. PDF
+archives and reminders are suppressed, and a database trigger prevents recording
+payment. The request follows the normal assigned approval UI; the synthetic
+preparer account has no login credentials and is banned. Do not use these fixtures
+for actual expenses. `supabase/tests/isolated_approval_tests.sql` verifies this
+isolation in a rollback-only transaction.
