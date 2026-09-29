@@ -1254,3 +1254,17 @@ button.stat[aria-pressed="true"] {
     flex-shrink: 0;
   }
 }
+.stat-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  color: #204359;
+  font-size: 13px;
+  font-weight: 600;
+}
+.stat-action svg { flex-shrink: 0; }
+button.stat:hover { background: #f6f9fb; border-color: #204359; }
+button.stat:focus-visible { outline: 3px solid #204359; outline-offset: 3px; }
+button.stat[aria-pressed="true"] .stat-action { color: #775800; }

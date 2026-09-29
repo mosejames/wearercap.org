@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
   ReceiptText,
   ShieldCheck,
   Upload,
@@ -1136,6 +1137,10 @@ export function RequestList({
           >
             <span className="muted">{label}</span>
             <strong>{value}</strong>
+            <span className="stat-action">
+              {filter === key ? "Showing below" : "View requests below"}
+              <ArrowDown size={15} aria-hidden="true" />
+            </span>
           </button>
         ))}
       </div>
