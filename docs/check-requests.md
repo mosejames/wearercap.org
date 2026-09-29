@@ -111,3 +111,50 @@ Assignment, approval, decline, requested changes, and payment each produce clear
 status wording. Email updates to the owner include the request recap. Optional PDF
 emails remain separate; an identical destination's PDF recap replaces a duplicate
 status email. Login verification codes are unaffected by these preferences.
+
+## Staff-prepared approval requests (September 29)
+
+The board dashboard now has **Request approval** and **Needs my approval**.
+Secretary, treasurer, and manager accounts can prepare a request for someone
+else. They enter their own name as preparer, the payee's contact, the event,
+receipts, the RCAP amount, and an independent board approver. The preparer
+retains responsibility for corrections. A payee contact does not create an
+account or grant access to private records. For an existing request, use its
+record rather than creating a second request for the same expense.
+
+Personal requests retain the existing treasurer review and board-vote rules.
+Staff-prepared requests require the assigned reviewer to approve or decline.
+The preparing treasurer can record payment after approval, provided they are
+not the recipient. Self-dealing checks also recognize existing staff email and
+phone entries with the same name. The server remains the permission authority.
+
+Each expense separates its document total from the requested RCAP amount.
+A difference requires an explanation of excluded items or personal coverage,
+including planned versus completed contributions. This note does not increase
+a committee budget or record a donation transfer. The approval button names the
+exact requested amount, and the decision history records the amount and payee.
+The receipt total and coverage explanation are preserved in the PDF archive.
+
+Assignment sends the existing text/email notifications and authenticated request
+link. Staff select the reviewer entry matching the login they should use.
+Daily reminders for assigned requests older than 24 hours run at 10 a.m.
+America/New_York, respecting daylight saving time and channel preferences.
+They are deduplicated per reviewer/contact/day; undelivered reminders are
+cancelled at claim time when no assigned approvals remain or the day has passed.
+A message already accepted by the provider cannot be recalled.
+
+After approval, one confirmation email includes the configured board list,
+the preparer's/requester's verified email when available, a payee email for
+staff-prepared requests, and any additional committee chair or other contacts
+selected by staff. The reviewer can amend the additional list before approving.
+Phone-only requesters keep their normal text updates; add an appropriate email
+to the circulation list when an email copy is wanted. Recipients are deduplicated
+and visible on the To line. The email states amount, payee, committee, event,
+approver and decision time, and that payment is still pending. It does not attach
+receipts or include Zelle details. A notification recipient does not gain access
+to the private request. Replies use the existing shared officers inbox.
+
+`supabase/tests/staff_payment_approvals.sql` exercises permissions, partial
+coverage, notifications, correction, exact amounts, approval circulation,
+idempotency, stale decisions, reminder suppression, payment gates and existing
+treasurer routing in a rollback-only transaction. No test emails are sent.

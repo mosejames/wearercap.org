@@ -21,7 +21,7 @@ afterEach(() => {
   act(() => root?.unmount());
   host?.remove();
 });
-function setup(receipts) {
+function setup(receipts, overrides = {}, staff = []) {
   host = document.createElement("div");
   document.body.append(host);
   const onError = vi.fn();
@@ -47,6 +47,7 @@ function setup(receipts) {
             receipts,
           },
         ],
+        ...overrides,
       };
     });
     return (
@@ -54,7 +55,7 @@ function setup(receipts) {
         draft={draft}
         setDraft={setDraft}
         user={{ phone: "14045550123" }}
-        staff={[]}
+        staff={staff}
         onSaved={vi.fn()}
         onError={onError}
         busy={false}
@@ -112,6 +113,61 @@ it("blocks review when an expense has no receipt", () => {
   advance();
   expect(panel().textContent).toContain("Expense 1");
   expect(onError).toHaveBeenLastCalledWith(
-    "Add supporting documents and a positive requested amount no greater than the combined receipt or invoice total.",
+    "Add supporting documents, a supported requested amount, and an explanation for any amount RCAP is not covering.",
   );
+});
+
+it("requires an explicit reviewer for staff-prepared requests", () => {
+  const error = setup(
+    [{ name: "receipt.pdf", path: "receipt.pdf" }],
+    { on_behalf: true, payee_contact: "crystal@example.test" },
+    [{ email: "+14045550123", name: "Latasha", role: "treasurer" }],
+  );
+  advance();
+  expect(error).toHaveBeenLastCalledWith(
+    "Choose an approver and enter the payee email or cellphone.",
+  );
+  expect(panel().textContent).toContain("Send approval request to");
+});
+it("shows the exact RCAP share, coverage note, reviewer and email circulation before sending", () => {
+  setup(
+    [],
+    {
+      on_behalf: true,
+      payee: "Crystal",
+      payee_contact: "crystal@example.test",
+      approver_email: "mose@example.test",
+      event_name: "Parent Social",
+      approval_recipients_text: "chair@example.test",
+      items: [
+        {
+          key: "catering",
+          date: today(),
+          vendor: "Caterer",
+          description: "Catering",
+          amount: "500",
+          document_total: "832.32",
+          coverage_note: "Crystal and Mose each plan to cover $166.16.",
+          receipts: [{ name: "receipt.pdf", path: "receipt.pdf" }],
+        },
+      ],
+    },
+    [
+      { email: "+14045550123", name: "Latasha", role: "treasurer" },
+      { email: "mose@example.test", name: "Mose", role: "manager" },
+    ],
+  );
+  advance();
+  expect(panel().textContent).toContain("$332.32");
+  advance();
+  for (const value of [
+    "$832.32",
+    "$500.00",
+    "$166.16",
+    "Mose",
+    "Parent Social",
+  ])
+    expect(panel().textContent).toContain(value);
+  expect(host.textContent).toContain("Send to Mose for approval");
+  expect(panel().textContent).toContain("Addresses are visible");
 });

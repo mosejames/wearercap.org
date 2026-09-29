@@ -35,6 +35,8 @@ export function requesterRecap(snapshot: any, attached = true) {
     `Total requested: ${money(r.total_cents)}`,
     `Payment method: ${method[r.delivery] || r.delivery}`,
     `Payable to: ${r.payee}`,
+    ...(r.on_behalf ? [`Prepared by: ${r.requester_name}`] : []),
+    ...(r.event_name ? [`Event: ${r.event_name}`] : []),
     ...(r.delivery === "mail" ? [`Mailing address: ${r.address}`] : []),
     ...(r.delivery === "zelle"
       ? [`Zelle email or cellphone: ${r.zelle_contact}`]
@@ -45,7 +47,7 @@ export function requesterRecap(snapshot: any, attached = true) {
     "Expenses:",
     ...r.items.map(
       (item: any, i: number) =>
-        `${i + 1}. ${item.description} | ${item.date} | ${money(item.amount_cents)} | ${item.receipts.length} document(s)${item.document_total_cents ? ` | Document total: ${money(item.document_total_cents)}` : ""}`,
+        `${i + 1}. ${item.description} | ${item.date} | ${money(item.amount_cents)} | ${item.receipts.length} document(s)${item.document_total_cents ? ` | Document total: ${money(item.document_total_cents)}` : ""}${item.coverage_note ? ` | Not requested from RCAP: ${item.coverage_note}` : ""}`,
     ),
     ...(event.note ? ["", `Review / activity note: ${event.note}`] : []),
     ...(r.payment_reference

@@ -1,4 +1,4 @@
-import Brand from '../components/Brand.jsx';
+import Brand from "../components/Brand.jsx";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -19,6 +19,7 @@ import {
 import { COMMITTEES } from "../committee/data.js";
 import {
   STATUS,
+  canPrepare,
   dollars,
   today,
   validateDraft,
@@ -318,6 +319,9 @@ export function RequestForm({
   busy,
   setBusy,
 }) {
+  const preparing = canPrepare(
+    staff.find((s) => s.email === contactOf(user))?.role,
+  );
   const [progress, setProgress] = useState("");
   const [step, setStep] = useState(0);
   const headingRef = useRef(null);
@@ -356,6 +360,13 @@ export function RequestForm({
     e.preventDefault();
     onError("");
     if (step === 0) {
+      if (
+        draft.on_behalf &&
+        (!draft.approver_email || !validZelle(draft.payee_contact))
+      ) {
+        onError("Choose an approver and enter the payee email or cellphone.");
+        return;
+      }
       if (!/^\d{10}$/.test(normalizePhone(draft.phone))) {
         onError("Enter a 10-digit phone number.");
         return;
@@ -371,13 +382,15 @@ export function RequestForm({
       const expenseError = draft.items.some(
         (item) =>
           !item.receipts.length ||
+          (toCents(item.amount) < toCents(item.document_total) &&
+            (item.coverage_note || "").trim().length < 10) ||
           toCents(item.amount) === null ||
           toCents(item.document_total) === null ||
           toCents(item.amount) > toCents(item.document_total),
       );
       if (expenseError) {
         onError(
-          "Add supporting documents and a positive requested amount no greater than the combined receipt or invoice total.",
+          "Add supporting documents, a supported requested amount, and an explanation for any amount RCAP is not covering.",
         );
         return;
       }
@@ -395,7 +408,7 @@ export function RequestForm({
     }
     setBusy(true);
     try {
-      onSaved(await submit(draft, user, setProgress));
+      onSaved(await submit(draft, user, setProgress, preparing));
     } catch (e) {
       onError(
         e.message || "Your request could not be saved. Please try again.",
@@ -451,9 +464,31 @@ export function RequestForm({
               <p className="muted">
                 All fields are required unless marked optional.
               </p>
+              {preparing && (
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={!!draft.on_behalf}
+                    onChange={(e) => set("on_behalf", e.target.checked)}
+                  />
+                  <span>I am preparing this request for someone else.</span>
+                </label>
+              )}
+              {draft.on_behalf && (
+                <p className="notice">
+                  You prepare the request, the assigned board member approves,
+                  and the treasurer records payment. Enter the recipient below.
+                  An email contact also receives the approval confirmation. This
+                  does not create an account for the payee.
+                </p>
+              )}
               <div className="fields">
                 <Field
-                  label="Your full name"
+                  label={
+                    draft.on_behalf
+                      ? "Prepared by (your full name)"
+                      : "Your full name"
+                  }
                   required
                   autoComplete="name"
                   maxLength={100}
@@ -498,6 +533,44 @@ export function RequestForm({
                   onChange={(e) => set("payee", e.target.value)}
                   placeholder="Person or vendor receiving payment"
                 />
+                {draft.on_behalf && (
+                  <Field
+                    label="Payee email or cellphone"
+                    required
+                    maxLength={254}
+                    value={draft.payee_contact || ""}
+                    onChange={(e) => set("payee_contact", e.target.value)}
+                    placeholder="Contact for the person receiving payment"
+                  />
+                )}
+                <Field
+                  label="Event or activity (optional)"
+                  maxLength={150}
+                  value={draft.event_name || ""}
+                  onChange={(e) => set("event_name", e.target.value)}
+                  placeholder="e.g. Parent Social"
+                />
+                {draft.on_behalf && (
+                  <Field label="Send approval request to">
+                    <select
+                      required
+                      value={draft.approver_email}
+                      onChange={(e) => set("approver_email", e.target.value)}
+                    >
+                      <option value="">
+                        Choose an independent board member
+                      </option>
+                      {staff
+                        .filter((s) => s.email !== contactOf(user))
+                        .map((s) => (
+                          <option key={s.email} value={s.email}>
+                            {s.name} (
+                            {s.email.startsWith("+") ? "text" : "email"})
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+                )}
                 <Field label="Committee">
                   <select
                     required
@@ -512,7 +585,7 @@ export function RequestForm({
                     <option>Other RCAP expense</option>
                   </select>
                 </Field>
-                <Field label="How would you like to receive payment?">
+                <Field label="How should the payee receive payment?">
                   <select
                     value={draft.delivery}
                     onChange={(e) => set("delivery", e.target.value)}
@@ -551,7 +624,7 @@ export function RequestForm({
                     maxLength={254}
                     value={draft.zelle_contact || ""}
                     onChange={(e) => set("zelle_contact", e.target.value)}
-                    placeholder="Your Zelle recipient email or cellphone"
+                    placeholder="Payee’s Zelle email or cellphone"
                   />
                 )}
                 <Field full label="What were these expenses for?">
@@ -667,6 +740,32 @@ export function RequestForm({
                         placeholder="e.g. Candy and table covers for the social"
                       />
                     </div>
+                    {toCents(item.amount) < toCents(item.document_total) && (
+                      <div className="coverage-note">
+                        <p>
+                          <strong>
+                            {dollars(
+                              toCents(item.document_total) -
+                                toCents(item.amount),
+                            )}{" "}
+                            is not requested from RCAP.
+                          </strong>{" "}
+                          The approved budget does not increase.
+                        </p>
+                        <Field full label="Who covers the difference, and how?">
+                          <textarea
+                            required
+                            minLength={10}
+                            maxLength={1000}
+                            value={item.coverage_note || ""}
+                            onChange={(e) =>
+                              setItem(i, "coverage_note", e.target.value)
+                            }
+                            placeholder="Explain any personal contribution or excluded items. Include who covers each share and whether it is planned or already paid."
+                          />
+                        </Field>
+                      </div>
+                    )}
                     <div className="upload">
                       <label>
                         <span>
@@ -760,7 +859,7 @@ export function RequestForm({
                 </div>
                 <dl className="details-grid">
                   <div>
-                    <dt>Requested by</dt>
+                    <dt>{draft.on_behalf ? "Prepared by" : "Requested by"}</dt>
                     <dd>{draft.requester_name}</dd>
                   </div>
                   <div>
@@ -800,9 +899,20 @@ export function RequestForm({
                   </div>
                   <div>
                     <dt>Reviewed by</dt>
-                    <dd>The RCAP Treasurer</dd>
+                    <dd>
+                      {draft.on_behalf
+                        ? staff.find((s) => s.email === draft.approver_email)
+                            ?.name
+                        : "The RCAP Treasurer"}
+                    </dd>
                   </div>
                   <div className="full">
+                    {draft.event_name && (
+                      <>
+                        <dt>Event</dt>
+                        <dd>{draft.event_name}</dd>
+                      </>
+                    )}
                     <dt>Purpose</dt>
                     <dd>{draft.purpose}</dd>
                   </div>
@@ -827,6 +937,14 @@ export function RequestForm({
                       {item.date} · {item.receipts.length} receipt
                       {item.receipts.length === 1 ? "" : "s"}
                     </p>
+                    <p>
+                      Document total:{" "}
+                      {dollars(toCents(item.document_total) || 0)}. Requested
+                      from RCAP: {dollars(toCents(item.amount) || 0)}.
+                    </p>
+                    {item.coverage_note && (
+                      <p>Not requested from RCAP: {item.coverage_note}</p>
+                    )}
                     <p className="muted">
                       {item.receipts.map((r) => r.name).join(", ")}
                     </p>
@@ -837,6 +955,37 @@ export function RequestForm({
                   <strong>{dollars(total)}</strong>
                 </div>
               </div>
+              {preparing && (
+                <Field
+                  full
+                  label="Committee chair and other approval email recipients (optional)"
+                >
+                  <textarea
+                    value={draft.approval_recipients_text || ""}
+                    maxLength={5000}
+                    onChange={(e) =>
+                      set("approval_recipients_text", e.target.value)
+                    }
+                    placeholder="Separate email addresses with commas"
+                  />
+                  <p className="muted">
+                    After approval, these people join the configured board and
+                    requester on one confirmation email. Addresses are visible
+                    to everyone on that email. Adding a recipient does not grant
+                    access to private receipts.
+                  </p>
+                </Field>
+              )}
+              {draft.on_behalf && (
+                <p className="notice">
+                  Approval will be requested from{" "}
+                  <strong>
+                    {staff.find((s) => s.email === draft.approver_email)
+                      ?.name || "the selected board member"}
+                  </strong>
+                  . They receive a review link. No reply-all is needed.
+                </p>
+              )}
               <Field
                 full
                 label="Email me a PDF copy (optional)"
@@ -859,9 +1008,10 @@ export function RequestForm({
                   onChange={(e) => set("budget_confirmed", e.target.checked)}
                 />
                 <span>
-                  I confirm this expense is within the approved committee
-                  budget. Approval by the assigned Board Member will take place
-                  through this form.
+                  I confirm the amount requested from RCAP is within the
+                  approved committee budget. Any remaining expense is explained
+                  above and does not increase that budget. Approval by the
+                  assigned Board Member will take place through this form.
                 </span>
               </label>
               <label className="check-row">
@@ -906,7 +1056,9 @@ export function RequestForm({
                     ? progress
                     : draft.version
                       ? "Resubmit for approval"
-                      : "Submit request"}
+                      : draft.on_behalf
+                        ? `Send to ${staff.find((s) => s.email === draft.approver_email)?.name || "board member"} for approval`
+                        : "Submit request"}
                   <ArrowRight size={16} />
                 </button>
               </div>
@@ -924,13 +1076,28 @@ export function RequestForm({
     </div>
   );
 }
-function RequestList({ records, board, onSelect, onNew, loading, onRefresh }) {
+export function RequestList({
+  records,
+  board,
+  onSelect,
+  onNew,
+  loading,
+  onRefresh,
+  contact,
+  role,
+  approvalsOnly = false,
+}) {
   const [search, setSearch] = useState(""),
-    [filter, setFilter] = useState("all");
+    [filter, setFilter] = useState(approvalsOnly ? "mine" : "all");
   const shown = records.filter(
     (r) =>
-      (filter === "all" || r.status === filter) &&
-      `${r.reference} ${r.requester_name} ${r.payee} ${r.committee}`
+      (filter === "all" ||
+        (filter === "mine"
+          ? actionAllowed(r, role, contact, "approved")
+          : filter === "awaiting_approval"
+            ? r.on_behalf && r.status === "submitted"
+            : r.status === filter)) &&
+      `${r.reference} ${r.requester_name} ${r.payee} ${r.committee} ${r.event_name || ""}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
@@ -976,6 +1143,7 @@ function RequestList({ records, board, onSelect, onNew, loading, onRefresh }) {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
+          {board && <option value="mine">Needs my approval</option>}
           <option value="all">All statuses</option>
           {Object.entries(STATUS).map(([key, label]) => (
             <option key={key} value={key}>
@@ -1025,11 +1193,18 @@ function RequestList({ records, board, onSelect, onNew, loading, onRefresh }) {
                 </p>
                 <h3>{r.payee}</h3>
                 <p>
+                  {r.event_name ? `${r.event_name} · ` : ""}
                   {r.committee}
                   {board ? ` · ${r.requester_name}` : ""}
                 </p>
               </div>
-              <Badge status={r.status} />
+              <Badge
+                status={
+                  r.on_behalf && r.approver_email && r.status === "submitted"
+                    ? "awaiting_approval"
+                    : r.status
+                }
+              />
               <strong className="money">{dollars(r.total_cents)}</strong>
               <ArrowRight size={18} />
             </button>
@@ -1084,6 +1259,9 @@ function Detail({
       clearInterval(timer);
     };
   }, [r.id, r.version]);
+  const [approvalRecipients, setApprovalRecipients] = useState(
+    (r.approval_recipients || []).join(", "),
+  );
   const me = contactOf(user);
   const myName = staff.find((s) => s.email === me)?.name;
   const eligible = voters(staff, r);
@@ -1104,6 +1282,14 @@ function Detail({
         id: r.id,
         version: r.version,
         note,
+        ...(["approved", "vote_approve"].includes(a)
+          ? {
+              approval_recipients: approvalRecipients
+                .split(/[,;\n]/)
+                .map((e) => e.trim())
+                .filter(Boolean),
+            }
+          : {}),
         duplicate_of: dupOf,
         payment_reference: payment,
         payment_date: paymentDate,
@@ -1139,11 +1325,17 @@ function Detail({
               <p className="eyebrow">REQUEST #{r.reference}</p>
               <h2>{r.payee}</h2>
             </div>
-            <Badge status={r.status} />
+            <Badge
+              status={
+                r.on_behalf && r.approver_email && r.status === "submitted"
+                  ? "awaiting_approval"
+                  : r.status
+              }
+            />
           </div>
           <dl className="details-grid">
             <div>
-              <dt>Requested by</dt>
+              <dt>{r.on_behalf ? "Prepared by" : "Requested by"}</dt>
               <dd>
                 {r.requester_name}
                 <br />
@@ -1185,10 +1377,18 @@ function Detail({
               <dd>
                 {r.status === "board_review"
                   ? "The board, by vote"
-                  : "The RCAP Treasurer"}
+                  : r.on_behalf && r.approver_email
+                    ? nameOf(r.approver_email)
+                    : "The RCAP Treasurer"}
               </dd>
             </div>
             <div className="full">
+              {r.event_name && (
+                <>
+                  <dt>Event</dt>
+                  <dd>{r.event_name}</dd>
+                </>
+              )}
               <dt>Purpose</dt>
               <dd>{r.purpose}</dd>
             </div>
@@ -1203,6 +1403,23 @@ function Detail({
                 </div>
                 {item.vendor && <p>{item.description}</p>}
                 <p className="muted">Purchased {item.date}</p>
+                <p>
+                  Document total:{" "}
+                  {dollars(item.document_total_cents || item.amount_cents)}.
+                  Requested from RCAP: {dollars(item.amount_cents)}.
+                </p>
+                {item.document_total_cents > item.amount_cents && (
+                  <div className="coverage-note">
+                    <strong>
+                      {dollars(item.document_total_cents - item.amount_cents)}{" "}
+                      not requested from RCAP
+                    </strong>
+                    <p>
+                      {item.coverage_note ||
+                        "See the expense description for covered items."}
+                    </p>
+                  </div>
+                )}
                 <ReceiptThumbs receipts={item.receipts} labels />
               </div>
             ))}
@@ -1225,7 +1442,9 @@ function Detail({
               <ol className="history">
                 {extra.history.map((h) => (
                   <li key={h.id}>
-                    <strong>{HISTORY_LABEL[h.action] || h.action.replaceAll("_", " ")}</strong>
+                    <strong>
+                      {HISTORY_LABEL[h.action] || h.action.replaceAll("_", " ")}
+                    </strong>
                     <p>
                       {nameOf(h.actor_email)} · {dateLabel(h.created_at)}
                     </p>
@@ -1253,7 +1472,9 @@ function Detail({
             </h2>
             <p className="muted">
               {r.status === "submitted"
-                ? "The treasurer reviews the receipts, then approves, sends it back, or takes it to the board."
+                ? r.approver_email
+                  ? `Approval requested from ${nameOf(r.approver_email)}. Review the RCAP amount and receipts, then approve or request changes.`
+                  : "The treasurer reviews the receipts, then approves, sends it back, or takes it to the board."
                 : r.status === "board_review"
                   ? `Board members vote here. ${votes.need} of ${eligible.length} yes votes approve it.`
                   : r.status === "approved"
@@ -1304,23 +1525,41 @@ function Detail({
                 ))}
               </ul>
             )}
-            {[
-              "approved",
-              "needs_changes",
-              "paid",
-              "board_review",
-              "vote",
-            ].some(allowed) && (
+            {(allowed("approved") || allowed("vote")) && (
+              <Field label="Approval confirmation email recipients">
+                <textarea
+                  value={approvalRecipients}
+                  maxLength={5000}
+                  onChange={(e) => setApprovalRecipients(e.target.value)}
+                  placeholder="Committee chair or other responsible people, separated by commas"
+                />
+                <p className="muted">
+                  The configured board and requester email are included
+                  automatically. These additional addresses receive the approval
+                  summary, not private receipts. Everyone can see the recipient
+                  list.
+                </p>
+              </Field>
+            )}
+            {["approved", "needs_changes", "paid", "board_review", "vote"].some(
+              allowed,
+            ) && (
               <div className="form-section">
-                {["needs_changes", "declined", "vote", "board_review", "approved"].some(allowed) && (
-                <Field label="Note">
-                  <textarea
-                    maxLength={2000}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Explain a decision, a correction, or a no vote. The requester sees notes on corrections and declines."
-                  />
-                </Field>
+                {[
+                  "needs_changes",
+                  "declined",
+                  "vote",
+                  "board_review",
+                  "approved",
+                ].some(allowed) && (
+                  <Field label="Note">
+                    <textarea
+                      maxLength={2000}
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Explain a decision, a correction, or a no vote. The requester sees notes on corrections and declines."
+                    />
+                  </Field>
                 )}
                 {allowed("paid") && (
                   <div className="fields" style={{ marginTop: 20 }}>
@@ -1348,7 +1587,7 @@ function Detail({
                       disabled={busy}
                       onClick={() => change("approved")}
                     >
-                      <Check size={16} /> Approve request
+                      <Check size={16} /> Approve {dollars(r.total_cents)}
                     </button>
                   )}
                   {allowed("vote") && (
@@ -1428,8 +1667,8 @@ function Detail({
               <details className="duplicate-box">
                 <summary>This is a duplicate</summary>
                 <p className="muted">
-                  Closes this request and texts the requester that it
-                  duplicates another one. Nothing is paid.
+                  Closes this request and texts the requester that it duplicates
+                  another one. Nothing is paid.
                 </p>
                 <div className="actions">
                   <Field
@@ -1555,9 +1794,9 @@ function Staff({ staff, onRefresh, onError }) {
       <h2>Board access</h2>
       <p className="muted">
         Add the cellphone number each board member uses to sign in. Everyone
-        here sees the full queue. The treasurer approves and pays; board
-        members vote when the treasurer sends a request to the board; admins
-        watch, send requests back, and close duplicates.
+        here sees the full queue. The treasurer approves and pays; board members
+        vote when the treasurer sends a request to the board; admins watch, send
+        requests back, and close duplicates.
       </p>
       <ul className="inline-list">
         {staff.map((s) => (
@@ -1608,7 +1847,9 @@ function Staff({ staff, onRefresh, onError }) {
 export function App() {
   const [user, setUser] = useState(null),
     [authLoading, setAuthLoading] = useState(true),
-    [tab, setTab] = useState("new"),
+    [tab, setTab] = useState(() =>
+      location.hash === "#approvals" ? "approvals" : "new",
+    ),
     [draft, setDraft] = useState(newDraft),
     [records, setRecords] = useState([]),
     [staff, setStaff] = useState([]),
@@ -1676,17 +1917,23 @@ export function App() {
     return () => clearInterval(timer);
   }, [user, refresh]);
   useEffect(() => {
-    const change = () =>
+    const change = () => {
+      if (location.hash === "#approvals") setTab("approvals");
       setSelected(
         location.hash.match(/^#request\/([0-9a-f-]{36})$/)?.[1] || null,
       );
+    };
     window.addEventListener("hashchange", change);
     return () => window.removeEventListener("hashchange", change);
   }, []);
   function navigate(next) {
     setTab(next);
     setSelected(null);
-    history.replaceState(null, "", location.pathname);
+    history.replaceState(
+      null,
+      "",
+      location.pathname + (next === "approvals" ? "#approvals" : ""),
+    );
     setError("");
     setNotice("");
   }
@@ -1719,6 +1966,20 @@ export function App() {
     setDraft(newDraft());
     setRecords([]);
     setStaff([]);
+    navigate("new");
+  }
+  const pendingApprovals = records.filter((r) =>
+    actionAllowed(r, role, contactOf(user), "approved"),
+  );
+  const boardTab = tab === "board" || tab === "approvals";
+  function prepareRequest() {
+    setDraft({
+      ...newDraft(),
+      on_behalf: true,
+      requester_name:
+        staff.find((s) => s.email === contactOf(user))?.name || "",
+      phone: normalizePhone(user.phone || ""),
+    });
     navigate("new");
   }
   const current = records.find((r) => r.id === selected);
@@ -1799,7 +2060,31 @@ export function App() {
             </button>
           )}
         </nav>
-        {user && !selected && (tab === "mine" || tab === "board") && (
+        {user && role && !selected && (
+          <section className="approval-banner">
+            <div>
+              <h2>Needs my approval ({pendingApprovals.length})</h2>
+              <p>
+                Review receipts and approve the exact RCAP amount. Finance
+                records payment afterward.
+              </p>
+            </div>
+            <div className="actions">
+              <button
+                className="secondary"
+                onClick={() => navigate("approvals")}
+              >
+                View my approvals
+              </button>
+              {canPrepare(role) && (
+                <button className="primary" onClick={prepareRequest}>
+                  Request approval <Plus size={16} />
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+        {user && !selected && (tab === "mine" || boardTab) && (
           <>
             <Account user={user} onError={setError} />
             <NotificationPreferences user={user} onError={setError} />
@@ -1823,8 +2108,8 @@ export function App() {
               <h2>Sign in to view this request</h2>
               <p className="muted">
                 Sign in with your cellphone number. Board members use the number
-                listed in Board access; requesters use the number they
-                submitted with.
+                listed in Board access; requesters use the number they submitted
+                with.
               </p>
               <SignIn onError={setError} />
             </section>
@@ -1875,9 +2160,9 @@ export function App() {
         ) : !user ? (
           <div className="workspace">
             <section className="form-card">
-              <h2>{tab === "board" ? "Board review" : "Your requests"}</h2>
+              <h2>{boardTab ? "Board review" : "Your requests"}</h2>
               <p className="muted">
-                {tab === "board"
+                {boardTab
                   ? "Use your cellphone number. Board access is added to that number by the admin."
                   : "Sign in to see your requests, reviewer notes, and payment status."}
               </p>
@@ -1885,7 +2170,7 @@ export function App() {
             </section>
             <Guide />
           </div>
-        ) : tab === "board" && !role ? (
+        ) : boardTab && !role ? (
           <div className="empty">
             <ShieldCheck size={35} />
             <h2>Board access is needed</h2>
@@ -1905,7 +2190,11 @@ export function App() {
                   ? records.filter((r) => r.owner_id === user.id)
                   : records
               }
-              board={tab === "board"}
+              key={tab}
+              board={boardTab}
+              approvalsOnly={tab === "approvals"}
+              contact={contactOf(user)}
+              role={role}
               onSelect={select}
               onNew={() => navigate("new")}
               loading={loading}

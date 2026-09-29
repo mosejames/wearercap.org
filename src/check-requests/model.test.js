@@ -98,12 +98,12 @@ describe("finance action visibility", () => {
     expect(actionAllowed(r, "approver", r.approver_email, "approved")).toBe(
       false,
     );
-    expect(
-      actionAllowed(r, "treasurer", "+19015550000", "approved"),
-    ).toBe(true);
-    expect(
-      actionAllowed(r, "treasurer", "+19015550000", "board_review"),
-    ).toBe(true);
+    expect(actionAllowed(r, "treasurer", "+19015550000", "approved")).toBe(
+      true,
+    );
+    expect(actionAllowed(r, "treasurer", "+19015550000", "board_review")).toBe(
+      true,
+    );
     expect(
       actionAllowed(r, "secretary", "secretary@example.test", "needs_changes"),
     ).toBe(true);
@@ -141,10 +141,27 @@ describe("board votes and duplicates", () => {
   });
   it("counts only each voter's latest vote since the request went to the board", () => {
     const history = [
-      { action: "vote_approve", actor_email: "+16785550000", created_at: "2026-09-01T10:00:00Z" },
-      { action: "board_review", actor_email: "+19015550000", created_at: "2026-09-02T10:00:00Z" },
-      { action: "vote_decline", actor_email: "+19015550000", created_at: "2026-09-02T11:00:00Z", note: "Too much" },
-      { action: "vote_approve", actor_email: "t@example.test", created_at: "2026-09-02T12:00:00Z" },
+      {
+        action: "vote_approve",
+        actor_email: "+16785550000",
+        created_at: "2026-09-01T10:00:00Z",
+      },
+      {
+        action: "board_review",
+        actor_email: "+19015550000",
+        created_at: "2026-09-02T10:00:00Z",
+      },
+      {
+        action: "vote_decline",
+        actor_email: "+19015550000",
+        created_at: "2026-09-02T11:00:00Z",
+        note: "Too much",
+      },
+      {
+        action: "vote_approve",
+        actor_email: "t@example.test",
+        created_at: "2026-09-02T12:00:00Z",
+      },
     ];
     const t = tally(history, staff, r);
     expect(t).toMatchObject({ yes: 1, no: 0, need: 2 });
@@ -157,8 +174,12 @@ describe("board votes and duplicates", () => {
     expect(actionAllowed(open, null, "someone", "duplicate")).toBe(false);
     expect(actionAllowed(open, "manager", "x", "needs_changes")).toBe(true);
     expect(actionAllowed(open, "board", "x", "needs_changes")).toBe(false);
-    expect(actionAllowed(r, "board", "x", "vote", { canVote: true })).toBe(true);
-    expect(actionAllowed(r, "manager", "x", "vote", { canVote: false })).toBe(false);
+    expect(actionAllowed(r, "board", "x", "vote", { canVote: true })).toBe(
+      true,
+    );
+    expect(actionAllowed(r, "manager", "x", "vote", { canVote: false })).toBe(
+      false,
+    );
   });
 });
 
@@ -178,7 +199,9 @@ describe("cellphone identity and Zelle", () => {
   });
   it("gates actions by verified phone identity", () => {
     const r = { email: "+14045550123", status: "submitted" };
-    expect(actionAllowed(r, "treasurer", "+14045550124", "approved")).toBe(true);
+    expect(actionAllowed(r, "treasurer", "+14045550124", "approved")).toBe(
+      true,
+    );
     expect(actionAllowed(r, "treasurer", "+14045550123", "approved")).toBe(
       false,
     );
@@ -203,6 +226,7 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
         description: "Covered supplies",
         amount: "20",
         document_total: "30",
+        coverage_note: "Personal items excluded from RCAP request.",
         receipts: [{}],
       },
     ],
@@ -230,17 +254,66 @@ describe("adding receipts to an expense", () => {
   const f = (name, size = 100, type = "image/png") => ({ name, size, type });
   it("keeps what is already attached, including uploaded receipts", () => {
     const existing = [{ path: "u/r/a.png", name: "payment.png" }];
-    const out = addReceipts(existing, [f("invoice.pdf", 200, "application/pdf")]);
-    expect(out.receipts.map((r) => r.name)).toEqual(["payment.png", "invoice.pdf"]);
+    const out = addReceipts(existing, [
+      f("invoice.pdf", 200, "application/pdf"),
+    ]);
+    expect(out.receipts.map((r) => r.name)).toEqual([
+      "payment.png",
+      "invoice.pdf",
+    ]);
   });
   it("skips a file picked twice and holds the total to five", () => {
     const once = addReceipts([], [f("a.png"), f("b.png")]).receipts;
-    expect(addReceipts(once, [f("a.png"), f("c.png")]).receipts).toHaveLength(3);
-    const four = addReceipts([], [f("1.png"), f("2.png"), f("3.png"), f("4.png")]).receipts;
-    expect(addReceipts(four, [f("5.png"), f("6.png")]).error).toMatch(/already has 4/);
+    expect(addReceipts(once, [f("a.png"), f("c.png")]).receipts).toHaveLength(
+      3,
+    );
+    const four = addReceipts(
+      [],
+      [f("1.png"), f("2.png"), f("3.png"), f("4.png")],
+    ).receipts;
+    expect(addReceipts(four, [f("5.png"), f("6.png")]).error).toMatch(
+      /already has 4/,
+    );
   });
   it("still rejects unsupported and oversized files", () => {
-    expect(addReceipts([], [f("x.gif", 10, "image/gif")]).error).toMatch(/PDF, JPG, or PNG/);
-    expect(addReceipts([], [f("big.png", 11 * 1024 * 1024)]).error).toMatch(/10 MB/);
+    expect(addReceipts([], [f("x.gif", 10, "image/gif")]).error).toMatch(
+      /PDF, JPG, or PNG/,
+    );
+    expect(addReceipts([], [f("big.png", 11 * 1024 * 1024)]).error).toMatch(
+      /10 MB/,
+    );
   });
+});
+
+it("requires independent assigned approval and lets the preparing treasurer record payment afterward", () => {
+  const r = {
+    email: "latasha@test.com",
+    payee_contact: "crystal@test.com",
+    on_behalf: true,
+    approver_email: "mose@test.com",
+    status: "submitted",
+  };
+  expect(actionAllowed(r, "manager", "mose@test.com", "approved")).toBe(true);
+  expect(actionAllowed(r, "treasurer", "latasha@test.com", "approved")).toBe(
+    false,
+  );
+  expect(actionAllowed(r, "treasurer", "someone@test.com", "approved")).toBe(
+    false,
+  );
+  expect(
+    actionAllowed(
+      { ...r, status: "approved" },
+      "treasurer",
+      "latasha@test.com",
+      "paid",
+    ),
+  ).toBe(true);
+  expect(
+    actionAllowed(
+      { ...r, status: "approved" },
+      "treasurer",
+      "crystal@test.com",
+      "paid",
+    ),
+  ).toBe(false);
 });

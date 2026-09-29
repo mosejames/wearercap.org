@@ -23,7 +23,8 @@ export async function act(action, data) {
   if (r.error) throw r.error;
   return r.data;
 }
-export async function submit(d, user, onProgress) {
+export async function submit(d, user, onProgress, canNotify = false) {
+  const { approval_recipients, approval_recipients_text, ...request } = d;
   const items = [];
   for (const [i, item] of d.items.entries()) {
     const receipts = [];
@@ -50,17 +51,30 @@ export async function submit(d, user, onProgress) {
     }
     items.push({
       date: item.date,
-      vendor:
-        d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
+      vendor: d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
       description: item.description.trim(),
       amount_cents: toCents(item.amount),
       document_total_cents: toCents(item.document_total),
+      coverage_note: (item.coverage_note || "").trim(),
       receipts,
     });
   }
   onProgress("Saving your request…");
   return act("submit", {
-    ...d,
+    ...request,
+    ...(canNotify
+      ? {
+          approval_recipients: (approval_recipients_text || "")
+            .split(/[,;\n]/)
+            .map((e) => e.trim())
+            .filter(Boolean),
+        }
+      : {}),
+    payee_contact: d.on_behalf
+      ? d.payee_contact.includes("@")
+        ? d.payee_contact.trim().toLowerCase()
+        : "+1" + normalizePhone(d.payee_contact)
+      : "",
     archive_email: (d.archive_email || "").trim().toLowerCase(),
     phone: normalizePhone(d.phone),
     zelle_contact:

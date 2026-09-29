@@ -1147,3 +1147,29 @@ p {
 .summary-card .milestones {
   margin: 18px 0 6px;
 }
+
+.approval-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  margin: 22px 0;
+  border: 1px solid #d7dfd8;
+  border-radius: 16px;
+  background: #f3f7f2;
+}
+.approval-banner h2 {
+  margin: 0 0 8px;
+}
+.approval-banner p {
+  margin: 0;
+  max-width: 560px;
+}
+.coverage-note {
+  padding: 16px;
+  margin: 12px 0;
+  border-left: 3px solid #b68a42;
+  background: #fcf8ed;
+}

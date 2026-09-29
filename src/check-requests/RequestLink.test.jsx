@@ -47,3 +47,14 @@ it("asks a signed-out reviewer to sign in instead of showing a blank new request
   expect(host.textContent).toContain("Use email instead");
   expect(location.hash).toBe("#request/7d40ca03-9127-4f61-a1d8-ca2f1c378454");
 });
+
+it("keeps a daily reminder link on the board sign-in path", async () => {
+  history.replaceState(null, "", "/check-requests/#approvals");
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  expect(host.textContent).toContain("Board access is added to that number");
+  expect(host.textContent).not.toContain("Continue to expenses");
+  expect(location.hash).toBe("#approvals");
+});

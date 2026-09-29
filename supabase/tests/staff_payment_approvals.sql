@@ -1,0 +1,75 @@
+-- Run inside a rollback-only transaction. Test messages are never delivered.
+begin;
+do $$
+declare preparer uuid:=gen_random_uuid(); reviewer uuid:=gen_random_uuid(); stranger uuid:=gen_random_uuid(); payee uuid:=gen_random_uuid(); rid uuid:=gen_random_uuid(); p jsonb; r jsonb; n int; secret text;
+begin
+ insert into auth.users(id,email,email_confirmed_at,phone,phone_confirmed_at) values
+ (preparer,'prepare@example.test',now(),'+15005550201',now()),(reviewer,'review@example.test',now(),'+15005550202',now()),(stranger,'outsider@example.test',now(),'+15005550203',now()),(payee,'payee@example.test',now(),'+15005550204',now());
+ insert into public.cr_staff(email,name,role) values('+15005550201','Approval Test Preparer','treasurer'),('+15005550202','Approval Test Reviewer','manager'),('review@example.test','Approval Test Reviewer','manager');
+ insert into public.cr_notification_preferences(user_id,channel) values(reviewer,'both');
+ insert into storage.objects(bucket_id,name,metadata) values('check-receipts',preparer::text||'/'||rid::text||'/receipt.pdf','{"size":100,"mimetype":"application/pdf"}');
+ p:=jsonb_build_object('id',rid,'requester_name','Test Treasurer','phone','5005550201','payee','Test Payee','on_behalf',true,'payee_contact','payee@example.test','event_name','Parent Social','approval_recipients',jsonb_build_array('chair@example.test','chair@example.test'),'delivery','zelle','zelle_contact','5005550204','request_type','reimbursement','budget_confirmed',true,'committee','General RCAP','purpose','Catering for Parent Social','acknowledged',true,'approver_email','+15005550202','items',jsonb_build_array(jsonb_build_object('date',current_date::text,'vendor','Catering vendor','description','Catering','amount_cents',50000,'document_total_cents',83232,'coverage_note','Crystal and Mose each plan to cover $166.16 personally.','receipts',jsonb_build_array(jsonb_build_object('path',preparer::text||'/'||rid::text||'/receipt.pdf','name','receipt.pdf')))));
+ perform set_config('request.jwt.claim.sub',stranger::text,true);
+ begin perform public.cr_action('submit',p);raise exception 'TEST outsider on behalf';exception when others then if sqlerrm not like '%Staff access%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',preparer::text,true);
+ begin perform public.cr_action('submit',p||'{"approver_email":""}');raise exception 'TEST missing approver';exception when others then if sqlerrm not like '%Choose a board member%' then raise;end if;end;
+ begin perform public.cr_action('submit',p||'{"payee_contact":"prepare@example.test"}');raise exception 'TEST self payment disguise';exception when others then if sqlerrm not like '%personal request%' then raise;end if;end;
+ begin perform public.cr_action('submit',p||'{"approval_recipients":["invalid"]}');raise exception 'TEST bad email';exception when others then if sqlerrm not like '%valid approval email%' then raise;end if;end;
+ begin perform public.cr_action('submit',jsonb_set(p,'{items,0,coverage_note}','""'));raise exception 'TEST missing explanation';exception when others then if sqlerrm not like '%covers the difference%' then raise;end if;end;
+ r:=public.cr_action('submit',p);
+ if r->>'status'<>'submitted' or r->>'approver_email'<>'+15005550202' or (r->>'total_cents')::int<>50000 or not (r->>'on_behalf')::boolean then raise exception 'TEST incorrect assigned submission';end if;
+ if jsonb_array_length(r->'approval_recipients')<>1 then raise exception 'TEST recipient dedup';end if;
+ if not exists(select 1 from public.cr_notifications where request_id=rid and recipient='+15005550202') or not exists(select 1 from public.cr_notifications where request_id=rid and recipient='review@example.test') then raise exception 'TEST assigned both notifications';end if;
+ perform public.cr_action('submit',p);
+ if (select count(*) from public.cr_history where request_id=rid)<>1 then raise exception 'TEST duplicate submission';end if;
+ begin perform public.cr_action('paid',jsonb_build_object('id',rid,'version',1,'payment_date',current_date,'payment_reference','TEST'));raise exception 'TEST early payment';exception when others then if sqlerrm not like '%Approval is required%' then raise;end if;end;
+ begin perform public.cr_action('approved',jsonb_build_object('id',rid,'version',1));raise exception 'TEST preparer approves';exception when others then if sqlerrm not like '%own request%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',stranger::text,true);
+ set local role authenticated;
+ select count(*) into n from public.cr_requests where id=rid;
+ if n<>0 then raise exception 'TEST private request leaked';end if;
+ reset role;
+ perform set_config('request.jwt.claim.sub',reviewer::text,true);
+ r:=public.cr_action('needs_changes',jsonb_build_object('id',rid,'version',1,'note','Please clarify personal contributions.'));
+ perform set_config('request.jwt.claim.sub',preparer::text,true);
+ r:=public.cr_action('submit',p||'{"version":2}');
+ if r->>'version'<>'3' then raise exception 'TEST correction';end if;
+ update public.cr_requests set updated_at=now()-interval '2 days' where id=rid;
+ perform cr_private.queue_approval_reminders();
+ perform cr_private.queue_approval_reminders();
+ if (select count(*) from public.cr_notifications where reminder_approver='+15005550202')<>2 then raise exception 'TEST daily reminder duplication or channel';end if;
+ perform set_config('request.jwt.claim.sub',reviewer::text,true);
+ r:=public.cr_action('approved',jsonb_build_object('id',rid,'version',3,'approval_recipients',jsonb_build_array('chair@example.test','chair@example.test')));
+ if r->>'status'<>'approved' then raise exception 'TEST approval';end if;
+ if not exists(select 1 from public.cr_notifications where request_id=rid and recipients @> array['chair@example.test','payee@example.test','prepare@example.test'] and subject like '%approved%' and body like '%Approved amount: $500.00%' and body not like '%5005550204%' and archive_snapshot is null) then raise exception 'TEST approval email circulation or amount';end if;
+ if not exists(select 1 from public.cr_notifications where request_id=rid and archive_snapshot->'request'->>'on_behalf'='true' and archive_snapshot->'request'->'items'->0->>'coverage_note' like '%166.16%') then raise exception 'TEST immutable coverage archive';end if;
+ select dispatch_secret into secret from cr_private.config where id;
+ perform public.cr_claim_notifications(secret);
+ if exists(select 1 from public.cr_notifications where reminder_approver='+15005550202' and state<>'cancelled') then raise exception 'TEST reminders stop after decision';end if;
+ begin perform public.cr_action('approved',jsonb_build_object('id',rid,'version',3));raise exception 'TEST stale approval';exception when others then if sqlerrm not like '%changed. Refresh%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',preparer::text,true);
+ r:=public.cr_action('paid',jsonb_build_object('id',rid,'version',4,'payment_date',current_date,'payment_reference','TEST-PAYMENT'));
+ if r->>'status'<>'paid' then raise exception 'TEST preparer treasurer cannot pay';end if;
+ -- Ordinary parent requests still go to the treasurer, ignoring old assignment fields.
+ rid:=gen_random_uuid();
+ insert into storage.objects(bucket_id,name,metadata) values('check-receipts',stranger::text||'/'||rid::text||'/receipt.pdf','{"size":100,"mimetype":"application/pdf"}');
+ p:=(p-'approval_recipients')||jsonb_build_object('id',rid,'on_behalf',false,'payee','Test Parent','payee_contact','');
+ p:=jsonb_set(p,'{items,0,receipts}',jsonb_build_array(jsonb_build_object('path',stranger::text||'/'||rid::text||'/receipt.pdf','name','receipt.pdf')));
+ perform set_config('request.jwt.claim.sub',stranger::text,true);
+ r:=public.cr_action('submit',p);
+ if r->>'status'<>'submitted' or r->>'approver_email' is not null then raise exception 'TEST parent routing changed';end if;
+ perform set_config('request.jwt.claim.sub',reviewer::text,true);
+ begin perform public.cr_action('approved',jsonb_build_object('id',rid,'version',1));raise exception 'TEST admin ordinary approval';exception when others then if sqlerrm not like '%Only the treasurer%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',preparer::text,true);
+ r:=public.cr_action('board_review',jsonb_build_object('id',rid,'version',1));
+ if r->>'status'<>'board_review' then raise exception 'TEST board escalation';end if;
+ -- A personal request by the treasurer still goes directly to a board vote.
+ rid:=gen_random_uuid();
+ insert into storage.objects(bucket_id,name,metadata) values('check-receipts',preparer::text||'/'||rid::text||'/receipt.pdf','{"size":100,"mimetype":"application/pdf"}');
+ p:=jsonb_set(p||jsonb_build_object('id',rid),'{items,0,receipts}',jsonb_build_array(jsonb_build_object('path',preparer::text||'/'||rid::text||'/receipt.pdf','name','receipt.pdf')));
+ r:=public.cr_action('submit',p);
+ if r->>'status'<>'board_review' then raise exception 'TEST treasurer personal routing changed';end if;
+ raise notice 'PASS: assigned approval, privacy, exact RCAP share, circulation, correction, payment gates, daily reminders and archives';
+end $$;
+rollback;
+select 'Staff approval workflow passed. All test data rolled back.' as result;

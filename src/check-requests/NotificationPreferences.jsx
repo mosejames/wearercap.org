@@ -79,7 +79,10 @@ export default function NotificationPreferences({ user, onError }) {
         </form>
       )}
       <p className="muted">
-        Optional emailed PDF copies are separate from status updates.
+        Assigned requests still awaiting your approval after 24 hours receive
+        one daily reminder at 10 a.m. Eastern. Approval confirmation emails to
+        the responsible people and optional PDF copies are separate from these
+        status updates.
       </p>
       {notice && <p role="status">{notice}</p>}
     </section>

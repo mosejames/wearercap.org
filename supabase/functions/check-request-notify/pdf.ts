@@ -57,7 +57,8 @@ export async function summaryPdf(snapshot: any) {
   );
   line(`Record date: ${snapshot.event.created_at}`);
   line(`Submitted: ${r.created_at}`);
-  line(`Requester: ${r.requester_name}`);
+  line(`${r.on_behalf ? "Prepared by" : "Requester"}: ${r.requester_name}`);
+  if (r.event_name) line(`Event: ${r.event_name}`);
   line(`Contact: ${r.phone}`);
   line(
     `Request type: ${r.request_type === "vendor" ? "Direct payment to vendor" : "Reimbursement"}`,
@@ -82,6 +83,8 @@ export async function summaryPdf(snapshot: any) {
     );
     if (item.document_total_cents)
       line(`Supporting document total: ${money(item.document_total_cents)}`);
+    if (item.coverage_note)
+      line(`Not requested from RCAP: ${item.coverage_note}`);
     item.receipts.forEach((receipt: any, j: number) =>
       line(`Document ${i + 1}.${j + 1}: ${receipt.name}`),
     );

@@ -1,4 +1,5 @@
 export const STATUS = {
+  awaiting_approval: "Awaiting assigned approval",
   submitted: "Awaiting treasurer",
   board_review: "Board vote",
   needs_changes: "Changes requested",
@@ -25,7 +26,22 @@ export const normalizePhone = (value) =>
   String(value)
     .replace(/\D/g, "")
     .replace(/^1(?=\d{10}$)/, "");
+export const canPrepare = (role) =>
+  ["secretary", "treasurer", "manager"].includes(role);
 export function validateDraft(d) {
+  const recipients = (d.approval_recipients_text || "")
+    .split(/[,;\n]/)
+    .map((e) => e.trim())
+    .filter(Boolean);
+  if (
+    recipients.length > 20 ||
+    recipients.some(
+      (e) => e.length > 254 || !/^[^\s@,<>]+@[^\s@,<>]+\.[^\s@,<>]+$/.test(e),
+    )
+  )
+    return "Enter up to 20 valid approval email addresses.";
+  if (d.on_behalf && (!d.approver_email || !validZelle(d.payee_contact)))
+    return "Choose an approver and enter the payee email or cellphone.";
   if (d.requester_name.trim().length < 2 || d.payee.trim().length < 2)
     return "Enter your full name and the check payee.";
   if (!/^\d{10}$/.test(normalizePhone(d.phone)))
@@ -46,10 +62,7 @@ export function validateDraft(d) {
     return "Include between 1 and 20 expenses.";
   for (let i = 0; i < d.items.length; i++) {
     const item = d.items[i];
-    if (
-      d.request_type !== "vendor" &&
-      (item.vendor || "").trim().length < 2
-    )
+    if (d.request_type !== "vendor" && (item.vendor || "").trim().length < 2)
       return `Enter the store or vendor for expense ${i + 1}.`;
     if (item.description.trim().length < 2) return `Describe expense ${i + 1}.`;
     if (!item.date || item.date > today())
@@ -61,6 +74,11 @@ export function validateDraft(d) {
       toCents(item.amount) > toCents(item.document_total)
     )
       return `Requested amount must not exceed the receipt or invoice total for expense ${i + 1}.`;
+    if (
+      toCents(item.amount) < toCents(item.document_total) &&
+      (item.coverage_note || "").trim().length < 10
+    )
+      return `Explain who covers the difference for expense ${i + 1}.`;
     if (!item.receipts?.length)
       return `Attach at least one receipt for expense ${i + 1}.`;
   }
@@ -87,7 +105,12 @@ export function addReceipts(existing, files) {
     return {
       error: `Use no more than 5 receipts per expense. This one already has ${existing.length}.`,
     };
-  return { receipts: [...existing, ...fresh.map((file) => ({ file, name: file.name }))] };
+  return {
+    receipts: [
+      ...existing,
+      ...fresh.map((file) => ({ file, name: file.name })),
+    ],
+  };
 }
 export function validateFiles(files) {
   if (files.length > 5) return "Use no more than 5 receipts per expense.";
@@ -101,9 +124,9 @@ export function validateFiles(files) {
     return "Each receipt must be between 1 byte and 10 MB.";
   return null;
 }
-// Mirrors cr_private.mutate, which is the real gate. The treasurer reviews
-// every request; admins (secretary, manager) watch, send back, and close
-// duplicates; board members vote when the treasurer sends one to the board.
+// Mirrors cr_private.mutate, which is the real gate. Personal requests use
+// treasurer review and board votes. Staff-prepared requests require their
+// assigned reviewer; the preparing treasurer may record payment afterward.
 const ADMINS = ["secretary", "manager"];
 const OPEN = ["submitted", "board_review", "needs_changes"];
 export function actionAllowed(r, role, email, action, opts = {}) {
@@ -114,19 +137,28 @@ export function actionAllowed(r, role, email, action, opts = {}) {
       OPEN.includes(r.status) &&
       (own || ["treasurer", "board", ...ADMINS].includes(role))
     );
-  if (own) return false;
+  const payeeIsSelf = r.on_behalf && r.payee_contact === email;
+  if (payeeIsSelf || (own && !(action === "paid" && r.on_behalf))) return false;
   if (action === "paid")
     return (
       r.status === "approved" &&
       (role === "treasurer" ||
         (ADMINS.includes(role) && !!opts.ownerIsTreasurer))
     );
-  if (["approved", "declined", "board_review"].includes(action))
+  if (["approved", "declined"].includes(action))
+    return (
+      r.status === "submitted" &&
+      (r.on_behalf && r.approver_email
+        ? r.approver_email === email
+        : role === "treasurer")
+    );
+  if (action === "board_review")
     return role === "treasurer" && r.status === "submitted";
   if (action === "needs_changes")
     return (
       ["submitted", "board_review"].includes(r.status) &&
-      ["treasurer", ...ADMINS].includes(role)
+      (["treasurer", ...ADMINS].includes(role) ||
+        (!!r.on_behalf && r.approver_email === email))
     );
   if (action === "vote")
     return (
@@ -169,11 +201,12 @@ export function tally(history, staff, r) {
   }
   const votes = eligible.map((name) => ({
     name,
-    vote: latest[name]?.action === "vote_approve"
-      ? "yes"
-      : latest[name]?.action === "vote_decline"
-        ? "no"
-        : null,
+    vote:
+      latest[name]?.action === "vote_approve"
+        ? "yes"
+        : latest[name]?.action === "vote_decline"
+          ? "no"
+          : null,
     note: latest[name]?.note || "",
   }));
   return {
@@ -187,8 +220,7 @@ export function tally(history, staff, r) {
 // The approval trail a treasurer reads top to bottom: submitted, decided,
 // paid. Built from history so it matches the permanent record.
 export function milestones(r, history, staff) {
-  const nameOf = (email) =>
-    staff.find((s) => s.email === email)?.name || email;
+  const nameOf = (email) => staff.find((s) => s.email === email)?.name || email;
   const last = (actions) =>
     [...history].reverse().find((h) => actions.includes(h.action));
   const sent = last(["submitted", "resubmitted"]);
@@ -218,12 +250,14 @@ export function milestones(r, history, staff) {
       !decided && r.status === "board_review"
         ? "Board decision"
         : decided?.action === "declined"
-        ? "Declined"
-        : decided?.action === "duplicate"
-          ? "Closed as duplicate"
-          : decidedByVote
-            ? "Approved by board vote"
-            : "Approved by treasurer",
+          ? "Declined"
+          : decided?.action === "duplicate"
+            ? "Closed as duplicate"
+            : decidedByVote
+              ? "Approved by board vote"
+              : r.on_behalf && r.approver_email
+                ? "Approved by assigned reviewer"
+                : "Approved by treasurer",
     done: ["approved", "declined", "paid"].includes(r.status) && !!decided,
     who: decided
       ? decidedByVote
@@ -249,11 +283,15 @@ export const newItem = () => ({
   description: "",
   amount: "",
   document_total: "",
+  coverage_note: "",
   receipts: [],
 });
 export const newDraft = () => ({
   id: crypto.randomUUID(),
   requester_name: "",
+  on_behalf: false,
+  payee_contact: "",
+  event_name: "",
   phone: "",
   payee: "",
   delivery: "zelle",
@@ -266,11 +304,13 @@ export const newDraft = () => ({
   approver_email: "",
   items: [newItem()],
   archive_email: "",
+  approval_recipients_text: "",
   acknowledged: false,
 });
 export function fromRecord(r) {
   return {
     ...r,
+    approval_recipients_text: (r.approval_recipients || []).join(", "),
     delivery: r.delivery === "debit_card" ? "debit_card" : "zelle",
     budget_confirmed: false,
     acknowledged: false,
