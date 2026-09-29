@@ -133,13 +133,8 @@ function Guide() {
     </aside>
   );
 }
-function SignIn({
-  onError,
-  allowEmail = true,
-  allowGoogle = true,
-  preferEmail = false,
-}) {
-  const [emailMode, setEmailMode] = useState(preferEmail);
+export function SignIn({ onError, allowEmail = true }) {
+  const [emailMode, setEmailMode] = useState(false);
   const [phone, setPhone] = useState(""),
     [code, setCode] = useState(""),
     [sent, setSent] = useState(false),
@@ -158,7 +153,7 @@ function SignIn({
           ? { email: phone.trim().toLowerCase() }
           : { phone: phoneIdentity(phone) }),
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser: !emailMode,
           ...(emailMode ? {} : { channel: "sms" }),
         },
       });
@@ -168,7 +163,9 @@ function SignIn({
       onError(
         /rate limit|once every/i.test(e.message)
           ? "Please wait a minute before requesting another code."
-          : e.message || "We could not send a sign-in code. Try again.",
+          : emailMode
+            ? "We could not send an email code. Use cellphone sign-in, then add and verify your backup email under Account & backup sign-in."
+            : e.message || "We could not send a sign-in code. Try again.",
       );
     } finally {
       setBusy(false);
@@ -204,38 +201,14 @@ function SignIn({
         <strong>Sign in to submit and track your request</strong>
         <p>
           {emailMode
-            ? "Use your email. If you previously used cellphone sign-in, first add this email under Account & backup sign-in to keep your requests together."
+            ? "Use the backup email you added and verified under Account & backup sign-in. Existing email accounts can also sign in here."
             : "Enter your cellphone number. We’ll text you a verification code. No email or password needed."}
         </p>
       </div>
-      {allowGoogle && (
-        <button
-          type="button"
-          className="secondary"
-          onClick={async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-              provider: "google",
-              options: {
-                redirectTo:
-                  location.origin + "/check-requests/" + location.hash,
-              },
-            });
-            if (error) onError(error.message);
-          }}
-        >
-          Continue with Google
-        </button>
-      )}
-      {allowGoogle && (
-        <p className="muted">
-          Already used your cellphone here? Sign in by text and add your Google
-          email under Account & backup sign-in first.
-        </p>
-      )}
       <form className="signin-form full" onSubmit={sent ? verify : send}>
         <div className="fields">
           <Field
-            label={emailMode ? "Email" : "Cellphone number"}
+            label={emailMode ? "Verified backup email" : "Cellphone number"}
             type={emailMode ? "email" : "tel"}
             required
             autoComplete={emailMode ? "email" : "tel"}
@@ -302,7 +275,7 @@ function SignIn({
               onError("");
             }}
           >
-            {emailMode ? "Use cellphone instead" : "Use email instead"}
+            {emailMode ? "Use cellphone instead" : "Use verified backup email"}
           </button>
         )}
       </form>
@@ -1066,7 +1039,7 @@ export function RequestForm({
           </fieldset>
         </form>
         {!user && step === 2 && (
-          <SignIn onError={onError} allowGoogle={false} />
+          <SignIn onError={onError} />
         )}
       </section>
       <details className="request-help">

@@ -34,7 +34,11 @@ export default function Account({ user, onError }) {
         );
       }
     } catch (e) {
-      onError(e.message || "Could not update your email.");
+      onError(
+        /already|registered|exists/i.test(e.message || "")
+          ? "That email belongs to an existing account. Keep using cellphone sign-in and contact RCAP for help connecting your accounts, or use another backup email."
+          : e.message || "Could not update your email.",
+      );
     } finally {
       setBusy(false);
     }
@@ -48,9 +52,9 @@ export default function Account({ user, onError }) {
           {user.phone || "Not linked"}.
         </p>
         <p>
-          Add and verify your personal email here before using email sign-in. To
-          use Google later, choose the Google account with this same verified
-          email.
+          Add and verify a backup email here. Then either a texted code or an
+          emailed code will open this same account, with the same requests and
+          approval access.
         </p>
         <form onSubmit={save}>
           <label className="field">

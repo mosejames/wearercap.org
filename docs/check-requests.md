@@ -169,3 +169,14 @@ payment. The request follows the normal assigned approval UI; the synthetic
 preparer account has no login credentials and is banned. Do not use these fixtures
 for actual expenses. `supabase/tests/isolated_approval_tests.sql` verifies this
 isolation in a rollback-only transaction.
+
+### Cellphone sign-in with backup email
+
+Check requests defaults to cellphone OTP and no longer offers Google sign-in.
+Email OTP is for a previously verified backup email (or an existing legacy
+email account), with `shouldCreateUser: false` so it cannot create a new account.
+Add a backup email while signed in through Account & backup sign-in. The
+existing `updateUser` and `email_change` verification flow attaches it to the
+same user ID; the backend continues resolving that user's verified cellphone
+for board permissions regardless of the sign-in method. An email already on a
+separate account requires account support, not an automatic merge.
