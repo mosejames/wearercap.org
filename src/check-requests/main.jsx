@@ -80,6 +80,8 @@ const HISTORY_LABEL = {
   duplicate: "Closed as duplicate",
   paid: "Funds released",
   assigned: "Assigned",
+  archived: "Archived",
+  restored: "Restored",
 };
 const Badge = ({ status }) => (
   <span className={`badge ${status}`}>{STATUS[status] || status}</span>
@@ -1038,9 +1040,7 @@ export function RequestForm({
             )}
           </fieldset>
         </form>
-        {!user && step === 2 && (
-          <SignIn onError={onError} />
-        )}
+        {!user && step === 2 && <SignIn onError={onError} />}
       </section>
       <details className="request-help">
         <summary>Document requirements & payment policy</summary>
@@ -1059,18 +1059,55 @@ export function RequestList({
   contact,
   role,
   approvalsOnly = false,
+  staff = [],
+  user,
+  onError,
+  onUpdate,
+  onEdit,
 }) {
-  const [search, setSearch] = useState(""),
-    [filter, setFilter] = useState(approvalsOnly ? "mine" : "all");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState(approvalsOnly ? "mine" : "all");
+  const [expanded, setExpanded] = useState(null);
+  const active = records.filter((r) => !r.archived_at);
+  const mine = active.filter(
+    (r) =>
+      actionAllowed(r, role, contact, "approved") ||
+      actionAllowed(r, role, contact, "vote", {
+        canVote: voters(staff, r).includes(
+          staff.find((s) => s.email === contact)?.name,
+        ),
+      }),
+  );
+  const pending = (r) => ["submitted", "board_review"].includes(r.status);
+  const nameOf = (email) =>
+    staff.find((s) => s.email === email)?.name || "Assigned reviewer";
+  const next = (r) =>
+    r.archived_at
+      ? "Archived"
+      : r.status === "approved"
+        ? "Treasurer: record payment"
+        : r.status === "needs_changes"
+          ? "Requester: make corrections"
+          : r.status === "board_review"
+            ? "Board: vote"
+            : r.status === "submitted"
+              ? r.on_behalf
+                ? `${nameOf(r.approver_email)}: review`
+                : "Treasurer: review"
+              : "Complete";
   const shown = records.filter(
     (r) =>
+      (filter === "archived" ? Boolean(r.archived_at) : !r.archived_at) &&
       (filter === "all" ||
+        filter === "archived" ||
         (filter === "mine"
-          ? actionAllowed(r, role, contact, "approved")
-          : filter === "awaiting_approval"
-            ? r.on_behalf && r.status === "submitted"
-            : r.status === filter)) &&
-      `${r.reference} ${r.requester_name} ${r.payee} ${r.committee} ${r.event_name || ""}`
+          ? mine.includes(r)
+          : filter === "pending"
+            ? pending(r)
+            : filter === "awaiting_approval"
+              ? r.on_behalf && r.status === "submitted"
+              : r.status === filter)) &&
+      `${r.reference} ${r.requester_name} ${r.payee} ${r.committee} ${r.purpose} ${r.event_name || ""}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
@@ -1078,33 +1115,52 @@ export function RequestList({
     <>
       <div className="stats">
         {[
-          [
-            "Awaiting review",
-            records.filter((r) => r.status === "submitted").length,
-          ],
+          ["Awaiting review", active.filter(pending).length, "pending"],
           [
             "Approved, unpaid",
             dollars(
-              records
+              active
                 .filter((r) => r.status === "approved")
                 .reduce((n, r) => n + r.total_cents, 0),
             ),
+            "approved",
           ],
-          ["Requests", records.length],
-        ].map(([label, value]) => (
-          <div className="stat" key={label}>
+          ["Active requests", active.length, "all"],
+        ].map(([label, value, key]) => (
+          <button
+            type="button"
+            className="stat"
+            key={key}
+            aria-pressed={filter === key}
+            onClick={() => setFilter(key)}
+          >
             <span className="muted">{label}</span>
             <strong>{value}</strong>
-          </div>
+          </button>
         ))}
       </div>
+      {board && (
+        <section className="approval-banner">
+          <div>
+            <h2>Needs my approval ({mine.length})</h2>
+            <p>
+              {mine.length
+                ? "Review the receipts and amount, then approve or request changes."
+                : "You’re caught up. No requests need your approval."}
+            </p>
+          </div>
+          <button className="secondary" onClick={() => setFilter("mine")}>
+            View my approvals
+          </button>
+        </section>
+      )}
       <div className="list-toolbar">
         <label className="sr-only" htmlFor="search">
           Search requests
         </label>
         <input
           id="search"
-          placeholder="Search name, committee, or request number"
+          placeholder="Search name, purpose, or request number"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -1117,77 +1173,79 @@ export function RequestList({
           onChange={(e) => setFilter(e.target.value)}
         >
           {board && <option value="mine">Needs my approval</option>}
-          <option value="all">All statuses</option>
+          <option value="all">All active requests</option>
+          <option value="pending">Pending approvals</option>
           {Object.entries(STATUS).map(([key, label]) => (
             <option key={key} value={key}>
               {label}
             </option>
           ))}
+          <option value="archived">Archived</option>
         </select>
         <button className="secondary" disabled={loading} onClick={onRefresh}>
           <RefreshCw size={16} /> Refresh
         </button>
       </div>
-      {loading ? (
+      {loading && !records.length ? (
         <p role="status">Loading requests…</p>
-      ) : shown.length === 0 ? (
+      ) : !shown.length ? (
         <div className="empty">
-          <ReceiptText size={40} />
-          <h2>
-            {search || filter !== "all"
-              ? "No matching requests"
-              : board
-                ? "Your review queue is clear"
-                : "Your requests will appear here"}
-          </h2>
-          <p className="muted">
-            {board
-              ? "New requests and their receipts will be ready for review here."
-              : "Submit a request to follow its approval and payment status."}
-          </p>
+          <h2>No matching requests</h2>
+          <p>Choose another queue or search to find a request.</p>
           {!board && (
             <button className="primary" onClick={onNew}>
-              New request <Plus size={16} />
+              New request
             </button>
           )}
         </div>
       ) : (
         shown.map((r) => (
-          <article className="record-card" key={r.id} style={{ padding: 0 }}>
-            <button
-              className="record-card record-button"
-              style={{ border: 0, margin: 0, boxShadow: "none" }}
-              onClick={() => onSelect(r.id)}
-            >
+          <article className="queue-item" key={r.id}>
+            <div className="queue-row">
               <div>
-                <p>
+                <p className="muted">
                   REQUEST #{r.reference} ·{" "}
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
                 <h3>{r.payee}</h3>
-                <p>
-                  {r.event_name ? `${r.event_name} · ` : ""}
-                  {r.committee}
-                  {board ? ` · ${r.requester_name}` : ""}
-                </p>
+                <p className="queue-purpose">{r.purpose}</p>
+                <p className="muted">Next: {next(r)}</p>
               </div>
-              <Badge
-                status={
-                  r.on_behalf && r.approver_email && r.status === "submitted"
-                    ? "awaiting_approval"
-                    : r.status
-                }
-              />
+              <Badge status={r.status} />
               <strong className="money">{dollars(r.total_cents)}</strong>
-              <ArrowRight size={18} />
-            </button>
-            {board && (
-              <ReceiptThumbs
-                receipts={r.items.flatMap((item) => item.receipts || [])}
-                limit={6}
-              />
+              <button
+                className={
+                  pending(r) && !r.archived_at ? "primary" : "secondary"
+                }
+                aria-expanded={expanded === r.id}
+                aria-controls={`review-${r.id}`}
+                onClick={() => setExpanded(expanded === r.id ? null : r.id)}
+              >
+                {expanded === r.id
+                  ? "Close"
+                  : pending(r) && !r.archived_at
+                    ? "Review"
+                    : "View"}
+              </button>
+            </div>
+            {expanded === r.id && (
+              <div className="queue-expanded" id={`review-${r.id}`}>
+                {user ? (
+                  <Detail
+                    record={r}
+                    role={role}
+                    user={user}
+                    staff={staff}
+                    onBack={() => setExpanded(null)}
+                    onError={onError}
+                    onUpdate={onUpdate}
+                    onEdit={onEdit}
+                  />
+                ) : (
+                  <button onClick={() => onSelect(r.id)}>Open request</button>
+                )}
+              </div>
             )}
-            <PdfDownloads requestId={r.id} />
           </article>
         ))
       )}
@@ -1282,6 +1340,37 @@ function Detail({
         <button className="secondary" onClick={onBack}>
           <ArrowLeft size={16} /> Back to requests
         </button>
+        {["secretary", "manager"].includes(role) && (
+          <button
+            className="secondary"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const { data, error } = await supabase.rpc(
+                  "cr_archive_request",
+                  {
+                    p_id: r.id,
+                    p_version: r.version,
+                    p_archive: !r.archived_at,
+                  },
+                );
+                if (error) throw error;
+                onUpdate(data);
+                onBack();
+              } catch (e) {
+                onError(e.message || "Could not update archive.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {r.archived_at ? "Restore request" : "Archive request"}
+          </button>
+        )}
+        {r.archived_at && (
+          <p>Archived. Restore this request before making changes.</p>
+        )}
         <button className="secondary" onClick={() => window.print()}>
           <Printer size={16} /> Print request
         </button>
@@ -1772,14 +1861,23 @@ function Staff({ staff, onRefresh, onError }) {
         requests back, and close duplicates.
       </p>
       <ul className="inline-list">
-        {staff.map((s) => (
-          <li key={s.email}>
-            <span>
-              <strong>{s.name}</strong>
-              <br />
-              <span className="muted">{s.email}</span>
-            </span>
-            <span className="badge">{s.role}</span>
+        {Object.entries(
+          staff.reduce((groups, person) => {
+            (groups[person.name] ||= []).push(person);
+            return groups;
+          }, {}),
+        ).map(([name, entries]) => (
+          <li key={name}>
+            <details>
+              <summary>
+                {name} · {[...new Set(entries.map((s) => s.role))].join(", ")}
+              </summary>
+              {entries.map((s) => (
+                <p key={s.email}>
+                  {s.email} ({s.email.startsWith("+") ? "Cellphone" : "Email"})
+                </p>
+              ))}
+            </details>
           </li>
         ))}
       </ul>
@@ -1917,7 +2015,7 @@ export function App() {
   }
   function update(r) {
     setRecords((a) => [r, ...a.filter((x) => x.id !== r.id)]);
-    setNotice("Request updated. Request updates have been queued.");
+    setNotice("Request updated.");
     refresh();
   }
   function saved(r) {
@@ -1941,9 +2039,6 @@ export function App() {
     setStaff([]);
     navigate("new");
   }
-  const pendingApprovals = records.filter((r) =>
-    actionAllowed(r, role, contactOf(user), "approved"),
-  );
   const boardTab = tab === "board" || tab === "approvals";
   function prepareRequest() {
     setDraft({
@@ -2016,8 +2111,14 @@ export function App() {
           ].map(([key, label]) => (
             <button
               key={key}
-              aria-current={tab === key ? "page" : undefined}
-              className={tab === key ? "active" : ""}
+              aria-current={
+                tab === key || (key === "board" && boardTab)
+                  ? "page"
+                  : undefined
+              }
+              className={
+                tab === key || (key === "board" && boardTab) ? "active" : ""
+              }
               onClick={() => navigate(key)}
             >
               {label}
@@ -2026,43 +2127,18 @@ export function App() {
           {user && (
             <button
               style={{ marginLeft: "auto" }}
-              disabled={busy}
-              onClick={signOut}
+              onClick={() => navigate("settings")}
+              className={tab === "settings" ? "active" : ""}
             >
+              Settings
+            </button>
+          )}
+          {user && (
+            <button disabled={busy} onClick={signOut}>
               <LogOut size={14} /> Sign out
             </button>
           )}
         </nav>
-        {user && role && !selected && (
-          <section className="approval-banner">
-            <div>
-              <h2>Needs my approval ({pendingApprovals.length})</h2>
-              <p>
-                Review receipts and approve the exact RCAP amount. Finance
-                records payment afterward.
-              </p>
-            </div>
-            <div className="actions">
-              <button
-                className="secondary"
-                onClick={() => navigate("approvals")}
-              >
-                View my approvals
-              </button>
-              {canPrepare(role) && (
-                <button className="primary" onClick={prepareRequest}>
-                  Request approval <Plus size={16} />
-                </button>
-              )}
-            </div>
-          </section>
-        )}
-        {user && !selected && (tab === "mine" || boardTab) && (
-          <>
-            <Account user={user} onError={setError} />
-            <NotificationPreferences user={user} />
-          </>
-        )}
         {error && (
           <div ref={errorRef} className="notice error" role="alert">
             {error}
@@ -2119,17 +2195,46 @@ export function App() {
               </button>
             </div>
           )
+        ) : tab === "settings" && user ? (
+          <section className="settings-panel">
+            <h2>Settings</h2>
+            <p className="muted">
+              Manage your account and notifications here. Your daily work stays
+              in Board review.
+            </p>
+            <Account user={user} onError={setError} />
+            <details className="request-help">
+              <summary>Notification preferences</summary>
+              <NotificationPreferences user={user} />
+            </details>
+            {["secretary", "manager"].includes(role) && (
+              <details className="request-help">
+                <summary>Board access</summary>
+                <Staff staff={staff} onRefresh={refresh} onError={setError} />
+              </details>
+            )}
+          </section>
         ) : tab === "new" ? (
-          <RequestForm
-            draft={draft}
-            setDraft={setDraft}
-            user={user}
-            staff={staff}
-            onSaved={saved}
-            onError={setError}
-            busy={busy}
-            setBusy={setBusy}
-          />
+          <>
+            {canPrepare(role) && (
+              <div className="actions">
+                <button className="secondary" onClick={prepareRequest}>
+                  Request approval for someone else
+                </button>
+              </div>
+            )}
+
+            <RequestForm
+              draft={draft}
+              setDraft={setDraft}
+              user={user}
+              staff={staff}
+              onSaved={saved}
+              onError={setError}
+              busy={busy}
+              setBusy={setBusy}
+            />
+          </>
         ) : !user ? (
           <div className="workspace">
             <section className="form-card">
@@ -2165,6 +2270,14 @@ export function App() {
               }
               key={tab}
               board={boardTab}
+              staff={staff}
+              user={user}
+              onError={setError}
+              onUpdate={update}
+              onEdit={(r) => {
+                setDraft(fromRecord(r));
+                navigate("new");
+              }}
               approvalsOnly={tab === "approvals"}
               contact={contactOf(user)}
               role={role}
@@ -2173,9 +2286,6 @@ export function App() {
               loading={loading}
               onRefresh={refresh}
             />
-            {tab === "board" && ["secretary", "manager"].includes(role) && (
-              <Staff staff={staff} onRefresh={refresh} onError={setError} />
-            )}
           </>
         )}
       </main>

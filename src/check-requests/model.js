@@ -130,6 +130,7 @@ export function validateFiles(files) {
 const ADMINS = ["secretary", "manager"];
 const OPEN = ["submitted", "board_review", "needs_changes"];
 export function actionAllowed(r, role, email, action, opts = {}) {
+  if (r.archived_at) return false;
   const own = r.email === email;
   if (action === "edit") return own && r.status === "needs_changes";
   if (action === "duplicate")

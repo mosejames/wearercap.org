@@ -1173,3 +1173,84 @@ p {
   border-left: 3px solid #b68a42;
   background: #fcf8ed;
 }
+/* Keep daily work compact; reveal supporting documents only on demand. */
+button.stat {
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+button.stat[aria-pressed="true"] {
+  border-color: #b78610;
+  box-shadow: 0 0 0 1px #b78610;
+}
+.queue-item {
+  background: white;
+  border: 1px solid #d9e1e6;
+  border-radius: 14px;
+  margin: 14px 0;
+  overflow: hidden;
+}
+.queue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+}
+.queue-row h3,
+.queue-row p {
+  margin: 0 0 5px;
+}
+.queue-purpose {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.queue-expanded {
+  padding: 20px;
+  border-top: 1px solid #d9e1e6;
+  background: #f6f8fa;
+}
+.queue-expanded .review-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+}
+.settings-panel > h2 {
+  margin-bottom: 8px;
+}
+.settings-panel details {
+  margin: 12px 0;
+}
+.settings-panel summary {
+  cursor: pointer;
+  padding: 16px;
+  font-weight: 700;
+}
+@media (max-width: 700px) {
+  .queue-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .queue-row > div:first-child {
+    grid-column: 1/-1;
+  }
+  .queue-row > button {
+    grid-column: 1/-1;
+  }
+  .queue-expanded {
+    padding: 10px;
+  }
+  .queue-expanded .review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .tabs button {
+    flex-shrink: 0;
+  }
+}

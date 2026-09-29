@@ -180,3 +180,18 @@ existing `updateUser` and `email_change` verification flow attaches it to the
 same user ID; the backend continues resolving that user's verified cellphone
 for board permissions regardless of the sign-in method. An email already on a
 separate account requires account support, not an automatic merge.
+
+### Queue and archive
+
+Board review puts clickable summary totals first, followed by the personal
+approval queue. Request rows expand in place, keeping receipts and review
+actions hidden until opened. Settings contains collapsed account, notification,
+and administrator board-access panels. Board contacts are grouped visually by
+name without merging their authentication accounts.
+
+Administrators can archive and restore a request. `archived_at` excludes it
+from queue totals and approval reminders while preserving its business status,
+receipts, and history. The Archived filter exposes these records. Archive and
+restore use a version-checked RPC and append history. A database trigger blocks
+business updates until the archived request is restored. Tests #4 and #25 were
+archived at the owner's request on September 29, 2026.
