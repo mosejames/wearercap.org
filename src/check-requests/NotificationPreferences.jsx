@@ -1,27 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./api.js";
-export default function NotificationPreferences({ user, onError }) {
+export default function NotificationPreferences({ user }) {
   const [channel, setChannel] = useState("sms"),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [error, setError] = useState(""),
+    [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
-    supabase.rpc("cr_notification_preference").then(({ data, error }) => {
-      if (!live) return;
-      if (error) onError("Could not load notification preferences.");
-      else setChannel(data.channel);
-      setLoading(false);
-    });
+    setLoading(true);
+    setError("");
+    async function load() {
+      try {
+        let result = await supabase.rpc("cr_notification_preference");
+        if (result.error && result.status === 401) {
+          // Retry once after refreshing an expired session, outside auth callbacks.
+          const refreshed = await supabase.auth.refreshSession();
+          if (!live) return;
+          if (refreshed.error) throw refreshed.error;
+          result = await supabase.rpc("cr_notification_preference");
+        }
+        if (!live) return;
+        if (result.error) throw result.error;
+        if (!["sms", "email", "both"].includes(result.data?.channel))
+          throw new Error("Invalid preference response");
+        setChannel(result.data.channel);
+        setError("");
+      } catch {
+        if (live) setError("Could not load notification preferences. Try again. If it keeps happening, sign out and sign in again.");
+      } finally {
+        if (live) setLoading(false);
+      }
+    }
+    load();
     return () => {
       live = false;
     };
-  }, [user.id]);
+  }, [user.id, attempt]);
   async function save(e) {
     e.preventDefault();
     setBusy(true);
     setNotice("");
-    onError("");
+    setError("");
     try {
       const { error } = await supabase.rpc("cr_notification_preference", {
         p_channel: channel,
@@ -31,7 +52,7 @@ export default function NotificationPreferences({ user, onError }) {
         "Notification preference saved. It applies to future updates on your current and new requests.",
       );
     } catch (e) {
-      onError(e.message || "Could not save your preference.");
+      setError(e.message || "Could not save your preference.");
     } finally {
       setBusy(false);
     }
@@ -48,6 +69,13 @@ export default function NotificationPreferences({ user, onError }) {
       </p>
       {loading ? (
         <p>Loading your preference…</p>
+      ) : error ? (
+        <div role="alert">
+          <p>{error}</p>
+          <button className="secondary" onClick={() => setAttempt((n) => n + 1)}>
+            Retry notification preferences
+          </button>
+        </div>
       ) : (
         <form onSubmit={save}>
           <label className="field">

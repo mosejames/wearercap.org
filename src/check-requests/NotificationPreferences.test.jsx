@@ -6,6 +6,7 @@ import NotificationPreferences from "./NotificationPreferences.jsx";
 import { supabase } from "./api.js";
 vi.mock("./api.js", () => ({
   supabase: {
+    auth: { refreshSession: vi.fn().mockResolvedValue({ error: null }) },
     rpc: vi.fn().mockResolvedValue({ data: { channel: "sms" }, error: null }),
   },
 }));
@@ -45,6 +46,37 @@ it("requires verified email for email preferences and saves a selection", async 
   expect(supabase.rpc).toHaveBeenCalledWith("cr_notification_preference", {
     p_channel: "both",
   });
+  act(() => root.unmount());
+  host.remove();
+});
+
+it("refreshes a rejected session once and loads the saved preference", async () => {
+  supabase.rpc.mockResolvedValueOnce({ error: { message: "JWT expired" }, status: 401 })
+    .mockResolvedValueOnce({ data: { channel: "email" }, error: null });
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  await act(async () => root.render(<NotificationPreferences user={{ id: "recovered", email: "test@example.test", email_confirmed_at: "now" }} />));
+  expect(supabase.auth.refreshSession).toHaveBeenCalledTimes(1);
+  expect(host.querySelector("select").value).toBe("email");
+  expect(host.querySelector('[role="alert"]')).toBeNull();
+  act(() => root.unmount());
+  host.remove();
+});
+
+it("hides unconfirmed defaults after a network failure and clears the error on retry", async () => {
+  supabase.rpc.mockRejectedValueOnce(new Error("Network unavailable"));
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const onError = vi.fn();
+  await act(async () => root.render(<NotificationPreferences user={{ id: "retry" }} onError={onError} />));
+  expect(host.querySelector("select")).toBeNull();
+  expect(host.querySelector('[role="alert"]')).not.toBeNull();
+  expect(onError).not.toHaveBeenCalled();
+  await act(async () => host.querySelector("button").click());
+  expect(host.querySelector('[role="alert"]')).toBeNull();
+  expect(host.querySelector("select").value).toBe("sms");
   act(() => root.unmount());
   host.remove();
 });

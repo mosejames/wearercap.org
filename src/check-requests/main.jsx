@@ -2060,7 +2060,7 @@ export function App() {
         {user && !selected && (tab === "mine" || boardTab) && (
           <>
             <Account user={user} onError={setError} />
-            <NotificationPreferences user={user} onError={setError} />
+            <NotificationPreferences user={user} />
           </>
         )}
         {error && (
