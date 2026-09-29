@@ -2273,7 +2273,7 @@ export function App() {
           <>
             <RequestList
               records={
-                tab === "mine"
+                tab === "mine" && !["manager", "secretary", "treasurer"].includes(role)
                   ? records.filter((r) => r.owner_id === user.id)
                   : records
               }

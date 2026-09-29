@@ -2,7 +2,7 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
-import { supabase } from "./api.js";
+import { supabase, loadRequests, loadStaff } from "./api.js";
 import { App, SignIn } from "./main.jsx";
 
 vi.mock("./api.js", () => ({
@@ -30,6 +30,31 @@ afterEach(() => {
   host?.remove();
   history.replaceState(null, "", "/");
 });
+
+it.each(["manager", "secretary", "treasurer", null])(
+  "Past requests shows the full history for %s and only personal submissions for requesters",
+  async (role) => {
+    const user = { id: "current-parent", phone: "14045550123" };
+    const row = {
+      status: "approved", total_cents: 50000, items: [],
+      created_at: "2026-09-29", committee: "General RCAP",
+    };
+    supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user } } });
+    loadStaff.mockResolvedValueOnce(role ? [{ name: "Mose James", email: "+14045550123", role }] : []);
+    loadRequests.mockResolvedValueOnce([
+      { ...row, id: "own", owner_id: user.id, reference: 1, purpose: "Personal supplies", requester_name: "Mose", payee: "Mose" },
+      { ...row, id: "other", owner_id: "crystal", reference: 2, purpose: "Crystal catering", requester_name: "Crystal", payee: "Crystal" },
+    ]);
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => root.render(<App />));
+    await act(async () => [...host.querySelectorAll("button")].find(b => b.textContent === "Past requests").click());
+    expect(host.textContent).toContain("Personal supplies");
+    if (role) expect(host.textContent).toContain("Crystal catering");
+    else expect(host.textContent).not.toContain("Crystal catering");
+  },
+);
 
 it("asks a signed-out reviewer to sign in instead of showing a blank new request", async () => {
   history.replaceState(
