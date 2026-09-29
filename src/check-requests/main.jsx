@@ -1875,7 +1875,11 @@ function Staff({ staff, onRefresh, onError }) {
           <li key={name}>
             <details>
               <summary>
-                {name} · {[...new Set(entries.map((s) => s.role))].join(", ")}
+                {name} • {name === "Crystal Jones"
+                  ? "Co-Chair"
+                  : name === "Mose James"
+                    ? "Chairman"
+                    : [...new Set(entries.map((s) => s.role))].join(", ")}
               </summary>
               {entries.map((s) => (
                 <p key={s.email}>
