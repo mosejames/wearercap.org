@@ -2,7 +2,8 @@ import Brand from '../components/Brand.jsx';
 import { sortGallery } from './gallerySort.js';
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
+  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
+  MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -48,7 +49,7 @@ function useHash() {
 
 function parseRoute(hash) {
   const raw = (hash || '').replace(/^#\/?/, '');
-  const [path] = raw.split('?');
+  const [path, query = ''] = raw.split('?');
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 'e' && parts[1]) return { name: 'event', slug: parts[1], photoId: parts[2] === 'p' ? parts[3] : null };
   if (parts[0] === 'activity' && parts[1]) return { name: 'activity', category: parts[1] };
@@ -56,7 +57,7 @@ function parseRoute(hash) {
   if (parts[0] === 'person' && parts[1]) return { name: 'person', owner: parts[1] };
   if (parts[0] === 'top') return { name: 'top' };
   if (parts[0] === 'me') return { name: 'me' };
-  if (parts[0] === 'admin') return { name: 'admin' };
+  if (parts[0] === 'admin') return { name: 'admin', gallery: new URLSearchParams(query).get('gallery') || '' };
   return { name: 'home' };
 }
 
@@ -1168,6 +1169,9 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [leaderTab, setLeaderTab] = useState('houses');
   const [galleryVoice, setGalleryVoice] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const galleryCardIds = galleryCardIdsFor(event, today);
+  const galleryPromos = promosFor(event?.slug, today, galleryCardIds);
+  const showUploadPrompts = galleryCardIds.includes(UPLOAD_PROMPT_CARD_ID);
   const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
 
@@ -1187,7 +1191,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
     if (!IS_SCHOOL || !event) return undefined;
     let active = true;
     setGalleryVoice(null);
-    const promoIds = promosFor(event.slug, today).map((promo) => promo.id);
+    const promoIds = promosFor(event.slug, today, galleryCardIdsFor(event, today)).map((promo) => promo.id);
     listGalleryVoice(event.id).then(async (voice) => {
       if (!active) return;
       if (voice) { setGalleryVoice(voice); return; }
@@ -1197,7 +1201,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
       }
     }).catch(() => { /* Standard wording stays available if generation fails. */ });
     return () => { active = false; };
-  }, [event?.id, event?.slug, admin, pass, today]);
+  }, [event?.id, event?.slug, event?.galleryCards, admin, pass, today]);
 
   // Refresh incoming uploads without moving a photo someone is viewing or selecting.
   useEffect(() => {
@@ -1280,6 +1284,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             {canMove && visible.length > 0 && <button className="link" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? 'Cancel selection' : 'Select uploads'}</button>}
             {/* Bulk download remains admin-only, even in the compact gallery. */}
             {admin && visible.length > 0 && <button className="link" onClick={() => setDl(true)}>Download all</button>}
+            {admin && <a className="link" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}>Gallery setup</a>}
           </div>
         </div>
       </div> : <div className="ev-head">
@@ -1330,8 +1335,8 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
-            promos={selecting ? [] : promosWithVoice(promosFor(event.slug, today), galleryVoice)}
-            onAddPhotos={IS_SCHOOL && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
+            promos={selecting ? [] : promosWithVoice(galleryPromos, galleryVoice)}
+            onAddPhotos={IS_SCHOOL && showUploadPrompts && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
             contributorCount={new Set(visible.map((p) => p.owner)).size}
             uploadPrompts={uploadPromptsFor(galleryVoice)}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
@@ -1537,9 +1542,9 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
 
 /* --------------------------------------------------------------- admin */
 
-const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '', endsOn: '', open: true, featured: false, hidden: false };
+const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '', endsOn: '', open: true, featured: false, hidden: false, galleryCards: [UPLOAD_PROMPT_CARD_ID] };
 
-function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite }) {
+function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite, openGallerySlug = '' }) {
   useDocTitle('Admin');
   const [galleryQuery,setGalleryQuery]=useState(''),[galleryFilter,setGalleryFilter]=useState('recent'),[galleryPage,setGalleryPage]=useState(0);
   const filteredGalleries=events.filter(e=>e.title.toLowerCase().includes(galleryQuery.trim().toLowerCase())&&(galleryFilter==='all'||(galleryFilter==='ongoing'?e.ongoing:!e.ongoing&&(galleryFilter==='recent'?e.startsOn<=todayISO():e.startsOn>todayISO())))).sort((a,b)=>b.startsOn.localeCompare(a.startsOn)||a.title.localeCompare(b.title));
@@ -1554,6 +1559,17 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   const [phones, setPhones] = useState(null);
   const [nudge, setNudge] = useState('');
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+  const openedDirectGallery = useRef('');
+  const editGallery = useCallback((event) => setEditing({
+    id: event.id,
+    form: { ...event, endsOn: event.endsOn || '', galleryCards: galleryCardIdsFor(event, todayISO()) },
+  }), []);
+  useEffect(() => {
+    if (!openGallerySlug) { openedDirectGallery.current = ''; return; }
+    if (!admin || editing || openedDirectGallery.current === openGallerySlug) return;
+    const event = events.find((item) => item.slug === openGallerySlug);
+    if (event) { openedDirectGallery.current = openGallerySlug; setTab('galleries'); editGallery(event); }
+  }, [admin, openGallerySlug, events, editing, editGallery]);
 
   const [tryPass, setTryPass] = useState('');
   const [passErr, setPassErr] = useState('');
@@ -1582,11 +1598,11 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       const saved = await saveEvent(editing.form, editing.id, pass);
       let customVoice = true;
       if (IS_SCHOOL) {
-        const promoIds = promosFor(saved.slug, todayISO()).map((promo) => promo.id);
+        const promoIds = promosFor(saved.slug, todayISO(), saved.galleryCards).map((promo) => promo.id);
         try { await generateGalleryVoice(saved.id, pass, promoIds, true); }
         catch { customVoice = false; }
       }
-      setEditing(null); refresh();
+      setEditing(null); if (openGallerySlug) go('/admin'); refresh();
       showToast(IS_SCHOOL
         ? customVoice ? 'Saved with custom gallery wording.' : 'Saved. Custom wording will retry when an admin opens the gallery.'
         : 'Saved.');
@@ -1667,15 +1683,15 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         <div className="adm-head"><h2>Gallery manager</h2><button className="btn small primary" onClick={() => setEditing({ id: null, form: { ...EMPTY_EVENT, startsOn: todayISO() } })}>New event</button></div>
         <label className="field"><span>Search galleries</span><input type="search" placeholder="Find an event or activity" value={galleryQuery} onChange={e=>{setGalleryQuery(e.target.value);setGalleryPage(0);}}/></label>
         <div className="admin-tabs" aria-label="Gallery filters">{[['recent','Recent'],['upcoming','Upcoming'],['ongoing','Ongoing'],['all','All']].map(([key,label])=><button key={key} className={galleryFilter===key?'active':''} aria-pressed={galleryFilter===key} onClick={()=>{setGalleryFilter(key);setGalleryPage(0);}}>{label}</button>)}</div>
-        <div className="gallery-manager-list">{filteredGalleries.slice(currentGalleryPage*10,(currentGalleryPage+1)*10).map(e=><div className="gallery-manager-row" key={e.id}><div><a href={`#/e/${e.slug}`}><b>{e.title}</b></a><small>{e.ongoing?'Ongoing · all year':fmtRange(e.startsOn,e.endsOn)}{e.hidden?' · Hidden':''}</small></div><span>{e.photoCount} uploads</span><button className="btn small ghost" onClick={()=>setEditing({id:e.id,form:{...e,endsOn:e.endsOn||''}})}>Manage</button></div>)}</div>
+        <div className="gallery-manager-list">{filteredGalleries.slice(currentGalleryPage*10,(currentGalleryPage+1)*10).map(e=><div className="gallery-manager-row" key={e.id}><div><a href={`#/e/${e.slug}`}><b>{e.title}</b></a><small>{e.ongoing?'Ongoing · all year':fmtRange(e.startsOn,e.endsOn)}{e.hidden?' · Hidden':''}</small></div><span>{e.photoCount} uploads</span><button className="btn small ghost" onClick={()=>editGallery(e)}>Manage</button></div>)}</div>
         {!filteredGalleries.length&&<p>No galleries match this search.</p>}
         <div className="member-pagination"><span>{filteredGalleries.length} galleries · Page {currentGalleryPage+1} of {galleryPages}</span><button className="btn small ghost" disabled={!currentGalleryPage} onClick={()=>setGalleryPage(currentGalleryPage-1)}>Previous</button><button className="btn small ghost" disabled={currentGalleryPage+1>=galleryPages} onClick={()=>setGalleryPage(currentGalleryPage+1)}>Next</button></div>
       </div>
 
       </>}
       {editing && (
-        <Sheet title={editing.id ? 'Manage gallery' : 'New event'} onClose={() => setEditing(null)}>
-          {editing.id&&<button className="btn small ghost" onClick={()=>{const event=events.find(e=>e.id===editing.id);setEditing(null);onInvite(event);}}>Invite to upload</button>}
+        <Sheet title={editing.id ? 'Manage gallery' : 'New event'} onClose={() => { setEditing(null); if (openGallerySlug) go('/admin'); }}>
+          {editing.id&&<button className="btn small ghost" onClick={()=>{const event=events.find(e=>e.id===editing.id);setEditing(null);if(openGallerySlug)go('/admin');onInvite(event);}}>Invite to upload</button>}
           <form className="stack" onSubmit={saveEv}>
             <label className="field"><span>Title</span><input required value={editing.form.title} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, title: e.target.value, slug: x.id ? x.form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') } }))} /></label>
             <label className="field"><span>Activity category</span><select value={editing.form.category||''} onChange={e=>setEditing(x=>({...x,form:{...x.form,category:e.target.value}}))}><option value="">Event albums</option>{ACTIVITIES.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
@@ -1699,6 +1715,25 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
                 <label key={k}><input type="checkbox" checked={!!editing.form[k]} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, [k]: e.target.checked } }))} /> {l}</label>
               ))}
             </div>
+            {IS_SCHOOL && <fieldset className="gallery-card-picker">
+              <legend>Cards shown inside this gallery</legend>
+              <p className="fine">Choose any combination. Custom wording will be created for this gallery when you save.</p>
+              <div className="gallery-card-options">{GALLERY_CARD_OPTIONS.map((card) => {
+                const checked = editing.form.galleryCards?.includes(card.id) || false;
+                return <label key={card.id} className={checked ? 'selected' : ''}>
+                  <input type="checkbox" checked={checked} onChange={(e) => setEditing((current) => ({
+                    ...current,
+                    form: {
+                      ...current.form,
+                      galleryCards: e.target.checked
+                        ? [...new Set([...(current.form.galleryCards || []), card.id])]
+                        : (current.form.galleryCards || []).filter((id) => id !== card.id),
+                    },
+                  }))} />
+                  <span><b>{card.label}</b><small>{card.description}</small></span>
+                </label>;
+              })}</div>
+            </fieldset>}
             <button className="btn primary">Save</button>
           </form>
         </Sheet>
@@ -1885,7 +1920,7 @@ export default function App() {
       {route.name === 'person' && <ContributorPage canMove={admin} pass={pass} refreshEvents={refresh} key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage onSuggest={() => setSuggesting(true)} onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
-      {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} />}
+      {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} openGallerySlug={route.gallery} />}
 
       {suggesting && <Sheet title="Suggest an event" onClose={() => setSuggesting(false)}><SuggestionForm profile={profile} onSignIn={() => needName('Sign in to suggest an event.')} onDone={() => setSuggesting(false)} /></Sheet>}
       <footer className="foot">

@@ -19,6 +19,11 @@ describe('gallery voice validation', () => {
     expect(validGalleryVoice(voice(['collective', 'suggestion-box']), ['collective', 'suggestion-box'])).toBe(true);
   });
 
+  it('accepts custom copy for every available promotional card', () => {
+    const promoIds = ['karaoke-feedback', 'karaoke-sept-27', 'membership-2026', 'karaoke-booth-gallery', 'karaoke-event-gallery', 'collective', 'suggestion-box'];
+    expect(validGalleryVoice(voice(promoIds), promoIds)).toBe(true);
+  });
+
   it('requires nine upload prompts and every requested promotion', () => {
     const missingPrompt = voice();
     missingPrompt.uploadPrompts.pop();

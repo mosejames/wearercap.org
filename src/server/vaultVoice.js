@@ -1,4 +1,5 @@
 const PROMOTIONS = {
+  'karaoke-sept-27': 'An RSVP page for the R&B Karaoke parent social.',
   'membership-2026': 'A donation that supports RCAP and helps make more school community moments possible.',
   collective: 'The RCAP Collective, a directory of businesses, services, creative work, and student ventures from RCA families.',
   'suggestion-box': 'The RCAP suggestion box where families can share an event idea, a fix, or a better way to do something.',
@@ -26,7 +27,7 @@ export const galleryVoiceSchema = {
     uploadPrompts: { type: 'array', minItems: 9, maxItems: 9, items: card },
     shareIntro: { type: 'string', minLength: 30, maxLength: 500 },
     promoCopy: {
-      type: 'array', minItems: 0, maxItems: 6,
+      type: 'array', minItems: 0, maxItems: 7,
       items: {
         type: 'object',
         additionalProperties: false,
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
   const pass = String(body?.pass || '');
   const promoIds = Array.isArray(body?.promoIds) ? [...new Set(body.promoIds.map(String))] : [];
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId)
-    || pass.length > 200 || promoIds.length > 6 || promoIds.some((id) => !PROMOTIONS[id])) {
+    || pass.length > 200 || promoIds.length > 7 || promoIds.some((id) => !PROMOTIONS[id])) {
     return res.status(400).json({ error: 'Invalid gallery request' });
   }
 

@@ -18,6 +18,21 @@ describe('album promos', () => {
     expect(promosFor('karaoke-night', '2026-09-28').map((p) => p.id)).toEqual(['karaoke-feedback', 'membership-2026', 'karaoke-booth-gallery', 'collective', 'suggestion-box']);
   });
 
+  it('uses an explicit admin selection for any gallery', async () => {
+    const { promosFor } = await school();
+    expect(promosFor('everyday-rca', '2026-09-29', ['membership-2026', 'suggestion-box']).map((p) => p.id))
+      .toEqual(['membership-2026', 'suggestion-box']);
+    expect(promosFor('bingo-night', '2026-09-29', [])).toEqual([]);
+  });
+
+  it('preserves automatic cards until an admin makes a selection', async () => {
+    const { galleryCardIdsFor, UPLOAD_PROMPT_CARD_ID } = await school();
+    expect(galleryCardIdsFor({ slug: 'bingo-night', galleryCards: null }, '2026-09-28'))
+      .toEqual([UPLOAD_PROMPT_CARD_ID, 'membership-2026', 'collective', 'suggestion-box']);
+    expect(galleryCardIdsFor({ slug: 'bingo-night', galleryCards: ['collective'] }, '2026-09-28'))
+      .toEqual(['collective']);
+  });
+
   it('take turns so the same card never follows itself, one per 20 photos', async () => {
     const { promosFor, promoSlots } = await school();
     for (const today of ['2026-09-16', '2026-09-28']) {

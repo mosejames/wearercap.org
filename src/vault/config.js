@@ -93,12 +93,15 @@ export const WORDS = WORDS_BY_VAULT[VAULT_ID] || WORDS_BY_VAULT.amistad;
 // Cards share the photo columns without interrupting the masonry flow.
 export const PROMO_FIRST = 6;
 export const PROMO_EVERY = 20;
+export const UPLOAD_PROMPT_CARD_ID = 'upload-more-photos';
 
 const SCHOOL_ALBUMS = ['bingo-night', 'karaoke-night'];
 
 export const PROMOS = IS_SCHOOL ? [
   {
     id: 'karaoke-feedback',
+    adminLabel: 'Karaoke feedback survey',
+    adminDescription: 'Invite families to take the anonymous R&B Karaoke Night survey.',
     events: ['karaoke-night', 'rcap-karaoke-photo-booth'],
     until: '2027-05-28',
     cta: 'Take the survey',
@@ -109,6 +112,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'karaoke-sept-27',
+    adminLabel: 'Karaoke RSVP',
+    adminDescription: 'Link families to the R&B Karaoke parent social RSVP page.',
     // Not inside its own album: an RSVP card on the night's photos is a dead end.
     events: ['bingo-night'],
     until: '2026-09-27',
@@ -122,6 +127,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'membership-2026',
+    adminLabel: 'Make a donation',
+    adminDescription: 'Invite families to support RCAP through the membership donation page.',
     events: [...SCHOOL_ALBUMS, 'rcap-karaoke-photo-booth'],
     until: '2027-05-28',
     cta: 'Make a donation',
@@ -135,6 +142,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'karaoke-booth-gallery',
+    adminLabel: 'Photo booth gallery',
+    adminDescription: 'Send families from the main Karaoke gallery to the photo booth gallery.',
     events: ['karaoke-night'],
     until: '2099-12-31',
     cta: 'See the photo booth photos',
@@ -145,6 +154,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'karaoke-event-gallery',
+    adminLabel: 'Main Karaoke gallery',
+    adminDescription: 'Send families from the photo booth gallery to the main Karaoke gallery.',
     events: ['rcap-karaoke-photo-booth'],
     until: '2099-12-31',
     cta: 'See more Karaoke Night photos',
@@ -155,6 +166,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'collective',
+    adminLabel: 'RCAP Collective',
+    adminDescription: 'Highlight the directory of businesses and services from RCA families.',
     events: SCHOOL_ALBUMS,
     until: '2027-05-28',
     cta: 'Explore the Collective',
@@ -166,6 +179,8 @@ export const PROMOS = IS_SCHOOL ? [
   },
   {
     id: 'suggestion-box',
+    adminLabel: 'Suggestion box',
+    adminDescription: 'Invite families to share ideas and improvements with the board.',
     events: SCHOOL_ALBUMS,
     until: '2027-05-28',
     cta: 'Open the suggestion box',
@@ -177,8 +192,28 @@ export const PROMOS = IS_SCHOOL ? [
   },
 ] : [];
 
-export const promosFor = (slug, today) =>
-  PROMOS.filter((p) => p.events.includes(slug) && today <= p.until);
+export const promosFor = (slug, today, enabledIds = null) => Array.isArray(enabledIds)
+  ? PROMOS.filter((p) => enabledIds.includes(p.id))
+  : PROMOS.filter((p) => p.events.includes(slug) && today <= p.until);
+
+export const GALLERY_CARD_OPTIONS = IS_SCHOOL ? [
+  {
+    id: UPLOAD_PROMPT_CARD_ID,
+    label: 'Ask for more photos',
+    description: 'Place the custom photo-request cards throughout this gallery. They automatically ease back as more families contribute.',
+  },
+  ...PROMOS.map((promo) => ({
+    id: promo.id,
+    label: promo.adminLabel || promo.cta,
+    description: promo.adminDescription || promo.variants?.[0]?.body || '',
+  })),
+] : [];
+
+export const galleryCardIdsFor = (event, today) => {
+  if (!IS_SCHOOL || !event) return [];
+  if (Array.isArray(event.galleryCards)) return event.galleryCards;
+  return [UPLOAD_PROMPT_CARD_ID, ...promosFor(event.slug, today).map((promo) => promo.id)];
+};
 
 // Where the cards land in an album of `count` photos: [{ at, promo, card, key }].
 // `at` is how many photos come before the card. An album shorter than

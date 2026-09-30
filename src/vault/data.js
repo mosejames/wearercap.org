@@ -166,6 +166,7 @@ const eventFromRow = (r, s = {}) => ({
   open: r.open,
   featured: r.featured,
   hidden: r.hidden,
+  galleryCards: Array.isArray(r.gallery_cards) ? r.gallery_cards : null,
   photoCount: Number(s.photo_count || 0),
   contributorCount: Number(s.contributor_count || 0),
   likeCount: Number(s.like_count || 0),
@@ -199,6 +200,7 @@ export async function saveEvent(form, id = null, pass = '') {
     open: true,
     featured: !!form.featured,
     hidden: !!form.hidden,
+    ...(Array.isArray(form.galleryCards) ? { gallery_cards: [...new Set(form.galleryCards)] } : {}),
   };
   const { data, error } = await supabase.rpc('vault_admin_save_event', { p_pass: pass, p_id: id, p, p_house: HOUSE.id });
   if (error) throw error;
