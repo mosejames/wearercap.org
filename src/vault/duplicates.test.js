@@ -3,7 +3,7 @@ import { webcrypto } from 'node:crypto';
 const deps = vi.hoisted(() => ({ prepareImage: vi.fn(), insertPhotos: vi.fn(), uploadToSupabase: vi.fn(), duplicateHashes: vi.fn() }));
 vi.mock('./config.js', async importOriginal => ({ ...await importOriginal(), IS_SCHOOL: true }));
 vi.mock('./images.js', () => ({ prepareImage: deps.prepareImage }));
-vi.mock('./data.js', () => ({ getOwner: async () => 'owner', storageConfig: async () => ({}), ...deps }));
+vi.mock('./data.js', () => ({ syncIdentity: async () => 'owner', storageConfig: async () => ({}), ...deps }));
 vi.mock('./auth.js', () => ({ authHeaders: async () => ({}) }));
 import { uploadBatch } from './upload.js';
 import { fingerprint } from './duplicates.js';

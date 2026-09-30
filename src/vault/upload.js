@@ -6,7 +6,7 @@
 import { authHeaders } from './auth.js';
 import { isVideo, prepareVideo } from './videos.js';
 import { prepareImage } from './images.js';
-import { getOwner, insertPhotos, uploadToSupabase, storageConfig, duplicateHashes } from './data.js';
+import { syncIdentity, insertPhotos, uploadToSupabase, storageConfig, duplicateHashes } from './data.js';
 import { fingerprint, isDuplicateError } from './duplicates.js';
 import { IS_SCHOOL, HOUSE, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
 
@@ -60,7 +60,11 @@ async function putAll(prepared, signed, mode, onBytes, signal) {
  */
 export async function uploadBatch(files, { event, profile, onProgress, signal }) {
   await storageConfig();
-  const owner = await getOwner();
+  // Reconcile the browser with the verified account immediately before a
+  // batch. A page can stay open across a phone sign-in or account recovery;
+  // using an owner cached before that change makes the signer accept the
+  // account but the insert trigger reject the stale owner.
+  const owner = await syncIdentity();
   const state = {
     total: files.length, prepared: 0, uploaded: 0, failed: [], done: [], duplicates: [], checking: IS_SCHOOL, checked: 0,
     bytesTotal: files.reduce((n, f) => n + f.size, 0), bytesSent: 0, current: '',

@@ -11,6 +11,17 @@ do $$begin
 end$$;
 select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 select public.vault_join();
+-- A recovered account can intentionally retain an older canonical owner. A
+-- later join must return that active owner instead of deriving a different
+-- value from the current auth UUID.
+reset role;
+update vault_private.members set owner=public.vault_hash('preserved-canonical-owner') where user_id='10000000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+do $$declare joined jsonb;begin
+ joined:=public.vault_join();
+ if joined->>'owner'<>public.vault_actor() then raise exception 'TEST FAILED: join returned a stale owner'; end if;
+end$$;
 select public.vault_save_profile('','Test family');
 select public.vault_reserve_uploads('security-test',array['30000000-0000-4000-8000-000000000001'::uuid]);
 insert into public.vault_photos(id,event_id,owner,storage,key,web_key,thumb_key)

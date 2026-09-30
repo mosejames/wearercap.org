@@ -1,8 +1,9 @@
 import { it, expect, vi } from 'vitest';
-const deps = vi.hoisted(() => ({ prepareImage: vi.fn(), prepareVideo: vi.fn(), insertPhotos: vi.fn(), uploadToSupabase: vi.fn() }));
+const deps = vi.hoisted(() => ({ prepareImage: vi.fn(), prepareVideo: vi.fn(), insertPhotos: vi.fn(), uploadToSupabase: vi.fn(), syncIdentity: vi.fn(async () => 'owner') }));
 vi.mock('./images.js', () => ({ prepareImage: deps.prepareImage }));
 vi.mock('./videos.js', () => ({ isVideo: (f) => f.type.startsWith('video/'), prepareVideo: deps.prepareVideo }));
-vi.mock('./data.js', () => ({ getOwner: async () => 'owner', storageConfig: async () => ({}), insertPhotos: deps.insertPhotos, uploadToSupabase: deps.uploadToSupabase }));
+vi.mock('./data.js', () => ({ syncIdentity: deps.syncIdentity, storageConfig: async () => ({}), insertPhotos: deps.insertPhotos, uploadToSupabase: deps.uploadToSupabase }));
+vi.mock('./auth.js', () => ({ authHeaders: async () => ({}) }));
 import { uploadBatch } from './upload.js';
 it('uploads the video original plus JPEG previews and stores its video MIME type', async () => {
   const original = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
@@ -12,6 +13,7 @@ it('uploads the video original plus JPEG previews and stores its video MIME type
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ mode: 'supabase', items: [{ id: 'id', keys: { orig: 'orig.mp4', web: 'web.jpg', thumb: 'thumb.jpg' } }] }) }));
   try {
     const result = await uploadBatch([original], { event: { id: 'event', slug: 'event' }, profile: { display_name: 'Test' } });
+    expect(deps.syncIdentity).toHaveBeenCalledOnce();
     expect(result.failed).toEqual([]);
     expect(deps.prepareImage).not.toHaveBeenCalled();
     expect(deps.uploadToSupabase).toHaveBeenCalledWith('orig.mp4', original, 'video/mp4');
