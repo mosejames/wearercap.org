@@ -1,5 +1,3 @@
-export const config = { maxDuration: 60 };
-
 const PROMOTIONS = {
   'membership-2026': 'A donation that supports RCAP and helps make more school community moments possible.',
   collective: 'The RCAP Collective, a directory of businesses, services, creative work, and student ventures from RCA families.',

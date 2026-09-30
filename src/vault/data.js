@@ -213,10 +213,10 @@ export async function listGalleryVoice(eventId) {
 
 export async function generateGalleryVoice(eventId, pass = '', promoIds = [], refresh = false) {
   const headers = await authHeaders();
-  const response = await fetch('/api/vault-voice', {
+  const response = await fetch('/api/feedback-draft', {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ eventId, pass, promoIds, refresh }),
+    body: JSON.stringify({ mode: 'gallery_voice', eventId, pass, promoIds, refresh }),
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result.error || 'Could not create the custom gallery wording.');

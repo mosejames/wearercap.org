@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { creativeDirectionFor, validGalleryVoice } from './vault-voice.js';
+import { creativeDirectionFor, validGalleryVoice } from './vaultVoice.js';
 
 const card = (n = 1) => ({
   eyebrow: `Prompt ${n}`,

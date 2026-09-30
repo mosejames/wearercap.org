@@ -1,4 +1,5 @@
 import { surveyError } from "../src/feedback/builder.js";
+import galleryVoiceHandler from "../src/server/vaultVoice.js";
 export const config = { maxDuration: 60 };
 const option = {
   type: "object",
@@ -61,6 +62,10 @@ export default async function handler(req, res) {
     } catch {
       return res.status(400).json({ error: "Invalid request" });
     }
+  }
+  if (body?.mode === "gallery_voice") {
+    req.body = body;
+    return galleryVoiceHandler(req, res);
   }
   if (
     !body ||
