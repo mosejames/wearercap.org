@@ -192,9 +192,16 @@ export const PROMOS = IS_SCHOOL ? [
   },
 ] : [];
 
-export const promosFor = (slug, today, enabledIds = null) => Array.isArray(enabledIds)
-  ? PROMOS.filter((p) => enabledIds.includes(p.id))
-  : PROMOS.filter((p) => p.events.includes(slug) && today <= p.until);
+const SPECIAL_GALLERY_PROMOS = {
+  'karaoke-night': ['karaoke-booth-gallery'],
+  'rcap-karaoke-photo-booth': ['karaoke-event-gallery'],
+};
+
+export const promosFor = (slug, today, enabledIds = null) => {
+  if (!Array.isArray(enabledIds)) return PROMOS.filter((p) => p.events.includes(slug) && today <= p.until);
+  const selected = new Set([...enabledIds, ...(SPECIAL_GALLERY_PROMOS[slug] || [])]);
+  return PROMOS.filter((promo) => selected.has(promo.id));
+};
 
 export const GALLERY_CARD_OPTIONS = IS_SCHOOL ? [
   {
@@ -202,7 +209,7 @@ export const GALLERY_CARD_OPTIONS = IS_SCHOOL ? [
     label: 'Add more photos',
     description: 'Place the custom photo-request cards throughout this gallery. They automatically ease back as more families contribute.',
   },
-  ...PROMOS.map((promo) => ({
+  ...PROMOS.filter((promo) => !['karaoke-booth-gallery', 'karaoke-event-gallery'].includes(promo.id)).map((promo) => ({
     id: promo.id,
     label: promo.adminLabel || promo.cta,
     description: promo.adminDescription || promo.variants?.[0]?.body || '',

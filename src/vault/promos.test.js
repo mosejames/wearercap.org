@@ -19,10 +19,14 @@ describe('album promos', () => {
   });
 
   it('uses an explicit admin selection for any gallery', async () => {
-    const { promosFor } = await school();
+    const { GALLERY_CARD_OPTIONS, promosFor } = await school();
     expect(promosFor('everyday-rca', '2026-09-29', ['membership-2026', 'suggestion-box']).map((p) => p.id))
       .toEqual(['membership-2026', 'suggestion-box']);
     expect(promosFor('bingo-night', '2026-09-29', [])).toEqual([]);
+    expect(promosFor('karaoke-night', '2026-09-29', []).map((p) => p.id)).toEqual(['karaoke-booth-gallery']);
+    expect(promosFor('rcap-karaoke-photo-booth', '2026-09-29', []).map((p) => p.id)).toEqual(['karaoke-event-gallery']);
+    expect(GALLERY_CARD_OPTIONS.map((card) => card.id)).not.toContain('karaoke-booth-gallery');
+    expect(GALLERY_CARD_OPTIONS.map((card) => card.id)).not.toContain('karaoke-event-gallery');
   });
 
   it('preserves automatic cards until an admin makes a selection', async () => {

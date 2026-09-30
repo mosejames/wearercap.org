@@ -1555,6 +1555,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   useEffect(()=>{updateCounts();},[updateCounts,tab]);
   const changed=()=>{refresh();updateCounts();};
   const [editing, setEditing] = useState(null);       // event form
+  const [savingGallery, setSavingGallery] = useState(false);
   const [ask, setAsk] = useState(null);               // request form
   const [phones, setPhones] = useState(null);
   const [nudge, setNudge] = useState('');
@@ -1562,7 +1563,11 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   const openedDirectGallery = useRef('');
   const editGallery = useCallback((event) => setEditing({
     id: event.id,
-    form: { ...event, endsOn: event.endsOn || '', galleryCards: galleryCardIdsFor(event, todayISO()) },
+    form: {
+      ...event,
+      endsOn: event.endsOn || '',
+      galleryCards: galleryCardIdsFor(event, todayISO()).filter((id) => GALLERY_CARD_OPTIONS.some((card) => card.id === id)),
+    },
   }), []);
   useEffect(() => {
     if (!openGallerySlug) { openedDirectGallery.current = ''; return; }
@@ -1594,20 +1599,21 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   if (staffRole === 'moderator') return <main className="shell page admin"><h1>Moderation</h1><p>Review concerns raised by our family. Uploads appear immediately; reports are reviewed here.</p><ModerationPanel pass={pass} onChanged={refresh} /></main>;
   const saveEv = async (e) => {
     e.preventDefault();
+    if (savingGallery) return;
+    setSavingGallery(true);
     try {
       const saved = await saveEvent(editing.form, editing.id, pass);
-      let customVoice = true;
+      setEditing(null); if (openGallerySlug) go('/admin'); refresh();
+      showToast(IS_SCHOOL ? 'Gallery saved. Custom wording is refreshing in the background.' : 'Saved.');
       if (IS_SCHOOL) {
         const promoIds = promosFor(saved.slug, todayISO(), saved.galleryCards).map((promo) => promo.id);
-        try { await generateGalleryVoice(saved.id, pass, promoIds, true); }
-        catch { customVoice = false; }
+        generateGalleryVoice(saved.id, pass, promoIds, true)
+          .then(() => showToast('Custom gallery wording is ready.'))
+          .catch(() => showToast('Gallery saved. Custom wording can be refreshed the next time you save.'));
       }
-      setEditing(null); if (openGallerySlug) go('/admin'); refresh();
-      showToast(IS_SCHOOL
-        ? customVoice ? 'Saved with custom gallery wording.' : 'Saved. Custom wording will retry when an admin opens the gallery.'
-        : 'Saved.');
     }
     catch (ex) { showToast(ex.message); }
+    finally { setSavingGallery(false); }
   };
   const saveAsk = async (e) => {
     e.preventDefault();
@@ -1734,7 +1740,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
                 </label>;
               })}</div>
             </fieldset>}
-            <button className="btn primary">Save</button>
+            <button className="btn primary" disabled={savingGallery}>{savingGallery ? 'Saving gallery…' : 'Save gallery'}</button>
           </form>
         </Sheet>
       )}
