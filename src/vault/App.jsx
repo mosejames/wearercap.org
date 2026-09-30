@@ -29,6 +29,7 @@ import { droppable, useDropGuard, useDropTarget, useWindowDropTarget } from './d
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
+import { UPLOAD_PROMPTS, uploadPromptSlots } from './uploadPrompts.js';
 
 /* ------------------------------------------------------------- routing */
 
@@ -770,13 +771,15 @@ function PromoCard({ promo }) {
 
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos }) {
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0 }) {
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
     return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
   }
   const slots = promoSlots(promos, photos.length);
   const at = (i) => slots.filter((s) => s.at === i);
+  const uploadSlots = onAddPhotos ? new Map(uploadPromptSlots(photos.length, contributorCount)
+    .map((position, index) => [position, UPLOAD_PROMPTS[index % UPLOAD_PROMPTS.length]])) : new Map();
   return (
     <div className="grid">
       {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
@@ -794,15 +797,15 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
           )}
         </button></div>
         {at(i + 1).map((s) => <PromoCard key={s.key} promo={s.card} />)}
-        {onAddPhotos && (i + 1 === Math.min(16, photos.length) || (i + 1 > 16 && (i + 1 - 16) % 40 === 0)) && (
+        {onAddPhotos && uploadSlots.has(i + 1) && (
           <div className="tile-wrap promo-wrap">
             <button type="button" className="promo-tile upload-promo" onClick={onAddPhotos}>
               <span className="promo-body">
                 <span className="upload-promo-plus" aria-hidden="true">+</span>
-                <span className="promo-eyebrow">Your memories belong here</span>
-                <b>Add your photos here.</b>
-                <span className="promo-copy">Have a moment on your phone? Share it with our school community.</span>
-                <span className="promo-cta">Add your photos →</span>
+                <span className="promo-eyebrow">{uploadSlots.get(i + 1).eyebrow}</span>
+                <b>{uploadSlots.get(i + 1).title}</b>
+                <span className="promo-copy">{uploadSlots.get(i + 1).body}</span>
+                <span className="promo-cta">{uploadSlots.get(i + 1).cta} →</span>
               </span>
             </button>
           </div>
@@ -1302,6 +1305,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
             promos={selecting ? [] : promosFor(event.slug, today)}
             onAddPhotos={IS_SCHOOL && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
+            contributorCount={new Set(visible.map((p) => p.owner)).size}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
