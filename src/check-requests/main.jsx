@@ -1216,7 +1216,7 @@ export function RequestList({
                 <p className="queue-purpose">{r.purpose}</p>
                 <p className="muted">Next: {next(r)}</p>
               </div>
-              <Badge status={r.status} />
+              <Badge status={r.on_behalf && r.approver_email && r.status === "submitted" ? "awaiting_approval" : r.status} />
               <strong className="money">{dollars(r.total_cents)}</strong>
               <button
                 className={
@@ -1535,7 +1535,9 @@ function Detail({
                       ? "A correction is needed"
                       : r.status === "declined"
                         ? "Request closed"
-                        : "Awaiting the treasurer"}
+                        : r.on_behalf && r.approver_email
+                          ? "Awaiting assigned approval"
+                          : "Awaiting the treasurer"}
             </h2>
             <p className="muted">
               {r.status === "submitted"
