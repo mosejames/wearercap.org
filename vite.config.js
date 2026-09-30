@@ -9,6 +9,8 @@ export default defineConfig({
       name: "feedback-dev-routes",
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
+          if (/^\/share\/[0-9a-f]{64}(?:\?.*)?$/.test(req.url || ""))
+            req.url = "/capsule-share/index.html";
           if (/^\/feedback\/(?!.*\.)[^?]*(?:\?.*)?$/.test(req.url || ""))
             req.url = "/feedback/index.html";
           next();
@@ -20,6 +22,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        capsuleshare: resolve(__dirname, "capsule-share/index.html"),
         feedback: resolve(__dirname, "feedback/index.html"),
         tonight: resolve(__dirname, "karaoke/tonight/index.html"),
         now: resolve(__dirname, "now/index.html"),

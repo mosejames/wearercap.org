@@ -1,0 +1,12 @@
+body { margin: 0; background: #f7f6f2; color: #152b34; font: 17px/1.6 system-ui, sans-serif; }
+.capsule-share-page { max-width: 900px; padding: 64px 24px; margin: auto; }
+.share-eyebrow { color: #8a1839; text-transform: uppercase; letter-spacing: .12em; font-weight: 750; }
+.capsule-share-page h1 { font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.1; }
+.share-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 32px 0; }
+.share-options section { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; }
+.share-options h2 { margin-top: 0; }
+.share-options button { margin-top: auto; border: 0; border-radius: 6px; background: #8a1839; color: white; padding: 14px; font: inherit; font-weight: 650; cursor: pointer; }
+.share-options button:disabled { opacity: .45; cursor: default; }
+.share-note { color: #52616b; font-size: .9rem; }
+[role="alert"] { color: #9a1637; }
+@media (max-width: 640px) { .share-options { grid-template-columns: 1fr; } .capsule-share-page { padding-top: 32px; } }

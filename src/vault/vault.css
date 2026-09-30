@@ -927,3 +927,7 @@ to{opacity:1}
 
 .btn.danger{background:#b42318;border-color:#b42318;color:#fff}
 .btn.danger:hover{background:#912018;border-color:#912018}
+
+.capsule-share-admin { padding: 16px 0; border-bottom: 1px solid var(--line, #ddd); }
+.capsule-share-admin > input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; }
+.capsule-share-buttons { display: flex; gap: 8px; flex-wrap: wrap; }

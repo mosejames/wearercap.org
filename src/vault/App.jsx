@@ -1,3 +1,4 @@
+import { CapsuleShareAdmin } from './CapsuleShareAdmin.jsx';
 import Brand from '../components/Brand.jsx';
 import { sortGallery } from './gallerySort.js';
 import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -1165,6 +1166,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [sort, setSort] = useState('time');
   const [open, setOpen] = useState(null);
   const [dl, setDl] = useState(false);
+  const [shareLinkOpen, setShareLinkOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState(false);
   const [leaderTab, setLeaderTab] = useState('houses');
   const [galleryVoice, setGalleryVoice] = useState(null);
@@ -1284,6 +1286,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             {canMove && visible.length > 0 && <button className="link" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? 'Cancel selection' : 'Select uploads'}</button>}
             {/* Bulk download remains admin-only, even in the compact gallery. */}
             {admin && visible.length > 0 && <button className="link" onClick={() => setDl(true)}>Download all</button>}
+            {admin && <button className="link" onClick={() => setShareLinkOpen(true)}>Private Share Link</button>}
             {admin && <a className="link" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}>Gallery setup</a>}
           </div>
         </div>
@@ -1311,6 +1314,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             {admin && visible.length > 0 && (
               <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
             )}
+            {admin && <button className="btn ghost" onClick={() => setShareLinkOpen(true)}>Private Share Link</button>}
             {visible.length > 1 && (
               <div className="sort">
                 {[['time', 'In order'], ['loved', 'Most loved'], ['new', 'Newest']].map(([k, l]) => (
@@ -1360,6 +1364,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         onRemoved={id => { setPhotos(ps => ps.filter(p => p.id !== id)); setSelected(previous => { const next = new Set(previous); next.delete(id); return next; }); }}
         onClose={() => { setDeleting(null); refreshEvents(); }} />}
       {moving&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMoving(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:moving,p_from:event.id,p_to:target,p_pass:pass});setPhotos(ps=>ps.filter(p=>!moving.includes(p.id)));setMoving(null);setSelected(new Set());setSelecting(false);refreshEvents();showToast('Uploads moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move {moving.length} {moving.length===1?'upload':'uploads'} from {event.title}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required value={target} disabled={moveBusy} onChange={e=>setTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==event.id&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!target||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
+      {shareLinkOpen && admin && <Sheet title="Private Share Link" onClose={() => setShareLinkOpen(false)}><CapsuleShareAdmin event={event} pass={pass} /></Sheet>}
       {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
   );
@@ -1697,6 +1702,7 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
       </>}
       {editing && (
         <Sheet title={editing.id ? 'Manage gallery' : 'New event'} onClose={() => { setEditing(null); if (openGallerySlug) go('/admin'); }}>
+          {editing.id && <CapsuleShareAdmin event={events.find(e => e.id === editing.id)} pass={pass} />}
           {editing.id&&<button className="btn small ghost" onClick={()=>{const event=events.find(e=>e.id===editing.id);setEditing(null);if(openGallerySlug)go('/admin');onInvite(event);}}>Invite to upload</button>}
           <form className="stack" onSubmit={saveEv}>
             <label className="field"><span>Title</span><input required value={editing.form.title} onChange={(e) => setEditing((x) => ({ ...x, form: { ...x.form, title: e.target.value, slug: x.id ? x.form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') } }))} /></label>

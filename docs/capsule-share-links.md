@@ -1,0 +1,17 @@
+# Private Capsule Share Links
+
+Admins open any RCAP or AMI gallery and choose **Private Share Link**, or find the same panel in **Manage gallery**. Generate a link, copy it, select the allowed qualities, and optionally set an expiry. Disable blocks new requests; regenerate replaces the token immediately and resets its completion counter. No link is generated automatically for an existing event.
+
+Recipients visit `/share/<random-token>` without an account. Each request checks the link, expiry, enabled state, capsule visibility and quality permissions in the database. Metadata and manifests omit the capsule ID, contributor names and account details. Hidden and removed uploads are excluded. An empty capsule displays a clear empty state.
+
+The private `vault_private.capsule_share_links` table stores `id`, `capsule_id`, a 256-bit random token, `enabled`, `allow_web_download`, `allow_full_download`, `created_by`, `created_at`, `expires_at`, and `download_count`. `created_by` records the authenticated user UUID, or `passcode:<house>` for legacy passcode administration. There is one current link per capsule. Regeneration preserves the quality/expiry settings while replacing token and creation metadata. The public invoker RPCs delegate to private functions with explicit admin or capability checks, fixed search paths, and no direct table grants.
+
+`capsule_share_admin` supports get/create/update/regenerate. `capsule_share` supports info/start/complete. A start returns only the selected rendition keys and an expiring completion receipt. Receipt completion is idempotent and rejects receipts from a previous link generation. The count reflects browser-reported completed saves, not page views, starts or cancelled downloads. It is an operational metric, not proof a person opened every file. Expired receipts are purged on subsequent starts.
+
+ZIP64 archives are generated in the browser on demand using the existing streaming writer. Chrome/Edge desktop can save directly to disk; other browsers collect a Blob and need enough memory for the archive. No permanent ZIP objects or new storage buckets are created. Videos/GIFs retain their saved format and quality in both options. RCAP Full Quality means the highest quality saved file, which may already have been resized during upload.
+
+The existing media storage serves public object URLs. Link revocation blocks new manifests, but cannot recall downloaded files or object URLs already obtained. This feature does not turn the underlying media bucket into private storage.
+
+Verification: `npm run build`, `npm test`, and `supabase/tests/capsule_share_links.sql`. The SQL suite runs against real uploaded fixtures inside a rollback-only transaction; it tests authorization, anonymous access, privacy, visibility, quality gates, expiry, disable, rotation, completion counting and AMI reuse.
+
+At implementation time, the production database contained no event matching Chipotle in its title or slug. The controls automatically apply when that event is created; no empty or guessed event was added.

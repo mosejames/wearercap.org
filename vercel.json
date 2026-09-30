@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/share/:token",
+      "destination": "/capsule-share/index.html"
+    },
+    {
       "source": "/feedback/:path*",
       "destination": "/feedback/index.html"
     },
@@ -90,6 +94,25 @@
       "source": "/rcap-vault/:path*",
       "destination": "/rcap-capsule/:path*",
       "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/share/:token",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
     }
   ]
 }
