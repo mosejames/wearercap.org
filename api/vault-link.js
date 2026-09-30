@@ -1,3 +1,4 @@
+import { describePrivateShare, sharePreviewCopy } from '../src/vault/sharePreview.js';
 // ---------------------------------------------------------------------------
 // Share cards for the Amistad Vault.
 //
@@ -93,7 +94,45 @@ async function describePhoto(id, eventId, house) {
     height: p.height > 0 ? Math.max(1, Math.round(p.height * scale)) : null };
 }
 
+export async function privateShareLink(req, res) {
+  const token = String(req.query?.share || '');
+  const info = await describePrivateShare(token);
+  const copy = sharePreviewCopy(info);
+  const validToken = /^[0-9a-f]{64}$/.test(token);
+  const canonical = validToken ? `${SITE}/share/${token}` : `${SITE}/capsule-share/`;
+  const dest = validToken ? `${SITE}/capsule-share/#${token}` : `${SITE}/capsule-share/`;
+  const image = validToken ? `${SITE}/api/vault-og?share=${token}` : `${SITE}/api/vault-og?share=invalid`;
+  const description = `${copy.detail} ${copy.quality}`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.status(200).send(`<!doctype html><html lang="en"><head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${esc(copy.title)} · ${esc(copy.brand)}</title>
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="description" content="${esc(description)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="${esc(copy.brand)}" />
+    <meta property="og:title" content="${esc(copy.title)} · Private Capsule Download" />
+    <meta property="og:description" content="${esc(description)}" />
+    <meta property="og:url" content="${esc(canonical)}" />
+    <meta property="og:image" content="${esc(image)}" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${esc(copy.title + '. ' + description)}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${esc(copy.title)} · Private Capsule Download" />
+    <meta name="twitter:description" content="${esc(description)}" />
+    <meta name="twitter:image" content="${esc(image)}" />
+    <meta http-equiv="refresh" content="0; url=${esc(dest)}" />
+    <script>window.location.replace(${JSON.stringify(dest)});</script>
+    </head><body><p>Opening your capsule download… <a href="${esc(dest)}">Continue</a></p></body></html>`);
+}
+
 export default async function handler(req, res) {
+  if (req.query?.share != null) return privateShareLink(req, res);
   const slug = String((req.query && req.query.slug) || '').trim();
   const V = VAULTS[String((req.query && req.query.vault) || '')] || VAULTS.amistad;
   const BASE = `${SITE}/${V.path}/`;

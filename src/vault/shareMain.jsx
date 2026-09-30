@@ -4,7 +4,9 @@ import { recipientShare, downloadShare } from './capsuleShare.js';
 import './capsuleShare.css';
 
 export function CapsuleSharePage() {
-  const token = window.location.pathname.split('/')[2] || '';
+  const token = window.location.pathname.startsWith('/share/')
+    ? window.location.pathname.split('/')[2] || ''
+    : window.location.hash.slice(1);
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);

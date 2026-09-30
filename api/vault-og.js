@@ -1,3 +1,4 @@
+import { describePrivateShare, sharePreviewCopy } from '../src/vault/sharePreview.js';
 import { ImageResponse } from '@vercel/og';
 import { createElement as h } from 'react';
 import { readFileSync } from 'node:fs';
@@ -41,7 +42,36 @@ export function eventCard(title, date, closed = false, vault = 'amistad') {
     {width:1200,height:630,fonts});
 }
 
+
+export function privateShareCard(info) {
+  const copy = sharePreviewCopy(info);
+  const theme = info?.house === 'amistad' ? THEMES.amistad : THEMES.rcap;
+  const { navy, gold, cream } = theme;
+  const label = copy.title.length > 100 ? `${copy.title.slice(0, 97).trimEnd()}…` : copy.title;
+  return new ImageResponse(box({ width: '100%', height: '100%', background: navy, color: cream,
+    fontFamily: 'Figtree', flexDirection: 'column', padding: '48px 60px', justifyContent: 'space-between' },
+    box({ alignItems: 'center', justifyContent: 'space-between' },
+      box({ fontSize: 28, fontWeight: 900, letterSpacing: 3, color: gold }, copy.brand.toUpperCase()),
+      box({ fontSize: 21, fontWeight: 500 }, 'PRIVATE SHARE LINK')),
+    box({ flexDirection: 'column', gap: 18 },
+      box({ fontSize: label.length > 65 ? 49 : label.length > 35 ? 62 : 78, fontWeight: 900,
+        letterSpacing: -2, lineHeight: 1.08, wordBreak: 'break-word' }, label),
+      box({ fontSize: 28, fontWeight: 500 }, copy.detail)),
+    box({ borderTop: `3px solid ${gold}`, paddingTop: 24, flexDirection: 'column', gap: 12 },
+      box({ fontSize: 30, fontWeight: 900, color: gold }, copy.quality),
+      box({ fontSize: 21, fontWeight: 500 }, info ? 'DOWNLOAD ALL  ·  NO LOGIN NEEDED' : 'CONTACT YOUR CAPSULE ADMIN'))),
+    { width: 1200, height: 630, fonts });
+}
+
 export default async function handler(req,res) {
+  if (req.query?.share != null) {
+    const info = await describePrivateShare(String(req.query.share));
+    const png = Buffer.from(await privateShareCard(info).arrayBuffer());
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return res.status(200).send(png);
+  }
   const title=String(req.query?.title || 'Our year. All together.').slice(0,180);
   const date=String(req.query?.date || '').slice(0,100);
   const png=Buffer.from(await eventCard(title,date,req.query?.closed==='1',String(req.query?.vault||'amistad')).arrayBuffer());

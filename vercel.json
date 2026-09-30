@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/share/:token",
-      "destination": "/capsule-share/index.html"
+      "destination": "/api/vault-link?share=:token"
     },
     {
       "source": "/feedback/:path*",
