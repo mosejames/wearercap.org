@@ -1,3 +1,4 @@
+import { Trophy, ListChecks, Link2, SlidersHorizontal } from 'lucide-react';
 import { CapsuleShareAdmin } from './CapsuleShareAdmin.jsx';
 import Brand from '../components/Brand.jsx';
 import { sortGallery } from './gallerySort.js';
@@ -1281,13 +1282,13 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           {companion && <p className="ev-blurb"><a href={`#/e/${companion.slug}`}>{event.slug === pair.main ? 'Looking for your booth photos?' : 'See the rest of the night and add your own photos:'} {companion.title} →</a></p>}
           <div className="gallery-actions">
             {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
-            <button className="btn ghost" onClick={() => setLeaderboard(true)}>Leaderboard</button>
+            <button className="gallery-action" onClick={() => setLeaderboard(true)}><Trophy aria-hidden="true" /><span>Leaderboard</span></button>
             <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
-            {canMove && visible.length > 0 && <button className="link" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? 'Cancel selection' : 'Select uploads'}</button>}
+            {canMove && visible.length > 0 && <button className="gallery-action" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting ? 'Cancel selection' : 'Select uploads'}</span></button>}
             {/* Bulk download remains admin-only, even in the compact gallery. */}
-            {admin && visible.length > 0 && <button className="link" onClick={() => setDl(true)}>Download all</button>}
-            {admin && <button className="link" onClick={() => setShareLinkOpen(true)}>Private Share Link</button>}
-            {admin && <a className="link" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}>Gallery setup</a>}
+            {admin && visible.length > 0 && <button className="gallery-action" onClick={() => setDl(true)}>{I.down}<span>Download all</span></button>}
+            {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
+            {admin && <a className="gallery-action" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}><SlidersHorizontal aria-hidden="true" /><span>Gallery setup</span></a>}
           </div>
         </div>
       </div> : <div className="ev-head">
@@ -1310,11 +1311,11 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
                 thing the vault can do and the easiest way for a forwarded link
                 to become a bulk copy of other people's children. One photo at a
                 time stays open to everyone, in the lightbox. */}
-            {canMove&&visible.length>0&&<button className="btn ghost" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting?'Cancel selection':'Select uploads'}</button>}
+            {canMove&&visible.length>0&&<button className="gallery-action" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting?'Cancel selection':'Select uploads'}</span></button>}
             {admin && visible.length > 0 && (
-              <button className="btn ghost" onClick={() => setDl(true)}>{I.down} Download all</button>
+              <button className="gallery-action" onClick={() => setDl(true)}>{I.down}<span>Download all</span></button>
             )}
-            {admin && <button className="btn ghost" onClick={() => setShareLinkOpen(true)}>Private Share Link</button>}
+            {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {visible.length > 1 && (
               <div className="sort">
                 {[['time', 'In order'], ['loved', 'Most loved'], ['new', 'Newest']].map(([k, l]) => (
@@ -1364,7 +1365,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         onRemoved={id => { setPhotos(ps => ps.filter(p => p.id !== id)); setSelected(previous => { const next = new Set(previous); next.delete(id); return next; }); }}
         onClose={() => { setDeleting(null); refreshEvents(); }} />}
       {moving&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMoving(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:moving,p_from:event.id,p_to:target,p_pass:pass});setPhotos(ps=>ps.filter(p=>!moving.includes(p.id)));setMoving(null);setSelected(new Set());setSelecting(false);refreshEvents();showToast('Uploads moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move {moving.length} {moving.length===1?'upload':'uploads'} from {event.title}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required value={target} disabled={moveBusy} onChange={e=>setTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==event.id&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!target||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
-      {shareLinkOpen && admin && <Sheet title="Private Share Link" onClose={() => setShareLinkOpen(false)}><CapsuleShareAdmin event={event} pass={pass} /></Sheet>}
+      {shareLinkOpen && admin && <Sheet title="Share downloads" onClose={() => setShareLinkOpen(false)}><CapsuleShareAdmin event={event} pass={pass} /></Sheet>}
       {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
   );

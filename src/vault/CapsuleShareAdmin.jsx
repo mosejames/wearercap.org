@@ -20,8 +20,8 @@ export function CapsuleShareAdmin({ event, pass }) {
     finally { setBusy(false); }
   };
   return <section className="capsule-share-admin stack" aria-label="Private share link">
-    <h3>Private Share Link</h3>
-    <p className="fine">Anyone with this link can download this capsule without signing in.</p>
+    <h3>Share capsule downloads</h3>
+    <p className="fine">Create a private link to download all photos and videos from <b>{event.title}</b>. Recipients choose the quality options you allow below. They do not need to sign in.</p>
     {link ? <>
       <input aria-label="Private share URL" value={shareUrl(link.token)} readOnly onFocus={e => e.target.select()} />
       <div className="capsule-share-buttons">
