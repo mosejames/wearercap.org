@@ -480,9 +480,17 @@ export async function listContributorPhotos(owner, offset = 0, event = null) {
   return { ...gallery, photos };
 }
 
-// Covers need only four thumbnails, not a full album and its like totals.
-export async function listCoverPhotos(eventId) {
-  const {data,error}=await supabase.from('vault_photos').select('*').eq('event_id',eventId).eq('hidden',false).is('removed_at',null).order('created_at',{ascending:false}).limit(4);
+// Amistad keeps the newest four thumbnails. The Capsule asks for a larger,
+// randomly positioned candidate window so its front page can choose photos
+// that fit the cover tiles instead of repeating the latest uploader forever.
+export async function listCoverPhotos(eventId, { random = false, total = 0, limit = 4 } = {}) {
+  let query = supabase.from('vault_photos').select('*').eq('event_id',eventId).eq('hidden',false).is('removed_at',null);
+  if (random) {
+    const size = Math.max(4, limit);
+    const start = Math.floor(Math.random() * (Math.max(0, Number(total) - size) + 1));
+    query = query.order('created_at', { ascending: true }).range(start, start + size - 1);
+  } else query = query.order('created_at',{ascending:false}).limit(limit);
+  const {data,error}=await query;
   if(error)throw error;
   return (data||[]).map(photoFromRow);
 }

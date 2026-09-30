@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickEvents, whenLabel, ago } from './CapsuleHome.jsx';
+import { pickCoverPhotos, pickEvents, whenLabel, ago } from './CapsuleHome.jsx';
 
 const ev = (slug, startsOn, extra = {}) => ({ id: slug, slug, title: slug, startsOn, kind: 'school', ...extra });
 const events = [
@@ -31,5 +31,21 @@ describe('Capsule home', () => {
     const now = Date.parse('2026-09-26T14:00:00Z');
     expect(ago('2026-09-26T13:58:00Z', now)).toBe('2m ago');
     expect(ago('2026-09-26T10:00:00Z', now)).toBe('4h ago');
+  });
+  it('randomizes among photos that fit the preview slots', () => {
+    const photos = [
+      { id: 'portrait', width: 800, height: 1600 },
+      { id: 'wide-a', width: 1600, height: 1000 },
+      { id: 'wide-b', width: 1500, height: 1000 },
+      { id: 'wide-c', width: 1700, height: 1000 },
+      { id: 'wide-d', width: 1800, height: 1000 },
+      { id: 'square', width: 1000, height: 1000 },
+    ];
+    const low = pickCoverPhotos(photos, 16 / 10, () => 0.5);
+    const high = pickCoverPhotos(photos, 16 / 10, () => 0.99);
+    expect(low).toHaveLength(4);
+    expect(low.every((p) => p.id.startsWith('wide-'))).toBe(true);
+    expect(high.every((p) => p.id.startsWith('wide-'))).toBe(true);
+    expect(low.map((p) => p.id)).not.toEqual(high.map((p) => p.id));
   });
 });

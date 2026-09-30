@@ -1779,12 +1779,18 @@ export default function App() {
   }, [recent]);
   const [extraCovers, setExtraCovers] = useState(new Map());
   useEffect(() => {
-    const need = events.filter((e) => e.photoCount > 0 && !covers.has(e.id));
+    const need = events.filter((e) => e.photoCount > 0 && (IS_SCHOOL || !covers.has(e.id)));
     if (!need.length) return;
-    Promise.all(need.map((e) => listCoverPhotos(e.id).then((ps) => [e.id, ps]).catch(() => [e.id, []])))
+    Promise.all(need.map((e) => listCoverPhotos(e.id, IS_SCHOOL
+      ? { random: true, total: e.photoCount, limit: 120 }
+      : undefined).then((ps) => [e.id, ps]).catch(() => [e.id, []])))
       .then((pairs) => setExtraCovers(new Map(pairs)));
   }, [events, covers]);
-  const allCovers = useMemo(() => new Map([...extraCovers, ...covers]), [covers, extraCovers]);
+  // Candidate pools replace the recent-photo fallback in the Capsule. Amistad
+  // keeps its established preference for the newest thumbnails.
+  const allCovers = useMemo(() => new Map(IS_SCHOOL
+    ? [...covers, ...extraCovers]
+    : [...extraCovers, ...covers]), [covers, extraCovers]);
 
   const [totals, setTotals] = useState(null);
 

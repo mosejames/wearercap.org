@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { WORDS, fmtDate, fmtRange, acceptsUploads, plural } from './config.js';
 import { listTopPhotos, latestComments, mediaUrl } from './data.js';
 import { HouseBoard } from './School.jsx';
@@ -62,11 +62,33 @@ export function pickEvents(events, today) {
   return { next, latest, everyday, albums };
 }
 
-function Cover({ photos, className = '' }) {
-  const n = Math.min(photos.length, 4);
+export function pickCoverPhotos(photos, frameAspect = 4 / 3, random = Math.random) {
+  const pool = photos.filter((p) => !p.hidden && !p.removedAt);
+  const count = Math.min(pool.length, 4);
+  if (!count) return [];
+  // Four tiles inherit the frame ratio. Two tiles are portrait slots and the
+  // three-tile layout is almost square, so compare against the actual slot.
+  const slotAspect = count === 2 ? frameAspect / 2 : count === 3 ? frameAspect * 2 / 3 : frameAspect;
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const score = (p) => p.width > 0 && p.height > 0
+    ? Math.abs(Math.log((p.width / p.height) / slotAspect))
+    : Number.POSITIVE_INFINITY;
+  const tolerance = Math.log(1.35);
+  const fits = shuffled.filter((p) => score(p) <= tolerance);
+  const rest = shuffled.filter((p) => score(p) > tolerance).sort((a, b) => score(a) - score(b));
+  return [...fits, ...rest].slice(0, count);
+}
+
+function Cover({ photos, className = '', aspect = 4 / 3 }) {
+  const picks = useMemo(() => pickCoverPhotos(photos, aspect), [photos, aspect]);
+  const n = picks.length;
   return (
     <div className={`cap-cover n${n} ${className}`}>
-      {n ? photos.slice(0, 4).map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" />)
+      {n ? picks.map((p) => <img key={p.id} src={mediaUrl(p, 'thumb')} alt="" loading="lazy" decoding="async" />)
         : <span className="cap-cover-empty" aria-hidden="true" />}
     </div>
   );
@@ -110,7 +132,7 @@ function LatestEvent({ event, covers, today, onAdd }) {
   return (
     <article className="cap-card cap-latest">
       <a className="cap-latest-cover" href={`#/e/${event.slug}`} aria-label={`Open the ${event.title} album`}>
-        <Cover photos={thumbs} />
+        <Cover photos={thumbs} aspect={16 / 10} />
         {thumbs.some(isVideo) && <span className="video-badge">▶ Includes video</span>}
       </a>
       <div className="cap-latest-body">
@@ -195,7 +217,7 @@ function Everyday({ event, covers, onAdd }) {
           {event.photoCount > 0 && <a className="cap-link light" href={`#/e/${event.slug}`}>View {plural(event.photoCount, 'photo')} →</a>}
         </div>
       </div>
-      {thumbs.length > 0 && <a className="cap-everyday-cover" href={`#/e/${event.slug}`} aria-label={`Open ${event.title}`}><Cover photos={thumbs} /></a>}
+      {thumbs.length > 0 && <a className="cap-everyday-cover" href={`#/e/${event.slug}`} aria-label={`Open ${event.title}`}><Cover photos={thumbs} aspect={16 / 10} /></a>}
     </section>
   );
 }
