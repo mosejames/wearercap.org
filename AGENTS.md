@@ -49,13 +49,21 @@ serverless functions in `api/` read them at runtime:
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | all of `api/` | falls back to the `VITE_` pair |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE` | `api/vault-sign.js`, `api/vault-link.js` | Cloudflare R2 photo storage |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE` | vault signing and link APIs | Shared Cloudflare R2 photo storage |
 | `VAULT_STORAGE` | `api/vault-sign.js` | forces `r2` or `supabase`; unset means R2 when its five vars exist |
+| `M3_STORAGE` | `api/m3-sign.js` | production is forced to `r2`; M3-specific `M3_R2_*` vars may override the shared R2 values |
 
 ### Cloudflare R2 (rarely)
 
 Only needed if you touch photo storage. Credentials live in the Vercel env, not
 here. `api/vault-sign.js` documents both storage modes at the top of the file.
+
+**All photo vaults use the shared R2 storage in production.** New vaults must
+reuse the shared `R2_*` configuration and store an explicit `storage = 'r2'`
+marker with each media row. Supabase remains the database and auth service, but
+do not add a new Supabase Storage bucket or production fallback for vault media.
+If local development needs a fallback, keep it local and make production fail
+clearly when R2 is unavailable.
 
 ## 2. Run it
 
@@ -148,7 +156,8 @@ is a browser token plus a name, team and students typed once. It reuses the
 Amistad pipeline modules (`src/vault/images.js`, `videos.js`, `dnd.js`,
 `zipstream.js`) and its base stylesheet; `src/m3/m3.css` says only what
 differs. Share cards: `/m3-vault/e/<slug>` → `api/m3-link.js`. Uploads:
-`api/m3-sign.js`, bucket `m3-media`, R2 via `M3_R2_*` env vars.
+`api/m3-sign.js`, shared R2 bucket under `m3-2028/`, with `M3_R2_*` available
+only as optional overrides. The old Supabase `m3-media` bucket is empty.
 
 ## 4. House rules
 
