@@ -25,8 +25,8 @@ const R2 = {
   account: process.env.M3_R2_ACCOUNT_ID || process.env.R2_ACCOUNT_ID,
   key: process.env.M3_R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID,
   secret: process.env.M3_R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY,
-  bucket: process.env.M3_R2_BUCKET || 'm3-vault',
-  publicBase: (process.env.M3_R2_PUBLIC_BASE || '').replace(/\/+$/, ''),
+  bucket: process.env.M3_R2_BUCKET || process.env.R2_BUCKET || 'm3-vault',
+  publicBase: (process.env.M3_R2_PUBLIC_BASE || process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, ''),
 };
 
 const VAULT = 'm3-2028';

@@ -19,7 +19,7 @@ const esc = (s) =>
 
 const SUPA = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-const R2_BASE = (process.env.M3_R2_PUBLIC_BASE || '').replace(/\/+$/, '');
+const R2_BASE = (process.env.M3_R2_PUBLIC_BASE || process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
 
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
