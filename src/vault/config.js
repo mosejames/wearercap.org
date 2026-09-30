@@ -199,7 +199,7 @@ export const promosFor = (slug, today, enabledIds = null) => Array.isArray(enabl
 export const GALLERY_CARD_OPTIONS = IS_SCHOOL ? [
   {
     id: UPLOAD_PROMPT_CARD_ID,
-    label: 'Ask for more photos',
+    label: 'Add more photos',
     description: 'Place the custom photo-request cards throughout this gallery. They automatically ease back as more families contribute.',
   },
   ...PROMOS.map((promo) => ({
