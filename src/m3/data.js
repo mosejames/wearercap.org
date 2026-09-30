@@ -225,6 +225,9 @@ export const isVideoPhoto = (p) => p.kind === 'video' || /^video\//.test(p.conte
 // Every photo read goes through one database function that applies the
 // team rule; the table itself is not readable. Likes ride along.
 async function listVia(mode, eventId = null, limit = 2000, pass = '') {
+  // R2 rows need the public base before React renders their media URLs.
+  // Loading it here keeps reads and uploads on the same storage decision.
+  await storageConfig();
   const { data, error } = await supabase.rpc('m3_list_photos', {
     p_token: getToken(), p_pass: pass, p_event: eventId, p_mode: mode, p_limit: limit, p_vault: VAULT.id,
   });
