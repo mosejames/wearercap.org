@@ -205,6 +205,24 @@ export async function saveEvent(form, id = null, pass = '') {
   return eventFromRow(Array.isArray(data) ? data[0] : data);
 }
 
+export async function listGalleryVoice(eventId) {
+  const { data, error } = await supabase.rpc('vault_gallery_voice', { p_event: eventId });
+  if (error) throw error;
+  return data || null;
+}
+
+export async function generateGalleryVoice(eventId, pass = '', promoIds = [], refresh = false) {
+  const headers = await authHeaders();
+  const response = await fetch('/api/vault-voice', {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId, pass, promoIds, refresh }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || 'Could not create the custom gallery wording.');
+  return result.voice;
+}
+
 
 /* ---------------------------------------------------------------- photos */
 

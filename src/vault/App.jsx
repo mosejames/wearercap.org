@@ -9,6 +9,7 @@ import {
   bannedMembers, unbanMember, syncIdentity, ownsUpload, requireContributor, signOut, removeUpload, reportUpload, reviewReports, dismissReport, banUploader,
   getOwner, localProfile, fetchProfile, saveProfile, localPass, rememberPass, checkPass,
   storageConfig, mediaUrl, listEvents, saveEvent,
+  listGalleryVoice, generateGalleryVoice,
   listContributorPhotos, listCoverPhotos, listPhotos, listTopPhotos, listRecentPhotos, listMyPhotos,
   myLikes, like, unlike, listComments, commentCounts, addComment, hideComment,
   listRequests, saveRequest, listPhonesForAdmin, fetchTotals, saveRcaHouse, staffRole as fetchStaffRole,
@@ -29,7 +30,9 @@ import { droppable, useDropGuard, useDropTarget, useWindowDropTarget } from './d
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import { zipStream, saveStream } from './zipstream.js';
-import { UPLOAD_PROMPTS, uploadPromptSlots } from './uploadPrompts.js';
+import {
+  DEFAULT_UPLOAD_PROMPTS, galleryShareMessage, promosWithVoice, uploadPromptsFor, uploadPromptSlots,
+} from './galleryVoice.js';
 
 /* ------------------------------------------------------------- routing */
 
@@ -551,9 +554,16 @@ function DownloadSheet({ event, photos, onClose }) {
 
 function InviteSheet({ event, onClose }) {
   const [copied, setCopied] = useState('');
+  const [voice, setVoice] = useState(null);
   const url = inviteUrl(event.slug);
   const when = event.ongoing ? 'all year' : fmtRange(event.startsOn, event.endsOn);
-  const message = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments. Add yours and help ${WORDS.ourFamily} keep the memories together: ${url}`;
+  const message = galleryShareMessage(event, url, WORDS.ourFamily, voice);
+  useEffect(() => {
+    let active = true;
+    setVoice(null);
+    listGalleryVoice(event.id).then((result) => { if (active) setVoice(result); }).catch(() => {});
+    return () => { active = false; };
+  }, [event.id]);
 
   const copy = async (text, what) => {
     try { await navigator.clipboard.writeText(text); }
@@ -771,7 +781,7 @@ function PromoCard({ promo }) {
 
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0 }) {
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0, uploadPrompts = DEFAULT_UPLOAD_PROMPTS }) {
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
     return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
@@ -779,7 +789,7 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
   const slots = promoSlots(promos, photos.length);
   const at = (i) => slots.filter((s) => s.at === i);
   const uploadSlots = onAddPhotos ? new Map(uploadPromptSlots(photos.length, contributorCount)
-    .map((position, index) => [position, UPLOAD_PROMPTS[index % UPLOAD_PROMPTS.length]])) : new Map();
+    .map((position, index) => [position, uploadPrompts[index % uploadPrompts.length]])) : new Map();
   return (
     <div className="grid">
       {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
@@ -1156,6 +1166,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [dl, setDl] = useState(false);
   const [leaderboard, setLeaderboard] = useState(false);
   const [leaderTab, setLeaderTab] = useState('houses');
+  const [galleryVoice, setGalleryVoice] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
@@ -1171,6 +1182,22 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   }, [event]);
 
   useEffect(() => { load().catch((e) => showToast(e.message)); }, [load, showToast]);
+
+  useEffect(() => {
+    if (!IS_SCHOOL || !event) return undefined;
+    let active = true;
+    setGalleryVoice(null);
+    const promoIds = promosFor(event.slug, today).map((promo) => promo.id);
+    listGalleryVoice(event.id).then(async (voice) => {
+      if (!active) return;
+      if (voice) { setGalleryVoice(voice); return; }
+      if (admin) {
+        const generated = await generateGalleryVoice(event.id, pass, promoIds);
+        if (active) setGalleryVoice(generated);
+      }
+    }).catch(() => { /* Standard wording stays available if generation fails. */ });
+    return () => { active = false; };
+  }, [event?.id, event?.slug, admin, pass, today]);
 
   // Refresh incoming uploads without moving a photo someone is viewing or selecting.
   useEffect(() => {
@@ -1303,9 +1330,10 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         {photos === null ? <p className="empty">Loading…</p> : (
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
-            promos={selecting ? [] : promosFor(event.slug, today)}
+            promos={selecting ? [] : promosWithVoice(promosFor(event.slug, today), galleryVoice)}
             onAddPhotos={IS_SCHOOL && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
             contributorCount={new Set(visible.map((p) => p.owner)).size}
+            uploadPrompts={uploadPromptsFor(galleryVoice)}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
@@ -1550,7 +1578,19 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
   if (staffRole === 'moderator') return <main className="shell page admin"><h1>Moderation</h1><p>Review concerns raised by our family. Uploads appear immediately; reports are reviewed here.</p><ModerationPanel pass={pass} onChanged={refresh} /></main>;
   const saveEv = async (e) => {
     e.preventDefault();
-    try { await saveEvent(editing.form, editing.id, pass); setEditing(null); refresh(); showToast('Saved.'); }
+    try {
+      const saved = await saveEvent(editing.form, editing.id, pass);
+      let customVoice = true;
+      if (IS_SCHOOL) {
+        const promoIds = promosFor(saved.slug, todayISO()).map((promo) => promo.id);
+        try { await generateGalleryVoice(saved.id, pass, promoIds, true); }
+        catch { customVoice = false; }
+      }
+      setEditing(null); refresh();
+      showToast(IS_SCHOOL
+        ? customVoice ? 'Saved with custom gallery wording.' : 'Saved. Custom wording will retry when an admin opens the gallery.'
+        : 'Saved.');
+    }
     catch (ex) { showToast(ex.message); }
   };
   const saveAsk = async (e) => {

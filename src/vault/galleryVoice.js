@@ -1,4 +1,4 @@
-export const UPLOAD_PROMPTS = [
+export const DEFAULT_UPLOAD_PROMPTS = [
   {
     eyebrow: 'Your turn, families',
     title: 'One parent cannot be the whole photo department.',
@@ -81,4 +81,18 @@ export function uploadPromptSlots(photoCount, contributorCount) {
     if (at === photos) break;
   }
   return slots;
+}
+
+export function uploadPromptsFor(voice) {
+  return voice?.uploadPrompts?.length === 9 ? voice.uploadPrompts : DEFAULT_UPLOAD_PROMPTS;
+}
+
+export function promosWithVoice(promos, voice) {
+  const custom = new Map((voice?.promoCopy || []).map((item) => [item.id, item.variants]));
+  return promos.map((promo) => custom.has(promo.id) ? { ...promo, variants: custom.get(promo.id) } : promo);
+}
+
+export function galleryShareMessage(event, url, audience, voice) {
+  const fallback = `${event.title}: let's relive the fun! Take a peek at the gallery, then check your camera roll for the smiles, laughs, and unforgettable moments.`;
+  return `${voice?.shareIntro || fallback} Add yours and help ${audience} keep the memories together: ${url}`;
 }
