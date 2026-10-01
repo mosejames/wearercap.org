@@ -83,6 +83,7 @@ const HISTORY_LABEL = {
   duplicate: "Closed as duplicate",
   paid: "Funds released",
   assigned: "Assigned",
+  reassigned: "Approver changed",
   archived: "Archived",
   restored: "Restored",
 };
@@ -1309,6 +1310,8 @@ function Detail({
   const [approvalRecipients, setApprovalRecipients] = useState(
     (r.approval_recipients || []).join(", "),
   );
+  const [approverChoice, setApproverChoice] = useState(r.approver_email || "");
+  const [reassignReason, setReassignReason] = useState("");
   const me = contactOf(user);
   const myName = staff.find((s) => s.email === me)?.name;
   const eligible = voters(staff, r);
@@ -1321,6 +1324,57 @@ function Detail({
       ),
     });
   const nameOf = (email) => staff.find((s) => s.email === email)?.name || email;
+  const canReassign =
+    ["treasurer", "secretary", "manager"].includes(role) &&
+    r.status === "submitted" &&
+    !r.archived_at;
+  const requesterName = staff.find((s) => s.email === r.email)?.name;
+  const payeeName = staff.find((s) => s.email === r.payee_contact)?.name;
+  const requesterIsTreasurer = staff.some(
+    (person) => person.name === requesterName && person.role === "treasurer",
+  );
+  const reviewerOptions = [
+    ...new Map(
+      staff
+        .filter(
+          (person) =>
+            ["board", "treasurer", "secretary", "manager"].includes(
+              person.role,
+            ) &&
+            person.email !== r.email &&
+            person.email !== r.payee_contact &&
+            person.name !== requesterName &&
+            (!r.on_behalf || person.name !== payeeName) &&
+            (assignedReviewer(r) || person.role !== "treasurer"),
+        )
+        .sort(
+          (a, b) =>
+            Number(a.email.startsWith("+")) -
+            Number(b.email.startsWith("+")),
+        )
+        .map((person) => [person.name, person]),
+    ).values(),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+  async function reassign(event) {
+    event.preventDefault();
+    setBusy(true);
+    onError("");
+    try {
+      const { data, error } = await supabase.rpc("cr_reassign_approver", {
+        p_id: r.id,
+        p_version: r.version,
+        p_approver: approverChoice,
+        p_reason: reassignReason.trim(),
+      });
+      if (error) throw error;
+      setReassignReason("");
+      onUpdate(data);
+    } catch (error) {
+      onError(error.message || "Could not change the approver.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function change(a) {
     setBusy(true);
     onError("");
@@ -1771,6 +1825,55 @@ function Detail({
               </details>
             )}
           </section>
+          {canReassign && (
+            <details className="request-help reassignment no-print">
+              <summary>Change approver</summary>
+              <form onSubmit={reassign}>
+                <p className="muted">
+                  Correct the reviewer for this request only. Earlier notices
+                  cannot be recalled.
+                </p>
+                <label>
+                  New approver
+                  <select
+                    value={approverChoice}
+                    onChange={(event) => setApproverChoice(event.target.value)}
+                  >
+                    {!r.on_behalf && !requesterIsTreasurer && (
+                      <option value="">Treasurer default</option>
+                    )}
+                    {reviewerOptions.map((person) => (
+                      <option key={person.email} value={person.email}>
+                        {person.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Reason for change
+                  <textarea
+                    required
+                    minLength={5}
+                    maxLength={500}
+                    value={reassignReason}
+                    onChange={(event) => setReassignReason(event.target.value)}
+                    placeholder="For example, this committee has a different reviewer"
+                  />
+                </label>
+                <button
+                  className="secondary"
+                  disabled={
+                    busy ||
+                    reassignReason.trim().length < 5 ||
+                    approverChoice ===
+                      (assignedReviewer(r) ? r.approver_email : "")
+                  }
+                >
+                  {busy ? "Saving…" : "Save and notify reviewers"}
+                </button>
+              </form>
+            </details>
+          )}
           <section className="record-card" style={{ marginTop: 20 }}>
             <h3>PDF records & receipts</h3>
             <p className="muted">

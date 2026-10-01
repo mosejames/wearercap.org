@@ -783,6 +783,18 @@ p {
   border: 0;
   border-radius: 0;
 }
+.reassignment {
+  margin-top: 20px;
+}
+.reassignment form {
+  display: grid;
+  gap: 14px;
+  padding: 0 18px 18px;
+}
+.reassignment label {
+  display: grid;
+  gap: 6px;
+}
 .review-summary h3 {
   margin: 15px 0;
   font-size: 18px;
