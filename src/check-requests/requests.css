@@ -449,8 +449,30 @@ p {
   flex: 1;
   min-width: 180px;
 }
-.list-toolbar select {
-  width: auto;
+.filter-select {
+  position: relative;
+  width: 260px;
+  max-width: 100%;
+}
+.list-toolbar .filter-select select {
+  display: block;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 48px;
+}
+.filter-select > svg {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #204359;
+}
+@media (max-width: 520px) {
+  .filter-select {
+    width: 100%;
+  }
 }
 .record-card {
   padding: 20px;
