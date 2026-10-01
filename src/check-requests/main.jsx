@@ -52,6 +52,7 @@ import NotificationPreferences from "./NotificationPreferences.jsx";
 import Account from "./Account.jsx";
 import PdfDownloads from "./PdfDownloads.jsx";
 import ReceiptThumbs from "./ReceiptThumbs.jsx";
+import ApprovalRecipients from "./ApprovalRecipients.jsx";
 import { financeArchive, saveFinanceArchive } from "./export.js";
 import ApprovalRouting from "./ApprovalRouting.jsx";
 
@@ -922,25 +923,12 @@ export function RequestForm({
                 </div>
               </div>
               {preparing && (
-                <Field
-                  full
-                  label="Committee chair and other approval email recipients (optional)"
-                >
-                  <textarea
-                    value={draft.approval_recipients_text || ""}
-                    maxLength={5000}
-                    onChange={(e) =>
-                      set("approval_recipients_text", e.target.value)
-                    }
-                    placeholder="Separate email addresses with commas"
-                  />
-                  <p className="muted">
-                    After approval, these people join the configured board and
-                    requester on one confirmation email. Addresses are visible
-                    to everyone on that email. Adding a recipient does not grant
-                    access to private receipts.
-                  </p>
-                </Field>
+                <ApprovalRecipients
+                  value={draft.approval_recipients_text}
+                  onChange={(people) =>
+                    set("approval_recipients_text", people.join(", "))
+                  }
+                />
               )}
               {draft.on_behalf && (
                 <p className="notice">
@@ -1308,7 +1296,7 @@ function Detail({
     };
   }, [r.id, r.version]);
   const [approvalRecipients, setApprovalRecipients] = useState(
-    (r.approval_recipients || []).join(", "),
+    r.approval_recipients || [],
   );
   const [approverChoice, setApproverChoice] = useState(r.approver_email || "");
   const [reassignReason, setReassignReason] = useState("");
@@ -1385,10 +1373,7 @@ function Detail({
         note,
         ...(["approved", "vote_approve"].includes(a)
           ? {
-              approval_recipients: approvalRecipients
-                .split(/[,;\n]/)
-                .map((e) => e.trim())
-                .filter(Boolean),
+              approval_recipients: approvalRecipients,
             }
           : {}),
         duplicate_of: dupOf,
@@ -1660,20 +1645,10 @@ function Detail({
               </ul>
             )}
             {(allowed("approved") || allowed("vote")) && (
-              <Field label="Approval confirmation email recipients">
-                <textarea
-                  value={approvalRecipients}
-                  maxLength={5000}
-                  onChange={(e) => setApprovalRecipients(e.target.value)}
-                  placeholder="Committee chair or other responsible people, separated by commas"
-                />
-                <p className="muted">
-                  The configured board and requester email are included
-                  automatically. These additional addresses receive the approval
-                  summary, not private receipts. Everyone can see the recipient
-                  list.
-                </p>
-              </Field>
+              <ApprovalRecipients
+                value={approvalRecipients}
+                onChange={setApprovalRecipients}
+              />
             )}
             {["approved", "needs_changes", "paid", "board_review", "vote"].some(
               allowed,

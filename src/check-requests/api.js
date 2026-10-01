@@ -23,6 +23,11 @@ export async function loadStaff() {
   if (error) throw error;
   return data;
 }
+export async function loadApprovalContacts() {
+  const { data, error } = await supabase.rpc("cr_approval_email_contacts");
+  if (error) throw error;
+  return data;
+}
 export async function loadRoutes() {
   const { data, error } = await supabase
     .from("cr_approval_routes")

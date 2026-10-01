@@ -795,6 +795,82 @@ p {
   display: grid;
   gap: 6px;
 }
+.approval-recipients {
+  min-width: 0;
+  margin: 18px 0 0;
+  padding: 0;
+  border: 0;
+}
+.approval-recipients legend {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.approval-recipients > .muted {
+  margin: 8px 0 12px;
+  font-size: 13px;
+}
+.recipient-choices {
+  display: grid;
+  gap: 8px;
+}
+.cr label.recipient-choice {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid #cbd6dd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+.cr label.recipient-choice.selected {
+  border-color: #2b6889;
+  background: #f1f8fc;
+  box-shadow: inset 3px 0 #2b6889;
+}
+.cr .recipient-choice input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex: 0 0 20px;
+  margin: 0;
+  accent-color: #1b526d;
+}
+.recipient-choice span {
+  min-width: 0;
+}
+.recipient-choice small {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  color: #566976;
+  font-size: 12px;
+  font-weight: 400;
+}
+.recipient-extra {
+  margin-top: 12px;
+}
+.recipient-extra summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #204359;
+  font-size: 13px;
+  font-weight: 700;
+}
+.recipient-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.recipient-add input {
+  min-width: 0;
+}
+.recipient-error {
+  color: #9c3328;
+  font-size: 13px;
+}
 .review-summary h3 {
   margin: 15px 0;
   font-size: 18px;
