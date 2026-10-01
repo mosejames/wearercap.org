@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowDown,
-  ChevronDown,
   ReceiptText,
   ShieldCheck,
   Upload,
@@ -1184,24 +1183,21 @@ export function RequestList({
         <label className="sr-only" htmlFor="filter">
           Filter by status
         </label>
-        <div className="filter-select">
-          <select
-            id="filter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            {board && <option value="mine">Needs my approval</option>}
-            <option value="all">All active requests</option>
-            <option value="pending">Pending approvals</option>
-            {Object.entries(STATUS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-            <option value="archived">Archived</option>
-          </select>
-          <ChevronDown aria-hidden="true" size={19} strokeWidth={2.5} />
-        </div>
+        <select
+          id="filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          {board && <option value="mine">Needs my approval</option>}
+          <option value="all">All active requests</option>
+          <option value="pending">Pending approvals</option>
+          {Object.entries(STATUS).map(([key, label]) => (
+            <option key={key} value={key}>
+              {label}
+            </option>
+          ))}
+          <option value="archived">Archived</option>
+        </select>
         <button className="secondary" disabled={loading} onClick={onRefresh}>
           <RefreshCw size={16} /> Refresh
         </button>

@@ -202,6 +202,15 @@ p {
   color: #182f3e;
   font-size: 16px;
 }
+.cr select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 48px;
+  background-image: url("./chevron-down.svg");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 19px 19px;
+}
 .cr input:focus,
 .cr select:focus,
 .cr textarea:focus {
@@ -449,28 +458,12 @@ p {
   flex: 1;
   min-width: 180px;
 }
-.filter-select {
-  position: relative;
+.list-toolbar select {
   width: 260px;
   max-width: 100%;
 }
-.list-toolbar .filter-select select {
-  display: block;
-  width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 48px;
-}
-.filter-select > svg {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: #204359;
-}
 @media (max-width: 520px) {
-  .filter-select {
+  .list-toolbar select {
     width: 100%;
   }
 }
