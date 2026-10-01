@@ -1,6 +1,6 @@
 # Private Capsule Share Links
 
-Admins open any RCAP or AMI gallery and choose **Private Share Link**, or find the same panel in **Manage gallery**. Generate a link, copy it, select the allowed qualities, and optionally set an expiry. Disable blocks new requests; regenerate replaces the token immediately and resets its completion counter. No link is generated automatically for an existing event.
+Admins open any RCAP or AMI gallery and choose **Share downloads**, or find the same panel in **Manage gallery**. Generate a link, then choose **Open downloads** to download the capsule yourself, or **Copy Link** to send it. The URL itself is clickable. Select the allowed qualities and optionally set an expiry. This replaces the separate gallery Download all action. Disable blocks new requests; regenerate replaces the token immediately and resets its completion counter. No link is generated automatically for an existing event.
 
 Recipients visit `/share/<random-token>` without an account. Each request checks the link, expiry, enabled state, capsule visibility and quality permissions in the database. Metadata and manifests omit the capsule ID, contributor names and account details. Hidden and removed uploads are excluded. An empty capsule displays a clear empty state.
 

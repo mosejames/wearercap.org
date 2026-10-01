@@ -32,7 +32,6 @@ import { isVideo } from './videos.js';
 import { droppable, useDropGuard, useDropTarget, useWindowDropTarget } from './dnd.js';
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
-import { zipStream, saveStream } from './zipstream.js';
 import {
   DEFAULT_UPLOAD_PROMPTS, galleryShareMessage, promosWithVoice, uploadPromptsFor, uploadPromptSlots,
 } from './galleryVoice.js';
@@ -482,75 +481,6 @@ function PickThumb({ file }) {
     return () => URL.revokeObjectURL(u);
   }, [file]);
   return <span className="pick-thumb">{url && (isVideo(file) ? <span className="picked-video" aria-label="Video">▶</span> : <img src={url} alt="" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />)}</span>;
-}
-
-/* ------------------------------------------------------------ download */
-
-function DownloadSheet({ event, photos, onClose }) {
-  const [which, setWhich] = useState('web');
-  const [prog, setProg] = useState(null);
-  const [err, setErr] = useState('');
-  const est = (w) => photos.reduce((n, p) => n + (w === 'orig' || isVideo(p) ? (p.bytes || 3_500_000) : 350_000), 0);
-  const start = async () => {
-    setErr('');
-    try {
-      const pad = String(photos.length).length;
-      const entries = photos.map((p, i) => {
-        const ext = IS_SCHOOL && isGif(p) ? 'mp4' : which === 'orig' || isVideo(p) ? (p.key.split('.').pop() || 'jpg') : 'jpg';
-        const who = (p.uploaderName || WORDS.zip).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-        const when = p.takenAt ? p.takenAt.slice(0, 10) : p.createdAt.slice(0, 10);
-        return {
-          name: `${event.slug}/${String(i + 1).padStart(pad, '0')}-${when}-${who}.${ext}`,
-          date: p.takenAt || p.createdAt,
-          open: async () => {
-            if (IS_SCHOOL && isGif(p)) {
-              const { prepareSaveFile } = await import('./saveMedia.js');
-              return new Response(await prepareSaveFile(p, mediaUrl(p, 'orig')));
-            }
-            const r = await fetch(mediaUrl(p, isVideo(p) ? 'orig' : which));
-            if (!r.ok) throw new Error(`Could not fetch ${p.id}`);
-            return r;
-          },
-        };
-      });
-      const stream = zipStream(entries, { onProgress: setProg });
-      const how = await saveStream(stream, `${WORDS.zip}-${YEAR.start.slice(0, 4)}-${YEAR.end.slice(2, 4)}-${event.slug}${which === 'orig' ? (IS_SCHOOL ? '-full-quality' : '-originals') : ''}.zip`);
-      if (how === 'cancelled') setProg(null);
-    } catch (ex) {
-      setErr(ex.message || 'Download failed.');
-      setProg(null);
-    }
-  };
-  const done = prog?.done;
-  return (
-    <Sheet title={`Download · ${event.title}`} onClose={onClose}>
-      {!prog ? (
-        <div className="stack">
-          <p className="lede">{plural(photos.length, 'file')} as one zip.</p>
-          <div className="choice">
-            <button className={which === 'web' ? 'on' : ''} onClick={() => setWhich('web')}>
-              <b>Web size</b><span>Smaller photos for screens. Videos stay original size. ~{fmtBytes(est('web'))}</span>
-            </button>
-            <button className={which === 'orig' ? 'on' : ''} onClick={() => setWhich('orig')}>
-              <b>{IS_SCHOOL ? 'Full quality' : 'Originals'}</b><span>{IS_SCHOOL ? 'The best saved version of each photo or video.' : 'Exactly what was uploaded. Full size.'} ~{fmtBytes(est('orig'))}</span>
-            </button>
-          </div>
-          {which === 'orig' && est('orig') > 1.2e9 && (
-            <p className="fine">That is a big one. On a phone it may not finish; use a computer with Chrome, which streams straight to disk.</p>
-          )}
-          {err && <p className="err">{err}</p>}
-          <button className="btn primary" onClick={start}>Start download</button>
-        </div>
-      ) : (
-        <div className="stack">
-          <div className="bar"><i style={{ width: `${Math.round((prog.files / photos.length) * 100)}%` }} /></div>
-          <p className="lede">{done ? 'Done. Check your downloads.' : `${prog.files} of ${photos.length} · ${fmtBytes(prog.bytes)}`}</p>
-          {!done && <p className="fine">Keep this open until it finishes.</p>}
-          {done && <button className="btn ghost" onClick={onClose}>Close</button>}
-        </div>
-      )}
-    </Sheet>
-  );
 }
 
 /* -------------------------------------------------------------- invite */
@@ -1166,7 +1096,6 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [counts, setCounts] = useState(new Map());
   const [sort, setSort] = useState('time');
   const [open, setOpen] = useState(null);
-  const [dl, setDl] = useState(false);
   const [shareLinkOpen, setShareLinkOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState(false);
   const [leaderTab, setLeaderTab] = useState('houses');
@@ -1285,8 +1214,6 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <button className="gallery-action" onClick={() => setLeaderboard(true)}><Trophy aria-hidden="true" /><span>Leaderboard</span></button>
             <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
             {canMove && visible.length > 0 && <button className="gallery-action" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting ? 'Cancel selection' : 'Select uploads'}</span></button>}
-            {/* Bulk download remains admin-only, even in the compact gallery. */}
-            {admin && visible.length > 0 && <button className="gallery-action" onClick={() => setDl(true)}>{I.down}<span>Download all</span></button>}
             {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {admin && <a className="gallery-action" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}><SlidersHorizontal aria-hidden="true" /><span>Gallery setup</span></a>}
           </div>
@@ -1307,14 +1234,8 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
               : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })}</span>}
             <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
             </div>
-            {/* Admins only. A whole event as one zip is both the most expensive
-                thing the vault can do and the easiest way for a forwarded link
-                to become a bulk copy of other people's children. One photo at a
-                time stays open to everyone, in the lightbox. */}
+            {/* Admins manage bulk download access through private share links. */}
             {canMove&&visible.length>0&&<button className="gallery-action" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting?'Cancel selection':'Select uploads'}</span></button>}
-            {admin && visible.length > 0 && (
-              <button className="gallery-action" onClick={() => setDl(true)}>{I.down}<span>Download all</span></button>
-            )}
             {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {visible.length > 1 && (
               <div className="sort">
@@ -1366,7 +1287,6 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         onClose={() => { setDeleting(null); refreshEvents(); }} />}
       {moving&&canMove&&<Sheet title="Move to another gallery" onClose={()=>{if(!moveBusy)setMoving(null);}}><form className="stack" onSubmit={async e=>{e.preventDefault();setMoveBusy(true);setMoveError('');try{await rewardCall('vault_move_uploads',{p_photos:moving,p_from:event.id,p_to:target,p_pass:pass});setPhotos(ps=>ps.filter(p=>!moving.includes(p.id)));setMoving(null);setSelected(new Set());setSelecting(false);refreshEvents();showToast('Uploads moved.');}catch(ex){setMoveError(ex.message);}finally{setMoveBusy(false);}}}><p>Move {moving.length} {moving.length===1?'upload':'uploads'} from {event.title}. The uploader, likes, and comments stay attached.</p><label className="field"><span>Destination gallery</span><select required value={target} disabled={moveBusy} onChange={e=>setTarget(e.target.value)}><option value="">Choose a gallery</option>{events.filter(e=>e.id!==event.id&&!e.hidden).map(e=><option key={e.id} value={e.id}>{e.title}</option>)}</select></label>{moveError&&<p className="err" role="alert">{moveError}</p>}<button className="btn primary" disabled={!target||moveBusy}>{moveBusy?'Moving…':'Confirm move'}</button></form></Sheet>}
       {shareLinkOpen && admin && <Sheet title="Share downloads" onClose={() => setShareLinkOpen(false)}><CapsuleShareAdmin event={event} pass={pass} /></Sheet>}
-      {dl && admin && <DownloadSheet event={event} photos={visible} onClose={() => setDl(false)} />}
     </div>
   );
 }

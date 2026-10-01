@@ -929,7 +929,8 @@ to{opacity:1}
 .btn.danger:hover{background:#912018;border-color:#912018}
 
 .capsule-share-admin { padding: 16px 0; border-bottom: 1px solid var(--line, #ddd); }
-.capsule-share-admin > input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; }
+.capsule-share-url{display:block;overflow-wrap:anywhere;color:var(--red);font-size:13px;text-decoration:underline;line-height:1.5}
+.capsule-share-url:focus-visible{outline:2px solid var(--red);outline-offset:3px}
 .capsule-share-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* Secondary gallery actions follow the quiet icon-and-label invitation. */

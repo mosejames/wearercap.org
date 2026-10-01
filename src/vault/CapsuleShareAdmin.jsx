@@ -21,15 +21,15 @@ export function CapsuleShareAdmin({ event, pass }) {
   };
   return <section className="capsule-share-admin stack" aria-label="Private share link">
     <h3>Share capsule downloads</h3>
-    <p className="fine">Create a private link to download all photos and videos from <b>{event.title}</b>. Recipients choose the quality options you allow below. They do not need to sign in.</p>
+    <p className="fine">Create a private link to download all photos and videos from <b>{event.title}</b>. Open the download page yourself, or copy the link to share it. Choose which quality options to offer below. No sign-in is needed.</p>
     {link ? <>
-      <input aria-label="Private share URL" value={shareUrl(link.token)} readOnly onFocus={e => e.target.select()} />
+      <a className="capsule-share-url" aria-label="Private share URL" href={shareUrl(link.token)} target="_blank" rel="noopener noreferrer">{shareUrl(link.token)}</a>
       <div className="capsule-share-buttons">
+        <a className="btn small primary" href={shareUrl(link.token)} target="_blank" rel="noopener noreferrer">Open downloads</a>
         <button type="button" className="btn small ghost" disabled={busy} onClick={async () => {
           try { await navigator.clipboard.writeText(shareUrl(link.token)); setMessage('Link copied.'); }
           catch { setError('Select the link above and copy it.'); }
         }}>Copy Link</button>
-        <a className="btn small ghost" href={shareUrl(link.token)} target="_blank" rel="noopener noreferrer">Open Link</a>
         <button type="button" className="btn small ghost" disabled={busy} onClick={() => change('regenerate')}>Regenerate</button>
         <button type="button" className="btn small ghost" disabled={busy} onClick={() => change('update', { enabled: !link.enabled })}>{link.enabled ? 'Disable' : 'Enable'}</button>
       </div>

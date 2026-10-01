@@ -20,7 +20,7 @@ it('generates, copies, disables and updates quality permissions from the admin p
   try {
     await act(async () => root.render(<CapsuleShareAdmin event={{ id: 'event' }} pass="pass" />));
     await act(async () => button('Generate private link').click());
-    expect(host.querySelector('input[readonly]').value).toContain('a'.repeat(64));
+    expect(host.querySelector('a[aria-label="Private share URL"]').href).toContain('a'.repeat(64));
     await act(async () => button('Copy Link').click());
     expect(copy).toHaveBeenCalledWith(`https://example.test/share/${'a'.repeat(64)}`);
     expect(host.querySelector('a').target).toBe('_blank');
@@ -29,6 +29,6 @@ it('generates, copies, disables and updates quality permissions from the admin p
     await act(async () => host.querySelector('input[type="checkbox"]').click());
     expect(adminShare).toHaveBeenLastCalledWith('event', 'update', 'pass', { allow_web_download: false });
     await act(async () => button('Regenerate').click());
-    expect(host.querySelector('input[readonly]').value).toContain('b'.repeat(64));
+    expect(host.querySelector('a[aria-label="Private share URL"]').href).toContain('b'.repeat(64));
   } finally { await act(async () => root.unmount()); host.remove(); }
 });
