@@ -59,9 +59,9 @@ The UI shows the newest 500 accessible requests. No historical records were impo
 
 ## Treasurer ledger
 
-Finance roles can open the live, read-only [treasurer ledger](https://docs.google.com/spreadsheets/d/1M5XRQp56NytaV8bYh6-f4aotsg6J7v3raSfiiKmnRuI/edit) from Board review. The Requests tab has one row per site request and links to its private document folder. The History tab lists every recorded action with actor and time. The existing ZIP export remains available as a dated backup. The Sheet and document folder are shared as readers with Latasha and `rcaparents@ronclarkacademy.com`; they are not public.
+Finance roles can open the live, read-only [treasurer ledger](https://docs.google.com/spreadsheets/d/1M5XRQp56NytaV8bYh6-f4aotsg6J7v3raSfiiKmnRuI/edit) from Board review. Requests has one row per site request, its payment method and Zelle destination, and a link to its private document folder. Expenses shows each receipt or invoice line and any amount covered outside RCAP. History lists every recorded action with actor and time. Notifications lists each email or text dispatch and its recipients and delivery state. The existing ZIP export remains available as a dated backup. The Sheet and document folder are shared as readers with Latasha and `rcaparents@ronclarkacademy.com`; they are not public.
 
-The initial backfill includes every site request, including archived and test records. It does not import the old Google Form history. A five-minute Apps Script sync refreshes both tabs and copies new private documents. See [the integration runbook](../integrations/rcap-treasurer-ledger/README.md) for setup and recovery.
+The backfill includes every site request, expense, notification, archived record, and test record. It does not import the old Google Form history. A five-minute Apps Script sync refreshes all four tabs and copies new private documents. See [the integration runbook](../integrations/rcap-treasurer-ledger/README.md) for setup and recovery.
 
 ## Verification
 

@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
 
   try {
     const archives = new Map<string, Document[]>();
+    const expenses: Record<string, unknown>[] = [];
     for (const entry of data.archives || []) {
       const list = archives.get(entry.request_id) || [];
       for (const file of entry.files || []) {
@@ -43,7 +44,18 @@ Deno.serve(async (req) => {
     for (const request of data.requests || []) {
       const seen = new Set<string>();
       const documents: Document[] = [];
-      for (const item of request.items || []) {
+      for (const [index, item] of (request.items || []).entries()) {
+        expenses.push({
+          request_id: request.id,
+          item_number: index + 1,
+          date: item.date || "",
+          vendor: item.vendor || request.payee,
+          description: item.description || "",
+          document_total_cents: item.document_total_cents ?? item.amount_cents,
+          amount_cents: item.amount_cents,
+          coverage_note: item.coverage_note || "",
+          receipt_names: (item.receipts || []).map((receipt: Document) => receipt.name || receipt.path?.split("/").at(-1) || "Receipt"),
+        });
         for (const receipt of item.receipts || []) {
           if (receipt.path) documents.push({
             bucket: "check-receipts",
@@ -68,6 +80,7 @@ Deno.serve(async (req) => {
       }));
       delete request.items;
     }
+    data.expenses = expenses;
     delete data.archives;
     return reply(data);
   } catch (cause) {
