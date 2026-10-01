@@ -20,7 +20,6 @@ import {
 import { COMMITTEES } from "../committee/data.js";
 import {
   STATUS,
-  canPrepare,
   dollars,
   today,
   validateDraft,
@@ -30,6 +29,7 @@ import {
   newItem,
   fromRecord,
   actionAllowed,
+  assignedReviewer,
   voters,
   tally,
   milestones,
@@ -52,6 +52,8 @@ import NotificationPreferences from "./NotificationPreferences.jsx";
 import Account from "./Account.jsx";
 import PdfDownloads from "./PdfDownloads.jsx";
 import ReceiptThumbs from "./ReceiptThumbs.jsx";
+import { financeArchive, saveFinanceArchive } from "./export.js";
+import ApprovalRouting from "./ApprovalRouting.jsx";
 
 // A bare YYYY-MM-DD (payment date) is a calendar day, not an instant; parsing
 // it as UTC midnight would show the day before in Atlanta.
@@ -295,9 +297,7 @@ export function RequestForm({
   busy,
   setBusy,
 }) {
-  const preparing = canPrepare(
-    staff.find((s) => s.email === contactOf(user))?.role,
-  );
+  const preparing = !!draft.on_behalf;
   const [progress, setProgress] = useState("");
   const [step, setStep] = useState(0);
   const headingRef = useRef(null);
@@ -440,16 +440,6 @@ export function RequestForm({
               <p className="muted">
                 All fields are required unless marked optional.
               </p>
-              {preparing && (
-                <label className="check-row">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.on_behalf}
-                    onChange={(e) => set("on_behalf", e.target.checked)}
-                  />
-                  <span>I am preparing this request for someone else.</span>
-                </label>
-              )}
               {draft.on_behalf && (
                 <p className="notice">
                   You prepare the request, the assigned board member approves,
@@ -877,9 +867,8 @@ export function RequestForm({
                     <dt>Reviewed by</dt>
                     <dd>
                       {draft.on_behalf
-                        ? staff.find((s) => s.email === draft.approver_email)
-                            ?.name
-                        : "The RCAP Treasurer"}
+                        ? staff.find((s) => s.email === draft.approver_email)?.name
+                        : "Automatically assigned after submission"}
                     </dd>
                   </div>
                   <div className="full">
@@ -986,8 +975,8 @@ export function RequestForm({
                 <span>
                   I confirm the amount requested from RCAP is within the
                   approved committee budget. Any remaining expense is explained
-                  above and does not increase that budget. Approval by the
-                  assigned Board Member will take place through this form.
+                  above and does not increase that budget. Approval will take
+                  place through this form.
                 </span>
               </label>
               <label className="check-row">
@@ -1069,6 +1058,17 @@ export function RequestList({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(approvalsOnly ? "mine" : "all");
   const [expanded, setExpanded] = useState(null);
+  const [exporting, setExporting] = useState("");
+  async function exportAll() {
+    try {
+      setExporting("Loading records…");
+      saveFinanceArchive(await financeArchive(setExporting));
+      setExporting("");
+    } catch (error) {
+      setExporting("");
+      onError(error.message || "Could not export the finance records.");
+    }
+  }
   const active = records.filter((r) => !r.archived_at);
   const mine = active.filter(
     (r) =>
@@ -1092,7 +1092,7 @@ export function RequestList({
           : r.status === "board_review"
             ? "Board: vote"
             : r.status === "submitted"
-              ? r.on_behalf
+              ? assignedReviewer(r)
                 ? `${nameOf(r.approver_email)}: review`
                 : "Treasurer: review"
               : "Complete";
@@ -1106,7 +1106,7 @@ export function RequestList({
           : filter === "pending"
             ? pending(r)
             : filter === "awaiting_approval"
-              ? r.on_behalf && r.status === "submitted"
+              ? assignedReviewer(r) && r.status === "submitted"
               : r.status === filter)) &&
       `${r.reference} ${r.requester_name} ${r.payee} ${r.committee} ${r.purpose} ${r.event_name || ""}`
         .toLowerCase()
@@ -1156,6 +1156,17 @@ export function RequestList({
           </div>
           <button className="secondary" onClick={() => setFilter("mine")}>
             View my approvals
+          </button>
+        </section>
+      )}
+      {board && ["treasurer", "secretary", "manager"].includes(role) && (
+        <section className="finance-export">
+          <div>
+            <h2>Finance records</h2>
+            <p>Download every request, its approval and payment history, and the supporting documents in one ZIP file. Archived requests are included.</p>
+          </div>
+          <button type="button" className="secondary" disabled={!!exporting} onClick={exportAll}>
+            <Download size={16} /> {exporting || "Download complete records"}
           </button>
         </section>
       )}
@@ -1216,7 +1227,7 @@ export function RequestList({
                 <p className="queue-purpose">{r.purpose}</p>
                 <p className="muted">Next: {next(r)}</p>
               </div>
-              <Badge status={r.on_behalf && r.approver_email && r.status === "submitted" ? "awaiting_approval" : r.status} />
+              <Badge status={assignedReviewer(r) && r.status === "submitted" ? "awaiting_approval" : r.status} />
               <strong className="money">{dollars(r.total_cents)}</strong>
               <button
                 className={
@@ -1394,7 +1405,7 @@ function Detail({
             </div>
             <Badge
               status={
-                r.on_behalf && r.approver_email && r.status === "submitted"
+                assignedReviewer(r) && r.status === "submitted"
                   ? "awaiting_approval"
                   : r.status
               }
@@ -1444,7 +1455,7 @@ function Detail({
               <dd>
                 {r.status === "board_review"
                   ? "The board, by vote"
-                  : r.on_behalf && r.approver_email
+                  : assignedReviewer(r)
                     ? nameOf(r.approver_email)
                     : "The RCAP Treasurer"}
               </dd>
@@ -1535,13 +1546,13 @@ function Detail({
                       ? "A correction is needed"
                       : r.status === "declined"
                         ? "Request closed"
-                        : r.on_behalf && r.approver_email
+                        : assignedReviewer(r)
                           ? "Awaiting assigned approval"
                           : "Awaiting the treasurer"}
             </h2>
             <p className="muted">
               {r.status === "submitted"
-                ? r.approver_email
+                ? assignedReviewer(r)
                   ? `Approval requested from ${nameOf(r.approver_email)}. Review the RCAP amount and receipts, then approve or request changes.`
                   : "The treasurer reviews the receipts, then approves, sends it back, or takes it to the board."
                 : r.status === "board_review"
@@ -2051,16 +2062,6 @@ export function App() {
     navigate("new");
   }
   const boardTab = tab === "board" || tab === "approvals";
-  function prepareRequest() {
-    setDraft({
-      ...newDraft(),
-      on_behalf: true,
-      requester_name:
-        staff.find((s) => s.email === contactOf(user))?.name || "",
-      phone: normalizePhone(user.phone || ""),
-    });
-    navigate("new");
-  }
   const current = records.find((r) => r.id === selected);
   return (
     <div className="cr">
@@ -2097,11 +2098,11 @@ export function App() {
             <p className="eyebrow">HOW IT WORKS</p>
             <div>
               <span>
-                <strong>Submit</strong> your request with receipts
+                <strong>Submit</strong> your own request with receipts
               </span>
               <ArrowRight size={16} />
               <span>
-                <strong>Board review</strong> and approval
+                <strong>Assigned review</strong> and approval
               </span>
               <ArrowRight size={16} />
               <span>
@@ -2218,6 +2219,12 @@ export function App() {
               <summary>Notification preferences</summary>
               <NotificationPreferences user={user} />
             </details>
+            {["treasurer", "secretary", "manager"].includes(role) && (
+              <details className="request-help">
+                <summary>Approval assignments</summary>
+                <ApprovalRouting staff={staff} />
+              </details>
+            )}
             {["secretary", "manager"].includes(role) && (
               <details className="request-help">
                 <summary>Board access</summary>
@@ -2227,14 +2234,6 @@ export function App() {
           </section>
         ) : tab === "new" ? (
           <>
-            {canPrepare(role) && (
-              <div className="actions">
-                <button className="secondary" onClick={prepareRequest}>
-                  Request approval for someone else
-                </button>
-              </div>
-            )}
-
             <RequestForm
               draft={draft}
               setDraft={setDraft}

@@ -2,19 +2,32 @@ import { supabase } from "../carpool/supabaseClient.js";
 import { normalizePhone, toCents } from "./model.js";
 export { supabase };
 export async function loadRequests() {
-  const { data, error } = await supabase
-    .from("cr_requests")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error) throw error;
-  return data;
+  const records = [];
+  for (let from = 0; ; from += 500) {
+    const { data, error } = await supabase
+      .from("cr_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + 499);
+    if (error) throw error;
+    records.push(...data);
+    if (data.length < 500) return records;
+  }
 }
 export async function loadStaff() {
   const { data, error } = await supabase
     .from("cr_staff")
     .select("*")
     .order("name");
+  if (error) throw error;
+  return data;
+}
+export async function loadRoutes() {
+  const { data, error } = await supabase
+    .from("cr_approval_routes")
+    .select("committee,request_type,approver_email,updated_at")
+    .order("committee");
   if (error) throw error;
   return data;
 }

@@ -124,11 +124,12 @@ export function validateFiles(files) {
     return "Each receipt must be between 1 byte and 10 MB.";
   return null;
 }
-// Mirrors cr_private.mutate, which is the real gate. Personal requests use
-// treasurer review and board votes. Staff-prepared requests require their
-// assigned reviewer; the preparing treasurer may record payment afterward.
+// Mirrors cr_private.mutate, which is the real gate. New requests route by
+// committee and type; unassigned requests go to the treasurer.
 const ADMINS = ["secretary", "manager"];
 const OPEN = ["submitted", "board_review", "needs_changes"];
+export const assignedReviewer = (r) =>
+  !!r.approver_email && !!(r.on_behalf || r.routed_approval);
 export function actionAllowed(r, role, email, action, opts = {}) {
   if (r.archived_at) return false;
   const own = r.email === email;
@@ -149,7 +150,7 @@ export function actionAllowed(r, role, email, action, opts = {}) {
   if (["approved", "declined"].includes(action))
     return (
       r.status === "submitted" &&
-      (r.on_behalf && r.approver_email
+      (assignedReviewer(r)
         ? r.approver_email === email
         : role === "treasurer")
     );
@@ -159,7 +160,7 @@ export function actionAllowed(r, role, email, action, opts = {}) {
     return (
       ["submitted", "board_review"].includes(r.status) &&
       (["treasurer", ...ADMINS].includes(role) ||
-        (!!r.on_behalf && r.approver_email === email))
+        (assignedReviewer(r) && r.approver_email === email))
     );
   if (action === "vote")
     return (
@@ -256,7 +257,7 @@ export function milestones(r, history, staff) {
             ? "Closed as duplicate"
             : decidedByVote
               ? "Approved by board vote"
-              : r.on_behalf && r.approver_email
+              : assignedReviewer(r)
                 ? "Approved by assigned reviewer"
                 : "Approved by treasurer",
     done: ["approved", "declined", "paid"].includes(r.status) && !!decided,

@@ -119,6 +119,12 @@ describe("finance action visibility", () => {
       actionAllowed(r, "treasurer", "treasurer@example.test", "paid"),
     ).toBe(false);
   });
+  it("routes a new request to its configured reviewer while preserving older treasurer requests", () => {
+    const routed = { ...r, routed_approval: true };
+    expect(actionAllowed(routed, "board", r.approver_email, "approved")).toBe(true);
+    expect(actionAllowed(routed, "treasurer", "treasurer@example.test", "approved")).toBe(false);
+    expect(actionAllowed(routed, "board", r.approver_email, "needs_changes")).toBe(true);
+  });
   it("only reopens returned requests for their owner", () => {
     expect(
       actionAllowed({ ...r, status: "needs_changes" }, null, r.email, "edit"),
