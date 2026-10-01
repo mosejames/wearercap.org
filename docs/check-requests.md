@@ -57,6 +57,12 @@ Every request change creates delivery records for the requester, secretary/manag
 
 The UI shows the newest 500 accessible requests. No historical records were imported.
 
+## Treasurer ledger
+
+Finance roles can open the live, read-only [treasurer ledger](https://docs.google.com/spreadsheets/d/1M5XRQp56NytaV8bYh6-f4aotsg6J7v3raSfiiKmnRuI/edit) from Board review. The Requests tab has one row per site request and links to its private document folder. The History tab lists every recorded action with actor and time. The existing ZIP export remains available as a dated backup. The Sheet and document folder are shared as readers with Latasha and `rcaparents@ronclarkacademy.com`; they are not public.
+
+The initial backfill includes every site request, including archived and test records. It does not import the old Google Form history. A five-minute Apps Script sync refreshes both tabs and copies new private documents. See [the integration runbook](../integrations/rcap-treasurer-ledger/README.md) for setup and recovery.
+
 ## Verification
 
 Run `npm run build` and `npm test` with the existing Supabase environment configured.

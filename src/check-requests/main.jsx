@@ -15,6 +15,7 @@ import {
   LogOut,
   RefreshCw,
   Download,
+  ExternalLink,
   Printer,
 } from "lucide-react";
 import { COMMITTEES } from "../committee/data.js";
@@ -1151,12 +1152,17 @@ export function RequestList({
       {board && ["treasurer", "secretary", "manager"].includes(role) && (
         <section className="finance-export">
           <div>
-            <h2>Finance records</h2>
-            <p>Download every request, its approval and payment history, and the supporting documents in one ZIP file. Archived requests are included.</p>
+            <h2>Treasurer ledger</h2>
+            <p>View requests, documents, and the full action history in a live, read-only Google Sheet. The ZIP is available for a dated copy.</p>
           </div>
-          <button type="button" className="secondary" disabled={!!exporting} onClick={exportAll}>
-            <Download size={16} /> {exporting || "Download complete records"}
-          </button>
+          <div className="finance-export-actions">
+            <a className="secondary" href="https://docs.google.com/spreadsheets/d/1M5XRQp56NytaV8bYh6-f4aotsg6J7v3raSfiiKmnRuI/edit" target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={16} /> Open live ledger
+            </a>
+            <button type="button" className="secondary" disabled={!!exporting} onClick={exportAll}>
+              <Download size={16} /> {exporting || "Download records ZIP"}
+            </button>
+          </div>
         </section>
       )}
       <div className="list-toolbar">
