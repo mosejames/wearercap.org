@@ -457,14 +457,14 @@ export function RequestForm({
               <p className="muted">
                 All fields are required unless marked optional.
               </p>
-              {!draft.on_behalf && (
+              {!draft.on_behalf && !draft.is_test && (
                 <p className="muted">
                   The parent or committee member requesting payment fills out this form.
                   Choose direct vendor payment when RCAP should pay the vendor.
                   The vendor does not need to sign in.
                 </p>
               )}
-              {draft.is_test && <p className="notice">TEST ONLY. Use a sample receipt. No purchase or payment will be recorded.</p>}
+              {draft.is_test && <p className="notice practice-notice">TEST ONLY. Use a sample receipt. No purchase or payment will be recorded.</p>}
               {draft.on_behalf && (
                 <p className="notice">
                   You prepare the request, the assigned board member approves,
