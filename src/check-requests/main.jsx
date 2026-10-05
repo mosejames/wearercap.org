@@ -2420,7 +2420,8 @@ export function App() {
               <NotificationPreferences user={user} />
             </details>
             {["treasurer", "secretary", "manager"].includes(role) && (
-              <details className="request-help" defaultOpen={reviewSettingsOpen}>
+              <details className="request-help" open={reviewSettingsOpen}
+                onToggle={(event) => setReviewSettingsOpen(event.currentTarget.open)}>
                 <summary>Committee reviewers</summary>
                 <ApprovalRouting staff={staff} />
               </details>
