@@ -2220,9 +2220,11 @@ export function App() {
               {label}
             </button>
           ))}
+          <a className="guide-link" href="/how-to/check-requests/walkthrough/">
+            Help guide
+          </a>
           {user && (
             <button
-              style={{ marginLeft: "auto" }}
               onClick={() => navigate("settings")}
               className={tab === "settings" ? "active" : ""}
             >

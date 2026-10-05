@@ -129,6 +129,18 @@ p {
   color: #667681;
   white-space: nowrap;
 }
+.tabs .guide-link {
+  margin-left: auto;
+  padding: 16px 2px;
+  color: #183f58;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tabs .guide-link:hover,
+.tabs .guide-link:focus-visible {
+  text-decoration: underline;
+}
 .tabs .active {
   border-bottom: 3px solid #183f58;
   color: #12364d;
