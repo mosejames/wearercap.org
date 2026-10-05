@@ -148,6 +148,7 @@ it("shows the exact RCAP share, coverage note, reviewer and email circulation be
           description: "Catering",
           amount: "500",
           document_total: "832.32",
+          partial: true,
           coverage_note: "Crystal and Mose each plan to cover $166.16.",
           receipts: [{ name: "receipt.pdf", path: "receipt.pdf" }],
         },

@@ -4,6 +4,7 @@ import {
   normalizePhone,
   validateDraft,
   validateFiles,
+  receiptMime,
   actionAllowed,
   voters,
   tally,
@@ -68,6 +69,12 @@ describe("check request validation", () => {
     ).toMatch(/10 MB/);
     expect(validateFiles([{ type: "application/pdf", size: 100 }])).toBeNull();
   });
+  it("uses receipt bytes instead of a misleading filename or MIME type", async () => {
+    const png = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], { type: "image/jpeg" });
+    expect(await receiptMime(png)).toBe("image/png");
+    await expect(receiptMime(new Blob(["not an image"], { type: "image/png" })))
+      .rejects.toThrow(/not a valid PDF/);
+  });
 });
 describe("finance action visibility", () => {
   const r = {
@@ -88,7 +95,7 @@ describe("finance action visibility", () => {
       actionAllowed({ ...r, status: "approved" }, "treasurer", r.email, "paid"),
     ).toBe(false);
   });
-  it("gives approval to the treasurer, not admins or former assignees", () => {
+  it("keeps unassigned decisions with a named board reviewer", () => {
     expect(
       actionAllowed(r, "secretary", "secretary@example.test", "approved"),
     ).toBe(false);
@@ -99,7 +106,7 @@ describe("finance action visibility", () => {
       false,
     );
     expect(actionAllowed(r, "treasurer", "+19015550000", "approved")).toBe(
-      true,
+      false,
     );
     expect(actionAllowed(r, "treasurer", "+19015550000", "board_review")).toBe(
       true,
@@ -119,7 +126,7 @@ describe("finance action visibility", () => {
       actionAllowed(r, "treasurer", "treasurer@example.test", "paid"),
     ).toBe(false);
   });
-  it("routes a new request to its configured reviewer while preserving older treasurer requests", () => {
+  it("routes a new request to its configured reviewer", () => {
     const routed = { ...r, routed_approval: true };
     expect(actionAllowed(routed, "board", r.approver_email, "approved")).toBe(true);
     expect(actionAllowed(routed, "treasurer", "treasurer@example.test", "approved")).toBe(false);
@@ -204,11 +211,11 @@ describe("cellphone identity and Zelle", () => {
     expect(validZelle("")).toBe(false);
   });
   it("gates actions by verified phone identity", () => {
-    const r = { email: "+14045550123", status: "submitted" };
-    expect(actionAllowed(r, "treasurer", "+14045550124", "approved")).toBe(
+    const r = { email: "+14045550123", approver_email: "+14045550124", routed_approval: true, status: "submitted" };
+    expect(actionAllowed(r, "board", "+14045550124", "approved")).toBe(
       true,
     );
-    expect(actionAllowed(r, "treasurer", "+14045550123", "approved")).toBe(
+    expect(actionAllowed(r, "board", "+14045550123", "approved")).toBe(
       false,
     );
   });
@@ -232,6 +239,7 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
         description: "Covered supplies",
         amount: "20",
         document_total: "30",
+        partial: true,
         coverage_note: "Personal items excluded from RCAP request.",
         receipts: [{}],
       },

@@ -41,7 +41,7 @@ export async function financeArchive(onProgress = () => {}) {
     allRows("cr_approval_route_history"),
   ]);
   const files = {
-    "requests.csv": [strToU8(csv(requests, ["reference", "id", "created_at", "updated_at", "requester_name", "email", "payee", "committee", "event_name", "request_type", "purpose", "total_cents", "status", "approver_email", "payment_date", "payment_reference", "archived_at"]))],
+    "requests.csv": [strToU8(csv(requests, ["reference", "id", "created_at", "updated_at", "requester_name", "email", "payee", "committee", "event_name", "request_type", "purpose", "total_cents", "status", "approver_email", "payment_date", "payment_method", "payment_reference", "archived_at", "is_test"]))],
     "history.csv": [strToU8(csv(history, ["id", "request_id", "created_at", "actor_email", "action", "note"]))],
     "notifications.csv": [strToU8(csv(notifications, ["id", "request_id", "created_at", "channel", "recipient", "state", "sent_at", "last_error"]))],
     "route-changes.csv": [strToU8(csv(routeChanges, ["created_at", "committee", "request_type", "old_approver", "new_approver", "actor_email"]))],

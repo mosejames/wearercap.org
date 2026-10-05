@@ -350,6 +350,14 @@ export function RequestForm({
         onError("Enter a 10-digit phone number.");
         return;
       }
+      if (draft.archive_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.archive_email.trim())) {
+        onError("Enter a valid contact email or leave it blank.");
+        return;
+      }
+      if (draft.is_test && (!user?.email_confirmed_at || draft.archive_email.trim().toLowerCase() !== user.email?.toLowerCase())) {
+        onError("Practice requests use your verified account email. Verify it in Settings first.");
+        return;
+      }
       if (draft.delivery === "zelle" && !validZelle(draft.zelle_contact)) {
         onError("Enter the email or cellphone registered with Zelle.");
         return;
@@ -361,11 +369,11 @@ export function RequestForm({
       const expenseError = draft.items.some(
         (item) =>
           !item.receipts.length ||
-          (toCents(item.amount) < toCents(item.document_total) &&
+          (item.partial && toCents(item.amount) < toCents(item.document_total) &&
             (item.coverage_note || "").trim().length < 10) ||
           toCents(item.amount) === null ||
-          toCents(item.document_total) === null ||
-          toCents(item.amount) > toCents(item.document_total),
+          (item.partial && (toCents(item.document_total) === null ||
+            toCents(item.amount) >= toCents(item.document_total))),
       );
       if (expenseError) {
         onError(
@@ -443,6 +451,34 @@ export function RequestForm({
               <p className="muted">
                 All fields are required unless marked optional.
               </p>
+              {!draft.on_behalf && (
+                <p className="muted">
+                  The parent or committee member requesting payment fills out this form.
+                  Choose direct vendor payment when RCAP should pay the vendor.
+                  The vendor does not need to sign in.
+                </p>
+              )}
+              {!draft.version && !draft.on_behalf && (
+                <label className="check-row practice-choice">
+                  <input
+                    type="checkbox"
+                    checked={!!draft.is_test}
+                    disabled={!user?.email_confirmed_at}
+                    onChange={(e) => setDraft((d) => ({
+                      ...d,
+                      is_test: e.target.checked,
+                      archive_email: e.target.checked ? user.email : d.archive_email,
+                      budget_confirmed: false,
+                      acknowledged: false,
+                    }))}
+                  />
+                  <span>Practice request. Clearly marked TEST, emailed only to your verified address, and blocked from payment.</span>
+                </label>
+              )}
+              {!user?.email_confirmed_at && !draft.version && (
+                <p className="muted">To try a practice request, verify your backup email in Settings first.</p>
+              )}
+              {draft.is_test && <p className="notice">TEST ONLY. Use a sample receipt. No purchase or payment will be recorded.</p>}
               {draft.on_behalf && (
                 <p className="notice">
                   You prepare the request, the assigned board member approves,
@@ -462,7 +498,13 @@ export function RequestForm({
                   autoComplete="name"
                   maxLength={100}
                   value={draft.requester_name}
-                  onChange={(e) => set("requester_name", e.target.value)}
+                  onChange={(e) => setDraft((d) => ({
+                    ...d,
+                    requester_name: e.target.value,
+                    payee: d.request_type === "reimbursement" &&
+                      (!d.payee || d.payee === d.requester_name)
+                      ? e.target.value : d.payee,
+                  }))}
                   placeholder="First and last name"
                 />
                 <Field
@@ -473,6 +515,16 @@ export function RequestForm({
                   value={draft.phone}
                   onChange={(e) => set("phone", e.target.value)}
                   placeholder="(404) 555-0123"
+                />
+                <Field
+                  label="Contact email (optional)"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  value={draft.archive_email || ""}
+                  readOnly={!!draft.is_test}
+                  onChange={(e) => set("archive_email", e.target.value)}
+                  placeholder="For updates and a copy of your request"
                 />
                 <Field label="Request type">
                   <select
@@ -491,11 +543,7 @@ export function RequestForm({
                   </select>
                 </Field>
                 <Field
-                  label={
-                    draft.request_type === "vendor"
-                      ? "Vendor name"
-                      : "Payee full name"
-                  }
+                  label={draft.request_type === "vendor" ? "Vendor to pay" : "Person to reimburse"}
                   required
                   maxLength={150}
                   value={draft.payee}
@@ -622,7 +670,9 @@ export function RequestForm({
                   </div>
                 </div>
                 <p className="muted">
-                  {draft.request_type === "vendor"
+                  {draft.is_test
+                    ? "Attach a clearly marked sample receipt or invoice. Practice requests cannot be paid."
+                    : draft.request_type === "vendor"
                     ? "Attach an unpaid invoice for every vendor expense."
                     : "Attach receipts showing payment completed, not just an order confirmation. Check Amazon and Walmart documents carefully."}{" "}
                   Identify the reimbursable items on the receipt. One
@@ -671,21 +721,32 @@ export function RequestForm({
                         onChange={(e) => setItem(i, "amount", e.target.value)}
                         placeholder="0.00"
                       />
-                      <Field
-                        label={
-                          draft.request_type === "vendor"
-                            ? "Invoice total (USD)"
-                            : "Paid receipt total (USD)"
-                        }
-                        required
-                        inputMode="decimal"
-                        pattern="[0-9]+(\.[0-9]{1,2})?"
-                        value={item.document_total || ""}
-                        onChange={(e) =>
-                          setItem(i, "document_total", e.target.value)
-                        }
-                        placeholder="0.00"
-                      />
+                      <label className="check-row full">
+                        <input
+                          type="checkbox"
+                          checked={!!item.partial}
+                          onChange={(e) => setDraft((d) => ({
+                            ...d,
+                            items: d.items.map((value, index) => index === i
+                              ? { ...value, partial: e.target.checked,
+                                  document_total: e.target.checked ? value.document_total : value.amount,
+                                  coverage_note: e.target.checked ? value.coverage_note : "" }
+                              : value),
+                          }))}
+                        />
+                        <span>Only part of this receipt or invoice is for RCAP</span>
+                      </label>
+                      {item.partial && (
+                        <Field
+                          label={draft.request_type === "vendor" ? "Full invoice total (USD)" : "Full paid receipt total (USD)"}
+                          required
+                          inputMode="decimal"
+                          pattern="[0-9]+(\.[0-9]{1,2})?"
+                          value={item.document_total || ""}
+                          onChange={(e) => setItem(i, "document_total", e.target.value)}
+                          placeholder="0.00"
+                        />
+                      )}
                       {draft.request_type !== "vendor" && (
                         <Field
                           full
@@ -709,7 +770,7 @@ export function RequestForm({
                         placeholder="e.g. Candy and table covers for the social"
                       />
                     </div>
-                    {toCents(item.amount) < toCents(item.document_total) && (
+                    {item.partial && toCents(item.amount) < toCents(item.document_total) && (
                       <div className="coverage-note">
                         <p>
                           <strong>
@@ -871,7 +932,7 @@ export function RequestForm({
                     <dd>
                       {draft.on_behalf
                         ? staff.find((s) => s.email === draft.approver_email)?.name
-                        : "Automatically assigned after submission"}
+                        : "Assigned by committee rules or finance staff"}
                     </dd>
                   </div>
                   <div className="full">
@@ -906,9 +967,8 @@ export function RequestForm({
                       {item.receipts.length === 1 ? "" : "s"}
                     </p>
                     <p>
-                      Document total:{" "}
-                      {dollars(toCents(item.document_total) || 0)}. Requested
-                      from RCAP: {dollars(toCents(item.amount) || 0)}.
+                      {item.partial && <>Document total: {dollars(toCents(item.document_total) || 0)}. </>}
+                      Requested from RCAP: {dollars(toCents(item.amount) || 0)}.
                     </p>
                     {item.coverage_note && (
                       <p>Not requested from RCAP: {item.coverage_note}</p>
@@ -941,19 +1001,10 @@ export function RequestForm({
                   . They receive a review link. No reply-all is needed.
                 </p>
               )}
-              <Field
-                full
-                label="Email me a PDF copy (optional)"
-                type="email"
-                maxLength={254}
-                value={draft.archive_email || ""}
-                onChange={(e) => set("archive_email", e.target.value)}
-                placeholder="Your personal email address"
-              />
               <p className="muted">
-                A PDF with your request and receipts is emailed to RCAP for its
-                records. Add your email above if you would like a copy too.
-                Sign-in stays by cellphone.
+                {draft.is_test
+                  ? "This TEST request is excluded from real payment. A practice update goes only to your verified email."
+                  : "A PDF with your request and receipts is emailed to RCAP for its records. The contact email you entered also gets a copy. Sign-in stays by cellphone."}
               </p>
               <label className="check-row">
                 <input
@@ -963,10 +1014,9 @@ export function RequestForm({
                   onChange={(e) => set("budget_confirmed", e.target.checked)}
                 />
                 <span>
-                  I confirm the amount requested from RCAP is within the
-                  approved committee budget. Any remaining expense is explained
-                  above and does not increase that budget. Approval will take
-                  place through this form.
+                  {draft.is_test
+                    ? "I understand this is a practice amount, not a claim against an RCAP budget."
+                    : "I confirm the amount requested from RCAP is within the approved committee budget. Any remaining expense is explained above and does not increase that budget. Approval will take place through this form."}
                 </span>
               </label>
               <label className="check-row">
@@ -977,7 +1027,9 @@ export function RequestForm({
                   onChange={(e) => set("acknowledged", e.target.checked)}
                 />
                 <span>
-                  {draft.request_type === "vendor"
+                  {draft.is_test
+                    ? "I confirm the attached document is a sample marked TEST and no purchase or payment was made."
+                    : draft.request_type === "vendor"
                     ? "I confirm this invoice is for RCAP, remains unpaid, and the requested amount is supported by the invoice. The finance team will pay the vendor after Board Member approval."
                     : "I confirm these RCAP expenses have been paid, have not already been reimbursed, and the receipts show completed payment. I have identified the reimbursable items and amounts. An order confirmation alone is not proof of payment."}
                 </span>
@@ -1011,6 +1063,8 @@ export function RequestForm({
                     ? progress
                     : draft.version
                       ? "Resubmit for approval"
+                      : draft.is_test
+                        ? "Submit TEST request"
                       : draft.on_behalf
                         ? `Send to ${staff.find((s) => s.email === draft.approver_email)?.name || "board member"} for approval`
                         : "Submit request"}
@@ -1044,6 +1098,7 @@ export function RequestList({
   onError,
   onUpdate,
   onEdit,
+  onManageReviewers,
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(approvalsOnly ? "mine" : "all");
@@ -1059,7 +1114,7 @@ export function RequestList({
       onError(error.message || "Could not export the finance records.");
     }
   }
-  const active = records.filter((r) => !r.archived_at);
+  const active = records.filter((r) => !r.archived_at && !r.is_test);
   const mine = active.filter(
     (r) =>
       actionAllowed(r, role, contact, "approved") ||
@@ -1090,19 +1145,23 @@ export function RequestList({
             : r.status === "submitted"
               ? assignedReviewer(r)
                 ? `${nameOf(r.approver_email)}: review`
-                : "Treasurer: review"
+                : "Finance staff: assign a board reviewer"
               : "Complete";
   const shown = records.filter(
     (r) =>
       (filter === "archived" ? Boolean(r.archived_at) : !r.archived_at) &&
+      (filter === "archived" || filter === "practice" ? true : !r.is_test) &&
       (filter === "all" ||
         filter === "archived" ||
+        (filter === "practice" && r.is_test) ||
         (filter === "mine"
           ? mine.includes(r)
           : filter === "pending"
             ? pending(r)
             : filter === "awaiting_approval"
               ? assignedReviewer(r) && r.status === "submitted"
+              : filter === "awaiting_assignment"
+                ? !assignedReviewer(r) && r.status === "submitted"
               : r.status === filter)) &&
       `${r.reference} ${r.requester_name} ${r.payee} ${r.committee} ${r.purpose} ${r.event_name || ""}`
         .toLowerCase()
@@ -1112,7 +1171,7 @@ export function RequestList({
     <>
       <div className="stats">
         {[
-          ["Awaiting review", active.filter(pending).length, "pending"],
+          ["Awaiting review or assignment", active.filter(pending).length, "pending"],
           [
             "Approved, unpaid",
             dollars(
@@ -1140,6 +1199,7 @@ export function RequestList({
           </button>
         ))}
       </div>
+      <p className="muted queue-count-note">These totals cover all active requests. Search and the queue menu narrow the list below.</p>
       {board && (
         <section className="approval-banner">
           <div>
@@ -1162,6 +1222,11 @@ export function RequestList({
             <p>View requests, documents, and the full action history in a live, read-only Google Sheet. The ZIP is available for a dated copy.</p>
           </div>
           <div className="finance-export-actions">
+            {onManageReviewers && (
+              <button type="button" className="secondary" onClick={onManageReviewers}>
+                Set committee reviewers
+              </button>
+            )}
             <a className="secondary" href="https://docs.google.com/spreadsheets/d/1M5XRQp56NytaV8bYh6-f4aotsg6J7v3raSfiiKmnRuI/edit" target="_blank" rel="noopener noreferrer">
               <ExternalLink size={16} /> Open live ledger
             </a>
@@ -1192,6 +1257,7 @@ export function RequestList({
           {board && <option value="mine">Needs my approval</option>}
           <option value="all">All active requests</option>
           <option value="pending">Pending approvals</option>
+          <option value="practice">Practice requests</option>
           {Object.entries(STATUS).map(([key, label]) => (
             <option key={key} value={key}>
               {label}
@@ -1203,6 +1269,7 @@ export function RequestList({
           <RefreshCw size={16} /> Refresh
         </button>
       </div>
+      {!loading && <p className="muted queue-count-note" role="status">Showing {shown.length} {shown.length === 1 ? "request" : "requests"}.</p>}
       {loading && !records.length ? (
         <p role="status">Loading requests…</p>
       ) : !shown.length ? (
@@ -1225,10 +1292,11 @@ export function RequestList({
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
                 <h3>{r.payee}</h3>
+                {r.is_test && <span className="badge test">TEST ONLY</span>}
                 <p className="queue-purpose">{r.purpose}</p>
                 <p className="muted">Next: {next(r)}</p>
               </div>
-              <Badge status={assignedReviewer(r) && r.status === "submitted" ? "awaiting_approval" : r.status} />
+              <Badge status={r.status === "submitted" ? (assignedReviewer(r) ? "awaiting_approval" : "awaiting_assignment") : r.status} />
               <strong className="money">{dollars(r.total_cents)}</strong>
               <button
                 className={
@@ -1292,6 +1360,9 @@ function Detail({
     [note, setNote] = useState(""),
     [dupOf, setDupOf] = useState(""),
     [payment, setPayment] = useState(""),
+    [paymentMethod, setPaymentMethod] = useState(
+      ["zelle", "debit_card"].includes(r.delivery) ? r.delivery : "zelle",
+    ),
     [paymentDate, setPaymentDate] = useState(today()),
     [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -1338,22 +1409,18 @@ function Detail({
     !r.archived_at;
   const requesterName = staff.find((s) => s.email === r.email)?.name;
   const payeeName = staff.find((s) => s.email === r.payee_contact)?.name;
-  const requesterIsTreasurer = staff.some(
-    (person) => person.name === requesterName && person.role === "treasurer",
-  );
   const reviewerOptions = [
     ...new Map(
       staff
         .filter(
           (person) =>
-            ["board", "treasurer", "secretary", "manager"].includes(
+            ["board", "secretary", "manager"].includes(
               person.role,
-            ) &&
+            ) && person.name !== "RCA Parents" &&
             person.email !== r.email &&
             person.email !== r.payee_contact &&
             person.name !== requesterName &&
-            (!r.on_behalf || person.name !== payeeName) &&
-            (assignedReviewer(r) || person.role !== "treasurer"),
+            (!r.on_behalf || person.name !== payeeName),
         )
         .sort(
           (a, b) =>
@@ -1398,6 +1465,7 @@ function Detail({
           : {}),
         duplicate_of: dupOf,
         payment_reference: payment,
+        payment_method: paymentMethod,
         payment_date: paymentDate,
       });
       setNote("");
@@ -1455,6 +1523,11 @@ function Detail({
           </button>
         )}
       </div>
+      {r.is_test && (
+        <div className="notice practice-notice" role="status">
+          <strong>TEST ONLY.</strong> This is a practice request, excluded from real payment totals. No funds can be recorded for it.
+        </div>
+      )}
       {allowed("paid") && (
         <section className="payment-action-card no-print" aria-labelledby="payment-action-title">
           <div>
@@ -1466,6 +1539,14 @@ function Detail({
             </p>
           </div>
           <div className="fields">
+            <Field full label="How were the funds sent?">
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <option value="zelle">Zelle</option>
+                <option value="debit_card">Debit card</option>
+                <option value="check">Check</option>
+                <option value="other">Other</option>
+              </select>
+            </Field>
             <Field
               full
               label="Payment confirmation or reference number"
@@ -1554,9 +1635,17 @@ function Detail({
                   ? "The board, by vote"
                   : assignedReviewer(r)
                     ? nameOf(r.approver_email)
-                    : "The RCAP Treasurer"}
+                    : ["approved", "paid"].includes(r.status)
+                      ? "The RCAP Treasurer (earlier request)"
+                      : "Not assigned yet"}
               </dd>
             </div>
+            {r.status === "paid" && (
+              <div>
+                <dt>Payment recorded</dt>
+                <dd>{({ zelle: "Zelle", debit_card: "Debit card", check: "Check", other: "Other" })[r.payment_method || r.delivery] || "Other"}: {r.payment_reference} on {r.payment_date}</dd>
+              </div>
+            )}
             <div className="full">
               {r.event_name && (
                 <>
@@ -1645,13 +1734,13 @@ function Detail({
                         ? "Request closed"
                         : assignedReviewer(r)
                           ? "Awaiting assigned approval"
-                          : "Awaiting the treasurer"}
+                          : "Needs a reviewer assignment"}
             </h2>
             <p className="muted">
               {r.status === "submitted"
                 ? assignedReviewer(r)
                   ? `Approval requested from ${nameOf(r.approver_email)}. Review the RCAP amount and receipts, then approve or request changes.`
-                  : "The treasurer reviews the receipts, then approves, sends it back, or takes it to the board."
+                  : "Finance staff will assign a board reviewer. The treasurer records payment after approval."
                 : r.status === "board_review"
                   ? `Board members vote here. ${votes.need} of ${eligible.length} yes votes approve it.`
                   : r.status === "approved"
@@ -1841,12 +1930,11 @@ function Detail({
                 <label>
                   New approver
                   <select
+                    required
                     value={approverChoice}
                     onChange={(event) => setApproverChoice(event.target.value)}
                   >
-                    {!r.on_behalf && !requesterIsTreasurer && (
-                      <option value="">Treasurer default</option>
-                    )}
+                    <option value="">Choose a board reviewer</option>
                     {reviewerOptions.map((person) => (
                       <option key={person.email} value={person.email}>
                         {person.name}
@@ -1869,6 +1957,7 @@ function Detail({
                   className="secondary"
                   disabled={
                     busy ||
+                    !approverChoice ||
                     reassignReason.trim().length < 5 ||
                     approverChoice ===
                       (assignedReviewer(r) ? r.approver_email : "")
@@ -1982,9 +2071,9 @@ function Staff({ staff, onRefresh, onError }) {
       <h2>Board access</h2>
       <p className="muted">
         Add the cellphone number each board member uses to sign in. Everyone
-        here sees the full queue. The treasurer approves and pays; board members
-        vote when the treasurer sends a request to the board; admins watch, send
-        requests back, and close duplicates.
+        here sees the full queue. Assigned board reviewers approve requests.
+        The treasurer records payment after approval. Admins can correct reviewer
+        assignments, send requests back, and close duplicates.
       </p>
       <ul className="inline-list">
         {Object.entries(
@@ -2031,7 +2120,7 @@ function Staff({ staff, onRefresh, onError }) {
           <Field label="Board role">
             <select value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="board">Board member (votes when asked)</option>
-              <option value="treasurer">Treasurer (approves and pays)</option>
+              <option value="treasurer">Treasurer (records payment)</option>
               <option value="secretary">Admin (watches, sends back)</option>
             </select>
           </Field>
@@ -2060,7 +2149,8 @@ export function App() {
     [busy, setBusy] = useState(false),
     [selected, setSelected] = useState(
       () => location.hash.match(/^#request\/([0-9a-f-]{36})$/)?.[1] || null,
-    );
+    ),
+    [reviewSettingsOpen, setReviewSettingsOpen] = useState(false);
   const errorRef = useRef(null);
   useEffect(() => {
     if (error)
@@ -2330,8 +2420,8 @@ export function App() {
               <NotificationPreferences user={user} />
             </details>
             {["treasurer", "secretary", "manager"].includes(role) && (
-              <details className="request-help">
-                <summary>Approval assignments</summary>
+              <details className="request-help" defaultOpen={reviewSettingsOpen}>
+                <summary>Committee reviewers</summary>
                 <ApprovalRouting staff={staff} />
               </details>
             )}
@@ -2405,6 +2495,9 @@ export function App() {
               onNew={() => navigate("new")}
               loading={loading}
               onRefresh={refresh}
+              onManageReviewers={boardTab && ["treasurer", "secretary", "manager"].includes(role)
+                ? () => { setReviewSettingsOpen(true); navigate("settings"); }
+                : undefined}
             />
           </>
         )}

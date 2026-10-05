@@ -50,6 +50,7 @@ export async function summaryPdf(snapshot: any) {
     y -= 4;
   }
   next();
+  if (r.is_test) line("TEST ONLY - NOT A REAL PURCHASE OR PAYMENT", true, 14);
   line(`Request #${r.reference}`, true, 22);
   line(
     `${snapshot.event.action.replaceAll("_", " ").toUpperCase()} | Version ${r.version}`,
@@ -98,6 +99,7 @@ export async function summaryPdf(snapshot: any) {
     if (event.note) line(event.note);
   }
   if (r.payment_reference) line(`Payment reference: ${r.payment_reference}`);
+  if (r.payment_method) line(`Payment method: ${{ zelle: "Zelle", debit_card: "Debit card", check: "Check", other: "Other" }[r.payment_method] || r.payment_method}`);
   if (r.payment_date) line(`Payment date: ${r.payment_date}`);
   line(
     r.request_type === "vendor"
@@ -124,12 +126,23 @@ export async function summaryPdf(snapshot: any) {
 }
 export async function receiptPdf(
   bytes: Uint8Array,
-  path: string,
+  _path: string,
   label: string,
 ) {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
-  if (path.toLowerCase().endsWith(".pdf")) {
+  const kind = bytes.length >= 8 &&
+      bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e &&
+      bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a &&
+      bytes[6] === 0x1a && bytes[7] === 0x0a
+    ? "png"
+    : bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+      ? "jpeg"
+      : bytes.length >= 5 && bytes[0] === 0x25 && bytes[1] === 0x50 &&
+          bytes[2] === 0x44 && bytes[3] === 0x46 && bytes[4] === 0x2d
+        ? "pdf" : null;
+  if (!kind) throw new Error("Unsupported receipt file content.");
+  if (kind === "pdf") {
     const source = await PDFDocument.load(bytes);
     // Flatten form field appearances before embedding, keeping the archive static.
     if (source.getForm().getFields().length) source.getForm().flatten();
@@ -152,7 +165,7 @@ export async function receiptPdf(
       });
     }
   } else {
-    const img = path.toLowerCase().endsWith(".png")
+    const img = kind === "png"
       ? await doc.embedPng(bytes)
       : await doc.embedJpg(bytes);
     const page = doc.addPage([612, 792]);

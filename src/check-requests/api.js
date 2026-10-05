@@ -1,5 +1,5 @@
 import { supabase } from "../carpool/supabaseClient.js";
-import { normalizePhone, toCents } from "./model.js";
+import { normalizePhone, receiptMime, toCents } from "./model.js";
 export { supabase };
 export async function loadRequests() {
   const records = [];
@@ -31,8 +31,18 @@ export async function loadApprovalContacts() {
 export async function loadRoutes() {
   const { data, error } = await supabase
     .from("cr_approval_routes")
-    .select("committee,request_type,approver_email,updated_at")
+    .select("committee,request_type,approver_email,backup_email,updated_at")
     .order("committee");
+  if (error) throw error;
+  return data;
+}
+export async function saveCommitteeAssignment(committee, draft) {
+  const { data, error } = await supabase.rpc("cr_save_committee_assignment", {
+    p_committee: committee,
+    p_approver: draft.approver || null,
+    p_backup: draft.backup || null,
+    p_active: draft.active,
+  });
   if (error) throw error;
   return data;
 }
@@ -52,11 +62,12 @@ export async function submit(d, user, onProgress, canNotify = false) {
         continue;
       }
       onProgress(`Uploading receipt for expense ${i + 1}…`);
-      const path = `${user.id}/${d.id}/${crypto.randomUUID()}.${{ "image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf" }[receipt.file.type]}`;
+      const contentType = await receiptMime(receipt.file);
+      const path = `${user.id}/${d.id}/${crypto.randomUUID()}.${{ "image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf" }[contentType]}`;
       const { error } = await supabase.storage
         .from("check-receipts")
         .upload(path, receipt.file, {
-          contentType: receipt.file.type,
+          contentType,
           upsert: false,
         });
       if (error)
@@ -72,8 +83,8 @@ export async function submit(d, user, onProgress, canNotify = false) {
       vendor: d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
       description: item.description.trim(),
       amount_cents: toCents(item.amount),
-      document_total_cents: toCents(item.document_total),
-      coverage_note: (item.coverage_note || "").trim(),
+      document_total_cents: toCents(item.partial ? item.document_total : item.amount),
+      coverage_note: item.partial ? (item.coverage_note || "").trim() : "",
       receipts,
     });
   }

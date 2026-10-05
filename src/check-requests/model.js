@@ -1,6 +1,7 @@
 export const STATUS = {
   awaiting_approval: "Awaiting assigned approval",
-  submitted: "Awaiting treasurer",
+  awaiting_assignment: "Needs reviewer assignment",
+  submitted: "Submitted",
   board_review: "Board vote",
   needs_changes: "Changes requested",
   approved: "Approved",
@@ -70,11 +71,13 @@ export function validateDraft(d) {
     if (toCents(item.amount) === null)
       return `Enter a positive amount with no more than two decimal places for expense ${i + 1}.`;
     if (
-      toCents(item.document_total) === null ||
-      toCents(item.amount) > toCents(item.document_total)
+      item.partial &&
+      (toCents(item.document_total) === null ||
+        toCents(item.amount) > toCents(item.document_total))
     )
       return `Requested amount must not exceed the receipt or invoice total for expense ${i + 1}.`;
     if (
+      item.partial &&
       toCents(item.amount) < toCents(item.document_total) &&
       (item.coverage_note || "").trim().length < 10
     )
@@ -87,9 +90,10 @@ export function validateDraft(d) {
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.archive_email.trim())
   )
     return "Enter a valid email for your PDF copy.";
-  if (!d.budget_confirmed) return "Confirm this expense is within budget.";
+  if (!d.budget_confirmed)
+    return d.is_test ? "Confirm this is a practice amount." : "Confirm this expense is within budget.";
   if (!d.acknowledged)
-    return "Confirm the reimbursement statement before submitting.";
+    return d.is_test ? "Confirm this is a TEST document, not a purchase." : "Confirm the reimbursement statement before submitting.";
   return null;
 }
 // Adding files to an expense keeps what is already attached (uploaded or
@@ -124,14 +128,25 @@ export function validateFiles(files) {
     return "Each receipt must be between 1 byte and 10 MB.";
   return null;
 }
-// Mirrors cr_private.mutate, which is the real gate. New requests route by
-// committee and type; unassigned requests go to the treasurer.
+export async function receiptMime(file) {
+  const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+  if (bytes.length >= 8 &&
+      [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+        .every((byte, index) => bytes[index] === byte)) return "image/png";
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return "image/jpeg";
+  if (bytes.length >= 5 && [0x25, 0x50, 0x44, 0x46, 0x2d]
+    .every((byte, index) => bytes[index] === byte)) return "application/pdf";
+  throw new Error("This receipt is not a valid PDF, JPG, or PNG file. Export it again and retry.");
+}
+// Mirrors the database guard: a named independent reviewer makes decisions.
 const ADMINS = ["secretary", "manager"];
 const OPEN = ["submitted", "board_review", "needs_changes"];
 export const assignedReviewer = (r) =>
   !!r.approver_email && !!(r.on_behalf || r.routed_approval);
 export function actionAllowed(r, role, email, action, opts = {}) {
   if (r.archived_at) return false;
+  if (r.is_test && action === "paid") return false;
   const own = r.email === email;
   if (action === "edit") return own && r.status === "needs_changes";
   if (action === "duplicate")
@@ -150,9 +165,9 @@ export function actionAllowed(r, role, email, action, opts = {}) {
   if (["approved", "declined"].includes(action))
     return (
       r.status === "submitted" &&
-      (assignedReviewer(r)
-        ? r.approver_email === email
-        : role === "treasurer")
+      assignedReviewer(r) &&
+      role !== "treasurer" &&
+      r.approver_email === email
     );
   if (action === "board_review")
     return role === "treasurer" && r.status === "submitted";
@@ -285,6 +300,7 @@ export const newItem = () => ({
   description: "",
   amount: "",
   document_total: "",
+  partial: false,
   coverage_note: "",
   receipts: [],
 });
@@ -292,6 +308,7 @@ export const newDraft = () => ({
   id: crypto.randomUUID(),
   requester_name: "",
   on_behalf: false,
+  is_test: false,
   payee_contact: "",
   event_name: "",
   phone: "",
@@ -325,6 +342,7 @@ export function fromRecord(r) {
       document_total: (
         (i.document_total_cents || i.amount_cents) / 100
       ).toFixed(2),
+      partial: (i.document_total_cents || i.amount_cents) > i.amount_cents,
     })),
   };
 }

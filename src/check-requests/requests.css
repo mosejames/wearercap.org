@@ -542,6 +542,18 @@ p {
   background: #fff0df;
   color: #855219;
 }
+.badge.test,
+.practice-notice,
+.practice-choice {
+  background: #fff7e5;
+  color: #684b0b;
+  border-color: #dec582;
+}
+.practice-choice {
+  padding: 12px;
+  border: 1px solid #dec582;
+  border-radius: 8px;
+}
 .detail-head {
   display: flex;
   gap: 15px;
@@ -601,6 +613,45 @@ p {
 .admin-panel {
   margin-top: 24px;
 }
+.committee-assignments {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.queue-count-note {
+  margin: 8px 0 16px;
+  font-size: 0.9rem;
+}
+.committee-assignment {
+  display: grid;
+  grid-template-columns: minmax(145px, 1.2fr) repeat(2, minmax(150px, 1fr)) auto auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce5ec;
+  border-radius: 10px;
+}
+.committee-assignment-name {
+  display: grid;
+  gap: 5px;
+  align-self: center;
+}
+.committee-assignment label {
+  min-width: 0;
+}
+.committee-assignment select {
+  width: 100%;
+}
+.committee-assignment .assignment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 13px;
+  white-space: nowrap;
+}
+.assignment-toggle input {
+  width: auto;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -626,6 +677,15 @@ p {
   flex-shrink: 0;
 }
 @media (max-width: 850px) {
+  .committee-assignment {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .committee-assignment-name {
+    grid-column: 1 / -1;
+  }
+  .committee-assignment button {
+    width: 100%;
+  }
   .payment-action-card {
     grid-template-columns: 1fr;
   }

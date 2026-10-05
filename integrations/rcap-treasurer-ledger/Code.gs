@@ -84,7 +84,8 @@ function syncLedger() {
         safe(request.payee),
         Number(request.total_cents) / 100,
         ['approved', 'paid'].includes(request.status) ? Number(request.total_cents) / 100 : '',
-        safe(staff.get(request.approver_email) || request.approver_email || 'Treasurer'),
+        safe(staff.get(request.approver_email) || request.approver_email ||
+          (request.status === 'submitted' ? 'Needs reviewer assignment' : 'Treasurer (earlier request)')),
         eastern(decision && decision.created_at),
         safe(request.status),
         request.payment_date || '',
@@ -92,7 +93,7 @@ function syncLedger() {
         folderUrl || (testIds.has(request.id) ? 'TEST: no documents' : 'No documents on file'),
         'https://wearercap.org/check-requests/#request/' + request.id,
         flags,
-        { zelle: 'Zelle', debit_card: 'Debit card', pickup: 'Pickup', mail: 'Mail' }[request.delivery] || safe(request.delivery),
+        { zelle: 'Zelle', debit_card: 'Debit card', check: 'Check', other: 'Other', pickup: 'Pickup', mail: 'Mail' }[request.payment_method || request.delivery] || safe(request.payment_method || request.delivery),
         request.delivery === 'zelle' ? safe(request.zelle_contact || '') : '',
       ];
     });
