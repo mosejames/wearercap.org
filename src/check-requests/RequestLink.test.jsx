@@ -17,6 +17,7 @@ vi.mock("./api.js", () => ({
   },
   loadRequests: vi.fn().mockResolvedValue([]),
   loadStaff: vi.fn().mockResolvedValue([]),
+  loadPaymentCommittees: vi.fn().mockResolvedValue([]),
   loadApprovalContacts: vi.fn().mockResolvedValue([]),
   submit: vi.fn(),
   act: vi.fn(),

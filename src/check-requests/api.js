@@ -36,6 +36,21 @@ export async function loadRoutes() {
   if (error) throw error;
   return data;
 }
+export async function loadPaymentCommittees() {
+  const { data, error } = await supabase
+    .from("cr_payment_committees")
+    .select("name")
+    .order("name");
+  if (error) throw error;
+  return data.map((item) => item.name);
+}
+export async function addPaymentCommittee(name) {
+  const { data, error } = await supabase.rpc("cr_add_payment_committee", {
+    p_name: name,
+  });
+  if (error) throw error;
+  return data;
+}
 export async function saveCommitteeAssignment(committee, draft) {
   const { data, error } = await supabase.rpc("cr_save_committee_assignment", {
     p_committee: committee,

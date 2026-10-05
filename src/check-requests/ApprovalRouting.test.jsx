@@ -3,11 +3,12 @@ import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import ApprovalRouting, { boardReviewers } from "./ApprovalRouting.jsx";
-import { loadRoutes, saveCommitteeAssignment } from "./api.js";
+import { addPaymentCommittee, loadRoutes, saveCommitteeAssignment } from "./api.js";
 
 vi.mock("./api.js", () => ({
   loadRoutes: vi.fn().mockResolvedValue([]),
   saveCommitteeAssignment: vi.fn().mockResolvedValue({ saved: true }),
+  addPaymentCommittee: vi.fn().mockResolvedValue("New Fundraiser"),
 }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -52,6 +53,34 @@ describe("committee reviewer settings", () => {
         approver: "+14045550222",
         backup: "",
       });
+    } finally {
+      await act(async () => { root.unmount(); });
+      host.remove();
+    }
+  });
+
+  it("adds a payment committee and offers it for reviewer assignment", async () => {
+    vi.clearAllMocks();
+    loadRoutes.mockResolvedValue([]);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    function Harness() {
+      const [committees, setCommittees] = React.useState(["Fall Raffle"]);
+      return <ApprovalRouting staff={staff} committees={committees}
+        onCommitteeAdded={(name) => setCommittees((names) => [...names, name])} />;
+    }
+    try {
+      await act(async () => { root.render(<Harness />); });
+      const input = host.querySelector('.committee-add input');
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "New Fundraiser");
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await act(async () => { host.querySelector('.committee-add button').click(); });
+      expect(addPaymentCommittee).toHaveBeenCalledWith("New Fundraiser");
+      expect(host.textContent).toContain("New Fundraiser added");
+      expect(host.querySelector('select[aria-label="New Fundraiser primary reviewer"]')).toBeTruthy();
     } finally {
       await act(async () => { root.unmount(); });
       host.remove();

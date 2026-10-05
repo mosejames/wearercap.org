@@ -22,7 +22,7 @@ afterEach(() => {
   act(() => root?.unmount());
   host?.remove();
 });
-function setup(receipts, overrides = {}, staff = []) {
+function setup(receipts, overrides = {}, staff = [], committees) {
   host = document.createElement("div");
   document.body.append(host);
   const onError = vi.fn();
@@ -57,6 +57,7 @@ function setup(receipts, overrides = {}, staff = []) {
         setDraft={setDraft}
         user={{ phone: "14045550123" }}
         staff={staff}
+        committees={committees}
         onSaved={vi.fn()}
         onError={onError}
         busy={false}
@@ -75,6 +76,13 @@ const advance = () =>
       .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })),
   );
 const panel = () => host.querySelector(".wizard-panel:not([hidden])");
+it("shows newly added payment committees on the request form", () => {
+  setup([], {}, [], ["New Fundraiser", "General RCAP"]);
+  const committee = host.querySelector('select[name="committee"]') ||
+    [...host.querySelectorAll("select")].find((select) => select.textContent.includes("New Fundraiser"));
+  expect(committee).toBeTruthy();
+  expect(committee.textContent).toContain("New Fundraiser");
+});
 it("keeps receipts when moving between steps and requires final confirmation", () => {
   setup([
     {

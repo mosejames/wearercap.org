@@ -18,7 +18,7 @@ import {
   ExternalLink,
   Printer,
 } from "lucide-react";
-import { COMMITTEES } from "../committee/data.js";
+import { DEFAULT_PAYMENT_COMMITTEES, mergePaymentCommittees } from "./committees.js";
 import {
   STATUS,
   dollars,
@@ -43,6 +43,7 @@ import {
   supabase,
   loadRequests,
   loadStaff,
+  loadPaymentCommittees,
   submit,
   act,
   details,
@@ -295,6 +296,7 @@ export function RequestForm({
   setDraft,
   user,
   staff,
+  committees = DEFAULT_PAYMENT_COMMITTEES,
   onSaved,
   onError,
   busy,
@@ -595,11 +597,9 @@ export function RequestForm({
                     onChange={(e) => set("committee", e.target.value)}
                   >
                     <option value="">Select a committee</option>
-                    {COMMITTEES.map((c) => (
-                      <option key={c.id}>{c.name}</option>
+                    {committees.map((name) => (
+                      <option key={name}>{name}</option>
                     ))}
-                    <option>General RCAP</option>
-                    <option>Other RCAP expense</option>
                   </select>
                 </Field>
                 <Field label="How should the payee receive payment?">
@@ -2143,6 +2143,7 @@ export function App() {
     [draft, setDraft] = useState(newDraft),
     [records, setRecords] = useState([]),
     [staff, setStaff] = useState([]),
+    [committees, setCommittees] = useState(DEFAULT_PAYMENT_COMMITTEES),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -2179,13 +2180,21 @@ export function App() {
     });
     return () => data.subscription.unsubscribe();
   }, []);
+  useEffect(() => {
+    loadPaymentCommittees()
+      .then((names) => setCommittees(mergePaymentCommittees(names)))
+      .catch(() => {});
+  }, []);
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [r, s] = await Promise.all([loadRequests(), loadStaff()]);
+      const [r, s, names] = await Promise.all([
+        loadRequests(), loadStaff(), loadPaymentCommittees().catch(() => null),
+      ]);
       setRecords(r);
       setStaff(s);
+      if (names) setCommittees(mergePaymentCommittees(names));
     } catch (e) {
       setError(
         "We could not load your requests. Please refresh and try again.",
@@ -2423,7 +2432,8 @@ export function App() {
               <details className="request-help" open={reviewSettingsOpen}
                 onToggle={(event) => setReviewSettingsOpen(event.currentTarget.open)}>
                 <summary>Committee reviewers</summary>
-                <ApprovalRouting staff={staff} />
+                <ApprovalRouting staff={staff} committees={committees}
+                  onCommitteeAdded={(name) => setCommittees((current) => mergePaymentCommittees([...current, name]))} />
               </details>
             )}
             {["secretary", "manager"].includes(role) && (
@@ -2440,6 +2450,7 @@ export function App() {
               setDraft={setDraft}
               user={user}
               staff={staff}
+              committees={committees}
               onSaved={saved}
               onError={setError}
               busy={busy}

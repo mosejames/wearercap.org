@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { COMMITTEES } from "../committee/data.js";
-import { loadRoutes, saveCommitteeAssignment } from "./api.js";
-
-const committees = [...COMMITTEES.map((item) => item.name), "General RCAP", "Other RCAP expense"];
+import { addPaymentCommittee, loadRoutes, saveCommitteeAssignment } from "./api.js";
+import { DEFAULT_PAYMENT_COMMITTEES } from "./committees.js";
 
 export function boardReviewers(staff) {
   const people = staff
@@ -21,11 +19,16 @@ function routeDraft(routes, committee) {
   };
 }
 
-export default function ApprovalRouting({ staff }) {
+export default function ApprovalRouting({
+  staff,
+  committees = DEFAULT_PAYMENT_COMMITTEES,
+  onCommitteeAdded = () => {},
+}) {
   const [routes, setRoutes] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [newCommittee, setNewCommittee] = useState("");
   const reviewers = boardReviewers(staff);
 
   useEffect(() => {
@@ -45,14 +48,14 @@ export default function ApprovalRouting({ staff }) {
   function set(committee, patch) {
     setDrafts((current) => ({
       ...current,
-      [committee]: { ...current[committee], ...patch },
+      [committee]: { ...(current[committee] || routeDraft(routes, committee)), ...patch },
     }));
     setMessage("");
   }
 
   async function save(event, committee) {
     event.preventDefault();
-    const draft = drafts[committee];
+    const draft = drafts[committee] || routeDraft(routes, committee);
     if (draft.active && (!draft.approver || draft.approver === draft.backup)) {
       setMessage("Choose a primary reviewer and a different backup for " + committee + ".");
       return;
@@ -72,6 +75,22 @@ export default function ApprovalRouting({ staff }) {
     }
   }
 
+  async function add(event) {
+    event.preventDefault();
+    setBusy("add");
+    setMessage("");
+    try {
+      const name = await addPaymentCommittee(newCommittee);
+      onCommitteeAdded(name);
+      setNewCommittee("");
+      setMessage(name + " added. Choose its reviewer, turn it on, and save below.");
+    } catch (error) {
+      setMessage(error.message || "Could not add this committee.");
+    } finally {
+      setBusy("");
+    }
+  }
+
   return (
     <section className="form-card admin-panel">
       <h2>Committee reviewers</h2>
@@ -79,6 +98,18 @@ export default function ApprovalRouting({ staff }) {
         Choose who approves requests for each committee. This applies to reimbursements and vendor payments.
         The treasurer records payment after approval. A backup can be assigned to a specific request when the primary is unavailable.
       </p>
+      <form className="committee-add" onSubmit={add}>
+        <label>
+          Add a payment committee
+          <input value={newCommittee} maxLength={100} required
+            onChange={(event) => setNewCommittee(event.target.value)}
+            placeholder="Committee name" />
+        </label>
+        <button className="secondary" disabled={!!busy || newCommittee.trim().length < 2}>
+          {busy === "add" ? "Adding…" : "Add committee"}
+        </button>
+      </form>
+      <p className="muted">New committees appear on the payment request form. The public volunteer committee list is separate.</p>
       <div className="committee-assignments">
         {committees.map((committee) => {
           const draft = drafts[committee] || { active: false, approver: "", backup: "" };
