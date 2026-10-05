@@ -543,16 +543,53 @@ p {
   color: #855219;
 }
 .badge.test,
-.practice-notice,
-.practice-choice {
+.practice-notice {
   background: #fff7e5;
   color: #684b0b;
   border-color: #dec582;
 }
-.practice-choice {
-  padding: 12px;
+.test-mode-entry,
+.test-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
   border: 1px solid #dec582;
-  border-radius: 8px;
+  border-radius: 10px;
+  background: #fffaf0;
+}
+.test-mode-entry {
+  margin: 12px 0;
+}
+.test-mode-entry h3,
+.test-mode-banner h2 {
+  margin: 0 0 6px;
+}
+.test-mode-entry p,
+.test-mode-banner p {
+  margin: 0;
+}
+.test-mode-entry p + p {
+  margin-top: 8px;
+}
+.test-mode-entry button,
+.test-mode-banner button {
+  flex: none;
+}
+.test-mode-banner {
+  margin-bottom: 18px;
+}
+.test-mode-banner .eyebrow {
+  color: #855219;
+  margin-bottom: 6px;
+}
+@media (max-width: 640px) {
+  .test-mode-entry,
+  .test-mode-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 .detail-head {
   display: flex;

@@ -432,8 +432,12 @@ export function RequestForm({
               {
                 [
                   "Tell us who to pay and what the expenses were for.",
-                  "Add each expense and its paid receipt or vendor invoice.",
-                  "Check your details, then send your request for approval.",
+                  draft.is_test
+                    ? "Add each sample expense and its clearly marked TEST document."
+                    : "Add each expense and its paid receipt or vendor invoice.",
+                  draft.is_test
+                    ? "Check your details, then submit your practice request."
+                    : "Check your details, then send your request for approval.",
                 ][step]
               }
             </p>
@@ -459,26 +463,6 @@ export function RequestForm({
                   Choose direct vendor payment when RCAP should pay the vendor.
                   The vendor does not need to sign in.
                 </p>
-              )}
-              {!draft.version && !draft.on_behalf && (
-                <label className="check-row practice-choice">
-                  <input
-                    type="checkbox"
-                    checked={!!draft.is_test}
-                    disabled={!user?.email_confirmed_at}
-                    onChange={(e) => setDraft((d) => ({
-                      ...d,
-                      is_test: e.target.checked,
-                      archive_email: e.target.checked ? user.email : d.archive_email,
-                      budget_confirmed: false,
-                      acknowledged: false,
-                    }))}
-                  />
-                  <span>Practice request. Clearly marked TEST, emailed only to your verified address, and blocked from payment.</span>
-                </label>
-              )}
-              {!user?.email_confirmed_at && !draft.version && (
-                <p className="muted">To try a practice request, verify your backup email in Settings first.</p>
               )}
               {draft.is_test && <p className="notice">TEST ONLY. Use a sample receipt. No purchase or payment will be recorded.</p>}
               {draft.on_behalf && (
@@ -2134,6 +2118,13 @@ function Staff({ staff, onRefresh, onError }) {
     </section>
   );
 }
+const newTestDraft = (user) => ({
+  ...newDraft(),
+  is_test: true,
+  archive_email: user?.email || "",
+  phone: normalizePhone(user?.phone || ""),
+});
+
 export function App() {
   const [user, setUser] = useState(null),
     [authLoading, setAuthLoading] = useState(true),
@@ -2141,6 +2132,7 @@ export function App() {
       location.hash === "#approvals" ? "approvals" : "new",
     ),
     [draft, setDraft] = useState(newDraft),
+    [testDraft, setTestDraft] = useState(() => newTestDraft(null)),
     [records, setRecords] = useState([]),
     [staff, setStaff] = useState([]),
     [committees, setCommittees] = useState(DEFAULT_PAYMENT_COMMITTEES),
@@ -2237,6 +2229,11 @@ export function App() {
     setError("");
     setNotice("");
   }
+  function enterTestMode() {
+    if (!user?.email_confirmed_at) return;
+    setTestDraft(newTestDraft(user));
+    navigate("test");
+  }
   function select(id) {
     setSelected(id);
     location.hash = `request/${id}`;
@@ -2249,7 +2246,8 @@ export function App() {
   }
   function saved(r) {
     update(r);
-    setDraft(newDraft());
+    if (tab === "test" || r.is_test) setTestDraft(newTestDraft(user));
+    else setDraft(newDraft());
     setNotice(
       `Request #${r.reference} submitted. Your receipts and request are saved, and request updates are queued.`,
     );
@@ -2264,6 +2262,7 @@ export function App() {
       return;
     }
     setDraft(newDraft());
+    setTestDraft(newTestDraft(null));
     setRecords([]);
     setStaff([]);
     navigate("new");
@@ -2397,8 +2396,9 @@ export function App() {
               onError={setError}
               onUpdate={update}
               onEdit={(r) => {
-                setDraft(fromRecord(r));
-                navigate("new");
+                if (r.is_test) setTestDraft(fromRecord(r));
+                else setDraft(fromRecord(r));
+                navigate(r.is_test ? "test" : "new");
               }}
             />
           ) : loading ? (
@@ -2428,6 +2428,18 @@ export function App() {
               <summary>Notification preferences</summary>
               <NotificationPreferences user={user} />
             </details>
+            <section className="test-mode-entry">
+              <div>
+                <h3>Practice check requests</h3>
+                <p className="muted">Use a sample document marked TEST. Practice requests cannot be paid and are excluded from real totals.</p>
+                {!user.email_confirmed_at && (
+                  <p className="muted">Verify your backup email under Account & backup sign-in first.</p>
+                )}
+              </div>
+              <button type="button" className="secondary" disabled={!user.email_confirmed_at} onClick={enterTestMode}>
+                Enter into test mode
+              </button>
+            </section>
             {["treasurer", "secretary", "manager"].includes(role) && (
               <details className="request-help" open={reviewSettingsOpen}
                 onToggle={(event) => setReviewSettingsOpen(event.currentTarget.open)}>
@@ -2443,9 +2455,33 @@ export function App() {
               </details>
             )}
           </section>
+        ) : tab === "test" && user ? (
+          <div className="test-mode-area">
+            <section className="test-mode-banner" aria-label="Test mode">
+              <div>
+                <p className="eyebrow">TEST MODE</p>
+                <h2>Practice a check request</h2>
+                <p>Use sample information and a document marked TEST. Nothing here can be paid.</p>
+              </div>
+              <button type="button" className="secondary" onClick={() => navigate("settings")}>Exit test mode</button>
+            </section>
+            <RequestForm
+              key="test"
+              draft={testDraft}
+              setDraft={setTestDraft}
+              user={user}
+              staff={staff}
+              committees={committees}
+              onSaved={saved}
+              onError={setError}
+              busy={busy}
+              setBusy={setBusy}
+            />
+          </div>
         ) : tab === "new" ? (
           <>
             <RequestForm
+              key="real"
               draft={draft}
               setDraft={setDraft}
               user={user}
@@ -2497,8 +2533,9 @@ export function App() {
               onError={setError}
               onUpdate={update}
               onEdit={(r) => {
-                setDraft(fromRecord(r));
-                navigate("new");
+                if (r.is_test) setTestDraft(fromRecord(r));
+                else setDraft(fromRecord(r));
+                navigate(r.is_test ? "test" : "new");
               }}
               approvalsOnly={tab === "approvals"}
               contact={contactOf(user)}

@@ -58,6 +58,41 @@ it.each(["manager", "secretary", "treasurer", null])(
   },
 );
 
+it("opens a separate practice form from Settings and keeps the real form clear", async () => {
+  const user = {
+    id: "current-parent", phone: "14045550123",
+    email: "parent@example.test", email_confirmed_at: "2026-10-05T12:00:00Z",
+  };
+  supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user } } });
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  expect(host.querySelector(".test-mode-banner")).toBeNull();
+  expect(host.textContent).not.toContain("Practice request. Clearly marked TEST");
+  await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent === "Settings").click());
+  await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent === "Enter into test mode").click());
+  expect(host.querySelector(".test-mode-banner").textContent).toContain("TEST MODE");
+  expect(host.textContent).toContain("TEST ONLY. Use a sample receipt");
+  expect(host.querySelector('input[type="email"]').value).toBe(user.email);
+  await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent === "New request").click());
+  expect(host.querySelector(".test-mode-banner")).toBeNull();
+  expect(host.textContent).not.toContain("TEST ONLY. Use a sample receipt");
+});
+
+it("requires a verified email before entering test mode", async () => {
+  const user = { id: "current-parent", phone: "14045550123" };
+  supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user } } });
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent === "Settings").click());
+  const enter = [...host.querySelectorAll("button")].find((b) => b.textContent === "Enter into test mode");
+  expect(enter.disabled).toBe(true);
+  expect(host.textContent).toContain("Verify your backup email");
+});
+
 it("asks a signed-out reviewer to sign in instead of showing a blank new request", async () => {
   history.replaceState(
     null,
