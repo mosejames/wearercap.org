@@ -286,6 +286,27 @@ p {
   border-color: #dce5ec;
   padding: 28px;
 }
+.payment-action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 18px;
+  padding: 22px;
+  margin-bottom: 22px;
+  background: #f2f7f3;
+  border: 1px solid #c9ddd0;
+  border-radius: 12px;
+}
+.payment-action-card h2,
+.payment-action-card p {
+  margin: 0 0 8px;
+}
+.payment-action-card .fields {
+  gap: 10px;
+}
+.payment-action-card > button {
+  white-space: nowrap;
+}
 .summary-card h2 {
   font-size: 25px;
   line-height: 1.2;
@@ -605,6 +626,12 @@ p {
   flex-shrink: 0;
 }
 @media (max-width: 850px) {
+  .payment-action-card {
+    grid-template-columns: 1fr;
+  }
+  .payment-action-card > button {
+    width: 100%;
+  }
   .workspace,
   .review-grid {
     grid-template-columns: 1fr;

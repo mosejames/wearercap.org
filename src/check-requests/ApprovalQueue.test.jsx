@@ -75,6 +75,38 @@ it("shows only actionable requests assigned to this reviewer in the approval que
   }
 });
 
+it("opens an approved request directly for the treasurer to record payment", () => {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  const onSelect = vi.fn();
+  try {
+    act(() => root.render(
+      <RequestList
+        records={[{
+          id: "ready", reference: 13, status: "approved", total_cents: 8594,
+          email: "+14045550124", payee: "Parent", requester_name: "Parent",
+          purpose: "Event supplies", committee: "General RCAP", items: [],
+          created_at: "2026-10-05T14:00:00Z",
+        }]}
+        board
+        role="treasurer"
+        contact="+14045550123"
+        staff={[{ name: "Treasurer", email: "+14045550123", role: "treasurer" }]}
+        onSelect={onSelect}
+        onRefresh={() => {}}
+      />,
+    ));
+    act(() => [...host.querySelectorAll("button")].find(
+      (button) => button.textContent === "Record payment",
+    ).click());
+    expect(onSelect).toHaveBeenCalledWith("ready");
+  } finally {
+    act(() => root.unmount());
+    host.remove();
+  }
+});
+
 it("excludes archived records from totals and reveals them only in Archived", () => {
   const host = document.createElement("div");
   document.body.append(host);

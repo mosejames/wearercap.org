@@ -1070,6 +1070,12 @@ export function RequestList({
       }),
   );
   const pending = (r) => ["submitted", "board_review"].includes(r.status);
+  const canRecordPayment = (r) =>
+    actionAllowed(r, role, contact, "paid", {
+      ownerIsTreasurer: staff.some(
+        (person) => person.email === r.email && person.role === "treasurer",
+      ),
+    });
   const nameOf = (email) =>
     staff.find((s) => s.email === email)?.name || "Assigned reviewer";
   const next = (r) =>
@@ -1226,13 +1232,21 @@ export function RequestList({
               <strong className="money">{dollars(r.total_cents)}</strong>
               <button
                 className={
-                  pending(r) && !r.archived_at ? "primary" : "secondary"
+                  (pending(r) || canRecordPayment(r)) && !r.archived_at
+                    ? "primary"
+                    : "secondary"
                 }
-                aria-expanded={expanded === r.id}
-                aria-controls={`review-${r.id}`}
-                onClick={() => setExpanded(expanded === r.id ? null : r.id)}
+                aria-expanded={canRecordPayment(r) ? undefined : expanded === r.id}
+                aria-controls={canRecordPayment(r) ? undefined : `review-${r.id}`}
+                onClick={() =>
+                  canRecordPayment(r)
+                    ? onSelect(r.id)
+                    : setExpanded(expanded === r.id ? null : r.id)
+                }
               >
-                {expanded === r.id
+                {canRecordPayment(r)
+                  ? "Record payment"
+                  : expanded === r.id
                   ? "Close"
                   : pending(r) && !r.archived_at
                     ? "Review"
@@ -1441,6 +1455,44 @@ function Detail({
           </button>
         )}
       </div>
+      {allowed("paid") && (
+        <section className="payment-action-card no-print" aria-labelledby="payment-action-title">
+          <div>
+            <p className="eyebrow">REQUEST #{r.reference}</p>
+            <h2 id="payment-action-title">Record payment</h2>
+            <p>
+              {dollars(r.total_cents)} to {r.payee}. After sending the funds,
+              enter the bank confirmation and date to mark this request paid.
+            </p>
+          </div>
+          <div className="fields">
+            <Field
+              full
+              label="Payment confirmation or reference number"
+              value={payment}
+              maxLength={100}
+              onChange={(e) => setPayment(e.target.value)}
+              placeholder="Use the bank reference, not the payee’s contact"
+            />
+            <Field
+              full
+              label="Date funds were sent"
+              type="date"
+              max={today()}
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="primary"
+            disabled={busy || !payment.trim() || !paymentDate}
+            onClick={() => change("paid")}
+          >
+            Record payment
+          </button>
+        </section>
+      )}
       <div className="review-grid">
         <section className="form-card">
           <div className="detail-head">
@@ -1656,7 +1708,7 @@ function Detail({
                 onChange={setApprovalRecipients}
               />
             )}
-            {["approved", "needs_changes", "paid", "board_review", "vote"].some(
+            {["approved", "needs_changes", "board_review", "vote"].some(
               allowed,
             ) && (
               <div className="form-section">
@@ -1675,25 +1727,6 @@ function Detail({
                       placeholder="Explain a decision, a correction, or a no vote. The requester sees notes on corrections and declines."
                     />
                   </Field>
-                )}
-                {allowed("paid") && (
-                  <div className="fields" style={{ marginTop: 20 }}>
-                    <Field
-                      full
-                      label="Zelle confirmation or check number"
-                      value={payment}
-                      maxLength={100}
-                      onChange={(e) => setPayment(e.target.value)}
-                    />
-                    <Field
-                      full
-                      label="Date funds were sent"
-                      type="date"
-                      max={today()}
-                      value={paymentDate}
-                      onChange={(e) => setPaymentDate(e.target.value)}
-                    />
-                  </div>
                 )}
                 <div className="actions decision">
                   {allowed("approved") && (
@@ -1748,15 +1781,6 @@ function Detail({
                       onClick={() => change("declined")}
                     >
                       Decline
-                    </button>
-                  )}
-                  {allowed("paid") && (
-                    <button
-                      className="primary"
-                      disabled={busy || !payment.trim() || !paymentDate}
-                      onClick={() => change("paid")}
-                    >
-                      Record payment
                     </button>
                   )}
                 </div>
@@ -2159,7 +2183,7 @@ export function App() {
         </a>
       </header>
       <main>
-        <div className="page-heading">
+        {!selected && <div className="page-heading">
           <div>
             <p className="eyebrow">RCAP FINANCE</p>
             <h1>Check requests.</h1>
@@ -2173,7 +2197,7 @@ export function App() {
           <span className="private-label">
             <ShieldCheck size={18} /> Private & secure
           </span>
-        </div>
+        </div>}
         {tab === "new" && !selected && (
           <div
             className="process-overview"
@@ -2199,7 +2223,7 @@ export function App() {
             </p>
           </div>
         )}
-        <nav className="tabs" aria-label="Check request sections">
+        {!selected && <nav className="tabs" aria-label="Check request sections">
           {[
             ["new", "New request"],
             ["mine", "Past requests"],
@@ -2236,7 +2260,7 @@ export function App() {
               <LogOut size={14} /> Sign out
             </button>
           )}
-        </nav>
+        </nav>}
         {error && (
           <div ref={errorRef} className="notice error" role="alert">
             {error}

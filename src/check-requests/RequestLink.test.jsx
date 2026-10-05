@@ -2,7 +2,7 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
-import { supabase, loadRequests, loadStaff } from "./api.js";
+import { supabase, loadRequests, loadStaff, details } from "./api.js";
 import { App, SignIn } from "./main.jsx";
 
 vi.mock("./api.js", () => ({
@@ -74,6 +74,35 @@ it("asks a signed-out reviewer to sign in instead of showing a blank new request
   expect(host.querySelector('input[type="tel"]')).not.toBeNull();
   expect(host.textContent).toContain("Use verified backup email");
   expect(location.hash).toBe("#request/7d40ca03-9127-4f61-a1d8-ca2f1c378454");
+});
+
+it("puts the treasurer payment action first when an approved request opens from a notification", async () => {
+  const id = "7d40ca03-9127-4f61-a1d8-ca2f1c378454";
+  history.replaceState(null, "", `/check-requests/#request/${id}`);
+  const user = { id: "treasurer", phone: "+14045550123" };
+  supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user } } });
+  loadStaff.mockResolvedValueOnce([
+    { name: "Treasurer", email: "+14045550123", role: "treasurer" },
+  ]);
+  loadRequests.mockResolvedValueOnce([{
+    id, reference: 13, version: 1, status: "approved", owner_id: "parent",
+    email: "+14045550124", requester_name: "Parent", phone: "+14045550124",
+    payee: "Parent", committee: "General RCAP", request_type: "reimbursement",
+    delivery: "zelle", zelle_contact: "parent@example.test", purpose: "Event supplies",
+    total_cents: 8594, items: [], created_at: "2026-10-05T14:00:00Z",
+  }]);
+  details.mockResolvedValueOnce({ history: [], notifications: [] });
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  const payment = host.querySelector(".payment-action-card");
+  expect(payment).not.toBeNull();
+  expect(payment.textContent).toContain("$85.94");
+  expect(payment.querySelector("button").disabled).toBe(true);
+  expect(host.querySelector(".page-heading")).toBeNull();
+  expect(host.querySelector(".tabs")).toBeNull();
+  expect(payment.compareDocumentPosition(host.querySelector(".review-grid")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
 it("keeps a daily reminder link on the board sign-in path", async () => {
