@@ -46,6 +46,7 @@ import {
   loadPaymentCommittees,
   submit,
   act,
+  addItemNote,
   details,
   archiveUrl,
 } from "./api.js";
@@ -85,6 +86,7 @@ const HISTORY_LABEL = {
   vote_decline: "Voted no",
   duplicate: "Closed as duplicate",
   paid: "Funds released",
+  item_note: "Expense note added",
   assigned: "Assigned",
   reassigned: "Approver changed",
   archived: "Archived",
@@ -1342,6 +1344,7 @@ function Detail({
   const [extra, setExtra] = useState({ history: [], notifications: [] }),
     [loading, setLoading] = useState(true),
     [note, setNote] = useState(""),
+    [itemNoteDrafts, setItemNoteDrafts] = useState({}),
     [dupOf, setDupOf] = useState(""),
     [payment, setPayment] = useState(""),
     [paymentMethod, setPaymentMethod] = useState(
@@ -1391,6 +1394,9 @@ function Detail({
     ["treasurer", "secretary", "manager"].includes(role) &&
     r.status === "submitted" &&
     !r.archived_at;
+  const canAddItemNote =
+    ["treasurer", "secretary", "manager"].includes(role) &&
+    ["approved", "paid"].includes(r.status);
   const requesterName = staff.find((s) => s.email === r.email)?.name;
   const payeeName = staff.find((s) => s.email === r.payee_contact)?.name;
   const reviewerOptions = [
@@ -1457,6 +1463,25 @@ function Detail({
       onUpdate(updated);
     } catch (e) {
       onError(e.message || "The update could not be saved.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function saveItemNote(event, index) {
+    event.preventDefault();
+    const content = (itemNoteDrafts[index] || "").trim();
+    if (!content || busy) return;
+    setBusy(true);
+    onError("");
+    try {
+      const entry = await addItemNote(r.id, index, content);
+      setExtra((current) => ({
+        ...current,
+        history: [...current.history.filter((row) => row.id !== entry.id), entry],
+      }));
+      setItemNoteDrafts((current) => ({ ...current, [index]: "" }));
+    } catch (error) {
+      onError(error.message || "Could not save the expense note.");
     } finally {
       setBusy(false);
     }
@@ -1643,8 +1668,14 @@ function Detail({
           </dl>
           <div className="form-section">
             <h2>Expenses & documents</h2>
-            {r.items.map((item, i) => (
-              <div className="expense" key={i}>
+            {canAddItemNote && (
+              <p className="muted">Expense notes are dated, visible to everyone with request access, and do not change the approved amounts.</p>
+            )}
+            {r.items.map((item, i) => {
+              const itemNotes = extra.history.filter(
+                (entry) => entry.action === "item_note" && entry.item_index === i,
+              );
+              return <div className="expense" key={i}>
                 <div className="detail-head">
                   <strong>{item.vendor || item.description}</strong>
                   <strong>{dollars(item.amount_cents)}</strong>
@@ -1669,8 +1700,34 @@ function Detail({
                   </div>
                 )}
                 <ReceiptThumbs receipts={item.receipts} labels />
+                {(itemNotes.length > 0 || canAddItemNote) && (
+                  <div className="item-notes">
+                    <h3>Expense {i + 1} notes</h3>
+                    {itemNotes.map((entry) => (
+                      <div className="item-note" key={entry.id}>
+                        <p>{entry.note.replace(/^Expense \d+: /, "")}</p>
+                        <p className="muted">{nameOf(entry.actor_email)} · {dateLabel(entry.created_at)}</p>
+                      </div>
+                    ))}
+                    {canAddItemNote && (
+                      <form onSubmit={(event) => saveItemNote(event, i)}>
+                        <label htmlFor={`item-note-${i}`}>Add a note after approval or payment</label>
+                        <textarea id={`item-note-${i}`} rows={2} maxLength={1000}
+                          value={itemNoteDrafts[i] || ""}
+                          onChange={(event) => setItemNoteDrafts((current) => ({
+                            ...current, [i]: event.target.value,
+                          }))}
+                          placeholder="Add accounting context for this expense" />
+                        <button type="submit" className="secondary"
+                          disabled={busy || !(itemNoteDrafts[i] || "").trim()}>
+                          {busy ? "Saving…" : "Save note"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
+            })}
             <div className="total">
               <span>Total requested</span>
               <strong>{dollars(r.total_cents)}</strong>

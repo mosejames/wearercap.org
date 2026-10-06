@@ -66,6 +66,15 @@ export async function act(action, data) {
   if (r.error) throw r.error;
   return r.data;
 }
+export async function addItemNote(requestId, itemIndex, note) {
+  const { data, error } = await supabase.rpc("cr_add_item_note", {
+    p_id: requestId,
+    p_item_index: itemIndex,
+    p_note: note,
+  });
+  if (error) throw error;
+  return data;
+}
 export async function submit(d, user, onProgress, canNotify = false) {
   const { approval_recipients, approval_recipients_text, ...request } = d;
   const items = [];

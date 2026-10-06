@@ -2,7 +2,7 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
-import { supabase, loadRequests, loadStaff, details } from "./api.js";
+import { supabase, loadRequests, loadStaff, details, addItemNote } from "./api.js";
 import { App, SignIn } from "./main.jsx";
 
 vi.mock("./api.js", () => ({
@@ -22,7 +22,9 @@ vi.mock("./api.js", () => ({
   submit: vi.fn(),
   act: vi.fn(),
   details: vi.fn(),
+  addItemNote: vi.fn(),
   receiptUrl: vi.fn(),
+  receiptPreviewUrls: vi.fn().mockResolvedValue([]),
   archiveUrl: vi.fn(),
 }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -139,6 +141,49 @@ it("puts the treasurer payment action first when an approved request opens from 
   expect(host.querySelector(".page-heading")).toBeNull();
   expect(host.querySelector(".tabs")).toBeNull();
   expect(payment.compareDocumentPosition(host.querySelector(".review-grid")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it("adds an audited note to a paid expense without changing its amount", async () => {
+  const id = "7d40ca03-9127-4f61-a1d8-ca2f1c378454";
+  history.replaceState(null, "", `/check-requests/#request/${id}`);
+  const user = { id: "treasurer", phone: "+14045550123" };
+  supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user } } });
+  loadStaff.mockResolvedValueOnce([
+    { name: "Treasurer", email: "+14045550123", role: "treasurer" },
+  ]);
+  loadRequests.mockResolvedValueOnce([{
+    id, reference: 13, version: 2, status: "paid", owner_id: "parent",
+    email: "+14045550124", requester_name: "Parent", phone: "+14045550124",
+    payee: "Parent", committee: "General RCAP", request_type: "reimbursement",
+    delivery: "zelle", zelle_contact: "parent@example.test", purpose: "Event supplies",
+    total_cents: 8594, payment_reference: "BANK-REF", payment_date: "2026-10-05",
+    items: [{ vendor: "Walgreens", description: "Poster", amount_cents: 8594,
+      document_total_cents: 8594, date: "2026-10-05", receipts: [] }],
+    created_at: "2026-10-05T14:00:00Z",
+  }]);
+  details.mockResolvedValueOnce({ history: [], notifications: [] });
+  addItemNote.mockResolvedValueOnce({
+    id: "new-note", request_id: id, item_index: 0, action: "item_note",
+    note: "Expense 1: Reconciled to bank statement", actor_email: "+14045550123",
+    created_at: "2026-10-05T15:00:00Z",
+  });
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<App />));
+  const textarea = host.querySelector("#item-note-0");
+  expect(textarea).not.toBeNull();
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")
+      .set.call(textarea, "Reconciled to bank statement");
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => [...host.querySelectorAll("button")]
+    .find((button) => button.textContent === "Save note").click());
+  expect(addItemNote).toHaveBeenCalledWith(id, 0, "Reconciled to bank statement");
+  expect(host.querySelector(".item-note").textContent).toContain("Reconciled to bank statement");
+  expect(host.querySelector(".total").textContent).toContain("$85.94");
+  expect(host.querySelector(".history").textContent).toContain("Expense note added");
 });
 
 it("keeps a daily reminder link on the board sign-in path", async () => {

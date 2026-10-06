@@ -11,14 +11,14 @@ const LEDGER_HEADERS = {
     'Payment date', 'Payment reference', 'Documents', 'Record link', 'Archived / test',
     'Payment method', 'Zelle destination'],
   Expenses: ['Request #', 'Item #', 'Expense date', 'Vendor', 'Expense',
-    'Receipt / invoice total', 'Requested from RCAP', 'Other coverage',
+    'Receipt / invoice total', 'Requested from RCAP', 'Other coverage', 'Notes after approval',
     'Source receipts', 'Documents', 'Record link'],
   History: ['Request #', 'When (ET)', 'Action', 'By', 'Note'],
   Notifications: ['Request #', 'Queued (ET)', 'Channel', 'To', 'Subject',
     'Send status', 'Sent (ET)', 'Delivery status', 'Error', 'Record link'],
 };
 const LEDGER_COLUMN_WIDTHS = {
-  Expenses: [105, 75, 115, 190, 320, 155, 165, 280, 220, 235, 235],
+  Expenses: [105, 75, 115, 190, 320, 155, 165, 280, 320, 220, 235, 235],
   Notifications: [105, 175, 120, 330, 250, 120, 175, 135, 250, 235],
 };
 
@@ -100,6 +100,12 @@ function syncLedger() {
     const expenseRows = data.expenses.map((item) => {
       const request = requestsById.get(item.request_id);
       if (!request) throw new Error('An expense has no matching request.');
+      const notes = data.history
+        .filter((action) => action.request_id === item.request_id &&
+          action.action === 'item_note' && action.item_index === item.item_number - 1)
+        .map((action) => eastern(action.created_at) + ' | ' +
+          (staff.get(action.actor_email) || action.actor_email) + ': ' +
+          String(action.note || '').replace(/^Expense \d+: /, ''));
       return [
         request.reference,
         item.item_number,
@@ -109,6 +115,7 @@ function syncLedger() {
         item.document_total_cents == null ? '' : Number(item.document_total_cents) / 100,
         Number(item.amount_cents) / 100,
         safe(item.coverage_note || ''),
+        safe(notes.join('\n')),
         safe((item.receipt_names || []).join('; ') || 'No original receipt'),
         documentFolders.get(request.id) || '',
         'https://wearercap.org/check-requests/#request/' + request.id,
