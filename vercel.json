@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/6ps",
+      "destination": "/6ps/index.html"
+    },
+    {
       "source": "/share/:token",
       "destination": "/api/vault-link?share=:token"
     },
