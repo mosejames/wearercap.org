@@ -84,6 +84,11 @@
   ],
   "redirects": [
     {
+      "source": "/london-vault/",
+      "destination": "/2028-london/",
+      "permanent": true
+    },
+    {
       "source": "/london-vault/:path*",
       "destination": "/2028-london/:path*",
       "permanent": true
