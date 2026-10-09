@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images } from 'lucide-react';
+import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House } from 'lucide-react';
 import { DAYS, PREP, VAULT, MAX_BATCH, DESTINATIONS, chapterFor, basePath, ideasFor, tripToday } from './config.js';
 import * as db from './data.js';
 import TripMap from './TripMap.jsx';
@@ -17,6 +17,21 @@ function Dialog({ title, close, children }) {
     <button className="l-close" aria-label="Close" onClick={close}><X size={22} /></button>
     <h2>{title}</h2>{children}
   </dialog>;
+}
+const ALBUM_COVERS = {
+  'the-whole-adventure': [Globe2, 'ONE SHARED STORY'],
+  'before-the-adventure': [Luggage, 'STARTING AT HOME'],
+  'off-we-go': [Plane, 'ATL → LHR'],
+  'hello-london': [Landmark, 'HELLO, LONDON'],
+  'history-and-six': [Ticket, 'HISTORY + THEATRE'],
+  'palaces-and-stones': [Castle, 'A LITTLE MAGIC'],
+  'bonjour-paris': [TrainFront, 'LONDON → PARIS'],
+  'a-day-to-remember': [Crown, 'A DAY IN FRANCE'],
+  'home-with-stories': [House, 'CDG → ATL'],
+};
+function AlbumCover({ slug }) {
+  const [Icon, label] = ALBUM_COVERS[slug];
+  return <div className={`l-album-cover l-cover-${slug}`} aria-hidden="true"><Icon size={27} strokeWidth={1.3} /><i>{label}</i></div>;
 }
 export default function App() {
   const [events, setEvents] = useState([]);
@@ -93,7 +108,7 @@ export default function App() {
       <TripMap chapter={chapter} pickAlbum={pickAlbum} />
       <section className="l-daily-chapter"><div><p className="l-eyebrow">{chapter.label.toUpperCase()} · {chapter.day.slug === PREP.slug ? 'OUR FAMILIES START THE STORY' : 'RCA 2028 TAKES LONDON'}</p><h2>{chapter.day.title === 'The whole adventure' ? 'A new place to wake up to.' : chapter.day.title}</h2><p>{chapter.day.blurb}</p><small>{chapter.day.slug === PREP.slug ? 'The excitement at home is part of the adventure, too.' : 'A new day, a new part of the adventure. The moments below are theirs to share.'}</small></div><button className="l-text" onClick={() => setIdea(chapter.day.slug)}><Sparkles size={17} /> A little inspiration for this chapter <ArrowUpRight size={16} /></button></section>
       <section className="l-memories" id="memories"><div className="l-section-head"><div><p className="l-eyebrow">THE STORY, TOGETHER</p><h2>{mine ? 'Your postcards home' : 'Postcards from their adventure'}</h2></div><span className="l-total">{photos.length} shared {photos.length === 1 ? 'moment' : 'moments'} <Heart size={15} /></span></div>
-        <div className="l-albums" aria-label="Trip albums"><button className={album === 'all' ? 'active' : ''} onClick={() => pickAlbum('all')}>The whole trip</button>{DAYS.map((d) => <button key={d.slug} className={album === d.slug ? 'active' : ''} onClick={() => pickAlbum(d.slug)}><img src={chapterFor(d.slug, d.date || '2026-10-09').photo.thumb} alt="" loading="lazy" width="180" height="100" /><span>{d.date && <small>{d.label}</small>}{d.title}</span></button>)}</div>
+        <div className="l-albums" aria-label="Trip albums"><button className={album === 'all' ? 'active' : ''} onClick={() => pickAlbum('all')}>The whole trip</button>{DAYS.map((d) => <button key={d.slug} className={album === d.slug ? 'active' : ''} onClick={() => pickAlbum(d.slug)}><AlbumCover slug={d.slug} /><span>{d.date && <small>{d.label}</small>}{d.title}</span></button>)}</div>
         {album !== 'all' && <p className="l-album-description">{DAYS.find((d) => d.slug === album)?.blurb}</p>}
         {!ideaHidden && <aside className="l-idea"><Sparkles size={21} /><div><b>A little inspiration, if you’d like</b><p>{ideasFor(suggestionDay.slug)[0]}</p><button className="l-text" onClick={() => setIdea(suggestionDay.slug)}>More ideas <ArrowUpRight size={14} /></button></div><button className="l-dismiss" aria-label="Dismiss photo ideas for this visit" onClick={() => { setIdeaHidden(true); try { sessionStorage.setItem('london-idea-hidden', 'yes'); } catch { /* private mode */ } }}><X size={17} /></button></aside>}
         <div className="l-filter-row"><div className="l-gallery-switch"><button className={`l-text ${!mine ? 'selected' : ''}`} onClick={() => setMine(false)} aria-pressed={!mine}>Everyone’s photos</button><button className={`l-text ${mine ? 'selected' : ''}`} onClick={myUploads} aria-pressed={mine}><Images size={15} /> My uploads</button></div>{groups.length > 0 && <label>Browse by group <select value={group} onChange={(e) => setGroup(e.target.value)}><option value="">Everyone together</option>{groups.map((g) => <option key={g}>{g}</option>)}</select></label>}</div>
