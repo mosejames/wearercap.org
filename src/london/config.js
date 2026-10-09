@@ -1,5 +1,5 @@
 import destinationPhotos from './destinations.json';
-export const VAULT = { id: 'london-2028', name: 'A Class of 2028 Takes London' };
+export const VAULT = { id: 'london-2028', name: 'RCA 2028 Takes London' };
 export const MAX_FILE_MB = 50;
 export const UPLOAD_PARALLEL = 3;
 export const MAX_BATCH = 60;

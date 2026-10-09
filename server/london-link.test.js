@@ -19,14 +19,14 @@ it('uses the requested R2 photo for OG and Twitter and opens that exact photo th
 });
 it.each([{hidden:true},{event_id:'other-album'},{vault:'m3-2028'},{storage:'supabase'},{web_key:'m3-2028/foreign/web.jpg'}])('falls back rather than exposing an unavailable or foreign photo: %j',async override=>{
  fetch.mockReset().mockResolvedValueOnce({ok:true,json:async()=>[event]}).mockResolvedValueOnce({ok:true,json:async()=>[{photo:{...photo,...override}}]});
- const res=response();await handler(request,res);expect(res.html).toContain('https://wearercap.org/london/2028-london-og.jpg');expect(res.html).not.toContain('/p/'+id);expect(res.html).not.toContain('https://media.example.com/');
+ const res=response();await handler(request,res);expect(res.html).toContain('https://wearercap.org/london/2028-london-og-v2.jpg');expect(res.html).not.toContain('/p/'+id);expect(res.html).not.toContain('https://media.example.com/');
 });
 it('does not look up a photo for an unavailable album',async()=>{
- fetch.mockReset().mockResolvedValueOnce({ok:true,json:async()=>[]});const res=response();await handler(request,res);expect(fetch).toHaveBeenCalledOnce();expect(res.html).toContain('2028-london-og.jpg');expect(res.html).not.toContain('#/e/');
+ fetch.mockReset().mockResolvedValueOnce({ok:true,json:async()=>[]});const res=response();await handler(request,res);expect(fetch).toHaveBeenCalledOnce();expect(res.html).toContain('2028-london-og-v2.jpg');expect(res.html).not.toContain('#/e/');
 });
 it('does not query invalid photo IDs and supplies the website image for album links',async()=>{
- const res=response();await handler({query:{slug:'hello-london',photo:'invalid'}},res);expect(fetch).toHaveBeenCalledOnce();expect(res.html).toContain('2028-london-og.jpg');expect(res.html).toContain('#/e/hello-london');
+ const res=response();await handler({query:{slug:'hello-london',photo:'invalid'}},res);expect(fetch).toHaveBeenCalledOnce();expect(res.html).toContain('2028-london-og-v2.jpg');expect(res.html).toContain('#/e/hello-london');
 });
 it('falls back cleanly when a photo was removed between requests',async()=>{
- fetch.mockReset().mockResolvedValueOnce({ok:true,json:async()=>[event]}).mockResolvedValueOnce({ok:true,json:async()=>[]});const res=response();await handler(request,res);expect(res.html).toContain('2028-london-og.jpg');expect(res.html).not.toContain('/p/'+id);expect(res.headers['Cache-Control']).toBe('no-store');
+ fetch.mockReset().mockResolvedValueOnce({ok:true,json:async()=>[event]}).mockResolvedValueOnce({ok:true,json:async()=>[]});const res=response();await handler(request,res);expect(res.html).toContain('2028-london-og-v2.jpg');expect(res.html).not.toContain('/p/'+id);expect(res.headers['Cache-Control']).toBe('no-store');
 });

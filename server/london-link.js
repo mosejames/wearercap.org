@@ -1,6 +1,6 @@
 const SITE = 'https://wearercap.org';
 const BASE = `${SITE}/2028-london/`;
-const NAME = 'A Class of 2028 Takes London';
+const NAME = 'RCA 2028 Takes London';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const esc = (value) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 export default async function handler(req,res) {
@@ -28,7 +28,7 @@ export default async function handler(req,res) {
   const dest = `${BASE}${suffix ? `#/${suffix}` : ''}`;
   const title = photo ? `${event.title} · Class of 2028` : NAME;
   const desc = photo ? photo.caption || `A postcard from ${event.title}. Open this moment from the class adventure.` : 'Postcards from London and Paris. One class, many perspectives, a little window into their big adventure.';
-  const image = photo ? `${publicBase}/${photo.web_key.split('/').map(encodeURIComponent).join('/')}` : `${SITE}/london/2028-london-og.jpg`;
+  const image = photo ? `${publicBase}/${photo.web_key.split('/').map(encodeURIComponent).join('/')}` : `${SITE}/london/2028-london-og-v2.jpg`;
   const alt = photo ? `A shared moment from ${event.title}` : 'Ron Clark Academy Class of 2028 takes London. A postcard overlooking Big Ben and the River Thames.';
   res.setHeader('Content-Type','text/html; charset=utf-8');
   // Recheck visibility on each request. Removed photos must not stay in our cached cards.

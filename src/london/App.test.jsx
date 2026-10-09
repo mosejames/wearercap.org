@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn()}));
+vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn()}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
 import App from './App.jsx';
@@ -100,4 +100,19 @@ it('opens family video postcards through the compact invitation',async()=>{
  expect(host.querySelector('.l-grid').textContent).toContain('Video');
  await click(host.querySelector('[aria-label="Open Ready for London"]'));
  expect(host.querySelector('dialog video').controls).toBe(true);expect(window.location.hash).toBe('#/e/before-the-adventure');
+});
+
+it('saves a thank-you reaction on the photo and lets a parent undo it',async()=>{
+ db.setThanks.mockResolvedValue();
+ await click(button('Thanks for sharing'));
+ expect(db.setThanks).toHaveBeenLastCalledWith('own',true);
+ expect(button('Thanks sent').getAttribute('aria-pressed')).toBe('true');
+ await click(button('Thanks sent'));
+ expect(db.setThanks).toHaveBeenLastCalledWith('own',false);
+});
+it('keeps a failed reaction available to retry',async()=>{
+ db.setThanks.mockRejectedValueOnce(new Error('offline'));
+ await click(button('Thanks for sharing'));
+ expect(host.querySelector('[role="alert"]').textContent).toContain('could not be saved');
+ expect(button('Thanks for sharing').getAttribute('aria-pressed')).toBe('false');
 });

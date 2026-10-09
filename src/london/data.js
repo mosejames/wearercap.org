@@ -56,7 +56,15 @@ export async function listPhotos() {
   await storageConfig();
   const { data, error } = await client.rpc('m3_list_photos', { p_token: getToken(), p_vault: VAULT.id, p_mode: 'recent', p_limit: 5000 });
   if (error) throw error;
-  return (data || []).map((row) => photoFromRow(row.photo));
+  const photos = (data || []).map((row) => photoFromRow(row.photo));
+  const owner = await getOwner();
+  const thanked = new Set();
+  for (let offset = 0; offset < photos.length; offset += 200) {
+    const { data: likes, error: likesError } = await client.from('m3_likes').select('photo_id').eq('owner', owner).in('photo_id', photos.slice(offset, offset + 200).map((p) => p.id));
+    if (likesError) throw likesError;
+    (likes || []).forEach((like) => thanked.add(like.photo_id));
+  }
+  return photos.map((photo) => ({ ...photo, thanked: thanked.has(photo.id) }));
 }
 export async function insertPhotos(rows) {
   const { error } = await client.from('m3_photos').insert(rows);
@@ -71,4 +79,9 @@ export async function checkPass(pass) {
   const { data, error } = await client.rpc('m3_pass_ok', { p_vault: VAULT.id, p_pass: pass });
   if (error) throw error;
   return data === true;
+}
+
+export async function setThanks(id, thanked) {
+  const { error } = await client.rpc('london_set_thanks', { p_photo: id, p_token: getToken(), p_thanked: thanked });
+  if (error) throw error;
 }
