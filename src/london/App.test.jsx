@@ -71,7 +71,7 @@ it('opens a valid shared photo after gallery loading and does not reopen it afte
  await act(async()=>window.dispatchEvent(new HashChangeEvent('hashchange')));expect(host.querySelector('dialog')).toBeNull();
 });
 it('opens family preparation uploads in their own album with photos and videos supported',async()=>{
- await click(button('Share our getting-ready moment'));
+ await click(button('Add a family postcard'));
  const dialog=host.querySelector('dialog');expect(dialog.querySelector('h2').textContent).toBe('A postcard from home');
  expect(dialog.querySelector('.l-upload-summary').textContent).toContain('Before the adventure');
  expect(dialog.querySelector('input[type="file"]').accept).toContain('video/mp4');
@@ -82,6 +82,8 @@ it('uses a selected parent question as an editable caption and saves to the prep
  db.listEvents.mockResolvedValue([{id:'prep',slug:'before-the-adventure',title:'Before the adventure'}]);
  db.saveProfile.mockResolvedValue({displayName:'Test chaperone',team:''});
  await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
+ expect(host.querySelector('.l-prep-prompts')).toBeNull();
+ await click(button('Need an idea?'));
  await click([...host.querySelectorAll('.l-prep-prompts button')][0]);
  const file=new File(['photo'],'packing.jpg',{type:'image/jpeg'});
  const input=host.querySelector('input[type="file"]');Object.defineProperty(input,'files',{value:[file],configurable:true});
@@ -90,11 +92,12 @@ it('uses a selected parent question as an editable caption and saves to the prep
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
  expect(uploadBatch).toHaveBeenCalledWith([file],expect.objectContaining({event:expect.objectContaining({id:'prep',slug:'before-the-adventure'}),caption:'What are you most excited to see or do?'}));
 });
-it('shows family video postcards in the special section and opens the playable original',async()=>{
+it('opens family video postcards through the compact invitation',async()=>{
  db.listEvents.mockResolvedValue([{id:'prep',slug:'before-the-adventure',title:'Before the adventure'}]);
  db.listPhotos.mockResolvedValue([{...own,eventId:'prep',kind:'video',caption:'Ready for London'}]);
  await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
- expect(host.querySelector('.l-prep-gallery').textContent).toContain('Video');
- await click(host.querySelector('[aria-label="Open family postcard: Ready for London"]'));
+ await click(button('View postcards (1)'));
+ expect(host.querySelector('.l-grid').textContent).toContain('Video');
+ await click(host.querySelector('[aria-label="Open Ready for London"]'));
  expect(host.querySelector('dialog video').controls).toBe(true);expect(window.location.hash).toBe('#/e/before-the-adventure');
 });
