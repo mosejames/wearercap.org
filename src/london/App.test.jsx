@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn()}));
+vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn()}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
 import App from './App.jsx';
@@ -138,6 +138,35 @@ it('restores a collection from its link and offers the correct day and collectio
  await click(button('Add a moment here'));
  expect(host.querySelector('dialog h2').textContent).toBe('Add to Hampton Court Palace');
  await click(button('Change or add a caption'));
- expect([...host.querySelectorAll('select')].find(el=>el.value==='hampton-court')).toBeTruthy();
+ expect(host.querySelector('.l-upload-summary').textContent).toContain('Hampton Court Palace');
+ expect(host.querySelector('dialog').textContent).not.toContain('Inspiration collection (optional)');
  expect([...host.querySelectorAll('select')].find(el=>el.value==='palaces-and-stones')).toBeTruthy();
+});
+
+it('keeps organizing out of uploads and lets parents label another contributor’s photo later',async()=>{
+ db.categorizePhoto.mockResolvedValue();
+ expect(host.querySelector('.l-collection-editor')).toBeNull();
+ await click(button('Parent tools'));
+ const article=[...host.querySelectorAll('.l-photo')].find(el=>el.textContent.includes('Another perspective'));
+ const select=article.querySelector('select');
+ await act(async()=>{select.value='packing-bags';select.dispatchEvent(new Event('change',{bubbles:true}));});
+ await click([...article.querySelectorAll('button')].find(b=>b.textContent.trim()==='Save label'));
+ expect(db.categorizePhoto).toHaveBeenCalledWith('other','packing-bags');
+ expect(article.querySelector('select').value).toBe('packing-bags');
+ expect(article.textContent).not.toContain('Remove');
+ await click(button('Done organizing'));
+ expect(host.querySelector('.l-collection-editor')).toBeNull();
+ await click(button('Add photos'));
+ await click(button('Change or add a caption'));
+ expect(host.querySelector('dialog').textContent).not.toContain('Collection for');
+ expect(host.querySelector('dialog').textContent).not.toContain('Inspiration collection');
+});
+it('keeps a failed parent label change available to retry',async()=>{
+ db.categorizePhoto.mockRejectedValueOnce(new Error('offline'));
+ await click(button('Parent tools'));
+ const select=host.querySelector('.l-collection-editor select');
+ await act(async()=>{select.value='packing-bags';select.dispatchEvent(new Event('change',{bubbles:true}));});
+ await click(button('Save label'));
+ expect(host.querySelector('[role="alert"]').textContent).toContain('could not be saved');
+ expect(button('Save label').disabled).toBe(false);
 });

@@ -343,3 +343,10 @@ uploads still work without a category. Collection choices remain inside the
 inspiration dialog or compact gallery suggestions, not a tall homepage section.
 Hotel names and named stops come from the final trip guide. Photo sharing still
 uses the photo's real event album, so exact-photo OG visibility checks apply.
+
+London's footer Parent tools view lets parents categorize any visible London
+photo through the narrow `london_categorize_photo` RPC. No login is required,
+consistent with participation elsewhere in this vault. Labels are reversible;
+photo ownership, removal controls, media and captions are unchanged. Collection
+selection is absent from the upload form. Uploads started inside a collection
+are labeled automatically, while ordinary uploads may remain uncategorized.

@@ -85,3 +85,8 @@ export async function setThanks(id, thanked) {
   const { error } = await client.rpc('london_set_thanks', { p_photo: id, p_token: getToken(), p_thanked: thanked });
   if (error) throw error;
 }
+
+export async function categorizePhoto(id, inspiration) {
+  const { error } = await client.rpc('london_categorize_photo', { p_photo: id, p_token: getToken(), p_inspiration: inspiration });
+  if (error) throw error;
+}
