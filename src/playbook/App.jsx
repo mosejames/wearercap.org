@@ -4,7 +4,7 @@ import {COMMITTEES,PS,QUESTIONS,nextQuestion,suggestedFollowups,docUrl,folderUrl
 import {supabase,call,syncDrive} from './api.js';
 import {loadGoogleIdentity,createGoogleNonce,GOOGLE_CLIENT_ID} from '../carpool/googleIdentity.js';
 const date=v=>new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'America/New_York'});
-function Mark(){return <span className="pb-mark" aria-hidden="true">r<span>cap</span><i>✳</i></span>}
+function Mark(){return <img className="pb-mark" src="/brand/rcap.svg" alt="RCAP" width="100" height="34"/>}
 function GoogleButton({onError}) {
  const mount=useRef(null);
  useEffect(()=>{let live=true; if(!GOOGLE_CLIENT_ID)return; (async()=>{try{const id=await loadGoogleIdentity();const {nonce,hashedNonce}=await createGoogleNonce();if(!live)return;id.initialize({client_id:GOOGLE_CLIENT_ID,nonce:hashedNonce,callback:async({credential})=>{const {error}=await supabase.auth.signInWithIdToken({provider:'google',token:credential,nonce});if(error)onError(error.message);}});id.renderButton(mount.current,{theme:'outline',size:'large',width:300,text:'continue_with',shape:'pill'});}catch{if(live)onError('Google sign-in is unavailable here. You can use your email below.');}})();return()=>{live=false;};},[onError]);
