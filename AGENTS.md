@@ -294,7 +294,9 @@ token, and `london_save_profile` so profiles cannot land in M3 by default.
 All groups share one gallery immediately. Group labels are optional.
 Appreciation is alphabetical, with no individual counts, quotas or rankings.
 Photo ideas are optional, dismissible and based on the selected album.
-`api/london-sign.js` uses only shared `R2_*` settings, checks the album belongs
+`/api/london-sign` rewrites to the existing M3 signing entry point, which
+dispatches to `server/london-sign.js`. This stays within the current hosting
+function limit. The London handler uses only shared `R2_*` settings, checks the album belongs
 to London, and fails clearly when R2 is missing. The database also enforces
 `storage = 'r2'` for London records. No Supabase Storage fallback exists.
 The trip guide heading says 2028, but its weekdays and the October 2026

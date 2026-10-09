@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { AwsClient } from 'aws4fetch';
+import londonHandler from '../server/london-sign.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -80,6 +81,9 @@ async function albumAccepts(eventId) {
 }
 
 export default async function handler(req, res) {
+  // London has its own album validation and R2-only storage rules. Sharing
+  // this entry point keeps the deployment within the existing function limit.
+  if (req.query?.vault === 'london') return londonHandler(req, res);
   res.setHeader('Cache-Control', 'no-store');
   const m = mode();
 
