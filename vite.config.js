@@ -22,6 +22,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        playbook: resolve(__dirname, "committee-playbook/index.html"),
         housepoint: resolve(__dirname, "house-point/index.html"),
         capsuleshare: resolve(__dirname, "capsule-share/index.html"),
         feedback: resolve(__dirname, "feedback/index.html"),

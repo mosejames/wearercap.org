@@ -1,0 +1,37 @@
+# RCAP Living Playbook: carrying it forward
+
+Website: https://wearercap.org/committee-playbook/
+
+The three pilot workspaces are Marketing & Communications, Men of RCAP, and Trunk or Treat. Each has 24 foundation questions across Purpose, Perspective, People, Provision, Plan, and Pass It On. Members can answer at their own pace, discuss contributions, review optional contextual follow-ups, and create next steps. Follow-up suggestions use explicit local rules, rather than an external AI model. Group agreements require a lead's action.
+
+## Where the knowledge lives
+
+Website contributions are stored in the existing RCAP Supabase project. Every edit preserves the previous answer, and changing an agreed answer reopens it for discussion. Website access uses a verified email and a committee membership list. Initial memberships came from completed committee signups and existing board access. Leads can add sign-in emails on the website. Adding a website member does not grant Google Drive access or send an invitation.
+
+The organization-owned RCAP 2026-27 folder contains Committees and all committee folders. Only the three pilot folders contain playbooks. Original editable Docs are preserved. Each pilot also has a separate generated Living Record for website contributions, comments, follow-up questions, next steps and earlier answer versions. Website changes flow to this generated record; edits to the Doc do not flow back to the website. Keep separate human notes in the original editable playbook.
+
+Members can download all committee data as JSON, including revisions and the foundation question catalog. The readable Google Doc is useful even if the website stops running. Its links, ownership and access should be checked at each handoff.
+
+## Drive updater
+
+Apps Script project: https://script.google.com/home/projects/1csWXbwSswIDHMVqFW9yri0tKidQQUtS8Ui_hPx50fj01hqx7DN7pG5AV/edit
+
+Source: `server/playbook/DriveUpdater.gs`. This source writes only to three fixed generated Docs, authenticates the signed-in member against the fixed Supabase origin, and serializes updates. It uses DocumentApp and UrlFetchApp. The Google authorization screen may request broader Docs access than the code uses. Owner authorization and web app deployment must be completed before automatic syncing works. A draft project is not a live connection.
+
+Deploy as the owner with an accessible web app endpoint. Set `PLAYBOOK_DRIVE_WEBHOOK_URL` in Vercel production to the deployment's `https://script.google.com/macros/s/.../exec` URL and redeploy. The endpoint accepts only the three committee IDs and independently checks a current Supabase member token. No Google refresh token is stored in Vercel or shipped to the browser. The browser calls the existing `api/feedback-draft.js` with `mode: playbook_sync`; this reuses a function entrypoint under the project's function limit.
+
+After authorization, verify a real contribution reaches the correct Doc and that a signed-out or unrelated member request cannot write. A contribution remains saved in Supabase when Drive is unavailable. The website reports a distinct Drive error and offers a retry. Avoid claiming a successful Drive save based only on a database save.
+
+## Succession checklist
+
+1. Name an incoming committee lead and a second ongoing administrator. Add their verified sign-in emails and verify access together.
+2. Confirm RCAP controls the repository, hosting, Supabase billing and project access, Google updater, folder access and domain. These services have separate ownership.
+3. Existing original and generated Docs are owned by mose@mosejames.com inside an organization-owned shared folder. Folder ownership does not transfer file ownership. Arrange an eligible transfer, Shared Drive move, or organization-owned copies. If IDs change, update the database committee records, frontend original-doc links and Apps Script fixed record map together.
+4. Reauthorize and redeploy the updater under the ongoing owner when necessary. Update the Vercel webhook environment variable and verify a real save before the departing owner loses access.
+5. Download an export, inspect the readable living record, record unfinished actions, and write the handoff date, incoming lead and access contact in Pass It On.
+
+## Verification
+
+Run `npm run build` and `npm test` before release. Database changes are in `supabase/migrations/20261009180737_committee_living_playbook.sql`. All playbook tables have RLS enabled and no direct anon or authenticated grants. The public RPC is an invoker; its private definer verifies the confirmed user and membership on every action. Static questions are validated against a server catalog. Test coverage includes save-before-navigation, conversation retention, Drive authentication boundaries and question progression. A rollback-only database check verified revision preservation, member agreement denial, cross-committee denial, outsider denial and rejection of forged question IDs.
+
+Branded share image: `public/playbook-og.jpg`, 1200 by 630. Both Open Graph and Twitter metadata use its absolute production HTTPS URL.
