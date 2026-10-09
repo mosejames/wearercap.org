@@ -33,6 +33,7 @@ export default function App() {
   const [admin, setAdmin] = useState('');
   const [ideaHidden, setIdeaHidden] = useState(() => { try { return sessionStorage.getItem('london-idea-hidden') === 'yes'; } catch { return false; } });
   const [idea, setIdea] = useState(null);
+  const openedShare = useRef('');
   const [hash, setHash] = useState(window.location.hash);
   async function refresh() {
     try {
@@ -44,6 +45,13 @@ export default function App() {
   useEffect(() => { refresh(); db.getOwner().then(setOwner); const timer = setInterval(refresh, 45000); return () => clearInterval(timer); }, []);
   useEffect(() => { const change = () => setHash(window.location.hash); window.addEventListener('hashchange', change); return () => window.removeEventListener('hashchange', change); }, []);
   useEffect(() => { const match = hash.match(/^#\/e\/([a-z0-9-]+)/); if (match) setAlbum(match[1]); else if (!hash || hash === '#/') setAlbum('all'); }, [hash]);
+  useEffect(() => {
+    const match = hash.match(/^#\/e\/([a-z0-9-]+)\/p\/([0-9a-f-]{36})$/i);
+    if (!match) { openedShare.current = ''; return; }
+    if (!loaded || openedShare.current === hash) return;
+    const photo = photos.find((p) => p.id === match[2] && events.find((e) => e.id === p.eventId)?.slug === match[1]);
+    if (photo) { openedShare.current = hash; setMine(false); setGroup(''); setModal({kind:'photo',id:photo.id}); }
+  }, [hash, loaded, photos, events]);
   useEffect(() => { if (notice) { const timer = setTimeout(() => setNotice(''), 4500); return () => clearTimeout(timer); } }, [notice]);
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   const groups = useMemo(() => [...new Set(photos.map((p) => p.team).filter(Boolean))].sort(), [photos]);
@@ -56,11 +64,20 @@ export default function App() {
   function upload() { setModal({ kind: 'upload' }); }
   function myUploads() { setMine(true); setGroup(''); pickAlbum('all'); setModal(null); document.getElementById('memories')?.scrollIntoView({ behavior: 'smooth' }); }
   async function share() {
-    const url = `${window.location.origin}${basePath()}${album === 'all' ? '' : `#/e/${album}`}`;
+    const url = `${window.location.origin}${basePath()}${album === 'all' ? '' : `e/${album}`}`;
     try {
       if (navigator.share) await navigator.share({ title: VAULT.name, text: 'A little window into their adventure. Thank you for every moment you share.', url });
       else { await navigator.clipboard.writeText(url); setNotice('Trip link copied.'); }
     } catch (e) { if (e.name !== 'AbortError') setNotice('Could not share the link. Please copy it from your address bar.'); }
+  }
+  async function sharePhoto(photo) {
+    const event = byId.get(photo.eventId);
+    if (!event) return;
+    const url = `${window.location.origin}${basePath()}e/${event.slug}/p/${photo.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: `${event.title} · Class of 2028`, url });
+      else { await navigator.clipboard.writeText(url); setNotice('Photo link copied. Its preview will show this moment.'); }
+    } catch (e) { if (e.name !== 'AbortError') setNotice('Could not share this photo. Please try again.'); }
   }
   return <div className="london" data-city={chapter.city}>
     <header className="l-top"><a href="#/" onClick={() => { setMine(false); pickAlbum('all'); }} className="l-brand"><img src="/london/ron-clark-academy.png" alt="The Ron Clark Academy" width="520" height="120" /><span>CLASS OF 2028<small>LONDON + PARIS</small></span></a><div className="l-top-actions"><button className="l-text l-my-uploads" onClick={myUploads}><Images size={16} /> My uploads</button><button className="l-button" onClick={upload}><Camera size={16} /> Add photos</button></div></header>
@@ -88,7 +105,7 @@ export default function App() {
     </main><footer className="l-footer"><span>RON CLARK ACADEMY · CLASS OF 2028 <Heart size={13} /> LONDON + PARIS</span><p>For our families. With love from the road.</p><button className="l-text" onClick={share}><Copy size={14} /> Share trip link</button><button className="l-text" onClick={() => setModal({ kind: 'profile' })}>{profile ? 'Your sharing details' : 'Add your sharing details'}</button><button className="l-text" onClick={() => setModal({ kind: 'credits' })}>Destination photo credits</button><button className="l-text" onClick={() => setModal({ kind: 'admin' })}>{admin ? 'Admin active' : 'Admin'}</button></footer>
     {modal?.kind === 'upload' && <Upload events={events} initialAlbum={album === 'all' ? currentDay.slug : album} viewUploads={myUploads} profile={profile} setProfile={setProfile} close={() => setModal(null)} done={() => { refresh(); setNotice('Thank you. You brought a little of their adventure home.'); }} />}
     {modal?.kind === 'profile' && <Profile profile={profile} setProfile={setProfile} close={() => setModal(null)} />}
-    {modal?.kind === 'photo' && <Photo key={modal.id} initialRemove={modal.remove} photo={photos.find((p) => p.id === modal.id)} photos={shown} owner={owner} admin={admin} close={() => setModal(null)} navigate={(id) => setModal({ kind: 'photo', id })} hidden={() => { setModal(null); refresh(); }} />}
+    {modal?.kind === 'photo' && <Photo key={modal.id} initialRemove={modal.remove} sharePhoto={sharePhoto} photo={photos.find((p) => p.id === modal.id)} photos={shown} owner={owner} admin={admin} close={() => setModal(null)} navigate={(id) => setModal({ kind: 'photo', id })} hidden={() => { setModal(null); refresh(); }} />}
     {modal?.kind === 'credits' && <Dialog title="The places in our story" close={() => setModal(null)}><p className="l-dialog-intro">Destination photographs set the scene. Family and chaperone contributions appear in the shared album.</p><ul className="l-credit-list">{Object.values(DESTINATIONS).map((p) => <li key={p.id}><a href={p.source} target="_blank" rel="noreferrer">{p.alt}<small>{p.credit}</small></a></li>)}</ul><a className="l-text" href="https://unsplash.com/license" target="_blank" rel="noreferrer">Unsplash photography license</a></Dialog>}
     {modal?.kind === 'admin' && <Admin close={() => setModal(null)} setAdmin={setAdmin} />}
     {idea && <Dialog title="A little inspiration" close={() => setIdea(null)}><p className="l-dialog-intro">Ideas for whenever a moment presents itself. Skip any or all of them. There’s no checklist to finish.</p><label className="l-field">Where are you in the adventure?<select value={idea} onChange={(e) => setIdea(e.target.value)}>{DAYS.map((d) => <option key={d.slug} value={d.slug}>{d.title}</option>)}</select></label><ul className="l-idea-list">{ideasFor(idea).map((s) => <li key={s}><Camera size={18} />{s}</li>)}</ul><p className="l-small">Enjoy the moment first. Photos can come later, and only where photography is welcome.</p><button className="l-button" onClick={() => setIdea(null)}>Lovely, thank you</button></Dialog>}
@@ -134,11 +151,11 @@ function Upload({ events, initialAlbum, profile, setProfile, close, done, viewUp
     <button className="l-button l-wide" disabled={busy || !files.length || !name.trim() || !events.length}>{busy ? 'Sharing…' : files.length ? `Share ${files.length} ${files.length === 1 ? 'photo or video' : 'photos & videos'}` : 'Share photos'}</button>{result?.done.length > 0 && <button type="button" className="l-text l-wide" onClick={viewUploads}>View my uploads <ArrowUpRight size={16} /></button>}<p className="l-small">Uploaded the wrong one? Remove it anytime in My uploads on this device.</p>{busy && <button type="button" className="l-text" onClick={() => abort.current?.abort()}>Stop upload</button>}
   </form></Dialog>;
 }
-function Photo({ photo, photos, owner, admin, close, navigate, hidden, initialRemove = false }) {
+function Photo({ photo, photos, owner, admin, close, navigate, hidden, initialRemove = false, sharePhoto }) {
   const [error, setError] = useState(''); const [confirm, setConfirm] = useState(initialRemove); const [busy, setBusy] = useState(false);
   if (!photo) return null;
   const index = photos.findIndex((p) => p.id === photo.id);
-  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close}><div className="l-viewer">{photo.kind === 'video' ? <video src={db.mediaUrl(photo, 'orig')} poster={db.mediaUrl(photo, 'thumb')} controls playsInline /> : <img src={db.mediaUrl(photo)} alt={photo.caption || 'A moment from the class trip'} />}</div><p>With thanks to <b>{photo.uploaderName || 'a trip friend'}</b>{photo.team ? ` · ${photo.team}` : ''}</p><div className="l-viewer-actions"><button className="l-text" disabled={index <= 0} onClick={() => { setConfirm(false); navigate(photos[index - 1].id); }}><ChevronLeft size={19} /> Previous</button><a className="l-text" href={db.mediaUrl(photo, 'orig')} target="_blank" rel="noreferrer"><Download size={17} /> Original</a><button className="l-text" disabled={index < 0 || index >= photos.length - 1} onClick={() => { setConfirm(false); navigate(photos[index + 1].id); }}>Next <ChevronRight size={19} /></button></div>{(photo.owner === owner || admin) && <div className="l-hide">{confirm ? <><p>Remove this photo from the shared album?</p><button className="l-button" disabled={busy} onClick={async () => { setBusy(true); try { await db.hidePhoto(photo.id, admin); hidden(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Remove from album</button><button className="l-text" onClick={() => setConfirm(false)}>Keep it visible</button></> : <button className="l-text" onClick={() => setConfirm(true)}><Trash2 size={16} /> Remove from album</button>}</div>}{error && <p className="l-error" role="alert">{error}</p>}</Dialog>;
+  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close}><div className="l-viewer">{photo.kind === 'video' ? <video src={db.mediaUrl(photo, 'orig')} poster={db.mediaUrl(photo, 'thumb')} controls playsInline /> : <img src={db.mediaUrl(photo)} alt={photo.caption || 'A moment from the class trip'} />}</div><p>With thanks to <b>{photo.uploaderName || 'a trip friend'}</b>{photo.team ? ` · ${photo.team}` : ''}</p><button className="l-button l-share-photo" onClick={() => sharePhoto(photo)}><Copy size={17} /> Share this photo</button><div className="l-viewer-actions"><button className="l-text" disabled={index <= 0} onClick={() => { setConfirm(false); navigate(photos[index - 1].id); }}><ChevronLeft size={19} /> Previous</button><a className="l-text" href={db.mediaUrl(photo, 'orig')} target="_blank" rel="noreferrer"><Download size={17} /> Original</a><button className="l-text" disabled={index < 0 || index >= photos.length - 1} onClick={() => { setConfirm(false); navigate(photos[index + 1].id); }}>Next <ChevronRight size={19} /></button></div>{(photo.owner === owner || admin) && <div className="l-hide">{confirm ? <><p>Remove this photo from the shared album?</p><button className="l-button" disabled={busy} onClick={async () => { setBusy(true); try { await db.hidePhoto(photo.id, admin); hidden(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Remove from album</button><button className="l-text" onClick={() => setConfirm(false)}>Keep it visible</button></> : <button className="l-text" onClick={() => setConfirm(true)}><Trash2 size={16} /> Remove from album</button>}</div>}{error && <p className="l-error" role="alert">{error}</p>}</Dialog>;
 }
 function Admin({ close, setAdmin }) {
   const [pass, setPass] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);

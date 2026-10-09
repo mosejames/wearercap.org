@@ -306,3 +306,23 @@ London keeps `/london-vault/` as a redirect to the class-specific address.
 Its route map shows planned guide stops, never live locations. My uploads
 uses the separate browser owner token. Removal hides the record from the
 shared album; it does not permanently delete R2 objects.
+
+## Share-preview requirement for all websites
+
+Every new website, vault, or shareable page needs an intentional OG thumbnail.
+Create a branded 1200 by 630 image and include absolute HTTPS og:image and
+Twitter summary_large_image metadata in server-rendered HTML. Include image
+size, type, alt text and canonical URL. Verify the deployed HTML and image URL.
+Do not consider a site finished without its share preview.
+
+When sharing a specific gallery photo, use that exact photo's existing web
+rendition as the OG and Twitter image, and open that exact photo for visitors.
+Check the photo belongs to the visible album and vault and is not hidden or
+removed. Unavailable photos fall back to the album or vault card. Keep photo
+card responses uncached so visibility changes are rechecked. Never substitute
+another gallery photo for a requested photo. This is a standing user preference.
+
+London's static thumbnail is `/london/2028-london-og.jpg`, rebuilt with
+`node scripts/create-london-og.mjs`. Its clean event/photo URLs dispatch from
+`api/m3-link.js` to `server/london-link.js`, preserving the hosting function
+limit. London share cards use only the shared R2 base for contributed media.

@@ -1,3 +1,4 @@
+import londonHandler from '../server/london-link.js';
 // ---------------------------------------------------------------------------
 // Share cards for the M³ Vault. Same trick as api/vault-link.js: the app is a
 // hash router, iMessage does not run JavaScript, so /m3-vault/e/<slug> is
@@ -45,6 +46,7 @@ async function describe(slug) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.vault === 'london') return londonHandler(req, res);
   const slug = String((req.query && req.query.slug) || '').trim();
   const ev = await describe(slug);
   const dest = ev ? `${BASE}#/e/${encodeURIComponent(ev.slug)}` : BASE;

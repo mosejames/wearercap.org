@@ -55,3 +55,18 @@ it('uses the map to select the corresponding guide chapter',async()=>{
  expect(host.querySelector('.l-route-day').textContent).toContain('Paris + Versailles');
  expect(host.querySelector('.l-destination-photo').src).toContain('versailles.jpg');
 });
+it('shares a clean link to the exact gallery photo instead of a hash-only album link',async()=>{
+ const share=vi.fn().mockResolvedValue();Object.defineProperty(navigator,'share',{configurable:true,value:share});
+ await click(host.querySelector('[aria-label="Open Our day"]'));await click(button('Share this photo'));
+ expect(share).toHaveBeenCalledWith({title:'The whole adventure · Class of 2028',url:`${window.location.origin}/e/the-whole-adventure/p/own`});
+ delete navigator.share;
+});
+it('opens a valid shared photo after gallery loading and does not reopen it after closing',async()=>{
+ const photoId='11111111-1111-4111-8111-111111111111';db.listPhotos.mockResolvedValue([{...own,id:photoId}]);
+ await act(async()=>{window.location.hash=`#/e/the-whole-adventure/p/${photoId}`;window.dispatchEvent(new HashChangeEvent('hashchange'));});
+ // Remount to exercise a fresh share landing with async gallery data.
+ await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
+ expect(host.querySelector('dialog').textContent).toContain('Our day');
+ await click(host.querySelector('[aria-label="Close"]'));expect(host.querySelector('dialog')).toBeNull();
+ await act(async()=>window.dispatchEvent(new HashChangeEvent('hashchange')));expect(host.querySelector('dialog')).toBeNull();
+});

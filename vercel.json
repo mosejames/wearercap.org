@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/2028-london/e/:slug/p/:photo",
+      "destination": "/api/m3-link?vault=london&slug=:slug&photo=:photo"
+    },
+    {
+      "source": "/2028-london/e/:slug",
+      "destination": "/api/m3-link?vault=london&slug=:slug"
+    },
+    {
       "source": "/api/london-sign",
       "destination": "/api/m3-sign?vault=london"
     },
