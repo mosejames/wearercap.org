@@ -84,6 +84,11 @@
   ],
   "redirects": [
     {
+      "source": "/london-vault/:path*",
+      "destination": "/2028-london/:path*",
+      "permanent": true
+    },
+    {
       "source": "/karaoke",
       "destination": "/rsvp/karaoke-sept-27",
       "permanent": false

@@ -39,7 +39,7 @@ export default defineConfig({
         exchange: resolve(__dirname, "uniform-exchange/index.html"),
         wishiknew: resolve(__dirname, "wish-i-knew/index.html"),
         wishiknewread: resolve(__dirname, "wish-i-knew/read/index.html"),
-        londonvault: resolve(__dirname, 'london-vault/index.html'),
+        londonvault: resolve(__dirname, '2028-london/index.html'),
         amivault: resolve(__dirname, "ami-vault/index.html"),
         rcapvault: resolve(__dirname, "rcap-capsule/index.html"),
         m3vault: resolve(__dirname, "m3-vault/index.html"),

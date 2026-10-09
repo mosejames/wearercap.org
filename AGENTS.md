@@ -287,7 +287,7 @@ Photo share HTML is not CDN-cached, so fresh requests recheck visibility.
 
 ## London trip vault
 
-`/london-vault/` is A Class of 2028 Takes London, October 11–17, 2026,
+`/2028-london/` is A Class of 2028 Takes London, October 11–17, 2026,
 including the Paris portion. Source lives in `src/london/`. It reuses the
 `m3_*` specialty-vault tables with `vault = 'london-2028'`, a separate browser
 token, and `london_save_profile` so profiles cannot land in M3 by default.
@@ -301,3 +301,8 @@ to London, and fails clearly when R2 is missing. The database also enforces
 `storage = 'r2'` for London records. No Supabase Storage fallback exists.
 The trip guide heading says 2028, but its weekdays and the October 2026
 calendar invitation establish the trip year as 2026.
+
+London keeps `/london-vault/` as a redirect to the class-specific address.
+Its route map shows planned guide stops, never live locations. My uploads
+uses the separate browser owner token. Removal hides the record from the
+shared album; it does not permanently delete R2 objects.
