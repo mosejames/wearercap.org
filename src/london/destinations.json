@@ -1,0 +1,44 @@
+[
+  {
+    "id": "london-morning",
+    "photo": "photo-1494922275507-58dc039ed337",
+    "alt": "Morning light over Big Ben, Westminster Bridge and the River Thames",
+    "source": "https://unsplash.com/s/photos/river-thames",
+    "credit": "Unsplash"
+  },
+  {
+    "id": "tower-of-london",
+    "photo": "photo-1678739815865-4cc92aaf635a",
+    "alt": "The Tower of London beside the River Thames",
+    "source": "https://unsplash.com/photos/a-large-castle-sitting-next-to-a-body-of-water-ONM_g1GzY2Y",
+    "credit": "George Ciobra / Unsplash"
+  },
+  {
+    "id": "westminster-abbey",
+    "photo": "photo-1601908096211-f9e45eb9c7bd",
+    "alt": "The Gothic stone facade of Westminster Abbey",
+    "source": "https://unsplash.com/s/photos/westminster-abbey",
+    "credit": "Unsplash"
+  },
+  {
+    "id": "stonehenge",
+    "photo": "photo-1545733154-3a8bd1419646",
+    "alt": "Stonehenge on the open green landscape of Salisbury Plain",
+    "source": "https://unsplash.com/photos/stonehenge-england-during-day-q-7BxOvJJ14",
+    "credit": "Zaxx / Unsplash"
+  },
+  {
+    "id": "paris-evening",
+    "photo": "photo-1639519309325-ec14bb05043e",
+    "alt": "The illuminated Eiffel Tower reflected in the River Seine",
+    "source": "https://unsplash.com/photos/the-statue-of-liberty-is-lit-up-at-night-td3gn8gk2M4",
+    "credit": "Palle Knudsen / Unsplash"
+  },
+  {
+    "id": "versailles",
+    "photo": "photo-1663274158677-c099f41870d5",
+    "alt": "The formal gardens and palace at Versailles",
+    "source": "https://unsplash.com/photos/a-courtyard-with-a-pool-and-a-building-in-the-background-PchBrps9gdA",
+    "credit": "Mahdi Samadzad / Unsplash"
+  }
+]

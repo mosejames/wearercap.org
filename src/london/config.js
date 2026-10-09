@@ -1,3 +1,4 @@
+import destinationPhotos from './destinations.json';
 export const VAULT = { id: 'london-2028', name: 'A Class of 2028 Takes London' };
 export const MAX_FILE_MB = 50;
 export const UPLOAD_PARALLEL = 3;
@@ -12,7 +13,6 @@ export const DAYS = [
   { slug: 'a-day-to-remember', title: 'A day to remember', date: '2026-10-16', label: 'Fri · Oct 16', blurb: 'Versailles, Napoleon’s Tomb, Notre-Dame and a dinner cruise on the Seine.', ideas: ['Taking in the gardens at Versailles', 'A group moment outside Notre-Dame', 'Friends around the dinner table on the Seine'] },
   { slug: 'home-with-stories', title: 'Home with stories', date: '2026-10-17', label: 'Sat · Oct 17', blurb: 'One last look, the journey home and those airport reunion hugs.', ideas: ['A last travel-buddy photo', 'A favorite memory in their own words', 'The reunion at home'] },
 ];
-export const EXTRA_IDEA = 'If Abbey Road happens to be on your route, a group photo nearby could be a lovely keepsake. Only if it fits the day.';
 export function basePath(path = window.location.pathname) {
   if (path.endsWith('/')) return path;
   const cut = path.lastIndexOf('/');
@@ -22,3 +22,23 @@ export function tripToday(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
 }
 export function ideasFor(slug) { return (DAYS.find((day) => day.slug === slug) || DAYS[0]).ideas; }
+
+export const DESTINATIONS = Object.fromEntries(destinationPhotos.map((p) => [p.id, { ...p, image: `/london/${p.id}.jpg`, thumb: `/london/${p.id}-thumb.jpg` }]));
+const CHAPTERS = {
+ 'the-whole-adventure': { image: 'london-morning', place: 'London', greeting: 'London is calling.', mood: 'A week of wonder is waiting.', route: 'ATL → LHR', city: 'london' },
+ 'off-we-go': { image: 'london-morning', place: 'London awaits', greeting: 'And so the adventure begins.', mood: 'Travel buddies, airport hellos and a whole world ahead.', route: 'ATL → LHR', city: 'london' },
+ 'hello-london': { image: 'tower-of-london', place: 'Tower of London', greeting: 'Good morning, London.', mood: 'A first day of history, discovery and fish and chips.', route: 'HELLO, LONDON', city: 'london' },
+ 'history-and-six': { image: 'westminster-abbey', place: 'Westminster Abbey', greeting: 'A new day. Centuries to discover.', mood: 'From Westminster Abbey to the British Museum, then SIX.', route: 'LONDON · DAY 2', city: 'london' },
+ 'palaces-and-stones': { image: 'stonehenge', place: 'Stonehenge', greeting: 'Oh, the stories these stones could tell.', mood: 'Hampton Court, Stonehenge and a little Wicked magic.', route: 'LONDON · DAY 3', city: 'london' },
+ 'bonjour-paris': { image: 'paris-evening', place: 'The Eiffel Tower', greeting: 'Bonjour, a whole new chapter.', mood: 'A train to Paris, the Louvre and a city full of light.', route: 'LONDON → PARIS', city: 'paris' },
+ 'a-day-to-remember': { image: 'versailles', place: 'The gardens of Versailles', greeting: 'Another morning. More wonder.', mood: 'Versailles, Napoleon’s Tomb, Notre-Dame and the Seine.', route: 'PARIS · DAY 2', city: 'paris' },
+ 'home-with-stories': { image: 'london-morning', place: 'A last look at London', greeting: 'Home with a world of stories.', mood: 'Travel buddies today. Remember-when friends forever.', route: 'CDG → ATL', city: 'london' },
+};
+export function chapterFor(album = 'all', today = tripToday()) {
+ const selected = DAYS.find((d) => d.slug === album && d.date);
+ const calendarDay = DAYS.find((d) => d.date === today);
+ const day = selected || calendarDay || (today > '2026-10-17' ? DAYS.at(-1) : DAYS[0]);
+ const chapter = CHAPTERS[day.slug];
+ return { ...chapter, photo: DESTINATIONS[chapter.image], day,
+   label: selected ? day.label : calendarDay ? `Today · ${day.label}` : today > '2026-10-17' ? 'A week to remember' : 'Before the adventure' };
+}
