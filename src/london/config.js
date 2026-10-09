@@ -3,8 +3,10 @@ export const VAULT = { id: 'london-2028', name: 'A Class of 2028 Takes London' }
 export const MAX_FILE_MB = 50;
 export const UPLOAD_PARALLEL = 3;
 export const MAX_BATCH = 60;
+export const PREP = { slug: 'before-the-adventure', title: 'Before the adventure', date: null, label: 'Before departure', blurb: 'Packing, big questions and the excitement at home. Our first postcards start with our families.', ideas: ['What are you most excited to see or do?', 'What’s going in your suitcase?', 'What do you think London will be like?'] };
 export const DAYS = [
   { slug: 'the-whole-adventure', title: 'The whole adventure', date: null, label: 'Any time', blurb: 'The little moments between the big ones. Every group, one shared story.', ideas: ['A laugh on the way to the next stop', 'Friends figuring something out together', 'A view through their eyes'] },
+  PREP,
   { slug: 'off-we-go', title: 'Off we go', date: '2026-10-11', label: 'Sun · Oct 11', blurb: 'Airport hellos, travel buddies and the beginning of something big.', ideas: ['Travel buddies before boarding', 'That ready-for-adventure smile', 'The view from the window'] },
   { slug: 'hello-london', title: 'Hello, London', date: '2026-10-12', label: 'Mon · Oct 12', blurb: 'Tower of London, fish and chips, London Dungeon, National Portrait Gallery and Trafalgar Square.', ideas: ['Their first look at the Tower of London', 'The verdict on fish and chips', 'Friends taking in Trafalgar Square'] },
   { slug: 'history-and-six', title: 'History, meet the West End', date: '2026-10-13', label: 'Tue · Oct 13', blurb: 'Westminster Abbey, British Museum, Madame Tussauds and SIX.', ideas: ['A moment outside Westminster Abbey', 'A discovery at the British Museum, where photos are allowed', 'The smiles outside SIX before the show'] },
@@ -25,6 +27,7 @@ export function ideasFor(slug) { return (DAYS.find((day) => day.slug === slug) |
 
 export const DESTINATIONS = Object.fromEntries(destinationPhotos.map((p) => [p.id, { ...p, image: `/london/${p.id}.jpg`, thumb: `/london/${p.id}-thumb.jpg` }]));
 const CHAPTERS = {
+ 'before-the-adventure': { image: 'london-morning', place: 'The adventure starts at home', greeting: 'Big dreams. Almost-packed bags.', mood: 'Our families send the first postcards.', route: 'NEXT STOP · LONDON', city: 'london' },
  'the-whole-adventure': { image: 'london-morning', place: 'London', greeting: 'London is calling.', mood: 'A week of wonder is waiting.', route: 'ATL → LHR', city: 'london' },
  'off-we-go': { image: 'london-morning', place: 'London awaits', greeting: 'And so the adventure begins.', mood: 'Travel buddies, airport hellos and a whole world ahead.', route: 'ATL → LHR', city: 'london' },
  'hello-london': { image: 'tower-of-london', place: 'Tower of London', greeting: 'Good morning, London.', mood: 'A first day of history, discovery and fish and chips.', route: 'HELLO, LONDON', city: 'london' },
@@ -35,7 +38,7 @@ const CHAPTERS = {
  'home-with-stories': { image: 'london-morning', place: 'A last look at London', greeting: 'Home with a world of stories.', mood: 'Travel buddies today. Remember-when friends forever.', route: 'CDG → ATL', city: 'london' },
 };
 export function chapterFor(album = 'all', today = tripToday()) {
- const selected = DAYS.find((d) => d.slug === album && d.date);
+ const selected = DAYS.find((d) => d.slug === album && (d.date || d.slug === PREP.slug));
  const calendarDay = DAYS.find((d) => d.date === today);
  const day = selected || calendarDay || (today > '2026-10-17' ? DAYS.at(-1) : DAYS[0]);
  const chapter = CHAPTERS[day.slug];

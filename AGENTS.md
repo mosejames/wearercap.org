@@ -326,3 +326,10 @@ London's static thumbnail is `/london/2028-london-og.jpg`, rebuilt with
 `node scripts/create-london-og.mjs`. Its clean event/photo URLs dispatch from
 `api/m3-link.js` to `server/london-link.js`, preserving the hosting function
 limit. London share cards use only the shared R2 base for contributed media.
+
+London's Before the adventure section invites parents to share preparations,
+photos and short videos in the `before-the-adventure` album. It uses the same
+R2 pipeline, moderation and exact-photo sharing as the trip albums. Prompts
+are optional; choosing one prefills an editable caption. The main upload
+flow defaults to this album before departure. Family postcards remain visible
+throughout the trip and are included in the collective gallery.
