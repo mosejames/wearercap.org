@@ -43,7 +43,7 @@ it('requires removal confirmation, preserves a failed removal and allows retry w
  expect(host.querySelector('dialog')).toBeNull();expect(host.querySelectorAll('.l-photo')).toHaveLength(1);
 });
 it('starts returning contributors with photo selection and keeps optional details out of the way',async()=>{
- await click(button('Add photos'));
+ await click(button('Share a moment'));
  const dialog=host.querySelector('dialog');expect(dialog.querySelector('input').type).toBe('file');
  expect(dialog.textContent).toContain('Sharing as Test chaperone');expect(dialog.querySelector('textarea')).toBeNull();
  await click(button('Change or add a caption'));
@@ -156,7 +156,7 @@ it('keeps organizing out of uploads and lets parents label another contributorâ€
  expect(article.textContent).not.toContain('Remove');
  await click(button('Done organizing'));
  expect(host.querySelector('.l-collection-editor')).toBeNull();
- await click(button('Add photos'));
+ await click(button('Share a moment'));
  await click(button('Change or add a caption'));
  expect(host.querySelector('dialog').textContent).not.toContain('Collection for');
  expect(host.querySelector('dialog').textContent).not.toContain('Inspiration collection');
