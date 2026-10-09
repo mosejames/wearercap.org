@@ -45,7 +45,7 @@ export function mediaUrl(photo, which = 'web') {
 const photoFromRow = (row) => ({
   id: row.id, eventId: row.event_id, owner: row.owner, uploaderName: row.uploader_name,
   team: row.team || '', storage: row.storage, key: row.key, webKey: row.web_key, thumbKey: row.thumb_key,
-  caption: row.caption || '', kind: row.kind, createdAt: row.created_at, takenAt: row.taken_at,
+  caption: row.caption || '', inspiration: row.inspiration || '', kind: row.kind, createdAt: row.created_at, takenAt: row.taken_at,
 });
 export async function listEvents() {
   const { data, error } = await client.from('m3_events').select('id,slug,title').eq('vault', VAULT.id).eq('hidden', false);

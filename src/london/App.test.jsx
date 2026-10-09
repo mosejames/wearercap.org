@@ -82,15 +82,16 @@ it('uses a selected parent question as an editable caption and saves to the prep
  db.listEvents.mockResolvedValue([{id:'prep',slug:'before-the-adventure',title:'Before the adventure'}]);
  db.saveProfile.mockResolvedValue({displayName:'Test chaperone',team:''});
  await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
- expect(host.querySelector('.l-prep-prompts')).toBeNull();
  await click(button('Need an idea?'));
- await click([...host.querySelectorAll('.l-prep-prompts button')][0]);
+ await click([...host.querySelectorAll('.l-inspiration-collections button')].find(b=>b.textContent.includes('What we’re most excited about')));
+ expect(window.location.hash).toBe('#/c/most-excited');
+ await click(button('Add a moment here'));
  const file=new File(['photo'],'packing.jpg',{type:'image/jpeg'});
  const input=host.querySelector('input[type="file"]');Object.defineProperty(input,'files',{value:[file],configurable:true});
  await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
  await click(button('Change or add a caption'));expect(host.querySelector('textarea').value).toBe('What are you most excited to see or do?');
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
- expect(uploadBatch).toHaveBeenCalledWith([file],expect.objectContaining({event:expect.objectContaining({id:'prep',slug:'before-the-adventure'}),caption:'What are you most excited to see or do?'}));
+ expect(uploadBatch).toHaveBeenCalledWith([file],expect.objectContaining({event:expect.objectContaining({id:'prep',slug:'before-the-adventure'}),caption:'What are you most excited to see or do?',inspiration:'most-excited'}));
 });
 it('opens family video postcards through the compact invitation',async()=>{
  db.listEvents.mockResolvedValue([{id:'prep',slug:'before-the-adventure',title:'Before the adventure'}]);
@@ -115,4 +116,28 @@ it('keeps a failed reaction available to retry',async()=>{
  await click(button('Thanks for sharing'));
  expect(host.querySelector('[role="alert"]').textContent).toContain('could not be saved');
  expect(button('Thanks for sharing').getAttribute('aria-pressed')).toBe('false');
+});
+
+it('collects matching moments from different parents and keeps unrelated photos out',async()=>{
+ db.listPhotos.mockResolvedValue([{...own,inspiration:'packing-bags'}, {...other,inspiration:'packing-bags'}, {...own,id:'unrelated',inspiration:'airport-hellos',caption:'Airport wave'}]);
+ await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
+ await click(button('Need an idea?'));
+ await click([...host.querySelectorAll('.l-inspiration-collections button')].find(b=>b.textContent.includes('Packing bags')));
+ expect(host.querySelector('.l-grid').textContent).toContain('Our day');
+ expect(host.querySelector('.l-grid').textContent).toContain('Another perspective');
+ expect(host.querySelector('.l-grid').textContent).not.toContain('Airport wave');
+ expect(host.querySelectorAll('.l-photo')).toHaveLength(2);
+ await click(button('Back to all postcards'));
+ expect(host.querySelectorAll('.l-photo')).toHaveLength(3);
+});
+it('restores a collection from its link and offers the correct day and collection for upload',async()=>{
+ db.listEvents.mockResolvedValue([{id:'stones',slug:'palaces-and-stones',title:'Palaces, stones & a little magic'}]);
+ window.location.hash='#/c/hampton-court';
+ await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
+ expect(host.querySelector('.l-section-head h2').textContent).toBe('Hampton Court Palace');
+ await click(button('Add a moment here'));
+ expect(host.querySelector('dialog h2').textContent).toBe('Add to Hampton Court Palace');
+ await click(button('Change or add a caption'));
+ expect([...host.querySelectorAll('select')].find(el=>el.value==='hampton-court')).toBeTruthy();
+ expect([...host.querySelectorAll('select')].find(el=>el.value==='palaces-and-stones')).toBeTruthy();
 });

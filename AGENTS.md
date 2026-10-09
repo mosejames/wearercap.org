@@ -287,12 +287,12 @@ Photo share HTML is not CDN-cached, so fresh requests recheck visibility.
 
 ## London trip vault
 
-`/2028-london/` is A Class of 2028 Takes London, October 11–17, 2026,
+`/2028-london/` is RCA 2028 Takes London, October 11–17, 2026,
 including the Paris portion. Source lives in `src/london/`. It reuses the
 `m3_*` specialty-vault tables with `vault = 'london-2028'`, a separate browser
 token, and `london_save_profile` so profiles cannot land in M3 by default.
 All groups share one gallery immediately. Group labels are optional.
-Appreciation is alphabetical, with no individual counts, quotas or rankings.
+Appreciation uses per-photo thank-you hearts, with no contributor rankings.
 Photo ideas are optional, dismissible and based on the selected album.
 `/api/london-sign` rewrites to the existing M3 signing entry point, which
 dispatches to `server/london-sign.js`. This stays within the current hosting
@@ -322,7 +322,7 @@ removed. Unavailable photos fall back to the album or vault card. Keep photo
 card responses uncached so visibility changes are rechecked. Never substitute
 another gallery photo for a requested photo. This is a standing user preference.
 
-London's static thumbnail is `/london/2028-london-og.jpg`, rebuilt with
+London's static thumbnail is `/london/2028-london-og-v2.jpg`, rebuilt with
 `node scripts/create-london-og.mjs`. Its clean event/photo URLs dispatch from
 `api/m3-link.js` to `server/london-link.js`, preserving the hosting function
 limit. London share cards use only the shared R2 base for contributed media.
@@ -333,3 +333,13 @@ R2 pipeline, moderation and exact-photo sharing as the trip albums. Prompts
 are optional; choosing one prefills an editable caption. The main upload
 flow defaults to this album before departure. Family postcards remain visible
 throughout the trip and are included in the collective gallery.
+
+London inspiration collections are defined in `src/london/inspirations.json`.
+They are optional photo categories, separate from day albums and captions.
+`m3_photos.inspiration` stores the selected collection ID; its check constraint
+allows only catalog IDs on London photos. `#/c/<id>` opens a filtered collection.
+Uploads from there preselect both the category and its day album; ordinary
+uploads still work without a category. Collection choices remain inside the
+inspiration dialog or compact gallery suggestions, not a tall homepage section.
+Hotel names and named stops come from the final trip guide. Photo sharing still
+uses the photo's real event album, so exact-photo OG visibility checks apply.

@@ -45,3 +45,5 @@ export function chapterFor(album = 'all', today = tripToday()) {
  return { ...chapter, photo: DESTINATIONS[chapter.image], day,
    label: selected ? day.label : calendarDay ? `Today · ${day.label}` : today > '2026-10-17' ? 'A week to remember' : 'Before the adventure' };
 }
+
+export { default as INSPIRATIONS } from './inspirations.json';

@@ -60,7 +60,7 @@ async function putAll(prepared, signed, mode, onBytes, signal) {
  * @param {File[]} files
  * @param {{event, profile, caption?: string, onProgress?: Function, signal?: AbortSignal}} ctx
  */
-export async function uploadBatch(files, { event, profile, caption = '', onProgress, signal }) {
+export async function uploadBatch(files, { event, profile, caption = '', inspiration = '', onProgress, signal }) {
   await storageConfig();
   const owner = await getOwner();
   const state = {
@@ -121,6 +121,7 @@ export async function uploadBatch(files, { event, profile, caption = '', onProgr
             content_type: p.contentType,
             taken_at: p.takenAt ? p.takenAt.toISOString() : null,
             caption: caption.slice(0, 280),
+            inspiration,
             team: profile?.team || '',
           }]);
           state.done.push(row);
