@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
 // The upload pipeline: prepare → sign → put ×3 → insert row. One file at a
 // time through prepare (the memory-hungry step on a phone), a few in flight
-// through the network. Image and video preparation are the same modules the
-// Amistad Vault uses; only the signing and the row differ.
+// through the network. London videos are compressed before any R2 signing.
 // ---------------------------------------------------------------------------
-import { isVideo, prepareVideo } from '../vault/videos.js';
+import { isVideo } from '../vault/videos.js';
+import { prepareLondonVideo } from './video.js';
 import { prepareImage } from '../vault/images.js';
 import { getOwner, insertPhotos, storageConfig } from './data.js';
 import { VAULT, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
 
-const SIGN_CHUNK = 40;
+const SIGN_CHUNK = UPLOAD_PARALLEL;
 
 function putWithProgress(url, blob, contentType, onBytes, signal) {
   return new Promise((resolve, reject) => {
@@ -65,37 +65,38 @@ export async function uploadBatch(files, { event, profile, caption = '', inspira
   const owner = await getOwner();
   const state = {
     total: files.length, prepared: 0, uploaded: 0, failed: [], done: [],
-    bytesTotal: files.reduce((n, f) => n + f.size, 0), bytesSent: 0, current: '',
+    bytesTotal: files.reduce((n, f) => n + f.size, 0), bytesSent: 0, current: '', optimizing: false, optimizationProgress: 0,
   };
   const tick = () => onProgress && onProgress({ ...state });
 
-  const ready = [];
-  for (const f of files) {
+  // Keep only one small batch of prepared media in memory on phones.
+  for (let i = 0; i < files.length; i += SIGN_CHUNK) {
     if (signal?.aborted) break;
-    state.current = f.name;
-    tick();
-    if (f.size > MAX_FILE_MB * 1024 * 1024) {
-      state.failed.push({ name: f.name, error: `Over ${MAX_FILE_MB}MB` });
-      state.prepared++; tick();
-      continue;
+    const ready = [];
+    for (const f of files.slice(i, i + SIGN_CHUNK)) {
+      if (signal?.aborted) break;
+      state.current = f.name;
+      tick();
+      if (!isVideo(f) && f.size > MAX_FILE_MB * 1024 * 1024) {
+        state.failed.push({ name: f.name, error: `Over ${MAX_FILE_MB}MB` });
+        state.prepared++; tick();
+        continue;
+      }
+      try {
+        const video = isVideo(f);
+        const p = await (video ? prepareLondonVideo(f, { signal, onProgress: (fraction) => { state.optimizing = true; state.optimizationProgress = fraction; tick(); } }) : prepareImage(f));
+        ready.push({ ...p, video });
+        state.bytesTotal += p.orig.size + p.web.size + p.thumb.size - f.size;
+      } catch (e) {
+        state.failed.push({ name: f.name, error: e.message || 'Could not read' });
+      }
+      state.optimizing = false;
+      state.prepared++;
+      tick();
     }
-    try {
-      const video = isVideo(f);
-      const p = await (video ? prepareVideo(f) : prepareImage(f));
-      ready.push({ ...p, video });
-    } catch (e) {
-      state.failed.push({ name: f.name, error: e.message || 'Could not read' });
-    }
-    state.prepared++;
-    tick();
-  }
-  state.bytesTotal = ready.reduce((n, p) => n + p.orig.size + p.web.size + p.thumb.size, 0);
-  state.bytesSent = 0;
-  tick();
-
-  for (let i = 0; i < ready.length; i += SIGN_CHUNK) {
     if (signal?.aborted) break;
-    const chunk = ready.slice(i, i + SIGN_CHUNK);
+    if (!ready.length) continue;
+    const chunk = ready;
     const { mode, items } = await sign(event, owner, chunk);
     if (mode !== 'r2') throw new Error('Photo storage is unavailable. Please try again later.');
     const byId = new Map(items.map((it) => [it.id, it]));

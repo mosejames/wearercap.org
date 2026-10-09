@@ -1,6 +1,8 @@
 import destinationPhotos from './destinations.json';
 export const VAULT = { id: 'london-2028', name: 'RCA 2028 Takes London' };
 export const MAX_FILE_MB = 50;
+export const MAX_VIDEO_INPUT_MB = 500;
+export const MAX_VIDEO_STORED_MB = 100;
 export const UPLOAD_PARALLEL = 3;
 export const MAX_BATCH = 60;
 export const PREP = { slug: 'before-the-adventure', title: 'Before the adventure', date: null, label: 'Before departure', blurb: 'Packing, big questions and the excitement at home. Our first postcards start with our families.', ideas: ['What are you most excited to see or do?', 'What’s going in your suitcase?', 'What do you think London will be like?'] };
