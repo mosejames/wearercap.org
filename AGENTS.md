@@ -284,3 +284,18 @@ for Open Graph and Twitter previews. No new image is generated. A visitor
 opens the exact photo through the existing hash route. Missing or unavailable
 photos fall back to the album; event shares retain their branded cards.
 Photo share HTML is not CDN-cached, so fresh requests recheck visibility.
+
+## London trip vault
+
+`/london-vault/` is A Class of 2028 Takes London, October 11–17, 2026,
+including the Paris portion. Source lives in `src/london/`. It reuses the
+`m3_*` specialty-vault tables with `vault = 'london-2028'`, a separate browser
+token, and `london_save_profile` so profiles cannot land in M3 by default.
+All groups share one gallery immediately. Group labels are optional.
+Appreciation is alphabetical, with no individual counts, quotas or rankings.
+Photo ideas are optional, dismissible and based on the selected album.
+`api/london-sign.js` uses only shared `R2_*` settings, checks the album belongs
+to London, and fails clearly when R2 is missing. The database also enforces
+`storage = 'r2'` for London records. No Supabase Storage fallback exists.
+The trip guide heading says 2028, but its weekdays and the October 2026
+calendar invitation establish the trip year as 2026.
