@@ -10,15 +10,17 @@ export default async function handler(req,res) {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   const publicBase = (process.env.R2_PUBLIC_BASE || '').replace(/\/+$/,'');
-  async function get(path) {
+  async function get(path, body) {
     if(!url || !key) return [];
-    try { const r=await fetch(`${url}/rest/v1/${path}`,{headers:{apikey:key,Authorization:`Bearer ${key}`},signal:AbortSignal.timeout(3000)});return r.ok ? await r.json() : []; } catch { return []; }
+    try { const r=await fetch(`${url}/rest/v1/${path}`,{method:body ? 'POST' : 'GET',headers:{apikey:key,Authorization:`Bearer ${key}`,...(body ? {'Content-Type':'application/json'} : {})},...(body ? {body:JSON.stringify(body)} : {}),signal:AbortSignal.timeout(3000)});return r.ok ? await r.json() : []; } catch { return []; }
   }
   const [event] = slug ? await get(`m3_events?slug=eq.${slug}&vault=eq.london-2028&hidden=eq.false&select=id,slug,title,hidden&limit=1`) : [];
   const validEvent = event && !event.hidden && event.slug === slug;
   let photo;
   if(validEvent && UUID.test(id)) {
-    const [row] = await get(`m3_photos?id=eq.${id}&event_id=eq.${encodeURIComponent(event.id)}&vault=eq.london-2028&hidden=eq.false&select=id,event_id,vault,hidden,storage,web_key,caption,kind&limit=1`);
+    // Direct photo table reads are closed. Use the gallery's visibility RPC.
+    const rows = await get('rpc/m3_list_photos', {p_token:'',p_vault:'london-2028',p_event:event.id,p_mode:'recent',p_limit:5000});
+    const row = rows.find((entry) => entry.photo?.id === id)?.photo;
     if(row && row.id === id && row.event_id === event.id && row.vault === 'london-2028' && !row.hidden && row.storage === 'r2' && row.web_key?.startsWith('london-2028/') && !row.web_key.split('/').includes('..') && publicBase) photo=row;
   }
   const suffix = validEvent ? `e/${slug}${photo ? `/p/${photo.id}` : ''}` : '';
