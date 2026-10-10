@@ -4,7 +4,10 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn()}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
-import App from './App.jsx';
+import App, { Upload } from './App.jsx';
+import { makeTextCard } from './textCard.js';
+import { uploadBatch } from './upload.js';
+vi.mock('./textCard.js',async importOriginal=>({...await importOriginal(),makeTextCard:vi.fn()}));
 let root,host;
 const own={id:'own',owner:'me',eventId:'event',uploaderName:'Test chaperone',caption:'Our day',team:''};
 const other={...own,id:'other',owner:'someone-else',caption:'Another perspective'};
@@ -169,4 +172,28 @@ it('keeps a failed parent label change available to retry',async()=>{
  await click(button('Save label'));
  expect(host.querySelector('[role="alert"]').textContent).toContain('could not be saved');
  expect(button('Save label').disabled).toBe(false);
+});
+
+it('shares an attributed quote as an R2-ready card in the chosen album',async()=>{
+ const card=new File(['card'],'quote-moment.jpg',{type:'image/jpeg'});
+ makeTextCard.mockResolvedValue({file:card,caption:'I love London! (Mosie)'});
+ uploadBatch.mockResolvedValue({done:[{id:'new'}],failed:[]});
+ db.saveProfile.mockResolvedValue({displayName:'Parent',team:''});
+ await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" initialPrompt="What do you think London will be like?" initialInspiration="dreaming-of-london" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await click([...host.querySelectorAll('[role=tab]')].find(b=>b.textContent==='Quote'));
+ const textarea=host.querySelector('textarea');
+ const setValue=async(el,value)=>{await act(async()=>{Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});};
+ await setValue(textarea,'I love London!');
+ await setValue(host.querySelector('input[placeholder="A first name, or leave it blank"]'),'Mosie');
+ expect(host.querySelector('input[type=file]')).toBeNull();
+ await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(makeTextCard).toHaveBeenCalledWith(expect.objectContaining({mode:'quote',text:'I love London!',speaker:'Mosie'}));
+ expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',caption:'I love London! (Mosie)'}));
+});
+it('offers written modes without requiring a photograph',async()=>{
+ await click(button('Share a moment'));
+ await click([...host.querySelectorAll('[role=tab]')].find(b=>b.textContent==='Finish a thought'));
+ expect(host.querySelector('#share-panel select').options).toHaveLength(3);
+ expect(host.querySelector('textarea')).toBeTruthy();
+ expect(host.querySelector('input[type=file]')).toBeNull();
 });
