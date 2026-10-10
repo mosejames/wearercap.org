@@ -249,4 +249,4 @@ it('asks for scholar attribution in every sharing mode, separately from the adul
  expect(uploadBatch).not.toHaveBeenCalled();
 });
 
-it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('30 seconds');});
+it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('30 seconds');expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(false);});
