@@ -52,3 +52,36 @@ it('shows chairs an invite button and labels contributions and replies with thei
  expect(host.querySelector('dialog').textContent).toContain('The invitation has not been sent.');
  }finally{await act(async()=>root.unmount());host.remove();}
 });
+
+it('captures an attributed idea, connects it to the playbook, and links a next step to its conversation',async()=>{
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ const storage=new Map([['pb-display-name','Member']]);vi.stubGlobal('localStorage',{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)});
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ mock.record={committee:{id:'marcom',name:'Marketing',folder_id:'folder',doc_id:'doc'},role:'member',is_admin:false,entries:[],comments:[],questions:[],actions:[],ideas:[],idea_comments:[]};
+ mock.sync.mockResolvedValue({synced_at:'2026-10-10T18:00:00Z'});
+ mock.call.mockImplementation(async(action,payload)=>{if(action==='memberships')return [{id:'marcom',name:'Marketing'}];if(action==='load')return structuredClone(mock.record);if(action==='idea'){mock.record.ideas=[{...payload,id:'idea-one',author_id:'member',author_name:'Member',version:1,created_at:'2026-10-10T18:00:00Z'}];return {id:'idea-one'};}if(action==='action'){mock.record.actions=[{...payload,id:'action-one',author_id:'member'}];return {id:'action-one'};}throw Error(action);});
+ const host=document.createElement('div');document.body.append(host);const root=createRoot(host);
+ const button=text=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes(text));
+ const input=async(el,value)=>act(async()=>{Object.getOwnPropertyDescriptor(el instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});
+ try{
+ await act(async()=>root.render(<App/>));
+ await act(async()=>button('Ideas & dates').click());
+ await act(async()=>button('Capture something').click());
+ expect([...host.querySelectorAll('dialog option')].some(o=>o.textContent==='Agreed')).toBe(false);
+ expect([...host.querySelectorAll('dialog option')].some(o=>o.textContent==='Confirmed date')).toBe(false);
+ await input(host.querySelector('#pb-capture-thought'),'Should dues have a defined collection window?');
+ const plan=[...host.querySelectorAll('dialog fieldset label')].find(l=>l.textContent==='Plan').querySelector('input');
+ await act(async()=>plan.click());
+ await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(mock.call).toHaveBeenCalledWith('idea',expect.objectContaining({author_name:'Member',content:'Should dues have a defined collection window?',sections:['plan'],committee:'marcom'}));
+ expect(host.querySelector('.pb-idea-author').textContent).toContain('Member');
+ await act(async()=>button('Our playbook').click());
+ expect(host.querySelector('.pb-linked-idea').textContent).toContain('Open for discussion');
+ await act(async()=>host.querySelector('.pb-linked-idea').click());
+ await act(async()=>button('Add a connected next step').click());
+ await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(mock.call).toHaveBeenCalledWith('action',expect.objectContaining({idea_id:'idea-one',committee:'marcom'}));
+ await act(async()=>button('What’s next').click());
+ expect(host.querySelector('.pb-action-card').textContent).toContain('From Ideas & dates');
+ }finally{await act(async()=>root.unmount());host.remove();}
+});

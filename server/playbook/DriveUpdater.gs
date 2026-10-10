@@ -54,9 +54,25 @@ function doPost(e) {
       const questions=record.questions.filter(function(q){return q.section===section;});
       if(questions.length){pbHeading(body,'Questions that grew from the conversation',DocumentApp.ParagraphHeading.HEADING2);questions.forEach(function(q){body.appendParagraph(q.title);});}
     });
+    pbHeading(body,'Ideas & dates',DocumentApp.ParagraphHeading.HEADING1);
+    body.appendParagraph('Ideas have room to develop. Proposed dates are possibilities; confirmed dates and group agreements are recorded by a chair or lead.');
+    if(!(record.ideas||[]).length)body.appendParagraph('Ready for the next useful idea, question, date or lesson.');
+    (record.ideas||[]).forEach(function(i){
+      pbHeading(body,i.kind+' | '+i.status,DocumentApp.ParagraphHeading.HEADING2);
+      body.appendParagraph(i.content);
+      body.appendParagraph('Shared by '+i.author_name+' | '+i.created_at);
+      if(i.event_date)body.appendParagraph((i.kind==='Confirmed date'?'Confirmed date: ':'Date to explore: ')+i.event_date);
+      if(i.timeframe)body.appendParagraph('Timing: '+i.timeframe);
+      if(i.context)body.appendParagraph('Why it matters: '+i.context);
+      if(i.involve)body.appendParagraph('Bring into the conversation: '+i.involve);
+      if(i.sections.length)body.appendParagraph('Informs: '+i.sections.map(function(s){return PB_SECTIONS[s];}).join(', '));
+      body.appendParagraph('Conversation: https://wearercap.org/committee-playbook/?committee='+input.committee+'&idea='+i.id);
+      (record.idea_comments||[]).filter(function(c){return c.idea_id===i.id;}).forEach(function(c){body.appendParagraph('Reply from '+c.author_name+' ('+c.created_at+'): '+c.content);});
+      (i.previous_versions||[]).forEach(function(v){body.appendParagraph('Earlier version ('+v.updated_at+'), '+v.kind+', '+v.status+': '+v.content+' | Timing: '+v.timeframe+(v.event_date?' | '+v.event_date:''));});
+    });
     pbHeading(body,'What’s next',DocumentApp.ParagraphHeading.HEADING1);
     if(!record.actions.length)body.appendParagraph('Choose the first useful steps together.');
-    record.actions.forEach(function(a){pbHeading(body,a.title,DocumentApp.ParagraphHeading.HEADING2);body.appendParagraph('Owner: '+(a.owner_name||'To agree')+' | Due: '+(a.due_date||'To agree')+' | Status: '+a.status);body.appendParagraph('Done when: '+(a.done_when||'To agree'));});
+    record.actions.forEach(function(a){pbHeading(body,a.title,DocumentApp.ParagraphHeading.HEADING2);body.appendParagraph('Owner: '+(a.owner_name||'To agree')+' | Due: '+(a.due_date||'To agree')+' | Status: '+a.status);body.appendParagraph('Done when: '+(a.done_when||'To agree'));if(a.idea_id)body.appendParagraph('Connected idea: https://wearercap.org/committee-playbook/?committee='+input.committee+'&idea='+a.idea_id);});
     pbHeading(body,'Earlier contributions and decisions',DocumentApp.ParagraphHeading.HEADING1);
     if(!record.history.length)body.appendParagraph('Earlier versions will appear here when contributions or agreements change.');
     record.history.forEach(function(h){const x=h.snapshot;pbHeading(body,x.question_text,DocumentApp.ParagraphHeading.HEADING2);body.appendParagraph(x.author_name+' • earlier version preserved '+h.saved_at+' • '+(x.agreed?'Previously agreed':'Contribution'));body.appendParagraph(x.content);});
