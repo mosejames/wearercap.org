@@ -10,9 +10,11 @@ let host,root;
 beforeEach(async()=>{vi.clearAllMocks();globalThis.IS_REACT_ACT_ENVIRONMENT=true;HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Ready/>));});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 const click=async el=>{expect(el).toBeTruthy();await act(async()=>el.click());};
-it('gives families their own page without a trip-vault link or chaperone controls',()=>{expect(host.textContent).toContain('Before the flight.');expect(host.textContent).not.toMatch(/chaperone|Admin|Parent tools/);expect(host.querySelector('a[href*="2028-london/"]')).toBeNull();});
+it('gives families their own page without a trip-vault link or chaperone controls',()=>{expect(host.textContent).toContain('What’s the first thing you want to do in London?');expect(host.textContent).not.toContain('trip collection');expect(host.textContent).not.toMatch(/chaperone|Admin|Parent tools/);expect(host.querySelector('a[href*="2028-london/"]')).toBeNull();});
 it('uploads a packing moment into the existing preparation album with no day or group choice',async()=>{
- await click(host.querySelector('.ready-cards button'));
+ await click(host.querySelector('.ready-shuffle'));
+ expect(host.querySelector('h1').textContent).toContain('suitcase');
+ await click(host.querySelector('.ready-answer'));
  await act(async()=>{await new Promise(r=>setTimeout(r,30));});
  expect(host.querySelector('dialog')).toBeTruthy();
  await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Change or add a caption'));
@@ -20,7 +22,7 @@ it('uploads a packing moment into the existing preparation album with no day or 
  const input=host.querySelector('input[type=file]');Object.defineProperty(input,'files',{value:[new File(['photo'],'bag.jpg',{type:'image/jpeg'})]});
  await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
- expect(uploadBatch).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'packing-bags',caption:'What’s going in your suitcase?'}));
+ expect(uploadBatch).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'packing-bags',caption:'What’s going in your suitcase that absolutely has to come?'}));
 });
 it('shows only this parent’s preparation uploads and confirms removal',async()=>{
  db.listPhotos.mockResolvedValueOnce([{id:'own',owner:'parent',eventId:'prep',caption:'Our packing'},{id:'other',owner:'another',eventId:'prep'},{id:'trip',owner:'parent',eventId:'trip'}]);
@@ -28,3 +30,5 @@ it('shows only this parent’s preparation uploads and confirms removal',async()
  expect(host.querySelectorAll('.ready-mine article')).toHaveLength(1);
  const remove=host.querySelector('.ready-mine button');await click(remove);expect(db.hidePhoto).not.toHaveBeenCalled();await click(remove);expect(db.hidePhoto).toHaveBeenCalledWith('own');
 });
+
+it('switches one question at a time without a checklist',async()=>{expect(host.querySelectorAll('h1')).toHaveLength(1);const first=host.querySelector('h1').textContent;await click(host.querySelector('.ready-shuffle'));expect(host.querySelector('h1').textContent).not.toBe(first);expect(host.querySelectorAll('.ready-cards')).toHaveLength(0);});
