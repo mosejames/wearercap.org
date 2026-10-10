@@ -1,6 +1,43 @@
 // Written moments use the existing R2 media pipeline, so their cards can be
 // shared, thanked and removed exactly like a photo, without a second store.
-export const THOUGHT_STARTERS = ['I can’t wait to…', 'Today surprised me because…', 'A moment I want to remember…'];
+export const THOUGHT_STARTERS = [
+ 'I can’t wait to…',
+ 'The first thing I want to do in London is…',
+ 'The one thing that has to go in my suitcase is…',
+ 'Getting ready for this trip feels like…',
+ 'I think London will be…',
+ 'I think Paris will be…',
+ 'The food I’m most curious to try is…',
+ 'My prediction for this adventure is…',
+ 'Before we leave, I want my traveler to know…',
+ 'As a parent, I’m most excited for…',
+ 'Something we laughed about while packing was…',
+ 'At the airport, the excitement became real when…',
+ 'My first impression was…',
+ 'Today surprised me because…',
+ 'A moment I want to remember…',
+ 'The best part of today was…',
+ 'The funniest thing that happened was…',
+ 'Something I heard a student say today…',
+ 'Watching them experience this, I thought…',
+ 'A little moment that made me smile…',
+ 'Something that looked different in person was…',
+ 'If today had a title, it would be…',
+ 'One thing the photos don’t show is…',
+ 'A new thing I tried was…',
+ 'Something I learned about myself was…',
+ 'Something I learned about a friend was…',
+ 'A kindness I noticed today…',
+ 'The view I wish everyone could see…',
+ 'On the way back to the hotel, we…',
+ 'Tonight, everyone is talking about…',
+ 'If I could send one feeling home, it would be…',
+ 'Tomorrow, I’m looking forward to…',
+ 'I wish I could bring home…',
+ 'When I get home, the first story I’ll tell is…',
+ 'This trip has helped me see…',
+ 'Years from now, I hope they remember…',
+];
 export function momentText({ mode, text, speaker = '', starter = '' }) {
  const body = text.trim();
  if (!body || body.length > 220 || speaker.trim().length > 40) throw new Error('Add your words, up to 220 characters.');

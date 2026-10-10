@@ -193,9 +193,10 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
 it('offers written modes without requiring a photograph',async()=>{
  await click(button('Share a moment'));
  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Finish a thought'));
- expect(host.querySelectorAll('.l-starter-choices button')).toHaveLength(3);
- await click(host.querySelectorAll('.l-starter-choices button')[1]);
- expect(host.querySelectorAll('.l-starter-choices button')[1].getAttribute('aria-pressed')).toBe('true');
+ const starters=host.querySelector('#share-panel select');
+ expect(starters.options).toHaveLength(36);
+ await act(async()=>{starters.value='The best part of today was…';starters.dispatchEvent(new Event('change',{bubbles:true}));});
+ expect(starters.value).toBe('The best part of today was…');
  expect(host.querySelector('textarea')).toBeTruthy();
  expect(host.querySelector('input[type=file]')).toBeNull();
 });
