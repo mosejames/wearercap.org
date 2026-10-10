@@ -10,11 +10,9 @@ let host,root;
 beforeEach(async()=>{vi.clearAllMocks();globalThis.IS_REACT_ACT_ENVIRONMENT=true;HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Ready/>));});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 const click=async el=>{expect(el).toBeTruthy();await act(async()=>el.click());};
-it('gives families their own page without a trip-vault link or chaperone controls',()=>{expect(host.textContent).toContain('What’s the first thing you want to do in London?');expect(host.textContent).not.toContain('trip collection');expect(host.textContent).not.toMatch(/chaperone|Admin|Parent tools/);expect(host.querySelector('a[href*="2028-london/"]')).toBeNull();});
+it('gives families their own page without a trip-vault link or chaperone controls',()=>{expect(host.textContent).toContain('A little question');expect(host.textContent).not.toContain('trip collection');expect(host.textContent).not.toMatch(/chaperone|Admin|Parent tools/);expect(host.querySelector('a[href*="2028-london/"]')).toBeNull();});
 it('uploads a packing moment into the existing preparation album with no day or group choice',async()=>{
- await click(host.querySelector('.ready-shuffle'));
- expect(host.querySelector('h1').textContent).toContain('suitcase');
- await click(host.querySelector('.ready-answer'));
+ await click(host.querySelectorAll('.ready-choices button')[1]);
  await act(async()=>{await new Promise(r=>setTimeout(r,30));});
  expect(host.querySelector('dialog')).toBeTruthy();
  await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Change or add a caption'));
@@ -31,4 +29,4 @@ it('shows only this parent’s preparation uploads and confirms removal',async()
  const remove=host.querySelector('.ready-mine button');await click(remove);expect(db.hidePhoto).not.toHaveBeenCalled();await click(remove);expect(db.hidePhoto).toHaveBeenCalledWith('own');
 });
 
-it('switches one question at a time without a checklist',async()=>{expect(host.querySelectorAll('h1')).toHaveLength(1);const first=host.querySelector('h1').textContent;await click(host.querySelector('.ready-shuffle'));expect(host.querySelector('h1').textContent).not.toBe(first);expect(host.querySelectorAll('.ready-cards')).toHaveLength(0);});
+it('offers three direct question choices without a checklist',()=>{expect(host.querySelectorAll('.ready-choices button')).toHaveLength(3);expect(host.querySelector('.ready-shuffle')).toBeNull();expect(host.textContent).toContain('What do you think London will be like?');});
