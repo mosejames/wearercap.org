@@ -1,4 +1,5 @@
 export const COMMITTEES = [
+  { id: 'raffle', name: 'Fall Raffle', short: 'Raffle', description: 'Build the excitement. Carry the learning forward.', folder: '1UhDKmZfOITk0Uj2YePQwaLBc-DFY-FA6', doc: '1161czHzH9NTMSRScxmUIeuwkClu56dkv4rrqzfplg04', symbol: '↗' },
   { id: 'marcom', name: 'Marketing & Communications', short: 'Marketing', description: 'Make the message matter.', folder: '1pXeiND1zX83ZHRVeAohCoGDl6E2VMhPz', doc: '18fBYlX6HVZb4TuAuOYfvvd-4rRkideEkGnYvgCUTuxU', symbol: '✳' },
   { id: 'men', name: 'Men of RCAP', short: 'Men of RCAP', description: 'Show up. Build something lasting.', folder: '1I9vwzU5uj76AJEwdnsawxpQyltT_9zts', doc: '1Ciz10tVUmgZ4pqUHDuuZbW1OCGslcRowO4eCVgxhWf8', symbol: '↗' },
   { id: 'trunk', name: 'Trunk or Treat', short: 'Trunk or Treat', description: 'A little magic. A lot of teamwork.', folder: '1fXwtQP9MtLyXCdFhA25o42ey-WKZniOS', doc: '1reeVoeYFcCQbyg9QaGNEnF5fNNePxxoKenIZ1lnDNnA', symbol: '✦' },
@@ -68,3 +69,33 @@ export function suggestedFollowups(entry) {
 }
 export const docUrl=id=>`https://docs.google.com/document/d/${id}/edit`;
 export const folderUrl=id=>`https://drive.google.com/drive/folders/${id}`;
+
+const RAFFLE_HELP = {
+ 'purpose-why': 'What will raffle proceeds support, who benefits, and how will we explain that purpose to families?',
+ 'purpose-scope': 'What does the raffle team own? Confirm what the board, school, finance team, donors and other committees handle.',
+ 'purpose-success': 'Set a proposed net fundraising goal, participation goal and experience goal. Distinguish targets from approved commitments.',
+ 'perspective-keep': 'Which prizes, ticket offers, messages or sales moments worked before? Link results or explain what makes you think so.',
+ 'perspective-change': 'Where did prize collection, ticket sales, payment tracking or winner follow-up become harder than expected?',
+ 'perspective-fresh': 'What do new members or families need explained about the raffle? What assumptions should the team revisit?',
+ 'people-roles': 'Who can help with donor outreach, prize tracking, communications, sales, money reconciliation, the drawing and winner follow-up? Link the team roster.',
+ 'people-leadership': 'Who is the lead, who is learning alongside them, and who handles approvals when the lead is unavailable?',
+ 'people-norms': 'Choose your communication channel, meeting rhythm, decision process and next check-in. How will the team approve changes to prizes or messaging?',
+ 'people-welcome': 'Give each new volunteer a clear first task, a point person and the instructions they need for a sales shift or donor conversation.',
+ 'provision-have': 'List confirmed prizes, donor commitments, ticket supplies, sales tools, payment systems and approved communication channels. Link the inventory.',
+ 'provision-need': 'What prizes, printing, signs, supplies or help are missing? Include quantity, cost, timing and an owner to follow up.',
+ 'provision-budget': 'Separate gross sales from net proceeds. Capture prize costs, printing, payment fees, other expenses, approved budget and actual totals.',
+ 'provision-responsibility': 'For each prize or expense, who supplies it and who pays? Confirm donor commitments, restrictions, pickup arrangements and approval responsibilities.',
+ 'provision-receipts': 'Who approves spending and reconciles sales? Explain ticket-number tracking, cash handoff, payment records, deposits and receipt storage. Keep individual payment details in the approved finance system.',
+ 'plan-dates': 'Work backward from the drawing: prize confirmations, approval of the raffle rules and ticket offer, launch, reminders, sales cutoff, drawing, winner notification and prize pickup. Name who confirms required approvals before launch.',
+ 'plan-first': 'Choose two to four next actions, such as confirming a prize, agreeing the ticket offer or drafting the sales timeline. Add an owner, date and definition of done.',
+ 'plan-workflow': 'Describe the path from donor promise to prize delivery, and from ticket sale to reconciled entry, drawing, winner contact and completed pickup.',
+ 'plan-risks': 'What happens if a prize falls through, an entry or payment is unclear, sales are slow, a winner cannot be reached or the drawing needs to move? Name the person who decides and follows up.',
+ 'pass-results': 'Record gross sales, expenses, net proceeds, participation, prize delivery and progress toward the original goals. Link the final reconciliation.',
+ 'pass-lessons': 'Which prizes and messages connected with families? What timing, staffing or sales approach should the next raffle team keep or change?',
+ 'pass-trail': 'Link approved rules, donor outreach templates, prize inventory, sales calendar, ticket materials, financial summaries, winner handoff process and thank-you messages. Keep private buyer records in their approved system.',
+ 'pass-open': 'List outstanding prize pickups, donor thanks, expenses, reconciliations or promises. Give each one an owner, date and next action.',
+ 'pass-handoff': 'Name the incoming lead and handoff date. Confirm access to the folder, approved sales tools and finance contacts, and review the lessons and unfinished work together.'
+};
+export function questionsFor(committee) {
+ return committee==='raffle' ? QUESTIONS.map(q=>({...q,help:RAFFLE_HELP[q.id]||q.help})) : QUESTIONS;
+}

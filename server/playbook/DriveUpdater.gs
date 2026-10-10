@@ -1,9 +1,10 @@
 /** RCAP Living Playbook. Deploy as owner; all requests independently verify
- * Supabase membership. Only these three generated records can be written.
+ * Supabase membership. Only these registered generated records can be written.
  * Original editable playbooks and other Drive files are never modified.
  */
 const PB_URL = 'https://kcsrtwwpnekqdrfgcfys.supabase.co';
 const PB_RECORDS = {
+  raffle: '1UyWDH2Ei1FhnTBfL_1AAZyACC7GiTZxMsoWHsrqHVfU',
   marcom: '1Zffu5ifTkIGyKacSSw5m4r4xy1A18JDUUPCQn1XfevU',
   men: '1_ep0M2T5GsZi7oleUeIM7tsP3eIBefepcgFRje-R6pY',
   trunk: '1hjAJ7bpy0m-N8hEtBG5YKjWGP_L-epIKgJQw32u7g8Y'
