@@ -12,7 +12,9 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 const click=async el=>{expect(el).toBeTruthy();await act(async()=>el.click());};
 it('gives families their own page without a trip-vault link or chaperone controls',()=>{expect(host.textContent).toContain('A little question');expect(host.textContent).not.toContain('trip collection');expect(host.textContent).not.toMatch(/chaperone|Admin|Parent tools/);expect(host.querySelector('a[href*="2028-london/"]')).toBeNull();});
 it('uploads a packing moment into the existing preparation album with no day or group choice',async()=>{
- await click(host.querySelectorAll('.ready-choices button')[1]);
+ let packing;
+ for(let i=0;i<3;i++){packing=[...host.querySelectorAll('.ready-choices button')].find(b=>b.textContent.includes('absolutely has to come'));if(packing)break;await click(host.querySelector('.ready-more'));}
+ await click(packing);
  await act(async()=>{await new Promise(r=>setTimeout(r,30));});
  expect(host.querySelector('dialog')).toBeTruthy();
  await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Add a caption or change name'));
@@ -29,4 +31,13 @@ it('shows only this parent’s preparation uploads and confirms removal',async()
  const remove=host.querySelector('.ready-mine button');await click(remove);expect(db.hidePhoto).not.toHaveBeenCalled();await click(remove);expect(db.hidePhoto).toHaveBeenCalledWith('own');
 });
 
-it('offers three direct question choices without a checklist',()=>{expect(host.querySelectorAll('.ready-choices button')).toHaveLength(3);expect(host.querySelector('.ready-shuffle')).toBeNull();expect(host.textContent).toContain('What do you think London will be like?');});
+it('offers three random choices and cycles through all nine without repeats',async()=>{
+ const seen=new Set();
+ for(let i=0;i<3;i++){
+  const choices=host.querySelectorAll('.ready-choices button');expect(choices).toHaveLength(3);
+  choices.forEach(b=>seen.add(b.textContent));
+  await click(host.querySelector('.ready-more'));
+ }
+ expect(seen.size).toBe(9);
+ expect(host.textContent).toContain('Answer one or all.');
+});
