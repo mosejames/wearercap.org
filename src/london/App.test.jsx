@@ -195,8 +195,8 @@ it('offers written modes without requiring a photograph',async()=>{
  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Finish a thought'));
  const starters=host.querySelector('#share-panel select');
  expect(starters.options).toHaveLength(20);
- await act(async()=>{starters.value='Something about Versailles that surprised me…';starters.dispatchEvent(new Event('change',{bubbles:true}));});
- expect(starters.value).toBe('Something about Versailles that surprised me…');
+ await act(async()=>{starters.value='One thing I’m curious about at Versailles is…';starters.dispatchEvent(new Event('change',{bubbles:true}));});
+ expect(starters.value).toBe('One thing I’m curious about at Versailles is…');
  expect(host.querySelector('textarea')).toBeTruthy();
  expect(host.querySelector('input[type=file]')).toBeNull();
 });
