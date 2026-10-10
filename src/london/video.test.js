@@ -1,10 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
+import { videoDuration } from './video-duration.js';
+vi.mock('./video-duration.js',()=>({videoDuration:vi.fn()}));
 import { prepareLondonVideo } from './video.js';
 import { optimizeVideo } from '../vault/optimize-video.js';
 import { prepareVideo } from '../vault/videos.js';
 vi.mock('../vault/optimize-video.js', () => ({ optimizeVideo: vi.fn() }));
 vi.mock('../vault/videos.js', () => ({ prepareVideo: vi.fn() }));
-beforeEach(() => { vi.resetAllMocks(); });
+beforeEach(() => { vi.resetAllMocks();videoDuration.mockResolvedValue(30); });
 const file = (mb) => ({ name: 'phone.mov', size: mb * 1024 * 1024 });
 it('converts a large phone video before preparing the only stored rendition', async () => {
   const original = file(150), smaller = file(8);
@@ -43,3 +45,5 @@ it('allows the prepared video to exceed the old 50 MB limit, up to 100 MB', asyn
   prepareVideo.mockResolvedValue({ orig: smaller });
   expect((await prepareLondonVideo(file(150))).orig).toBe(smaller);
 });
+
+it('rejects clips over 30 seconds before compression or uploading',async()=>{videoDuration.mockResolvedValue(30.1);await expect(prepareLondonVideo(file(8))).rejects.toThrow('30 seconds or less');expect(optimizeVideo).not.toHaveBeenCalled();expect(prepareVideo).not.toHaveBeenCalled();});

@@ -1,3 +1,4 @@
+import { videoDuration } from './video-duration.js';
 import { prepareVideo } from '../vault/videos.js';
 import { MAX_VIDEO_INPUT_MB, MAX_VIDEO_STORED_MB } from './config.js';
 
@@ -6,6 +7,8 @@ import { MAX_VIDEO_INPUT_MB, MAX_VIDEO_STORED_MB } from './config.js';
 export async function prepareLondonVideo(file, { signal, onProgress } = {}) {
   if (file.size > MAX_VIDEO_INPUT_MB * 1024 * 1024) throw new Error(`This video is over ${MAX_VIDEO_INPUT_MB} MB. Choose a shorter clip so your phone can prepare it.`);
   signal?.throwIfAborted();
+  const duration=await videoDuration(file,{signal});
+  if(duration>30)throw new Error('Please trim this video to 30 seconds or less in Photos, then choose it again.');
   onProgress?.(0);
   let smaller;
   try {

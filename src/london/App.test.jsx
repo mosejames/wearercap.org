@@ -195,7 +195,7 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',scholarName:'Mosie',caption:'I love London! (Mosie)'}));
 });
 it('offers written modes without requiring a photograph',async()=>{
- await click(button('Share a moment'));
+ await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Finish a thought'));
  const starters=host.querySelector('#share-panel select');
  expect(starters.options).toHaveLength(20);
@@ -239,7 +239,7 @@ it('offers only positive reactions and posts comments on the selected moment',as
 });
 
 it('asks for scholar attribution in every sharing mode, separately from the adult name',async()=>{
- await click(button('Share a moment'));
+ await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  for(const label of ['Photo / video','Write a response','Finish a thought']){
   await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent===label));
   expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(true);
@@ -248,3 +248,5 @@ it('asks for scholar attribution in every sharing mode, separately from the adul
  expect(host.querySelector('[role=alert]').textContent).toContain('scholar’s first name');
  expect(uploadBatch).not.toHaveBeenCalled();
 });
+
+it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('30 seconds');});
