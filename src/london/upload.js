@@ -6,7 +6,7 @@
 import { isVideo } from '../vault/videos.js';
 import { prepareLondonVideo } from './video.js';
 import { prepareImage } from '../vault/images.js';
-import { getOwner, insertPhotos, storageConfig } from './data.js';
+import { getOwner, insertPhotos, storageConfig, authHeaders } from './data.js';
 import { VAULT, MAX_FILE_MB, UPLOAD_PARALLEL } from './config.js';
 
 const SIGN_CHUNK = UPLOAD_PARALLEL;
@@ -29,7 +29,7 @@ function putWithProgress(url, blob, contentType, onBytes, signal) {
 async function sign(event, owner, items) {
   const r = await fetch('/api/london-sign', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({
       eventId: event.id, eventSlug: event.slug, owner,
       files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })),

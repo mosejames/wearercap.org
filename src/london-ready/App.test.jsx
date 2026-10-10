@@ -1,3 +1,4 @@
+vi.mock('../london/LoginGate.jsx',()=>({default:({children})=>children,LoginPanel:()=>null}));
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';

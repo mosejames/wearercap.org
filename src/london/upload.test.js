@@ -3,7 +3,7 @@ import { uploadBatch } from './upload.js';
 import { prepareLondonVideo } from './video.js';
 import { insertPhotos } from './data.js';
 vi.mock('./video.js', () => ({ prepareLondonVideo: vi.fn() }));
-vi.mock('./data.js', () => ({ getOwner: vi.fn(async () => 'owner'), storageConfig: vi.fn(async () => ({ mode: 'r2' })), insertPhotos: vi.fn(async (rows) => rows) }));
+vi.mock('./data.js', () => ({ authHeaders:vi.fn(async()=>({Authorization:'Bearer test'})), getOwner: vi.fn(async () => 'owner'), storageConfig: vi.fn(async () => ({ mode: 'r2' })), insertPhotos: vi.fn(async (rows) => rows) }));
 const sent = [];
 beforeEach(() => {
  vi.clearAllMocks(); sent.length = 0;

@@ -28,6 +28,12 @@ export default async function handler(req, res) {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !anon) return res.status(503).json({ error: 'The vault is temporarily unavailable.' });
+  const authorization=req.headers?.authorization || req.headers?.Authorization;
+  if(!authorization?.startsWith('Bearer '))return res.status(401).json({error:'Please sign in to share.'});
+  try{
+    const verified=await fetch(`${url}/rest/v1/rpc/london_verified_owner`,{method:'POST',headers:{apikey:anon,Authorization:authorization,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(5000)});
+    if(!verified.ok || await verified.json()!==body.owner)return res.status(403).json({error:'Please sign in with the account sharing these photos.'});
+  }catch{return res.status(503).json({error:'Could not verify your account. Please try again.'});}
   let event;
   try {
     const response = await fetch(`${url}/rest/v1/m3_events?id=eq.${body.eventId}&vault=eq.${VAULT}&hidden=eq.false&select=slug,ongoing,starts_on`, { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, signal: AbortSignal.timeout(5000) });

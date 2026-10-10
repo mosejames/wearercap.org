@@ -1,3 +1,4 @@
+vi.mock('./LoginGate.jsx',()=>({default:({children})=>children,LoginPanel:()=>null}));
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -29,7 +30,7 @@ it('shows only this contributor’s photos in My uploads and no removal control 
  await click(button('My uploads'));
  expect(host.querySelectorAll('.l-photo')).toHaveLength(1);
  expect(host.querySelector('.l-photo').textContent).toContain('Our day');
- expect(host.querySelector('.l-own-note').textContent).toContain('this device');
+ expect(host.querySelector('.l-own-note').textContent).toContain('this account');
  await click(button('Everyone’s photos'));
  await click(host.querySelector('[aria-label="Open Another perspective"]'));
  expect(host.querySelector('dialog').textContent).not.toContain('Remove from album');

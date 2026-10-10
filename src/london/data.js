@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { VAULT } from './config.js';
-const client = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+export const client = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
+  auth: { storageKey: 'london-verified-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 let token;
 export function getToken() {
@@ -13,7 +13,22 @@ export function getToken() {
   }
   return token;
 }
+let accountPromise;
+export async function syncAccount() {
+ if(accountPromise) return accountPromise;
+ accountPromise=(async()=>{
+  const {data,error}=await client.auth.getSession();if(error)throw error;
+  if(!data.session) return null;
+  const {data:account,error:claimError}=await client.rpc('london_claim_account',{p_token:getToken()});if(claimError)throw claimError;
+  token=account.token;
+  try{localStorage.setItem('london-vault-token',token);if(account.name)localStorage.setItem('london-vault-profile',JSON.stringify({displayName:account.name,team:account.group||''}));}catch{}
+  return data.session;
+ })();
+ try{return await accountPromise;}finally{accountPromise=null;}
+}
+export async function signOutAccount(){await client.auth.signOut();token=null;localStorage.removeItem('london-vault-token');localStorage.removeItem('london-vault-profile');}
 export async function getOwner() {
+  await syncAccount();
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(getToken()));
   return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -48,11 +63,13 @@ const photoFromRow = (row) => ({
   caption: row.caption || '', inspiration: row.inspiration || '', kind: row.kind, createdAt: row.created_at, takenAt: row.taken_at,
 });
 export async function listEvents() {
+  await syncAccount();
   const { data, error } = await client.from('m3_events').select('id,slug,title').eq('vault', VAULT.id).eq('hidden', false);
   if (error) throw error;
   return data || [];
 }
 export async function listPhotos() {
+  await syncAccount();
   await storageConfig();
   const { data, error } = await client.rpc('m3_list_photos', { p_token: getToken(), p_vault: VAULT.id, p_mode: 'recent', p_limit: 5000 });
   if (error) throw error;
@@ -96,3 +113,5 @@ export async function conversation(photoId, action = 'read', values = {}) {
  if(error) throw error;
  return data || {reactions:[],comments:[]};
 }
+
+export async function authHeaders(){const {data,error}=await client.auth.getSession();if(error)throw error;if(!data.session)throw new Error('Please sign in to share.');return {Authorization:`Bearer ${data.session.access_token}`};}
