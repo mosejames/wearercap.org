@@ -1,4 +1,6 @@
 export const COMMITTEES = [
+  { id: 'exec', name: 'RCAP Executive Board', short: 'Executive Board', description: 'Connect our committees. Shape our year. Move forward together.', folder: '1LucB19GjG9Y75hG6F7HZg0VSK-ccpjpk', doc: '1cms_kUBd5DYrII_hq9nRTwDT6dhnLw4_UZNTVUrAyHc', symbol: '◎', introduction: 'Our shared view of the year ahead.', welcome: 'Our Executive Board brings the work of RCAP together. This is our space to shape priorities, exchange ideas, coordinate committees and events, and connect decisions to clear next steps. Our plans can grow as we listen, learn and build together.' },
+  { id: 'advisory', name: 'RCAP Advisory Board', short: 'Advisory Board', description: 'Bring perspective. Ask useful questions. Help RCAP grow.', folder: '1n6kyw21KrHCTssIDZFQCil04ZDU3oLBE', doc: '1subapYGkFV9XjfY6m-Fc9kfWbqADnjbOiBMoxGQfcII', symbol: '◒', introduction: 'Our perspective can help shape what comes next.', welcome: 'This is our Advisory Board’s shared space to listen, explore possibilities and offer thoughtful recommendations. Together we can clarify our role, support RCAP’s direction and carry useful experience forward. Ideas have room to develop before they become recommendations or decisions.' },
   { id: 'uniform', name: 'Uniform Committee', short: 'Uniforms', description: 'Help every family find a good fit.', folder: '1EtdK_2DqIMAUsZoJz0pxTSfqkQvgzi-0', doc: '1oqqH5ehFXeAisZF_1NAez1AZyU1hJXShNawT1oIhCE4', symbol: '◇' },
   { id: 'raffle', name: 'Fall Raffle', short: 'Raffle', description: 'Build the excitement. Carry the learning forward.', folder: '1UhDKmZfOITk0Uj2YePQwaLBc-DFY-FA6', doc: '1161czHzH9NTMSRScxmUIeuwkClu56dkv4rrqzfplg04', symbol: '↗' },
   { id: 'marcom', name: 'Marketing & Communications', short: 'Marketing', description: 'Shape our voice. Build our team. Make the message matter.', folder: '1pXeiND1zX83ZHRVeAohCoGDl6E2VMhPz', doc: '18fBYlX6HVZb4TuAuOYfvvd-4rRkideEkGnYvgCUTuxU', symbol: '✳' },
@@ -98,6 +100,7 @@ const RAFFLE_HELP = {
  'pass-handoff': 'Name the incoming lead and handoff date. Confirm access to the folder, approved sales tools and finance contacts, and review the lessons and unfinished work together.'
 };
 export function questionsFor(committee) {
+ if(BOARD_HELP[committee])return QUESTIONS.map(q=>({...q,help:BOARD_HELP[committee][q.id]||q.help}));
  if(committee==='trunk')return QUESTIONS.map(q=>({...q,help:TRUNK_HELP[q.id]||q.help}));
  if(committee==='marcom')return QUESTIONS.map(q=>({...q,help:MARCOM_HELP[q.id]||q.help}));
  if(committee==='uniform')return QUESTIONS.map(q=>({...q,help:UNIFORM_HELP[q.id]||q.help}));
@@ -180,4 +183,59 @@ const TRUNK_HELP = {
  'pass-lessons':'After the event, have a short debrief: what worked, what was missing and what should next year’s team know? Capture a few useful details while they are fresh.',
  'pass-trail':'Link the existing event plan, roster, supply list, layout, communications and key decisions where useful. One person can help keep the links together; do not duplicate every document.',
  'pass-open':'Keep outstanding planning tasks visible before the event. Afterward, note unfinished returns, expenses, cleanup or thank-you messages, with an owner and next step.'
+};
+
+const BOARD_HELP = {
+ exec: {
+ 'purpose-why':'What should RCAP make possible for families, students and the school? How can our Executive Board help committees work toward that shared purpose?',
+ 'purpose-scope':'What does the Executive Board coordinate or decide, what can chairs own, and what needs school or other approval? Confirm responsibilities against the governing documents; proposed changes remain proposals.',
+ 'purpose-success':'What would a strong year look like across RCAP? Agree a few priorities and signs of healthy committees, meaningful participation and well-supported events.',
+ 'perspective-keep':'Which useful practices from past boards, events or other teams should we build on? What helped chairs feel supported and families feel included?',
+ 'perspective-change':'Where do committees lose time or repeat work? Explore unclear approvals, overlapping dates, late requests or communication gaps, and suggest improvements.',
+ 'perspective-fresh':'What new committee, event, partnership or way of working should we explore? Capture the purpose, people it would serve and a small way to test the idea before committing.',
+ 'people-roles':'Who serves on the Executive Board, who chairs each committee and who is each chair’s board contact? Link a current roster and identify unfilled roles or support needs.',
+ 'people-leadership':'How will board members support chairs without taking over their teams? Agree points of contact, coverage and opportunities for future leaders to learn.',
+ 'people-norms':'How will we meet, hear committee updates, make and record decisions, and communicate them? Confirm which decisions need formal approval and where official minutes belong.',
+ 'people-welcome':'How will a new chair or board member get oriented? Gather a welcome checklist, role overview, calendar, resource links and a person to help them begin.',
+ 'provision-have':'What shared tools, templates, supplies, relationships and spaces can committees use? Link an inventory or resource directory with an access contact for each.',
+ 'provision-need':'Which committees need volunteers, supplies, information or board support? Capture the request, reason, needed-by date and person following up.',
+ 'provision-budget':'How do committee proposals fit into RCAP’s approved budget? Track requested versus approved amounts, timing and summary actual costs. Link the official finance records.',
+ 'provision-responsibility':'For each event or shared resource, who organizes, provides, approves and pays? Confirm the roles of RCAP, committees, the school and outside partners.',
+ 'provision-receipts':'Where do chairs find purchasing, reimbursement and receipt instructions? Identify finance contacts and approval steps, with links to the official process.',
+ 'plan-dates':'Build our shared year calendar: committee milestones, events, planning start dates, request deadlines, approvals, communications and debriefs. Link the calendar we use and spot conflicts early.',
+ 'plan-first':'What needs board attention next? Turn committee requests, event milestones or organizing ideas into two to four useful actions with an owner, due date and definition of done.',
+ 'plan-workflow':'How does an idea become a supported committee or event? Map the path from proposal and scope through chair ownership, timeline, resources, approval, delivery and debrief.',
+ 'plan-risks':'Which overlapping events, missing chairs, delayed approvals or shared-resource needs could affect multiple teams? Name the dependency, decision needed, owner and response date.',
+ 'pass-results':'What is happening across committees and events? Capture dated updates, completed milestones, decisions and results, with links to the team’s own records rather than duplicating them.',
+ 'pass-lessons':'What are we learning about organizing committees and the RCAP year? Capture an improvement to try, why it matters and when we will check whether it helped.',
+ 'pass-trail':'Link our calendar, committee directory, planning templates, approved budgets, official minutes and decision records. Record why key choices were made and where the authoritative version lives.',
+ 'pass-open':'Which committee requests, event tasks, proposals or decisions are still open? Record status, next step, owner and due date. Keep ideas distinct from approved commitments.',
+ 'pass-handoff':'What will the next Executive Board need to lead confidently? Capture the annual planning rhythm, chair onboarding, access contacts, recurring obligations and a handoff conversation.'
+ },
+ advisory: {
+ 'purpose-why':'What useful perspective can our Advisory Board offer RCAP? What should our involvement make possible for the Executive Board, committees and families?',
+ 'purpose-scope':'How is our advisory role defined in the governing documents? Clarify what we recommend, where we can support and who holds decision authority. Questions about scope remain open until confirmed.',
+ 'purpose-success':'What would meaningful advisory support look like this year? Choose signs that our listening, recommendations and shared experience are useful.',
+ 'perspective-keep':'What experience from earlier RCAP work or other organizations can help? Explain the context so today’s team can decide what fits.',
+ 'perspective-change':'Where do we see recurring friction or an unmet need? Gather context and the voices closest to the work before proposing a change.',
+ 'perspective-fresh':'What possibilities should RCAP explore? Share ideas for committee support, events, participation or long-term growth without treating them as commitments.',
+ 'people-roles':'Who is part of the Advisory Board, what experience does each person bring and who connects us with the Executive Board?',
+ 'people-leadership':'Who coordinates our conversations and follows up on recommendations? Confirm coverage and how new advisory members can learn alongside others.',
+ 'people-norms':'How will we listen, discuss different views and form recommendations? Agree our meeting rhythm, communication channel and how we record consensus or unresolved questions.',
+ 'people-welcome':'What will help someone new contribute with confidence? Offer role context, useful records, a point person and space for fresh questions.',
+ 'provision-have':'What experience, relationships, past materials or research can we offer? Record what is available and who can help the team use it.',
+ 'provision-need':'What information or perspectives do we need before offering advice? Name the question, appropriate contact and when the input would be useful.',
+ 'provision-budget':'What resource implications should a recommendation explain? Note estimates, assumptions and tradeoffs, then refer spending decisions through the confirmed approval process.',
+ 'provision-responsibility':'Who would carry out a proposed recommendation, and have they been consulted? Distinguish advisory support from operational ownership and spending authority.',
+ 'provision-receipts':'If advisory work needs expenses, what is the approved request and reimbursement process? Link official instructions and confirm approval before spending.',
+ 'plan-dates':'Which board conversations, committee planning windows or upcoming events would benefit from timely advice? Plan our input early enough to help rather than add last-minute work.',
+ 'plan-first':'Choose useful next steps: listen to a chair, clarify a question, review a proposal or draft a recommendation. Give each an owner, date and definition of done.',
+ 'plan-workflow':'How does a question reach us, become an informed recommendation and return to the responsible decision-maker? Track the response and follow-up without assuming approval.',
+ 'plan-risks':'Could advice arrive too late, duplicate committee work or blur authority? Identify missing context, who to consult and how to keep our support useful.',
+ 'pass-results':'Which recommendations have we offered and what response or outcome is confirmed? Record dates and distinguish proposed, under review, accepted and declined recommendations.',
+ 'pass-lessons':'What helped our advisory support make a difference? What should we change about our listening, timing, recommendations or follow-through?',
+ 'pass-trail':'Link advisory notes, background materials, recommendations and confirmed responses. Keep official decisions with their responsible board and link the authoritative record.',
+ 'pass-open':'Which questions or recommendations await a response? Capture the next step, contact, owner and review date without treating silence as agreement.',
+ 'pass-handoff':'What should future advisory members understand first? Preserve role boundaries, relationships, open recommendations, useful experience and the reasons behind our advice.'
+ }
 };

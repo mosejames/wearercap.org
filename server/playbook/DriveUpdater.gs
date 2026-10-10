@@ -4,6 +4,8 @@
  */
 const PB_URL = 'https://kcsrtwwpnekqdrfgcfys.supabase.co';
 const PB_RECORDS = {
+  exec: '1WxvNU0W0WaX0SN6EnET-NXsh1G9uKhxTSjfQCVbOFpw',
+  advisory: '1BH_S2gPNK49Fq7xrr8oHMJuPxVhIxy69BWxe5ejcP8U',
   uniform: '1kIe4ZpWdI-mIWNsVITuJpNWo4ETXYZTMaD5O5x2zEtU',
   raffle: '1UyWDH2Ei1FhnTBfL_1AAZyACC7GiTZxMsoWHsrqHVfU',
   marcom: '1Zffu5ifTkIGyKacSSw5m4r4xy1A18JDUUPCQn1XfevU',

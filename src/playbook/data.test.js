@@ -14,3 +14,7 @@ describe('new teams can create without losing existing question links',()=>{
  it('keeps every committee’s saved question identifiers, sections and titles compatible with the server catalog',async()=>{const {COMMITTEES,questionsFor}=await import('./data.js');const identity=qs=>qs.map(({id,section,title})=>({id,section,title}));for(const c of COMMITTEES)expect(identity(questionsFor(c.id))).toEqual(identity(QUESTIONS));});
  it('gives first-year marketing a relevant prompt for every foundation question',async()=>{const {questionsFor}=await import('./data.js');const prompts=questionsFor('marcom');expect(prompts).toHaveLength(24);expect(prompts.every(q=>q.help!==QUESTIONS.find(base=>base.id===q.id).help)).toBe(true);expect(prompts.find(q=>q.id==='perspective-keep').help).toContain('We do not need a past committee');});
 });
+
+describe('board workspaces',()=>{
+ it('gives both boards tailored prompts without changing shared question identities',async()=>{const {questionsFor}=await import('./data.js');for(const id of ['exec','advisory']){const qs=questionsFor(id);expect(qs).toHaveLength(24);expect(qs.every(q=>q.help!==QUESTIONS.find(base=>base.id===q.id).help)).toBe(true);}expect(questionsFor('exec').find(q=>q.id==='plan-dates').help).toContain('shared year calendar');expect(questionsFor('advisory').find(q=>q.id==='plan-workflow').help).toContain('without assuming approval');});
+});
