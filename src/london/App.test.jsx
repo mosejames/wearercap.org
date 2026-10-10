@@ -75,7 +75,7 @@ it('opens a valid shared photo after gallery loading and does not reopen it afte
 });
 it('opens family preparation uploads in their own album with photos and videos supported',async()=>{
  await click(button('Add a family postcard'));
- const dialog=host.querySelector('dialog');expect(dialog.querySelector('h2').textContent).toBe('A postcard from home');
+ const dialog=host.querySelector('dialog');expect(dialog.querySelector('h2').textContent).toBe('What would you like to share?');
  expect(dialog.querySelector('.l-upload-summary').textContent).toContain('Before the adventure');
  expect(dialog.querySelector('input[type="file"]').accept).toContain('video/mp4');
  expect(dialog.querySelector('input[type="file"]').accept).toContain('image/*');
@@ -139,7 +139,7 @@ it('restores a collection from its link and offers the correct day and collectio
  await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
  expect(host.querySelector('.l-section-head h2').textContent).toBe('Hampton Court Palace');
  await click(button('Add a moment here'));
- expect(host.querySelector('dialog h2').textContent).toBe('Add to Hampton Court Palace');
+ expect(host.querySelector('dialog h2').textContent).toBe('What’s happening at Hampton Court Palace?');
  await click(button('Change or add a caption'));
  expect(host.querySelector('.l-upload-summary').textContent).toContain('Hampton Court Palace');
  expect(host.querySelector('dialog').textContent).not.toContain('Inspiration collection (optional)');
@@ -180,7 +180,7 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  uploadBatch.mockResolvedValue({done:[{id:'new'}],failed:[]});
  db.saveProfile.mockResolvedValue({displayName:'Parent',team:''});
  await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" initialPrompt="What do you think London will be like?" initialInspiration="dreaming-of-london" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
- await click([...host.querySelectorAll('[role=tab]')].find(b=>b.textContent==='Quote'));
+ await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Quote'));
  const textarea=host.querySelector('textarea');
  const setValue=async(el,value)=>{await act(async()=>{Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});};
  await setValue(textarea,'I love London!');
@@ -192,8 +192,10 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
 });
 it('offers written modes without requiring a photograph',async()=>{
  await click(button('Share a moment'));
- await click([...host.querySelectorAll('[role=tab]')].find(b=>b.textContent==='Finish a thought'));
- expect(host.querySelector('#share-panel select').options).toHaveLength(3);
+ await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Finish a thought'));
+ expect(host.querySelectorAll('.l-starter-choices button')).toHaveLength(3);
+ await click(host.querySelectorAll('.l-starter-choices button')[1]);
+ expect(host.querySelectorAll('.l-starter-choices button')[1].getAttribute('aria-pressed')).toBe('true');
  expect(host.querySelector('textarea')).toBeTruthy();
  expect(host.querySelector('input[type=file]')).toBeNull();
 });

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House } from 'lucide-react';
+import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House, MessageCircle, Quote, PencilLine } from 'lucide-react';
 import { DAYS, PREP, VAULT, MAX_BATCH, DESTINATIONS, chapterFor, basePath, tripToday, INSPIRATIONS } from './config.js';
 import * as db from './data.js';
 import TripMap from './TripMap.jsx';
 import { uploadBatch } from './upload.js';
 import { makeTextCard, THOUGHT_STARTERS } from './textCard.js';
 
-function Dialog({ title, close, children }) {
+function Dialog({ title, close, children, className = '' }) {
   const ref = useRef(null);
   useEffect(() => {
     const before = document.activeElement;
@@ -14,7 +14,7 @@ function Dialog({ title, close, children }) {
     dialog.showModal();
     return () => { dialog.close(); before?.focus?.(); };
   }, []);
-  return <dialog ref={ref} className="l-dialog" onCancel={close} onClick={(event) => { if (event.target === ref.current) close(); }}>
+  return <dialog ref={ref} className={`l-dialog ${className}`} onCancel={close} onClick={(event) => { if (event.target === ref.current) close(); }}>
     <button className="l-close" aria-label="Close" onClick={close}><X size={22} /></button>
     <h2>{title}</h2>{children}
   </dialog>;
@@ -172,11 +172,16 @@ export function Upload({ events, initialAlbum, initialPrompt = '', initialInspir
     } catch (e) { setError(e.message || 'The upload could not finish. Please try again.'); }
     finally { setBusy(false); }
   }
-  return <Dialog title={result?.done.length ? (parentOnly ? 'Thanks for sharing!' : 'Postcards delivered. Thank you!') : parentOnly ? 'A little of your excitement.' : selectedCollection ? `Add to ${selectedCollection.title}` : slug === PREP.slug ? 'A postcard from home' : 'Add today’s photos'} close={() => { if (busy) abort.current?.abort(); close(); }}><p className="l-dialog-intro">{parentOnly ? 'A photo, a video, or a few words. Whatever feels like you.' : slug === PREP.slug ? 'Packing, a little anticipation, or a question for your child. Photos, videos and a few words are all welcome.' : 'A few favorites or the whole day. Share whenever you have a moment.'}</p>{slug === PREP.slug && initialPrompt && <p className="l-prep-upload-prompt">“{initialPrompt}”<small>{parentOnly ? 'Your question is saved with your moment.' : 'This question is your starting caption. You can change it below.'}</small></p>}<form onSubmit={submit}><fieldset disabled={busy}>
-    <div className="l-contribution-tabs" role="tablist" aria-label="Ways to share">{[['media','Photo / video'],['comment','Comment'],['quote','Quote'],['thought','Finish a thought']].map(([id,label])=><button key={id} id={`share-tab-${id}`} type="button" role="tab" aria-selected={mode===id} tabIndex={mode===id?0:-1} onKeyDown={e=>{const ids=['media','comment','quote','thought'];const index=ids.indexOf(id);const next=e.key==='ArrowRight'?ids[(index+1)%4]:e.key==='ArrowLeft'?ids[(index+3)%4]:e.key==='Home'?ids[0]:e.key==='End'?ids[3]:null;if(next){e.preventDefault();setMode(next);setResult(null);setError('');document.getElementById(`share-tab-${next}`)?.focus();}}} aria-controls="share-panel" onClick={()=>{setMode(id);setResult(null);setError('');}}>{label}</button>)}</div>
+  return <Dialog className="l-compose" title={result?.done.length ? 'A little moment, saved.' : initialPrompt || (parentOnly ? 'What’s your London mood?' : selectedCollection ? `What’s happening at ${selectedCollection.title}?` : 'What would you like to share?')} close={() => { if (busy) abort.current?.abort(); close(); }}><p className="l-dialog-intro">{parentOnly ? 'Let us in on the excitement. Pick your way to answer.' : 'A glimpse, a little story, something they said. Pick your way to share.'}</p><form onSubmit={submit}><fieldset disabled={busy}>
+    <div className="l-share-choices" role="tablist" aria-label="Ways to share">{[
+      ['media','Photo / video','Show us a little glimpse',Camera],
+      ['comment','Comment','Tell us what’s happening',MessageCircle],
+      ['quote','Quote','Save something they said',Quote],
+      ['thought','Finish a thought','A few words to get you going',PencilLine],
+    ].map(([id,label,hint,Icon])=><button key={id} id={`share-tab-${id}`} type="button" role="tab" aria-selected={mode===id} tabIndex={mode===id?0:-1} onKeyDown={e=>{const ids=['media','comment','quote','thought'];const i=ids.indexOf(id);const next=e.key==='ArrowRight'?ids[(i+1)%4]:e.key==='ArrowLeft'?ids[(i+3)%4]:e.key==='Home'?ids[0]:e.key==='End'?ids[3]:null;if(next){e.preventDefault();setMode(next);setResult(null);setError('');document.getElementById(`share-tab-${next}`)?.focus();}}} aria-controls="share-panel" onClick={()=>{setMode(id);setResult(null);setError('');}}><Icon size={26}/><span><b>{label}</b><small>{hint}</small></span>{mode===id ? <Check size={18}/> : <ArrowUpRight size={18}/>}</button>)}</div>
     <div id="share-panel" role="tabpanel" aria-labelledby={`share-tab-${mode}`}>
     {mode === 'media' ? <label className="l-file"><Camera size={29} /><b>{files.length ? `${files.length} selected. Tap to change` : 'Choose photos or videos'}</b><span>Videos up to 500 MB. Made smaller before sharing.</span><input aria-label="Choose photos or videos" type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif" multiple onChange={(e) => { const selected = [...e.target.files]; setFiles(selected.slice(0, MAX_BATCH)); setResult(null); setError(selected.length > MAX_BATCH ? 'The first 60 files are selected. You can add the rest in another batch.' : ''); }} /></label>
-    : <div className="l-written-moment">{mode==='thought'&&<label className="l-field">Start here<select value={starter} onChange={e=>setStarter(e.target.value)}>{THOUGHT_STARTERS.map(value=><option key={value}>{value}</option>)}</select></label>}<label className="l-field">{mode==='quote'?'What did they say?':mode==='thought'?'Finish it your way':'What’s on your mind?'}<textarea autoFocus rows={4} maxLength={220} value={words} onChange={e=>setWords(e.target.value)} placeholder={mode==='quote'?'The words you want to remember…':mode==='thought'?'The rest is yours…':'A small observation, a feeling, a favorite moment…'}/></label>{mode==='quote'&&<label className="l-field">Who said it? (optional)<input maxLength={40} value={speaker} onChange={e=>setSpeaker(e.target.value)} placeholder="A first name, or leave it blank"/></label>}<p className="l-small">{words.length}/220 · Shared as a card. No photo needed.</p></div>}
+    : <div className="l-written-moment">{mode==='thought'&&<div className="l-starter-choices"><p>Pick a beginning. Make it yours.</p>{THOUGHT_STARTERS.map(value=><button type="button" key={value} aria-pressed={starter===value} onClick={()=>setStarter(value)}>{value}</button>)}</div>}<label className="l-field">{mode==='quote'?'What did they say?':mode==='thought'?'Finish it your way':'What’s on your mind?'}<textarea rows={3} maxLength={220} value={words} onChange={e=>setWords(e.target.value)} placeholder={mode==='quote'?'The words you want to remember…':mode==='thought'?'The rest is yours…':'A small observation, a feeling, a favorite moment…'}/></label>{mode==='quote'&&<label className="l-field">Who said it? (optional)<input maxLength={40} value={speaker} onChange={e=>setSpeaker(e.target.value)} placeholder="A first name, or leave it blank"/></label>}<p className="l-small">{words.length}/220 · Your words become a postcard.</p></div>}
     </div>
     {!profile && <label className="l-field">Your name<input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="So we know who to thank" /></label>}
     <p className="l-upload-summary">{profile ? `Sharing as ${name} · ` : ''}{!parentOnly && <>{selectedCollection ? `${selectedCollection.title} · ` : ''}{DAYS.find((d) => d.slug === slug)?.title}</>}<button type="button" className="l-text" onClick={() => setDetails(!details)} aria-expanded={details}>{details ? 'Less detail' : mode==='media' ? 'Change or add a caption' : 'Sharing details'}</button></p>
