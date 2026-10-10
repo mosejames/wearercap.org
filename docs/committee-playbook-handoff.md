@@ -39,3 +39,9 @@ Branded share image: `public/playbook-og.jpg`, 1200 by 630. Both Open Graph and 
 ## Fall Raffle rollout
 
 The 2026-27 Fall Raffle workspace uses the existing Fall Raffle folder. Initial member access comes from completed raffle signups, with the same named organization administrators as the original rollout. No invitations are sent. Its editable playbook and separate living record are linked from the website. Automatic Drive updates remain pending owner authorization. The source updater map includes the raffle record; publish that updated source when authorizing the script.
+
+## Committee privacy
+
+Global administration is separate from committee leadership. The private admins table initially contains Mose's two sign-in emails and the ongoing RCAP organization email. It has RLS and no direct client grants. Only global admins see the committee switcher. Every other account must have explicit membership for the committee requested, including exports and Drive updates. Leads can manage their own committee and cannot grant global administration. The original blanket grants for other board accounts were removed except where a completed signup establishes membership. The website does not silently redirect an unauthorized committee link into a different playbook. People serving on multiple committees retain explicit memberships, but open each committee through its link.
+
+Google Drive document access is separate and still inherits existing parent-folder sharing. The website's access controls do not revoke those Google permissions.
