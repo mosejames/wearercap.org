@@ -90,3 +90,9 @@ export async function categorizePhoto(id, inspiration) {
   const { error } = await client.rpc('london_categorize_photo', { p_photo: id, p_token: getToken(), p_inspiration: inspiration });
   if (error) throw error;
 }
+
+export async function conversation(photoId, action = 'read', values = {}) {
+ const {data,error}=await client.rpc('london_conversation',{p_photo:photoId,p_token:getToken(),p_action:action,...values});
+ if(error) throw error;
+ return data || {reactions:[],comments:[]};
+}

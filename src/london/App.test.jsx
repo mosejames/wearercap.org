@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn()}));
+vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
 import App, { Upload } from './App.jsx';
@@ -222,4 +222,16 @@ it('thanks a successful contributor and opens the parent invitation in native sh
  await click(button('Bring the group chat along'));
  expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/2028-london-ready/'));
  expect(host.textContent).toContain('Invite copied.');
+});
+
+it('offers only positive reactions and posts comments on the selected moment',async()=>{
+ const {Conversation}=await import('./App.jsx');
+ db.conversation.mockResolvedValue({reactions:[],comments:[]});
+ await act(async()=>root.render(<Conversation photoId="own"/>));
+ expect([...host.querySelectorAll('.l-positive-reactions button')].map(b=>b.textContent)).toEqual(['❤️ Love','🎉 Celebrate','💙 Thanks']);
+ await click(host.querySelectorAll('.l-positive-reactions button')[1]);
+ expect(db.conversation).toHaveBeenCalledWith('own','react',{p_reaction:'celebrate'});
+ await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'So excited for you!');el.dispatchEvent(new Event('input',{bubbles:true}));});
+ await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'So excited for you!',p_name:'Test chaperone'});
 });
