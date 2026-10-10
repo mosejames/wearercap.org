@@ -180,7 +180,7 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  uploadBatch.mockResolvedValue({done:[{id:'new'}],failed:[]});
  db.saveProfile.mockResolvedValue({displayName:'Parent',team:''});
  await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" initialPrompt="What do you think London will be like?" initialInspiration="dreaming-of-london" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
- await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Quote'));
+ await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Write a response'));
  const textarea=host.querySelector('textarea');
  const setValue=async(el,value)=>{await act(async()=>{Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});};
  await setValue(textarea,'I love London!');
@@ -203,7 +203,7 @@ it('offers written modes without requiring a photograph',async()=>{
 
 it('does not offer empty sharing options to a new parent writing a quote',async()=>{
  await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={null} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
- await click(host.querySelector('#share-tab-quote'));
+ await click(host.querySelector('#share-tab-comment'));
  expect(host.querySelector('.l-upload-summary button')).toBeNull();
  expect(host.querySelector('.l-share-example').textContent).toContain('packing extra room');
  expect(host.querySelector('input[autocomplete="name"]')).toBeTruthy();
