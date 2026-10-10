@@ -98,6 +98,7 @@ const RAFFLE_HELP = {
  'pass-handoff': 'Name the incoming lead and handoff date. Confirm access to the folder, approved sales tools and finance contacts, and review the lessons and unfinished work together.'
 };
 export function questionsFor(committee) {
+ if(committee==='trunk')return QUESTIONS.map(q=>({...q,help:TRUNK_HELP[q.id]||q.help}));
  if(committee==='marcom')return QUESTIONS.map(q=>({...q,help:MARCOM_HELP[q.id]||q.help}));
  if(committee==='uniform')return QUESTIONS.map(q=>({...q,help:UNIFORM_HELP[q.id]||q.help}));
  return committee==='raffle' ? QUESTIONS.map(q=>({...q,help:RAFFLE_HELP[q.id]||q.help})) : QUESTIONS;
@@ -162,4 +163,21 @@ const MARCOM_HELP = {
  'pass-trail':'Create a useful home for our emerging scope, brand guidance, templates, calendar, approval process and decisions. Identify the owner of each resource.',
  'pass-open':'Which ideas, questions or decisions remain open? Keep promising ideas visible without treating them as commitments. Choose the next step when ready.',
  'pass-handoff':'How will someone else understand and carry forward the team we are building? Document roles, access contacts and the reasons behind our choices as we go.'
+};
+
+const TRUNK_HELP = {
+ 'purpose-why':'What do we want children and families to experience at Trunk or Treat? Use this to guide the event plan when helpful; a fuller team conversation can come later.',
+ 'perspective-keep':'This is the committee’s second year. What from last year can help with this year’s event: layout, trunk hosts, supplies, volunteer roles or timing? Capture only what is useful now.',
+ 'perspective-change':'Which challenges from last year should we address in this year’s plan? Choose practical adjustments; deeper reflection can wait until after the event.',
+ 'people-roles':'Who is coordinating trunk hosts, volunteers, family communications, supplies, setup, event support and cleanup? Link the roster or shift plan your team already uses.',
+ 'provision-have':'What supplies and equipment from last year are available and usable? Confirm storage, access and what needs to be checked before the event.',
+ 'provision-need':'What is still needed for the event? Check treats, decorations, signs, tables and other supplies as relevant. Name a quantity, owner and needed-by date.',
+ 'plan-dates':'Work backward from October 31, 2026. Confirm the event time and location, needed approvals, trunk-host and volunteer confirmations, family communications, setup and cleanup. Link your existing planning document if that is easier.',
+ 'plan-first':'What are the most important outstanding tasks for October 31? Add only useful next actions to What’s next, with an owner, due date and definition of done. Use your existing task list if it already works.',
+ 'plan-workflow':'Link or outline the event plan your team uses: arrival, trunk setup, family welcome, event flow and cleanup. Confirm the appropriate school or event contacts for safety and access questions.',
+ 'plan-risks':'What still needs a decision or backup plan: weather, supplies, volunteer coverage, access or event flow? Identify who confirms the plan and how changes reach the team.',
+ 'pass-results':'After October 31, capture what happened and what families experienced. This can wait until after the event; there is no need to complete it during planning.',
+ 'pass-lessons':'After the event, have a short debrief: what worked, what was missing and what should next year’s team know? Capture a few useful details while they are fresh.',
+ 'pass-trail':'Link the existing event plan, roster, supply list, layout, communications and key decisions where useful. One person can help keep the links together; do not duplicate every document.',
+ 'pass-open':'Keep outstanding planning tasks visible before the event. Afterward, note unfinished returns, expenses, cleanup or thank-you messages, with an owner and next step.'
 };
