@@ -187,6 +187,8 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  await setValue(host.querySelector('input[placeholder="A first name, or leave it blank"]'),'Mosie');
  expect(host.querySelector('input[type=file]')).toBeNull();
  await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(host.querySelector('dialog h2').textContent).toBe('Thank you for sharing!');
+ expect(button('Invite the group chat')).toBeTruthy();
  expect(makeTextCard).toHaveBeenCalledWith(expect.objectContaining({mode:'quote',text:'I love London!',speaker:'Mosie'}));
  expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',caption:'I love London! (Mosie)'}));
 });
@@ -207,4 +209,17 @@ it('does not offer empty sharing options to a new parent writing a quote',async(
  expect(host.querySelector('.l-upload-summary button')).toBeNull();
  expect(host.querySelector('.l-share-example').textContent).toContain('packing extra room');
  expect(host.querySelector('input[autocomplete="name"]')).toBeTruthy();
+});
+
+it('thanks a successful contributor and opens the parent invitation in native sharing',async()=>{
+ const share=vi.fn(async()=>{});Object.defineProperty(navigator,'share',{configurable:true,value:share});
+ const {ShareThanks}=await import('./App.jsx');
+ await act(async()=>root.render(<ShareThanks parentOnly again={()=>{}} close={()=>{}} viewUploads={()=>{}}/>));
+ await click(button('Invite the group chat'));
+ expect(share).toHaveBeenCalledWith(expect.objectContaining({url:new URL('/2028-london-ready/',window.location.origin).href,text:expect.stringContaining('getting-ready')}));
+ Object.defineProperty(navigator,'share',{configurable:true,value:undefined});
+ const writeText=vi.fn(async()=>{});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}});
+ await click(button('Invite the group chat'));
+ expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/2028-london-ready/'));
+ expect(host.textContent).toContain('Invite copied.');
 });

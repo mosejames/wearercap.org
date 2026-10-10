@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House, MessageCircle, PencilLine } from 'lucide-react';
+import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House, MessageCircle, Share2, PencilLine } from 'lucide-react';
 import { DAYS, PREP, VAULT, MAX_BATCH, DESTINATIONS, chapterFor, basePath, tripToday, INSPIRATIONS } from './config.js';
 import * as db from './data.js';
 import TripMap from './TripMap.jsx';
@@ -147,6 +147,20 @@ function Profile({ profile, setProfile, close }) {
   async function save(e) { e.preventDefault(); setBusy(true); try { setProfile(await db.saveProfile({ displayName: name, team: group })); close(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   return <Dialog title="A name to say thank you to" close={close}><p className="l-dialog-intro">Your name travels with the moments you share. Your group is optional and can change as the day does.</p><form onSubmit={save}><label className="l-field">Your name<input required maxLength={60} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="l-field">Group, if you’d like<input maxLength={40} placeholder="Your assigned group, dinner group, or leave blank" value={group} onChange={(e) => setGroup(e.target.value)} /></label><p className="l-small">Saved on this device. Everyone shares in one class album.</p>{error && <p role="alert" className="l-error">{error}</p>}<button className="l-button" disabled={busy || !name.trim()}>{busy ? 'Saving…' : 'Save details'}</button></form></Dialog>;
 }
+export function ShareThanks({ parentOnly = false, again, close, viewUploads }) {
+  const [notice,setNotice]=useState('');
+  const url=new URL(parentOnly ? '/2028-london-ready/' : '/2028-london/',window.location.origin).href;
+  const text=parentOnly ? 'We shared a little of our getting-ready excitement! Add a photo, a quick video, or a few words from your traveler. Answer one or all!' : 'A little window into our class adventure. Come share a moment with us!';
+  async function invite() {
+    try {
+      if(navigator.share) await navigator.share({title:parentOnly ? 'Getting ready · RCA 2028' : VAULT.name,text,url});
+      else {await navigator.clipboard.writeText(`${text}\n${url}`);setNotice('Invite copied. Paste it into your group chat or Messages.');}
+    } catch(e) {
+      if(e.name!=='AbortError') setNotice('Couldn’t open sharing. Copy the invite below.');
+    }
+  }
+  return <div className="l-share-thanks"><Heart size={38}/><p>Your moment is part of the story.</p><button type="button" className="l-button l-wide" onClick={invite}><Share2 size={19}/>Invite the group chat</button><p className="l-small">Send the invitation through Messages or your favorite chat.</p>{notice&&<div role="status"><p>{notice}</p><textarea aria-label="Invitation to copy" readOnly rows={4} value={`${text}\n${url}`}/></div>}<div className="l-thanks-actions"><button type="button" className="l-text" onClick={again}>Add another moment</button><button type="button" className="l-text" onClick={viewUploads}>View my moments</button><button type="button" className="l-text" onClick={close}>Done</button></div></div>;
+}
 export function Upload({ events, initialAlbum, initialPrompt = '', initialInspiration = '', profile, setProfile, close, done, viewUploads, parentOnly = false }) {
   const [name, setName] = useState(profile?.displayName || ''); const [group, setGroup] = useState(profile?.team || '');
   const [slug, setSlug] = useState(initialAlbum === 'all' ? 'the-whole-adventure' : initialAlbum);
@@ -172,6 +186,7 @@ export function Upload({ events, initialAlbum, initialPrompt = '', initialInspir
     } catch (e) { setError(e.message || 'The upload could not finish. Please try again.'); }
     finally { setBusy(false); }
   }
+  if(result?.done.length && !result.failed.length) return <Dialog className="l-compose" title="Thank you for sharing!" close={close}><ShareThanks parentOnly={parentOnly} close={close} viewUploads={viewUploads} again={()=>{setResult(null);setProgress(null);setError('');}}/></Dialog>;
   return <Dialog className="l-compose" title={result?.done.length ? 'A little moment, saved.' : initialPrompt || (parentOnly ? 'What’s your London mood?' : selectedCollection ? `What’s happening at ${selectedCollection.title}?` : 'What would you like to share?')} close={() => { if (busy) abort.current?.abort(); close(); }}><p className="l-dialog-intro">Choose a way to share.</p><form onSubmit={submit}><fieldset disabled={busy}>
     <div className="l-share-choices" role="tablist" aria-label="Ways to share">{[
       ['media','Photo / video','A photo or quick clip',Camera],
