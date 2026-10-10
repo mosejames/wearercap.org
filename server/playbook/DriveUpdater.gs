@@ -32,6 +32,8 @@ function doPost(e) {
     body.clear();
     pbHeading(body,record.committee.name+' | Living Record',DocumentApp.ParagraphHeading.TITLE);
     body.appendParagraph('RCAP • School year 2026-27');
+    body.appendParagraph('Build the team we want to be. Shape our purpose, scope, ideas and ways of working together. New teams can begin with hopes, questions and experiments; returning teams can build on experience. Revisit our direction as we learn.');
+    if(input.committee==='marcom')body.appendParagraph('Marketing & Communications is in its first year. This is a space to create our team together, define what belongs to us and test how we can serve families and other committees.');
     body.appendParagraph('Generated from the committee website. Contribute and discuss on the website; keep free-form notes in the original editable playbook. This generated record is refreshed when members save or choose Save record to Drive.');
     body.appendParagraph('Website: https://wearercap.org/committee-playbook/?committee='+input.committee);
     body.appendParagraph('Committee folder: https://drive.google.com/drive/folders/'+record.committee.folder_id);
@@ -40,7 +42,7 @@ function doPost(e) {
     Object.keys(PB_SECTIONS).forEach(function(section){
       pbHeading(body,PB_SECTIONS[section],DocumentApp.ParagraphHeading.HEADING1);
       const entries=record.entries.filter(function(x){return x.section===section;});
-      if(!entries.length)body.appendParagraph('This chapter is ready for the committee’s experience.');
+      if(!entries.length)body.appendParagraph('This chapter is ready for the committee’s ideas, questions and experience.');
       entries.forEach(function(x){
         pbHeading(body,x.question_text,DocumentApp.ParagraphHeading.HEADING2);
         body.appendParagraph(x.author_name+' • '+x.kind+' • '+(x.agreed?'Group agreement':'Contribution, not a group decision')+' • '+new Date(x.updated_at).toISOString());

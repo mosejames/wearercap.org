@@ -55,3 +55,9 @@ Every committee lead sees Invite contributors. Adding a sign-in email grants mem
 Contributions and replies display the contributor's name. The name field starts from the signed-in profile when available and remains editable. Names provide attribution; confirmed account identity and committee membership control access.
 
 Uniform sharing uses `public/uniform-playbook-og.jpg`, 1200 by 630, with absolute HTTPS Open Graph and Twitter large-image metadata. Validation: build and all 766 tests pass. A rollback-only database check confirmed invitations cannot cross committees, grant chair roles, or be created by ordinary members.
+
+## Creating the team, not only preserving history
+
+All committee workspaces now introduce the playbook as a place to shape purpose, scope, ideas and working culture. Marketing & Communications has 24 first-year prompts, including creative roles, request scope, approvals, listening and pilots. General prompts offer starting-fresh paths where history was previously assumed. Existing question IDs, sections and titles remain compatible with the server catalog; no contributions, memberships or links are migrated or reset. The editable Google Docs gained an introductory section in place, using revision guards. The updater source carries this framing into future generated records when deployed.
+
+Chair activation: start with the chair’s provisional vision, invite the team to challenge and build on it, ask each person for one idea or question, discuss purpose/scope/working norms together, record genuine group agreements, and choose two to four first actions. Return after the first real project to capture learning. A chair starts the conversation rather than completing the entire playbook alone.

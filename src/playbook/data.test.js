@@ -9,3 +9,8 @@ describe('questions at the member’s pace',()=>{
 describe('committee invitations',()=>{
  it('links an invited person to the intended committee',async()=>{const {committeeInviteUrl,committeeInvitation}=await import('./data.js');const url=committeeInviteUrl('uniform','https://wearercap.org');expect(url).toBe('https://wearercap.org/uniform-playbook/?committee=uniform');expect(committeeInvitation('Uniform Committee','person@example.com',url)).toContain('Sign in with: person@example.com');});
 });
+
+describe('new teams can create without losing existing question links',()=>{
+ it('keeps every committee’s saved question identifiers, sections and titles compatible with the server catalog',async()=>{const {COMMITTEES,questionsFor}=await import('./data.js');const identity=qs=>qs.map(({id,section,title})=>({id,section,title}));for(const c of COMMITTEES)expect(identity(questionsFor(c.id))).toEqual(identity(QUESTIONS));});
+ it('gives first-year marketing a relevant prompt for every foundation question',async()=>{const {questionsFor}=await import('./data.js');const prompts=questionsFor('marcom');expect(prompts).toHaveLength(24);expect(prompts.every(q=>q.help!==QUESTIONS.find(base=>base.id===q.id).help)).toBe(true);expect(prompts.find(q=>q.id==='perspective-keep').help).toContain('We do not need a past committee');});
+});

@@ -1,7 +1,7 @@
 export const COMMITTEES = [
   { id: 'uniform', name: 'Uniform Committee', short: 'Uniforms', description: 'Help every family find a good fit.', folder: '1EtdK_2DqIMAUsZoJz0pxTSfqkQvgzi-0', doc: '1oqqH5ehFXeAisZF_1NAez1AZyU1hJXShNawT1oIhCE4', symbol: '◇' },
   { id: 'raffle', name: 'Fall Raffle', short: 'Raffle', description: 'Build the excitement. Carry the learning forward.', folder: '1UhDKmZfOITk0Uj2YePQwaLBc-DFY-FA6', doc: '1161czHzH9NTMSRScxmUIeuwkClu56dkv4rrqzfplg04', symbol: '↗' },
-  { id: 'marcom', name: 'Marketing & Communications', short: 'Marketing', description: 'Make the message matter.', folder: '1pXeiND1zX83ZHRVeAohCoGDl6E2VMhPz', doc: '18fBYlX6HVZb4TuAuOYfvvd-4rRkideEkGnYvgCUTuxU', symbol: '✳' },
+  { id: 'marcom', name: 'Marketing & Communications', short: 'Marketing', description: 'Shape our voice. Build our team. Make the message matter.', folder: '1pXeiND1zX83ZHRVeAohCoGDl6E2VMhPz', doc: '18fBYlX6HVZb4TuAuOYfvvd-4rRkideEkGnYvgCUTuxU', symbol: '✳' },
   { id: 'men', name: 'Men of RCAP', short: 'Men of RCAP', description: 'Show up. Build something lasting.', folder: '1I9vwzU5uj76AJEwdnsawxpQyltT_9zts', doc: '1Ciz10tVUmgZ4pqUHDuuZbW1OCGslcRowO4eCVgxhWf8', symbol: '↗' },
   { id: 'trunk', name: 'Trunk or Treat', short: 'Trunk or Treat', description: 'A little magic. A lot of teamwork.', folder: '1fXwtQP9MtLyXCdFhA25o42ey-WKZniOS', doc: '1reeVoeYFcCQbyg9QaGNEnF5fNNePxxoKenIZ1lnDNnA', symbol: '✦' },
 ];
@@ -20,9 +20,9 @@ const sectionQuestions = {
  ['success', 'At the end of the year, what would make us proud?', 'Choose one or two results we can actually observe or measure.'],
  ],
  perspective: [
- ['keep', 'What should we never have to learn the hard way again?', 'Share something that worked, why it worked, and what the next team should keep.'],
- ['change', 'What was harder than it needed to be?', 'What happened, what got in the way, and what could we try differently?'],
- ['fresh', 'What are we seeing with fresh eyes?', 'New members: what are you wondering? Returning members: what context would help?'],
+ ['keep', 'What should we never have to learn the hard way again?', 'Bring useful experience from any team or project. Starting fresh? What good practice would you like us to try, and why?'],
+ ['change', 'What was harder than it needed to be?', 'What has been difficult, or what friction do you want this new team to prevent? Suggest an approach we can test.'],
+ ['fresh', 'What are we seeing with fresh eyes?', 'What could we create or do differently? Share a question, a bold idea or an assumption worth testing. New and returning voices belong here.'],
  ],
  people: [
  ['roles', 'Who is bringing what to the table?', 'Capture names, preferred contacts, skills, interests and small jobs people can own. A roster link is welcome.'],
@@ -31,7 +31,7 @@ const sectionQuestions = {
  ['welcome', 'How will someone new find their place?', 'Give them a voice, a clear first task and a person to learn alongside.'],
  ],
  provision: [
- ['have', 'What do we already have that the next team should know about?', 'Supplies, equipment, vendor relationships and borrowed items. Where are they, who has access, and what must be returned?'],
+ ['have', 'What do we already have that the next team should know about?', 'What skills, relationships, tools, supplies or support can we build with now? Starting from zero is useful context. Identify what we still need to create.'],
  ['need', 'What would make this work easier?', 'Be specific about what is missing, broken or wearing out. Include quantity, size, timing, likely cost and who can follow up.'],
  ['budget', 'What does the work really cost?', 'Requested and approved budgets, currency, estimates versus actual spending, funding sources and how the numbers were built.'],
  ['responsibility', 'Who should provide or pay for what we need?', 'Who operates the activity, who benefits, and what have the parties agreed to provide? Record questions as questions until confirmed.'],
@@ -44,8 +44,8 @@ const sectionQuestions = {
  ['risks', 'What could get in our way?', 'Dependencies, backup plans and help or decisions needed. Who should respond, by when, and who will follow up?'],
  ],
  pass: [
- ['results', 'What did we make happen?', 'Return to our success measures. What did we deliver, and what evidence or results should we leave?'],
- ['lessons', 'What would you tell yourself before doing this again?', 'What should the next group keep, change or start earlier? Capture lessons while they are fresh.'],
+ ['results', 'What did we make happen?', 'As work unfolds, capture milestones and results. Just beginning? Describe the difference you hope to make and what evidence you will collect.'],
+ ['lessons', 'What would you tell yourself before doing this again?', 'Capture lessons as you learn. Just beginning? Name an experiment, what you hope to learn and when we should revisit it.'],
  ['trail', 'Where can the next team find everything?', 'Link timelines, templates, budgets, actual costs, receipts, inventory, bin photos, storage instructions, vendor contacts and key decisions.'],
  ['open', 'What is still unfinished?', 'Open tasks, risks, unpaid costs and promises. Add a next action, owner and due date for each.'],
  ['handoff', 'Who is ready to carry this forward?', 'Who is learning the role? What should they know first, and when should they start? Record the incoming lead, handoff date, folder access contact and who reviewed it together.'],
@@ -75,7 +75,7 @@ const RAFFLE_HELP = {
  'purpose-why': 'What will raffle proceeds support, who benefits, and how will we explain that purpose to families?',
  'purpose-scope': 'What does the raffle team own? Confirm what the board, school, finance team, donors and other committees handle.',
  'purpose-success': 'Set a proposed net fundraising goal, participation goal and experience goal. Distinguish targets from approved commitments.',
- 'perspective-keep': 'Which prizes, ticket offers, messages or sales moments worked before? Link results or explain what makes you think so.',
+ 'perspective-keep': 'Which ideas from earlier raffles or other fundraisers could help? Starting fresh? Propose a prize, message or sales approach to test and explain why.',
  'perspective-change': 'Where did prize collection, ticket sales, payment tracking or winner follow-up become harder than expected?',
  'perspective-fresh': 'What do new members or families need explained about the raffle? What assumptions should the team revisit?',
  'people-roles': 'Who can help with donor outreach, prize tracking, communications, sales, money reconciliation, the drawing and winner follow-up? Link the team roster.',
@@ -98,6 +98,7 @@ const RAFFLE_HELP = {
  'pass-handoff': 'Name the incoming lead and handoff date. Confirm access to the folder, approved sales tools and finance contacts, and review the lessons and unfinished work together.'
 };
 export function questionsFor(committee) {
+ if(committee==='marcom')return QUESTIONS.map(q=>({...q,help:MARCOM_HELP[q.id]||q.help}));
  if(committee==='uniform')return QUESTIONS.map(q=>({...q,help:UNIFORM_HELP[q.id]||q.help}));
  return committee==='raffle' ? QUESTIONS.map(q=>({...q,help:RAFFLE_HELP[q.id]||q.help})) : QUESTIONS;
 }
@@ -106,7 +107,7 @@ const UNIFORM_HELP = {
  'purpose-why':'How can the uniform swap help families feel prepared, welcome and supported? What experience do we want every family to have?',
  'purpose-scope':'Confirm what the committee handles for collecting, sorting, storing and sharing uniforms, and what belongs to the school or another team.',
  'purpose-success':'Choose observable goals, such as families served, usable items shared, fewer unmet size requests or an easier collection process.',
- 'perspective-keep':'What collection windows, sorting methods, displays or volunteer habits made previous swaps work well?',
+ 'perspective-keep':'What collection, sorting or volunteer ideas should we build on? Use past swaps or propose a new approach to test if there is no history yet.',
  'perspective-change':'Where did condition checks, missing sizes, storage, pickup or communication become difficult? What would make it easier?',
  'perspective-fresh':'What do new families need explained about donating or finding uniforms? What assumptions should returning volunteers revisit?',
  'people-roles':'Who owns donations, condition checks, inventory, size sorting, storage, family communications, event setup and pickup?',
@@ -133,5 +134,32 @@ export function committeeInviteUrl(committee,origin) {
  url.searchParams.set('committee',committee);return url.href;
 }
 export function committeeInvitation(committeeName,email,url) {
- return `You’re invited to help build the ${committeeName} living playbook.\n\nShare what you know, add ideas and help us leave the next team a better starting point. Answer one question or keep going at your own pace.\n\nOpen: ${url}\nSign in with: ${email}\n\nYour contributions and replies will be shared with our committee and credited to your name.`;
+ return `You’re invited to help build the ${committeeName} living playbook.\n\nHelp shape the team we want to be: our purpose, responsibilities, ideas and ways of working. No past committee experience is needed. Bring a first thought or a question, and build on one another’s ideas. Answer one question or keep going at your own pace.\n\nOpen: ${url}\nSign in with: ${email}\n\nYour contributions and replies will be shared with our committee and credited to your name.`;
 }
+
+const MARCOM_HELP = {
+ 'purpose-why':'This is our first year. What should Marketing & Communications make possible for RCAP and its families? What do we want people to understand, feel or do?',
+ 'purpose-scope':'Design our scope together. What should we own, support or refer elsewhere? Discuss event promotion, committee requests, storytelling and who approves school or RCAP messages. These are proposals until agreed.',
+ 'purpose-success':'What would a strong first year look like? Choose a few signs of clearer communication, participation or belonging, and agree how we will learn what is working.',
+ 'perspective-keep':'We do not need a past committee to begin. What communication, creative or volunteer experience can each person bring? What good practice should we try?',
+ 'perspective-change':'What communication gaps do families or committees experience today? What could this new team make simpler, clearer or more welcoming?',
+ 'perspective-fresh':'If we could build this team from scratch, what would we create? Bring ideas for our voice, channels, stories and ways to listen. What assumptions should we test?',
+ 'people-roles':'What strengths and interests does each person bring? Explore writing, design, photography, planning, outreach and coordination. Invite people to shape roles before assigning them.',
+ 'people-leadership':'How can the chair help people contribute and grow? Agree who coordinates, who is learning alongside them and who can help when someone is unavailable.',
+ 'people-norms':'What kind of creative team do we want to be? Agree how we share ideas, give feedback, make decisions and include different voices, plus our channel and meeting rhythm.',
+ 'people-welcome':'How will a new member feel welcome and useful? Offer a small first contribution, a point person and room to suggest something new.',
+ 'provision-have':'What can we build with now: people, skills, brand materials, photos, templates, approved channels and relationships? Identify access we need to confirm.',
+ 'provision-need':'What tools, training, creative support or information would help us begin? Separate essentials for our first project from ideas for later.',
+ 'provision-budget':'What might our proposed work cost? Estimate design, printing, tools or other needs. Distinguish ideas and requests from approved spending.',
+ 'provision-responsibility':'Who owns each channel, provides source information and approves publication? Confirm what RCAP, the school and requesting committees each handle.',
+ 'provision-receipts':'How will tool subscriptions, purchases and reimbursement be approved and recorded? Identify an owner and the receipt folder before spending.',
+ 'plan-dates':'What should we build first? Map a realistic first project, listening period, approval checkpoints and communication calendar together.',
+ 'plan-first':'Choose two to four small first steps: listen to families, draft our scope, gather assets or try a pilot message. Give each an owner, date and definition of done.',
+ 'plan-workflow':'Design a simple path from a committee request to a brief, draft, feedback, approval, publication and learning. Who owns each handoff?',
+ 'plan-risks':'What could overwhelm a new team? Discuss unclear requests, approval delays, missing information or too many channels. Set boundaries and a way to ask for help.',
+ 'pass-results':'As we begin, record small milestones and what we learn from our first projects. Which signs will tell us our communication is helping?',
+ 'pass-lessons':'What are our early experiments teaching us? Capture what to keep, change or test next, even while the team is still taking shape.',
+ 'pass-trail':'Create a useful home for our emerging scope, brand guidance, templates, calendar, approval process and decisions. Identify the owner of each resource.',
+ 'pass-open':'Which ideas, questions or decisions remain open? Keep promising ideas visible without treating them as commitments. Choose the next step when ready.',
+ 'pass-handoff':'How will someone else understand and carry forward the team we are building? Document roles, access contacts and the reasons behind our choices as we go.'
+};
