@@ -200,3 +200,11 @@ it('offers written modes without requiring a photograph',async()=>{
  expect(host.querySelector('textarea')).toBeTruthy();
  expect(host.querySelector('input[type=file]')).toBeNull();
 });
+
+it('does not offer empty sharing options to a new parent writing a quote',async()=>{
+ await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={null} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await click(host.querySelector('#share-tab-quote'));
+ expect(host.querySelector('.l-upload-summary button')).toBeNull();
+ expect(host.querySelector('.l-share-example').textContent).toContain('packing extra room');
+ expect(host.querySelector('input[autocomplete="name"]')).toBeTruthy();
+});

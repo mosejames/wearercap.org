@@ -15,7 +15,7 @@ it('uploads a packing moment into the existing preparation album with no day or 
  await click(host.querySelectorAll('.ready-choices button')[1]);
  await act(async()=>{await new Promise(r=>setTimeout(r,30));});
  expect(host.querySelector('dialog')).toBeTruthy();
- await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Change or add a caption'));
+ await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Add a caption or change name'));
  expect(host.querySelector('dialog select')).toBeNull();
  const input=host.querySelector('input[type=file]');Object.defineProperty(input,'files',{value:[new File(['photo'],'bag.jpg',{type:'image/jpeg'})]});
  await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
