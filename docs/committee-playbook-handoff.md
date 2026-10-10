@@ -45,3 +45,13 @@ The 2026-27 Fall Raffle workspace uses the existing Fall Raffle folder. Initial 
 Global administration is separate from committee leadership. The private admins table initially contains Mose's two sign-in emails and the ongoing RCAP organization email. It has RLS and no direct client grants. Only global admins see the committee switcher. Every other account must have explicit membership for the committee requested, including exports and Drive updates. Leads can manage their own committee and cannot grant global administration. The original blanket grants for other board accounts were removed except where a completed signup establishes membership. The website does not silently redirect an unauthorized committee link into a different playbook. People serving on multiple committees retain explicit memberships, but open each committee through its link.
 
 Google Drive document access is separate and still inherits existing parent-folder sharing. The website's access controls do not revoke those Google permissions.
+
+## Uniform rollout and chair invitations
+
+The Uniform Committee lives at `/uniform-playbook/` with 24 tailored prompts, an editable playbook and a separate living record in the existing Uniform Swap folder. Shekita James has committee lead access. Automatic Drive updates still require authorization and deployment of the current updater source, which now includes uniform and raffle.
+
+Every committee lead sees Invite contributors. Adding a sign-in email grants membership only in that committee and prepares a named, committee-specific invitation to copy or open in email. The app does not send email automatically. The server always grants member access through this invitation action, regardless of a submitted role. Only global admins can assign or change committee chair roles through `set_member_role`.
+
+Contributions and replies display the contributor's name. The name field starts from the signed-in profile when available and remains editable. Names provide attribution; confirmed account identity and committee membership control access.
+
+Uniform sharing uses `public/uniform-playbook-og.jpg`, 1200 by 630, with absolute HTTPS Open Graph and Twitter large-image metadata. Validation: build and all 766 tests pass. A rollback-only database check confirmed invitations cannot cross committees, grant chair roles, or be created by ordinary members.

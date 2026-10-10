@@ -30,3 +30,25 @@ it.each([false,true])('saves before navigation and limits the committee switcher
   expect(host.querySelector('.pb-entry-text').textContent).toContain('Leave a clear message');
  }finally{await act(async()=>root.unmount());host.remove();}
 });
+
+it('shows chairs an invite button and labels contributions and replies with their authors',async()=>{
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ const storage=new Map();vi.stubGlobal('localStorage',{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)});
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ mock.record={committee:{id:'marcom',name:'Marketing',folder_id:'folder',doc_id:'doc'},role:'lead',is_admin:false,entries:[{id:'peer-entry',question_id:QUESTIONS[0].id,question_text:QUESTIONS[0].title,section:'purpose',author_id:'peer',author_name:'Jordan Smith',content:'A shared perspective.',kind:'insight',created_at:'2026-10-10',updated_at:'2026-10-10'}],comments:[{id:'reply',entry_id:'peer-entry',author_name:'Casey Jones',content:'Building on Jordan’s idea.',created_at:'2026-10-10'}],questions:[],actions:[]};
+ mock.call.mockImplementation(async(action)=>{if(action==='memberships')return [{id:'marcom',name:'Marketing'}];if(action==='load')return structuredClone(mock.record);if(action==='add_member')return {ok:true};throw Error(action);});
+ const host=document.createElement('div');document.body.append(host);const root=createRoot(host);
+ try{await act(async()=>{root.render(<App/>);});
+ expect(host.querySelector('select#committee')).toBeNull();
+ expect(host.querySelector('.pb-person b').textContent).toBe('Jordan Smith');
+ await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent.includes('1 reply')).click();});
+ expect(host.querySelector('.pb-reply b').textContent).toBe('Casey Jones');
+ await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent.includes('Invite contributors')).click();});
+ const el=host.querySelector('dialog input[type="email"]');
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,'guest@example.com');el.dispatchEvent(new Event('input',{bubbles:true}));});
+ await act(async()=>{host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
+ expect(mock.call).toHaveBeenCalledWith('add_member',{committee:'marcom',email:'guest@example.com',role:'member'});
+ expect(host.querySelector('dialog textarea').value).toContain('committee=marcom');
+ expect(host.querySelector('dialog').textContent).toContain('The invitation has not been sent.');
+ }finally{await act(async()=>root.unmount());host.remove();}
+});

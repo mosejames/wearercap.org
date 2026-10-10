@@ -2,7 +2,7 @@ export default async function playbookSync(req,res) {
  res.setHeader('Cache-Control','no-store');
  const token=req.headers.authorization?.match(/^Bearer ([A-Za-z0-9._-]+)$/)?.[1];
  const committee=req.body?.committee;
- if(!token||!['marcom','men','trunk','raffle'].includes(committee))return res.status(400).json({error:'Sign in and choose your committee before saving to Drive.'});
+ if(!token||!['marcom','men','trunk','raffle','uniform'].includes(committee))return res.status(400).json({error:'Sign in and choose your committee before saving to Drive.'});
  const url=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL;
  const key=process.env.SUPABASE_ANON_KEY||process.env.VITE_SUPABASE_ANON_KEY;
  try{

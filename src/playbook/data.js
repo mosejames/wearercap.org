@@ -1,4 +1,5 @@
 export const COMMITTEES = [
+  { id: 'uniform', name: 'Uniform Committee', short: 'Uniforms', description: 'Help every family find a good fit.', folder: '1EtdK_2DqIMAUsZoJz0pxTSfqkQvgzi-0', doc: '1oqqH5ehFXeAisZF_1NAez1AZyU1hJXShNawT1oIhCE4', symbol: '◇' },
   { id: 'raffle', name: 'Fall Raffle', short: 'Raffle', description: 'Build the excitement. Carry the learning forward.', folder: '1UhDKmZfOITk0Uj2YePQwaLBc-DFY-FA6', doc: '1161czHzH9NTMSRScxmUIeuwkClu56dkv4rrqzfplg04', symbol: '↗' },
   { id: 'marcom', name: 'Marketing & Communications', short: 'Marketing', description: 'Make the message matter.', folder: '1pXeiND1zX83ZHRVeAohCoGDl6E2VMhPz', doc: '18fBYlX6HVZb4TuAuOYfvvd-4rRkideEkGnYvgCUTuxU', symbol: '✳' },
   { id: 'men', name: 'Men of RCAP', short: 'Men of RCAP', description: 'Show up. Build something lasting.', folder: '1I9vwzU5uj76AJEwdnsawxpQyltT_9zts', doc: '1Ciz10tVUmgZ4pqUHDuuZbW1OCGslcRowO4eCVgxhWf8', symbol: '↗' },
@@ -97,5 +98,40 @@ const RAFFLE_HELP = {
  'pass-handoff': 'Name the incoming lead and handoff date. Confirm access to the folder, approved sales tools and finance contacts, and review the lessons and unfinished work together.'
 };
 export function questionsFor(committee) {
+ if(committee==='uniform')return QUESTIONS.map(q=>({...q,help:UNIFORM_HELP[q.id]||q.help}));
  return committee==='raffle' ? QUESTIONS.map(q=>({...q,help:RAFFLE_HELP[q.id]||q.help})) : QUESTIONS;
+}
+
+const UNIFORM_HELP = {
+ 'purpose-why':'How can the uniform swap help families feel prepared, welcome and supported? What experience do we want every family to have?',
+ 'purpose-scope':'Confirm what the committee handles for collecting, sorting, storing and sharing uniforms, and what belongs to the school or another team.',
+ 'purpose-success':'Choose observable goals, such as families served, usable items shared, fewer unmet size requests or an easier collection process.',
+ 'perspective-keep':'What collection windows, sorting methods, displays or volunteer habits made previous swaps work well?',
+ 'perspective-change':'Where did condition checks, missing sizes, storage, pickup or communication become difficult? What would make it easier?',
+ 'perspective-fresh':'What do new families need explained about donating or finding uniforms? What assumptions should returning volunteers revisit?',
+ 'people-roles':'Who owns donations, condition checks, inventory, size sorting, storage, family communications, event setup and pickup?',
+ 'people-leadership':'Who is the chair, who is learning the role, and who can coordinate when the chair is unavailable?',
+ 'people-norms':'Agree your communication channel, meeting rhythm, decision process and next check-in. How will volunteers hand tasks to one another?',
+ 'people-welcome':'Give a new volunteer a point person and a clear first job, such as labeling bins, sorting one size or helping with pickup.',
+ 'provision-have':'List usable uniforms by type and size, racks, hangers, bins, signs and storage space. Where are they, and who has access?',
+ 'provision-need':'Which sizes or uniform items are in short supply? What racks, bags, labels or help do we need, in what quantity and by when?',
+ 'provision-budget':'Capture requested and approved costs for bins, hangers, cleaning, labels, transport or events, then compare estimates with actual spending.',
+ 'provision-responsibility':'Who supplies storage, cleaning materials, transport and missing items? Confirm what families, the school and the committee have agreed to provide.',
+ 'provision-receipts':'Who approves purchases, how are expenses reimbursed, and where do receipts and inventory records live?',
+ 'plan-dates':'Plan donation windows, sorting days, family communications, swap events, pickup times, cleanup and inventory checks.',
+ 'plan-first':'Choose two to four next steps. Name the owner, due date and definition of done for each, then add them to What’s next.',
+ 'plan-workflow':'Explain the journey from donated item through condition check, sorting, inventory, storage and family pickup. Confirm handling of unusable or unclaimed items.',
+ 'plan-risks':'What if a needed size is unavailable, storage fills up or a pickup is missed? Name the person who follows up and the backup plan.',
+ 'pass-results':'How many families and usable items did we serve? Which needs remain? Link summary inventory and results without including private family circumstances.',
+ 'pass-lessons':'What should next year’s team keep, change or start earlier about collection, sorting, events and communications?',
+ 'pass-trail':'Link inventory, bin labels and photos, storage instructions, collection messages, event checklists and key decisions. Keep family-specific requests in the approved private channel.',
+ 'pass-open':'List unfinished sorting, outstanding pickups, supply needs or storage issues. Add an owner, due date and next action.',
+ 'pass-handoff':'Name the incoming chair, handoff date and access contact. Review inventory, storage access, volunteer roles, lessons and unfinished work together.'
+};
+export function committeeInviteUrl(committee,origin) {
+ const url=new URL(committee==='uniform'?'/uniform-playbook/':committee==='raffle'?'/raffle-playbook/':'/committee-playbook/',origin);
+ url.searchParams.set('committee',committee);return url.href;
+}
+export function committeeInvitation(committeeName,email,url) {
+ return `You’re invited to help build the ${committeeName} living playbook.\n\nShare what you know, add ideas and help us leave the next team a better starting point. Answer one question or keep going at your own pace.\n\nOpen: ${url}\nSign in with: ${email}\n\nYour contributions and replies will be shared with our committee and credited to your name.`;
 }
