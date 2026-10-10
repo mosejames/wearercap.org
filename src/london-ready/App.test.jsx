@@ -5,7 +5,7 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import Ready from './App.jsx';
 import * as db from '../london/data.js';
 import { uploadBatch } from '../london/upload.js';
-vi.mock('../london/data.js',()=>({localProfile:vi.fn(()=>({displayName:'Parent',team:''})),getOwner:vi.fn(async()=>'parent'),listEvents:vi.fn(async()=>[{id:'prep',slug:'before-the-adventure'},{id:'trip',slug:'hello-london'}]),listPhotos:vi.fn(async()=>[]),saveProfile:vi.fn(async p=>p),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(async()=>{}),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
+vi.mock('../london/data.js',()=>({localScholar:vi.fn(()=>''),saveScholar:vi.fn(),localProfile:vi.fn(()=>({displayName:'Parent',team:''})),getOwner:vi.fn(async()=>'parent'),listEvents:vi.fn(async()=>[{id:'prep',slug:'before-the-adventure'},{id:'trip',slug:'hello-london'}]),listPhotos:vi.fn(async()=>[]),saveProfile:vi.fn(async p=>p),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(async()=>{}),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
 vi.mock('../london/upload.js',()=>({uploadBatch:vi.fn(async()=>({done:[{id:'new'}],failed:[]}))}));
 let host,root;
 beforeEach(async()=>{vi.clearAllMocks();globalThis.IS_REACT_ACT_ENVIRONMENT=true;HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Ready/>));});
@@ -22,8 +22,9 @@ it('uploads a packing moment into the existing preparation album with no day or 
  expect(host.querySelector('dialog select')).toBeNull();
  const input=host.querySelector('input[type=file]');Object.defineProperty(input,'files',{value:[new File(['photo'],'bag.jpg',{type:'image/jpeg'})]});
  await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+ await act(async()=>{const el=host.querySelector('input[placeholder="Mosie, or names for a group moment"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,'Mosie');el.dispatchEvent(new Event('input',{bubbles:true}));});
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
- expect(uploadBatch).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'packing-bags',caption:'What’s going in your suitcase that absolutely has to come?'}));
+ expect(uploadBatch).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},scholarName:'Mosie',inspiration:'packing-bags',caption:'What’s going in your suitcase that absolutely has to come?'}));
 });
 it('shows only this parent’s preparation uploads and confirms removal',async()=>{
  db.listPhotos.mockResolvedValueOnce([{id:'own',owner:'parent',eventId:'prep',caption:'Our packing'},{id:'other',owner:'another',eventId:'prep'},{id:'trip',owner:'parent',eventId:'trip'}]);

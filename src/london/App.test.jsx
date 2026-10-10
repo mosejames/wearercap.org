@@ -2,7 +2,7 @@ vi.mock('./LoginGate.jsx',()=>({default:({children})=>children,LoginPanel:()=>nu
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-vi.mock('./data.js', () => ({localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
+vi.mock('./data.js', () => ({localScholar:vi.fn(()=>''),saveScholar:vi.fn(),localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
 import App, { Upload } from './App.jsx';
@@ -94,8 +94,9 @@ it('uses a selected parent question as an editable caption and saves to the prep
  const input=host.querySelector('input[type="file"]');Object.defineProperty(input,'files',{value:[file],configurable:true});
  await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
  await click(button('Change or add a caption'));expect(host.querySelector('textarea').value).toBe('What are you most excited to see or do?');
+ await act(async()=>{const el=host.querySelector('input[placeholder="Mosie, or names for a group moment"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,'Mosie');el.dispatchEvent(new Event('input',{bubbles:true}));});
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
- expect(uploadBatch).toHaveBeenCalledWith([file],expect.objectContaining({event:expect.objectContaining({id:'prep',slug:'before-the-adventure'}),caption:'What are you most excited to see or do?',inspiration:'most-excited'}));
+ expect(uploadBatch).toHaveBeenCalledWith([file],expect.objectContaining({event:expect.objectContaining({id:'prep',slug:'before-the-adventure'}),caption:'What are you most excited to see or do?',scholarName:'Mosie',inspiration:'most-excited'}));
 });
 it('opens family video postcards through the compact invitation',async()=>{
  db.listEvents.mockResolvedValue([{id:'prep',slug:'before-the-adventure',title:'Before the adventure'}]);
@@ -185,13 +186,13 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  const textarea=host.querySelector('textarea');
  const setValue=async(el,value)=>{await act(async()=>{Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});};
  await setValue(textarea,'I love London!');
- await setValue(host.querySelector('input[placeholder="A first name, or leave it blank"]'),'Mosie');
+ await setValue(host.querySelector('input[placeholder="Mosie, or names for a group moment"]'),'Mosie');
  expect(host.querySelector('input[type=file]')).toBeNull();
  await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
  expect(host.querySelector('dialog h2').textContent).toBe('That’s a memory worth keeping.');
  expect(button('Bring the group chat along')).toBeTruthy();
  expect(makeTextCard).toHaveBeenCalledWith(expect.objectContaining({mode:'quote',text:'I love London!',speaker:'Mosie'}));
- expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',caption:'I love London! (Mosie)'}));
+ expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',scholarName:'Mosie',caption:'I love London! (Mosie)'}));
 });
 it('offers written modes without requiring a photograph',async()=>{
  await click(button('Share a moment'));
@@ -235,4 +236,15 @@ it('offers only positive reactions and posts comments on the selected moment',as
  await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'So excited for you!');el.dispatchEvent(new Event('input',{bubbles:true}));});
  await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
  expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'So excited for you!',p_name:'Test chaperone'});
+});
+
+it('asks for scholar attribution in every sharing mode, separately from the adult name',async()=>{
+ await click(button('Share a moment'));
+ for(const label of ['Photo / video','Write a response','Finish a thought']){
+  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent===label));
+  expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(true);
+ }
+ await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(host.querySelector('[role=alert]').textContent).toContain('scholar’s first name');
+ expect(uploadBatch).not.toHaveBeenCalled();
 });

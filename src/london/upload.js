@@ -60,7 +60,7 @@ async function putAll(prepared, signed, mode, onBytes, signal) {
  * @param {File[]} files
  * @param {{event, profile, caption?: string, onProgress?: Function, signal?: AbortSignal}} ctx
  */
-export async function uploadBatch(files, { event, profile, caption = '', inspiration = '', onProgress, signal }) {
+export async function uploadBatch(files, { event, profile, caption = '', scholarName = '', inspiration = '', onProgress, signal }) {
   await storageConfig();
   const owner = await getOwner();
   const state = {
@@ -115,6 +115,7 @@ export async function uploadBatch(files, { event, profile, caption = '', inspira
             vault: VAULT.id,
             owner,
             uploader_name: profile?.displayName || '',
+            scholar_name: scholarName.trim().slice(0,40),
             kind: p.video ? 'video' : 'photo',
             storage: 'r2',
             key: s.keys.orig, web_key: s.keys.web, thumb_key: s.keys.thumb,

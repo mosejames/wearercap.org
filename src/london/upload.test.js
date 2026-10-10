@@ -16,7 +16,7 @@ beforeEach(() => {
  vi.stubGlobal('fetch', vi.fn(async (_, options) => ({ ok: true, json: async () => ({ mode: 'r2', items: JSON.parse(options.body).files.map(({id}) => ({ id, keys: {orig: 'video', web: 'poster', thumb: 'thumb'}, urls: {orig: 'r2/video', web: 'r2/poster', thumb: 'r2/thumb'} })) }) })));
 });
 afterEach(() => vi.unstubAllGlobals());
-const context = { event: {id: 'event', slug: 'off-we-go'}, profile: {displayName: 'Family'} };
+const context = { event: {id: 'event', slug: 'off-we-go'}, profile: {displayName: 'Family'}, scholarName:'Mosie' };
 it('sends only the prepared video and two posters to R2, recording compressed bytes', async () => {
  const original = {name:'phone.mov',type:'video/quicktime',size:150*1024*1024};
  const orig = new Blob(['smaller']), web = new Blob(['poster']), thumb = new Blob(['thumb']);
@@ -25,7 +25,7 @@ it('sends only the prepared video and two posters to R2, recording compressed by
  expect(result.done).toHaveLength(1);
  expect(sent.map(p => p.blob)).toEqual([orig,web,thumb]);
  expect(sent.every(p => p.blob !== original)).toBe(true);
- expect(insertPhotos).toHaveBeenCalledWith([expect.objectContaining({kind:'video',storage:'r2',bytes:orig.size,content_type:'video/mp4'})]);
+ expect(insertPhotos).toHaveBeenCalledWith([expect.objectContaining({scholar_name:'Mosie',uploader_name:'Family',kind:'video',storage:'r2',bytes:orig.size,content_type:'video/mp4'})]);
 });
 it('does not sign, upload or create a gallery row when compression fails', async () => {
  prepareLondonVideo.mockRejectedValue(new Error('Cannot compress'));

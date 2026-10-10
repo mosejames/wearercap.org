@@ -25,7 +25,7 @@ export const THOUGHT_STARTERS = [
 export function momentText({ mode, text, speaker = '', starter = '' }) {
  const body = text.trim();
  if (!body || body.length > 220 || speaker.trim().length > 40) throw new Error('Add your words, up to 220 characters.');
- return `${mode === 'thought' ? `${starter} ` : ''}${body}${mode === 'quote' && speaker.trim() ? ` (${speaker.trim()})` : ''}`;
+ return `${mode === 'thought' ? `${starter} ` : ''}${body}${speaker.trim() ? ` (${speaker.trim()})` : ''}`;
 }
 export function wrapCardText(ctx, text, maxWidth) {
  const lines = []; let line = '';
@@ -60,7 +60,7 @@ export async function makeTextCard({ mode, text, speaker, starter, prompt = '' }
  do {ctx.font=`600 ${size}px "DM Sans", sans-serif`;lines=wrapCardText(ctx,body,1060);if(lines.length*size*1.3<=650)break;size-=2;} while(size>24);
  ctx.fillStyle=dark?'#fffdf6':'#1a2a56';lines.forEach((line,i)=>ctx.fillText(line,70,330+i*size*1.3));
  ctx.font='26px "DM Sans", sans-serif';ctx.fillStyle=dark?'#f2ce78':'#657085';
- ctx.fillText(mode==='quote'&&speaker?.trim()?speaker.trim():mode==='thought'?'A little moment, in words.':'A thought shared.',70,1090);
+ ctx.fillText(speaker?.trim()?speaker.trim():mode==='thought'?'A little moment, in words.':'A thought shared.',70,1090);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
  if(!blob)throw new Error('Could not prepare your written moment. Please try again.');
  return {file:new File([blob],`${mode}-moment.jpg`,{type:'image/jpeg'}),caption};

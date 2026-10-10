@@ -59,7 +59,7 @@ export function mediaUrl(photo, which = 'web') {
 }
 const photoFromRow = (row) => ({
   id: row.id, eventId: row.event_id, owner: row.owner, uploaderName: row.uploader_name,
-  team: row.team || '', storage: row.storage, key: row.key, webKey: row.web_key, thumbKey: row.thumb_key,
+  scholarName: row.scholar_name || '', team: row.team || '', storage: row.storage, key: row.key, webKey: row.web_key, thumbKey: row.thumb_key,
   caption: row.caption || '', inspiration: row.inspiration || '', kind: row.kind, createdAt: row.created_at, takenAt: row.taken_at,
 });
 export async function listEvents() {
@@ -115,3 +115,6 @@ export async function conversation(photoId, action = 'read', values = {}) {
 }
 
 export async function authHeaders(){const {data,error}=await client.auth.getSession();if(error)throw error;if(!data.session)throw new Error('Please sign in to share.');return {Authorization:`Bearer ${data.session.access_token}`};}
+
+export function localScholar(){try{return localStorage.getItem(`london-scholar-${getToken()}`)||'';}catch{return '';}}
+export function saveScholar(name){try{localStorage.setItem(`london-scholar-${getToken()}`,name);}catch{}}
