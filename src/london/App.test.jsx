@@ -1,8 +1,8 @@
-vi.mock('./LoginGate.jsx',()=>({default:({children})=>children,LoginPanel:()=>null}));
+vi.mock('./LoginGate.jsx',()=>({default:({children})=>children,LoginPanel:({onReady})=><button onClick={onReady}>Complete sign-in</button>}));
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-vi.mock('./data.js', () => ({localScholar:vi.fn(()=>''),saveScholar:vi.fn(),localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
+vi.mock('./data.js', () => ({syncAccount:vi.fn(async()=>({user:{}})),localScholar:vi.fn(()=>''),saveScholar:vi.fn(),localProfile:vi.fn(),getOwner:vi.fn(),listEvents:vi.fn(),listPhotos:vi.fn(),mediaUrl:vi.fn(()=>'/test.jpg'),hidePhoto:vi.fn(),saveProfile:vi.fn(),setThanks:vi.fn(),categorizePhoto:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]}))}));
 vi.mock('./upload.js',()=>({uploadBatch:vi.fn()}));
 import * as db from './data.js';
 import App, { Upload } from './App.jsx';
@@ -253,3 +253,21 @@ it('asks for scholar attribution in every sharing mode, separately from the adul
 it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('Choose your photos to share.');expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(false);});
 
 it("keeps writing choices hidden by default for parent photo uploads",async()=>{await act(async()=>root.render(<Upload parentOnly events={[{id:"prep",slug:"before-the-adventure"}]} initialAlbum="before-the-adventure" profile={{displayName:"Parent",team:""}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));expect(host.querySelector("[role=tablist]")).toBeNull();expect(host.querySelector("input[type=file]")).toBeTruthy();expect(host.textContent).not.toContain("Finish a thought");});
+
+ it('keeps an anonymous comment until sign-in and then posts it once',async()=>{
+ const {Conversation}=await import('./App.jsx');
+ db.syncAccount.mockResolvedValueOnce(null);
+ db.conversation.mockResolvedValue({reactions:[],comments:[]});
+ const share=vi.fn();const upload=vi.fn();
+ await act(async()=>root.render(<Conversation photoId="own" sharePhoto={share} onUpload={upload}/>));
+ expect(host.textContent).not.toContain('Complete sign-in');
+ await click(button('Share this photo'));expect(share).toHaveBeenCalledOnce();
+ await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'Have a wonderful adventure!');el.dispatchEvent(new Event('input',{bubbles:true}));});
+ await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(db.conversation).not.toHaveBeenCalledWith('own','comment',expect.anything());
+ expect(host.querySelector('textarea').value).toBe('Have a wonderful adventure!');
+ await click(button('Complete sign-in'));
+ expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'Have a wonderful adventure!',p_name:'Test chaperone'});
+ expect(host.querySelector('textarea').value).toBe('');
+ await click(button('Share your memories'));expect(upload).toHaveBeenCalledOnce();
+ });
