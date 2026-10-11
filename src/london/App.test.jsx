@@ -182,7 +182,7 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  makeTextCard.mockResolvedValue({file:card,caption:'I love London! (Mosie)'});
  uploadBatch.mockResolvedValue({done:[{id:'new'}],failed:[]});
  db.saveProfile.mockResolvedValue({displayName:'Parent',team:''});
- await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" initialPrompt="What do you think London will be like?" initialInspiration="dreaming-of-london" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await act(async()=>root.render(<Upload writingEnabled parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" initialPrompt="What do you think London will be like?" initialInspiration="dreaming-of-london" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Write a response'));
  const textarea=host.querySelector('textarea');
  const setValue=async(el,value)=>{await act(async()=>{Object.getOwnPropertyDescriptor(el.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}));});};
@@ -196,7 +196,7 @@ it('shares an attributed quote as an R2-ready card in the chosen album',async()=
  expect(uploadBatch).toHaveBeenCalledWith([card],expect.objectContaining({event:{id:'prep',slug:'before-the-adventure'},inspiration:'dreaming-of-london',scholarName:'Mosie',caption:'I love London! (Mosie)'}));
 });
 it('offers written modes without requiring a photograph',async()=>{
- await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await act(async()=>root.render(<Upload writingEnabled parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent==='Finish a thought'));
  const starters=host.querySelector('#share-panel select');
  expect(starters.options).toHaveLength(20);
@@ -207,7 +207,7 @@ it('offers written modes without requiring a photograph',async()=>{
 });
 
 it('does not offer empty sharing options to a new parent writing a quote',async()=>{
- await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={null} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await act(async()=>root.render(<Upload writingEnabled parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={null} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  await click(host.querySelector('#share-tab-comment'));
  expect(host.querySelector('.l-upload-summary button')).toBeNull();
  expect(host.querySelector('.l-share-example').textContent).toContain('packing extra room');
@@ -240,7 +240,7 @@ it('offers only positive reactions and posts comments on the selected moment',as
 });
 
 it('asks for scholar attribution in every sharing mode, separately from the adult name',async()=>{
- await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
+ await act(async()=>root.render(<Upload writingEnabled parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
  for(const label of ['Upload photo','Write a response','Finish a thought']){
   await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent===label));
   expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(true);
@@ -251,3 +251,5 @@ it('asks for scholar attribution in every sharing mode, separately from the adul
 });
 
 it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('Choose your photos to share.');expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(false);});
+
+it("keeps writing choices hidden by default for parent photo uploads",async()=>{await act(async()=>root.render(<Upload parentOnly events={[{id:"prep",slug:"before-the-adventure"}]} initialAlbum="before-the-adventure" profile={{displayName:"Parent",team:""}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));expect(host.querySelector("[role=tablist]")).toBeNull();expect(host.querySelector("input[type=file]")).toBeTruthy();expect(host.textContent).not.toContain("Finish a thought");});
