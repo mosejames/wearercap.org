@@ -8,3 +8,5 @@
 .ready-airport{margin:24px 0 38px;padding:24px;border-radius:18px;background:#fffdf5ed;text-align:left}.ready-airport p{margin:0 0 16px;font-size:18px;line-height:1.5}.ready-airport small{display:block;margin-top:12px;font-size:12px;color:#58647b}.ready-question h2{font-size:23px;margin-bottom:12px}.ready-airport .l-button{min-height:56px}
 
 .ready-sendoff{margin:24px 0 0;text-align:left}.ready-sendoff img{display:block;width:100%;height:auto;border-radius:16px}.ready-sendoff figcaption{font-size:12px;color:#58647b;margin:10px 2px 0}
+
+.ready-video{margin-top:22px;padding-top:18px;border-top:1px solid #dedacc}.ready-video>a{display:flex;align-items:center;gap:10px;line-height:1.5;font-size:16px}.ready-video>a svg{flex-shrink:0}
