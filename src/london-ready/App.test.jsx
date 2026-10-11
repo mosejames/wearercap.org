@@ -24,9 +24,11 @@ it('uploads airport moments into the departure album without day or group choice
  await act(async()=>host.querySelector('dialog form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
  expect(uploadBatch).toHaveBeenCalledWith(expect.any(Array),expect.objectContaining({event:{id:'departure',slug:'off-we-go'},scholarName:'Mosie',inspiration:'airport-hellos',caption:'Airport hugs, smiles, and see-you-soons.'}));
 });
-it('shows only this parent’s preparation uploads and confirms removal',async()=>{
+it('shows family moments together and lets parents filter and remove their own uploads',async()=>{
  db.listPhotos.mockResolvedValueOnce([{id:'own',owner:'parent',eventId:'prep',caption:'Our packing'},{id:'other',owner:'another',eventId:'prep'},{id:'trip',owner:'parent',eventId:'trip'}]);
  await act(async()=>{root.unmount();root=createRoot(host);root.render(<Ready/>);});
+ expect(host.querySelectorAll('.ready-mine article')).toHaveLength(2);
+ await click([...host.querySelectorAll('button')].find(b=>b.textContent==='Your uploads'));
  expect(host.querySelectorAll('.ready-mine article')).toHaveLength(1);
  const remove=[...host.querySelectorAll('.ready-mine button')].find(b=>b.textContent==='Remove my upload');await click(remove);expect(db.hidePhoto).not.toHaveBeenCalled();await click(remove);expect(db.hidePhoto).toHaveBeenCalledWith('own');
 });
