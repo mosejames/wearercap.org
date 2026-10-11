@@ -28,6 +28,14 @@ begin
  perform set_config('request.jwt.claim.sub',outsider::text,true);
  rejected:=false;begin perform public.rcap_closeout('file',jsonb_build_object('event','karaoke-2026','id',f));exception when others then rejected:=true;end;if not rejected then raise exception 'Outsider file read accepted';end if;
  rejected:=false;begin perform public.rcap_closeout_archive('pull',repeat('f',64));exception when others then rejected:=true;end;if not rejected then raise exception 'Invalid archive key accepted';end if;
+ update closeout_private.events set sync_hash=encode(extensions.digest(repeat('e',64),'sha256'),'hex') where id='karaoke-2026';
+ r:=public.rcap_closeout_archive('pull',repeat('e',64));
+ if r->'event'->>'id'<>'karaoke-2026' or not exists(select 1 from jsonb_array_elements(r->'submissions') x where x->>'id'=first_id::text) then raise exception 'Authorized archive pull did not return pending test';end if;
+ r:=public.rcap_closeout_archive('file',repeat('e',64),jsonb_build_object('id',f));
+ if r->>'name'<>'verification.pdf' then raise exception 'Authorized archive file missing';end if;
+ perform public.rcap_closeout_archive('ack_file',repeat('e',64),jsonb_build_object('id',f,'drive_id','test_file_1234567890'));
+ perform public.rcap_closeout_archive('ack',repeat('e',64),jsonb_build_object('id',first_id,'archive_id','test_archive_1234567890'));
+ if not exists(select 1 from closeout_private.submissions where id=first_id and drive_synced_at is not null) then raise exception 'Archive acknowledgement missing';end if;
 end $$;
 select 'Private access, draft restore, optimistic revisions, immutable submissions, receipts and archive denial passed' as result;
 rollback;
