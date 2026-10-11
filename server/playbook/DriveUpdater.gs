@@ -4,13 +4,13 @@
  */
 const PB_URL = 'https://kcsrtwwpnekqdrfgcfys.supabase.co';
 const PB_RECORDS = {
-  exec: '1WxvNU0W0WaX0SN6EnET-NXsh1G9uKhxTSjfQCVbOFpw',
-  advisory: '1BH_S2gPNK49Fq7xrr8oHMJuPxVhIxy69BWxe5ejcP8U',
-  uniform: '1kIe4ZpWdI-mIWNsVITuJpNWo4ETXYZTMaD5O5x2zEtU',
-  raffle: '1UyWDH2Ei1FhnTBfL_1AAZyACC7GiTZxMsoWHsrqHVfU',
-  marcom: '1Zffu5ifTkIGyKacSSw5m4r4xy1A18JDUUPCQn1XfevU',
-  men: '1_ep0M2T5GsZi7oleUeIM7tsP3eIBefepcgFRje-R6pY',
-  trunk: '1hjAJ7bpy0m-N8hEtBG5YKjWGP_L-epIKgJQw32u7g8Y'
+  exec: '14W3T0t-MVREbG2z0nDSwddLNI1MnpDkHlPr60b2il2c',
+  advisory: '1qe1u479Cy5OuktJNevFK7_HKlK0N9F1CVr-W5W7ZXv4',
+  uniform: '17WVlBAuC_HiYLqfaCJpEXjPO0U9itAvBfOqFpI-f0zY',
+  raffle: '1HXenV___CqY8UrA7IYGQIR1LPE62zEWNrhyM49f0-Ic',
+  marcom: '110lzxdQpRvSeOKDU3IP5P-jDr6PYf4FBPyt2ks4RGfw',
+  men: '1w0RslQBa8DWw3bpgJPZOlnTrp5LPr7w2rGPdrkv4xkQ',
+  trunk: '1-1T0eLRrvE09hd1cl-2Woslpqwt6PfNVA1_Ff3s7cr4'
 };
 const PB_SECTIONS = {purpose:'Purpose',perspective:'Perspective',people:'People',provision:'Provision',plan:'Plan',pass:'Pass It On'};
 function doGet() { return pbJson({ok:true,service:'RCAP Living Playbook Drive updater'}); }

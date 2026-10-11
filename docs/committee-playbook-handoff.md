@@ -26,7 +26,7 @@ After authorization, verify a real contribution reaches the correct Doc and that
 
 1. Name an incoming committee lead and a second ongoing administrator. Add their verified sign-in emails and verify access together.
 2. Confirm RCAP controls the repository, hosting, Supabase billing and project access, Google updater, folder access and domain. These services have separate ownership.
-3. Existing original and generated Docs are owned by mose@mosejames.com inside an organization-owned shared folder. Folder ownership does not transfer file ownership. Arrange an eligible transfer, Shared Drive move, or organization-owned copies. If IDs change, update the database committee records, frontend original-doc links and Apps Script fixed record map together.
+3. On October 10, 2026, 25 personally owned files and 20 folders were replaced with copies owned by rcaparents@ronclarkacademy.com. Current database links, frontend references and the source Apps Script record map use the new IDs. Existing collaborators were retained. Folder ownership does not transfer file ownership. See the ownership reconciliation record for the old-to-new mapping and future checks.
 4. Reauthorize and redeploy the updater under the ongoing owner when necessary. Update the Vercel webhook environment variable and verify a real save before the departing owner loses access.
 5. Download an export, inspect the readable living record, record unfinished actions, and write the handoff date, incoming lead and access contact in Pass It On.
 
@@ -67,3 +67,11 @@ Chair activation: start with the chair’s provisional vision, invite the team t
 Every workspace has a capture space for ideas, questions, lessons, proposed dates, confirmed dates and recurring reminders. The contributor is credited; replies retain their own authors. Optional timing, context, people to involve and six-P connections keep one item connected across the record. Connected actions refer back to the original idea. Only leads record Agreed or Confirmed date. Changes to agreed wording/context/timing reopen the discussion and turn a previously confirmed date back into a proposal. Updates require the current version and preserve earlier snapshots in the export.
 
 The new private tables have RLS and no direct client grants. The existing verified membership handler remains the authorization boundary through a private wrapper. DriveUpdater.gs now includes ideas, replies, earlier versions and connected-action links. The owner-authorized cloud deployment must use this updated source before Drive can include these items. The authorization flow is still awaiting the user's approval of Google's requested Docs and external-service permissions.
+
+## Ownership reconciliation, October 10, 2026
+
+Create and upload future files while signed into rcaparents@ronclarkacademy.com, and verify each file’s Owner in Drive. At event closeout and leadership handoff, review the Owner column throughout RCAP 2026-27, including subfolders. For personal files, prefer an eligible ownership transfer; if Google blocks it, copy under RCAP, preserve collaborators, repair references and verify content before moving originals to Trash. A school-managed Shared Drive is the stronger long-term option because its files belong to the organization.
+
+The prepared Apps Script source uses the new RCAP-owned generated records. The older draft project has not been authorized or deployed and must not be treated as a working Drive connection. Create or deploy the updater under the ongoing RCAP account, authorize it, configure the webhook and verify a real save before claiming automatic Drive updates.
+
+The old-to-new ID mapping is in `rcap-drive-ownership-2026-10-10.json`. Copies have new URLs and do not carry original version history. Originals are retained in recoverable Trash rather than permanently deleted.
