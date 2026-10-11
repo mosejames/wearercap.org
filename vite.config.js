@@ -22,6 +22,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        karaokecloseout: resolve(__dirname, "karaoke/closeout/index.html"),
         uniformplaybook: resolve(__dirname, 'uniform-playbook/index.html'),
       raffleplaybook: resolve(__dirname, 'raffle-playbook/index.html'),
       playbook: resolve(__dirname, "committee-playbook/index.html"),

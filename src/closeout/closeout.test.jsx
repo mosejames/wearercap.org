@@ -1,0 +1,21 @@
+import React from 'react';
+import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest';
+import {createRoot} from 'react-dom/client';
+import {act} from 'react';
+import {Workspace} from './App.jsx';
+import {moneyFlags,unresolved,QUESTIONS} from './model.js';
+import {call} from './api.js';
+vi.mock('./api.js',()=>({call:vi.fn(),supabase:{},uploadReceipt:vi.fn(),downloadReceipt:vi.fn()}));
+let div,root;
+beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;Element.prototype.scrollIntoView=vi.fn();div=document.createElement('div');document.body.append(div);root=createRoot(div);vi.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());div.remove();});
+const draft={name:'Test organizer',answers:{flow:{status:'confirmed',text:'A saved narrative'},attendance:{status:'pending',owner:'Farren',text:'Needs a count'}},vendors:{},finalNote:''};
+const render=(extra={})=>act(async()=>root.render(<Workspace data={{draft:{content:draft,revision:2},reference:{dj:500},receipts:[],event:{sync_ready:false}}} user={{user_metadata:{}}} onError={vi.fn()} {...extra}/>));
+const click=async text=>act(async()=>[...div.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
+describe('Karaoke closeout',()=>{
+ it('restores a private saved draft and keeps unanswered questions open',async()=>{await render();expect(div.querySelector('#co-flow').value).toBe('A saved narrative');expect(unresolved(draft)).toHaveLength(QUESTIONS.length-1);});
+ it('submits the current revision without claiming Drive delivery',async()=>{call.mockResolvedValue({revision:3,id:'submitted',submitted_at:'2026-10-11T12:00:00Z'});await render();await click('Review & send');await click('Send my closeout');expect(call).toHaveBeenCalledWith('submit',expect.objectContaining({expected_revision:2,content:draft}));expect(div.textContent).toContain('Google Drive delivery is waiting');});
+ it('preview submissions never call the data service',async()=>{await render({preview:true});await click('Review & send');await click('Send my closeout');expect(call).not.toHaveBeenCalled();expect(div.textContent).toContain('No answers or receipts were sent');});
+ it('retains answers when a save is rejected',async()=>{const onError=vi.fn();call.mockRejectedValue(new Error('Newer version saved'));await render({onError});await click('Save for later');expect(onError).toHaveBeenCalledWith('Newer version saved');expect(div.querySelector('#co-flow').value).toBe('A saved narrative');expect(div.textContent).toContain('Not saved. Your answers are still here.');});
+ it('flags cost conflicts and unsupported paid claims',()=>{expect(moneyFlags({vendors:{dj:{cost:'650',status:'paid'}}},{dj:500})).toHaveLength(2);});
+});

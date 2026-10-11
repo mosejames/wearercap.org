@@ -1,0 +1,33 @@
+begin;
+do $$
+declare owner_id uuid; outsider uuid; r jsonb; f uuid; first_id uuid; rev integer; rejected boolean; content jsonb:='{"name":"Verification only","answers":{"flow":{"status":"confirmed","text":"Rollback-only test, not an event fact"},"attendance":{"status":"pending","owner":"Farren","text":"Please verify"}},"vendors":{},"finalNote":""}';
+begin
+ select u.id into owner_id from auth.users u join closeout_private.members m on m.email=lower(u.email) where m.event='karaoke-2026' and m.role='lead' and u.email_confirmed_at is not null limit 1;
+ if owner_id is null then raise exception 'Verified owner account needed for test'; end if;
+ select u.id into outsider from auth.users u where not exists(select 1 from closeout_private.members m where m.email=lower(u.email)) and u.email_confirmed_at is not null limit 1;
+ if outsider is null then raise exception 'Outsider account needed'; end if;
+ if has_table_privilege('authenticated','closeout_private.drafts','SELECT') or has_table_privilege('anon','closeout_private.receipts','SELECT') or has_function_privilege('anon','public.rcap_closeout(text,jsonb)','EXECUTE') then raise exception 'Direct client access must be denied'; end if;
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ rejected:=false;begin perform public.rcap_closeout('load','{"event":"karaoke-2026"}');exception when others then rejected:=true;end;if not rejected then raise exception 'Outsider read accepted';end if;
+ perform set_config('request.jwt.claim.sub',owner_id::text,true);
+ r:=public.rcap_closeout('load','{"event":"karaoke-2026"}');
+ if not (r->'reference' ? 'catering') then raise exception 'Wrong archived reference';end if;
+ rev:=coalesce((r->'draft'->>'revision')::int,0);
+ r:=public.rcap_closeout('save',jsonb_build_object('event','karaoke-2026','expected_revision',rev,'content',content));
+ if (r->>'revision')::int<>rev+1 then raise exception 'Draft not saved';end if;
+ rejected:=false;begin perform public.rcap_closeout('save',jsonb_build_object('event','karaoke-2026','expected_revision',rev,'content',content));exception when others then rejected:=true;end;if not rejected then raise exception 'Stale overwrite accepted';end if;
+ r:=public.rcap_closeout('receipt',jsonb_build_object('event','karaoke-2026','name','verification.pdf','mime','application/pdf','base64',encode(convert_to('%PDF-1.4 verification only','UTF8'),'base64')));f:=(r->>'id')::uuid;
+ r:=public.rcap_closeout('submit',jsonb_build_object('event','karaoke-2026','expected_revision',rev+1,'content',content));first_id:=(r->>'id')::uuid;
+ if first_id is null or not exists(select 1 from closeout_private.submissions where id=first_id and f=any(receipt_ids) and drive_synced_at is null) then raise exception 'Submission or attachment missing';end if;
+ r:=public.rcap_closeout('submit',jsonb_build_object('event','karaoke-2026','expected_revision',rev+2,'content',jsonb_set(content,'{answers,flow,text}','"Revised rollback-only test"')));
+ if (select s.content->'answers'->'flow'->>'text' from closeout_private.submissions s where s.id=first_id)<>'Rollback-only test, not an event fact' then raise exception 'Earlier submitted version changed';end if;
+ perform public.rcap_closeout('receipt_exclude',jsonb_build_object('event','karaoke-2026','id',f));
+ if exists(select 1 from closeout_private.receipts where id=f and included) or not exists(select 1 from closeout_private.submissions where id=first_id and f=any(receipt_ids)) then raise exception 'Receipt exclusion damaged earlier evidence';end if;
+ if coalesce(closeout_private.valid_content('{"name":"Test"}'),true) or coalesce(closeout_private.valid_content('{"name":"Test","answers":{"flow":{"status":"confirmed"}},"vendors":{}}'),true) then raise exception 'Missing required content accepted';end if;
+ rejected:=false;begin perform public.rcap_closeout('receipt','{"event":"karaoke-2026","name":"fake.pdf","mime":"application/pdf","base64":"bm90IGEgcGRm"}');exception when others then rejected:=true;end;if not rejected then raise exception 'Wrong file contents accepted';end if;
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ rejected:=false;begin perform public.rcap_closeout('file',jsonb_build_object('event','karaoke-2026','id',f));exception when others then rejected:=true;end;if not rejected then raise exception 'Outsider file read accepted';end if;
+ rejected:=false;begin perform public.rcap_closeout_archive('pull',repeat('f',64));exception when others then rejected:=true;end;if not rejected then raise exception 'Invalid archive key accepted';end if;
+end $$;
+select 'Private access, draft restore, optimistic revisions, immutable submissions, receipts and archive denial passed' as result;
+rollback;
