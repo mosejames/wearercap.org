@@ -6,3 +6,5 @@
 .ready-more{display:block;margin:18px auto 0;padding:10px 18px;border:1px solid #bac0c8;border-radius:24px;background:#fffdf7;color:#1c2d56;font:inherit;font-size:14px;cursor:pointer}.ready-more:hover{background:#eceeea}.ready-more:focus-visible{outline:3px solid #1c2d56;outline-offset:3px}
 
 .ready-airport{margin:24px 0 38px;padding:24px;border-radius:18px;background:#fffdf5ed;text-align:left}.ready-airport p{margin:0 0 16px;font-size:18px;line-height:1.5}.ready-airport small{display:block;margin-top:12px;font-size:12px;color:#58647b}.ready-question h2{font-size:23px;margin-bottom:12px}.ready-airport .l-button{min-height:56px}
+
+.ready-sendoff{margin:24px 0 0;text-align:left}.ready-sendoff img{display:block;width:100%;height:auto;border-radius:16px}.ready-sendoff figcaption{font-size:12px;color:#58647b;margin:10px 2px 0}
