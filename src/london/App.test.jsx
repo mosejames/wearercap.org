@@ -74,11 +74,12 @@ it('opens a valid shared photo after gallery loading and does not reopen it afte
  await click(host.querySelector('[aria-label="Close"]'));expect(host.querySelector('dialog')).toBeNull();
  await act(async()=>window.dispatchEvent(new HashChangeEvent('hashchange')));expect(host.querySelector('dialog')).toBeNull();
 });
-it('opens family preparation uploads in their own album with photos and videos supported',async()=>{
+it('opens family preparation uploads in their own album with photos and a separate video route',async()=>{
  await click(button('Add a family postcard'));
  const dialog=host.querySelector('dialog');expect(dialog.querySelector('h2').textContent).toBe('What would you like to share?');
  expect(dialog.querySelector('.l-upload-summary').textContent).toContain('Before the adventure');
- expect(dialog.querySelector('input[type="file"]').accept).toContain('video/mp4');
+ expect(dialog.querySelector('input[type="file"]').accept).not.toContain('video/');
+ expect(dialog.querySelector('a[href*="dropbox.com/request"]')).toBeTruthy();
  expect(dialog.querySelector('input[type="file"]').accept).toContain('image/*');
 });
 it('uses a selected parent question as an editable caption and saves to the preparation album',async()=>{
@@ -240,7 +241,7 @@ it('offers only positive reactions and posts comments on the selected moment',as
 
 it('asks for scholar attribution in every sharing mode, separately from the adult name',async()=>{
  await act(async()=>root.render(<Upload parentOnly events={[{id:'prep',slug:'before-the-adventure'}]} initialAlbum="before-the-adventure" profile={{displayName:'Parent',team:''}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));
- for(const label of ['Photo / video','Write a response','Finish a thought']){
+ for(const label of ['Upload photo','Write a response','Finish a thought']){
   await click([...host.querySelectorAll('[role=tab]')].find(b=>b.querySelector('b')?.textContent===label));
   expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(true);
  }
@@ -249,4 +250,4 @@ it('asks for scholar attribution in every sharing mode, separately from the adul
  expect(uploadBatch).not.toHaveBeenCalled();
 });
 
-it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('30 seconds');expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(false);});
+it('keeps chaperone uploads focused on media without parent prompts or writing choices',async()=>{await click(button('Share a moment'));expect(host.querySelector('[role=tablist]')).toBeNull();expect(host.querySelector('.l-share-example')).toBeNull();expect(host.querySelector('input[type=file]')).toBeTruthy();expect(host.querySelector('dialog').textContent).toContain('Choose your photos to share.');expect(host.querySelector('input[placeholder="Mosie, or names for a group moment"]').required).toBe(false);});
