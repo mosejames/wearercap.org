@@ -4,6 +4,7 @@ import { DAYS, PREP, VAULT, MAX_BATCH, DESTINATIONS, chapterFor, basePath, tripT
 import * as db from './data.js';
 import TripMap from './TripMap.jsx';
 import PhotoCredit from './PhotoCredit.jsx';
+import {photoDay,matchesGalleryFilters} from './galleryFilters.js';
 import { captureTime, newestCapturedFirst } from './timeline.js';
 import LoginGate,{LoginPanel} from './LoginGate.jsx';
 import { uploadBatch } from './upload.js';
@@ -41,12 +42,15 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [profile, setProfile] = useState(db.localProfile);
+  const [sourceFilter,setSourceFilter]=useState('all');
+  const [dayFilter,setDayFilter]=useState('');
+  const [placeFilter,setPlaceFilter]=useState('');
   const [visibleCount,setVisibleCount] = useState(60);
   const [album, setAlbum] = useState('all');
   const [collectionId, setCollectionId] = useState('');
   const [group, setGroup] = useState('');
   const [mine, setMine] = useState(false);
-  useEffect(()=>setVisibleCount(60),[album,collectionId,group,mine]);
+  useEffect(()=>setVisibleCount(60),[album,collectionId,group,mine,sourceFilter,dayFilter,placeFilter]);
   const [organizing, setOrganizing] = useState(false);
   const [modal, setModal] = useState(null);
   const [error, setError] = useState('');
@@ -79,7 +83,9 @@ export default function App() {
   const byId = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
   const groups = useMemo(() => [...new Set(photos.map((p) => p.team).filter(Boolean))].sort(), [photos]);
   const collection = INSPIRATIONS.find((c) => c.id === collectionId);
-  const shown = [...photos].sort(newestCapturedFirst).filter((p) => (!collection || p.inspiration === collection.id) && (album === 'all' || byId.get(p.eventId)?.slug === album) && (!group || p.team === group) && (!mine || p.owner === owner));
+  const shown = [...photos].sort(newestCapturedFirst).filter((p) => (!collection || p.inspiration === collection.id) && (album === 'all' || byId.get(p.eventId)?.slug === album) && (!group || p.team === group) && (!mine || p.owner === owner) && matchesGalleryFilters(p,{source:sourceFilter,day:dayFilter,place:placeFilter}));
+  const filterDays=[...new Set(photos.map(photoDay).filter(Boolean))].sort().reverse();
+  const filtersActive=sourceFilter!=='all'||dayFilter||placeFilter;
   const visiblePhotos=shown.slice(0,visibleCount);
   const dayLabel=p=>captureTime(p) ? new Intl.DateTimeFormat('en-US',{timeZone:'Europe/London',weekday:'long',month:'short',day:'numeric'}).format(new Date(captureTime(p))) : 'Shared moments';
   const currentDay = DAYS.find((d) => d.date === tripToday()) || (tripToday() < '2026-10-11' ? PREP : DAYS[0]);
@@ -133,7 +139,8 @@ export default function App() {
         {album !== 'all' && <p className="l-album-description">{DAYS.find((d) => d.slug === album)?.blurb}</p>}
 
         <div className="l-filter-row"><div className="l-gallery-switch"><button className={`l-text ${!mine ? 'selected' : ''}`} onClick={() => setMine(false)} aria-pressed={!mine}>Everyone’s photos</button><button className={`l-text ${mine ? 'selected' : ''}`} onClick={myUploads} aria-pressed={mine}><Images size={15} /> My uploads</button></div>{groups.length > 0 && <label>Browse by group <select value={group} onChange={(e) => setGroup(e.target.value)}><option value="">Everyone together</option>{groups.map((g) => <option key={g}>{g}</option>)}</select></label>}</div>
-        {mine && <p className="l-small l-own-note">Your uploads on this account. Open a photo or tap Remove to take it out of the shared album.</p>}
+        <div className="l-gallery-filters" aria-label="Filter gallery"><label>Source<select aria-label="Filter by source" value={sourceFilter} onChange={e=>setSourceFilter(e.target.value)}><option value="all">All photos</option><option value="instagram">Instagram</option><option value="shared">Family &amp; chaperones</option></select></label><label>Day<select aria-label="Filter by day" value={dayFilter} onChange={e=>{setDayFilter(e.target.value);pickAlbum('all');}}><option value="">Every day</option>{filterDays.map(day=><option key={day} value={day}>{new Intl.DateTimeFormat('en-US',{timeZone:'Europe/London',weekday:'short',month:'short',day:'numeric'}).format(new Date(day+'T12:00:00Z'))}</option>)}</select></label><label>Place<select aria-label="Filter by place" value={placeFilter} onChange={e=>{setPlaceFilter(e.target.value);pickAlbum('all');}}><option value="">Everywhere</option><option value="unassigned">Not sorted yet</option>{INSPIRATIONS.map(place=><option key={place.id} value={place.id}>{place.title}</option>)}</select></label></div>{filtersActive && <div className="l-filter-status"><span role="status">{shown.length} matching {shown.length===1?'moment':'moments'}</span><button className="l-text" onClick={()=>{setSourceFilter('all');setDayFilter('');setPlaceFilter('');}}>Clear filters</button></div>}
+        {mine && <p className="l-small l-own-note">Your uploads on this account. Open a photo to take it out of the shared album.</p>}
         {error && <div className="l-error" role="alert">{error} <button onClick={refresh}>Try again</button></div>}
         {!loaded && <p role="status">Opening the trip album…</p>}
         {loaded && !shown.length && !error && <div className="l-empty"><div className="l-empty-icon"><Camera size={33} strokeWidth={1.4} /></div><h3>{mine ? 'Your postcards start here.' : collection ? 'A little space for this story.' : photos.length ? 'A quiet page in the story, for now.' : 'The adventure is just beginning.'}</h3><p>{mine ? 'Photos you share on this account will appear here. You can remove any accidental uploads.' : collection ? 'Moments shared here will appear together. Enjoy browsing whenever they arrive.' : photos.length ? 'Moments for this album or group will appear here when shared.' : 'When the first moments arrive, this will become a little window into their world.'}</p><button className="l-text" onClick={upload}>Have a moment to share? <ArrowUpRight size={16} /></button></div>}

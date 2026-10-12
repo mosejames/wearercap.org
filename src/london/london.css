@@ -76,3 +76,8 @@
 .l-gallery-day:first-child { margin-top:0; }
 .l-load-more { display:flex; margin:24px auto 0; }
 .l-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.l-gallery-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0 22px;max-width:720px;}
+.l-gallery-filters label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#657085;min-width:0;}
+.l-gallery-filters select{width:100%;min-height:44px;border:1px solid #dddcd4;border-radius:7px;background:#fffdf8;color:#1a2a56;padding:9px;font-size:16px;}
+.l-filter-status{display:flex;align-items:center;gap:18px;font-size:12px;margin:-8px 0 20px;color:#657085;}
+@media(max-width:600px){.l-gallery-filters{gap:6px;}.l-gallery-filters select{padding:8px 4px;font-size:16px;}}
