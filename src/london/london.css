@@ -52,3 +52,8 @@
 
 /* Keep iOS from magnifying the modal when a field receives focus. */
 @media(max-width:760px){.l-dialog input,.l-dialog textarea,.l-dialog select{font-size:16px}.l-dialog{max-width:calc(100vw - 24px);overflow-x:hidden}.l-positive-reactions button{min-height:44px}}
+
+.l-instagram-credit { display:inline-flex; align-items:center; gap:6px; max-width:100%; margin:8px 0; padding:5px 10px; border:1px solid #ddd7cb; border-radius:20px; background:#f5edf3; color:#674270; font-size:12px; line-height:1.4; text-decoration:none; overflow-wrap:anywhere; }
+.l-instagram-credit svg { flex-shrink:0; }
+.l-instagram-credit:hover { background:#ede0ec; }
+.l-photo-credit { display:block; margin:8px 0; }
