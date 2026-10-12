@@ -31,3 +31,12 @@ describe('London R2 uploads', () => {
 });
 
 it('requires a verified account before signing London uploads',async()=>{const res=response();await handler({method:'POST',body:body()},res);expect(res.statusCode).toBe(401);});
+
+it('allows an authorized administrator to import a Dropbox video with the same album restrictions',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>true}).mockResolvedValueOnce({ok:true,json:async()=>[{slug:'hello-london',ongoing:true}]});vi.stubGlobal('fetch',fetch);
+ const input={...body(),adminPass:'test-import-pass',files:[{id,ext:'mp4',contentType:'video/mp4'}]};const res=response();await handler({method:'POST',body:input},res);
+ expect(res.statusCode).toBe(200);expect(res.body.items[0].keys.orig).toContain('/orig.mp4');expect(fetch.mock.calls[0][0]).toContain('/rpc/m3_pass_ok');expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({p_vault:'london-2028',p_pass:'test-import-pass'});
+});
+it('does not sign anything when the import passphrase is invalid',async()=>{
+ const fetch=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>false});vi.stubGlobal('fetch',fetch);const res=response();await handler({method:'POST',body:{...body(),adminPass:'wrong'}},res);expect(res.statusCode).toBe(403);expect(fetch).toHaveBeenCalledTimes(1);expect(res.body.items).toBeUndefined();
+});

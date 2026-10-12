@@ -4,6 +4,7 @@ const Conversation = lazy(() => import('../london/App.jsx').then(module=>({defau
 const Upload = lazy(() => import('../london/App.jsx').then(module => ({ default: module.Upload })));
 import * as db from '../london/data.js';
 import { PREP } from '../london/config.js';
+import { newestCapturedFirst } from '../london/timeline.js';
 import '../london/london.css';
 import './ready.css';
 import {LoginPanel} from '../london/LoginGate.jsx';
@@ -11,7 +12,7 @@ export default function Ready() {
  const [account,setAccount]=useState(false);
  const [mine,setMine]=useState(false);
  const [events,setEvents]=useState([]), [profile,setProfile]=useState(db.localProfile), [upload,setUpload]=useState(()=>new URLSearchParams(window.location.search).get('moment')==='airport'?{inspiration:'airport-hellos',album:'off-we-go',prompt:'Airport hugs, smiles, and see-you-soons.'}:null), [photos,setPhotos]=useState([]), [owner,setOwner]=useState(''), [error,setError]=useState(''), [notice,setNotice]=useState(''), [removing,setRemoving]=useState(''), [confirming,setConfirming]=useState('');
- async function refresh() { try {const [albums,images,me]=await Promise.all([db.listEvents(),db.listPhotos(),db.getOwner()]);setEvents(albums.filter(e=>[PREP.slug,'off-we-go'].includes(e.slug)));setPhotos(images.filter(p=>(p.eventId===albums.find(e=>e.slug===PREP.slug)?.id || p.inspiration==='airport-hellos')));setOwner(me);setError('');} catch {setError('We couldn’t open sharing just yet. Please try again.');} }
+ async function refresh() { try {const [albums,images,me]=await Promise.all([db.listEvents(),db.listPhotos(),db.getOwner()]);setEvents(albums.filter(e=>[PREP.slug,'off-we-go'].includes(e.slug)));setPhotos([...images].sort(newestCapturedFirst).filter(p=>(p.eventId===albums.find(e=>e.slug===PREP.slug)?.id || p.inspiration==='airport-hellos')));setOwner(me);setError('');} catch {setError('We couldn’t open sharing just yet. Please try again.');} }
  useEffect(()=>{refresh();},[]);
  async function remove(p) {setRemoving(p.id);try {await db.hidePhoto(p.id);await refresh();setConfirming('');}catch {setError('That moment could not be removed. Please try again.');}finally{setRemoving('');}}
  return <div className="ready"><header className="ready-header"><img src="/london/ron-clark-academy.png" alt="The Ron Clark Academy" width="520" height="120"/><span>CLASS OF 2028<br/><small>LONDON + PARIS</small></span></header>
