@@ -26,10 +26,10 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 const button=(text)=>[...host.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
 const click=async(el)=>{expect(el).toBeTruthy();await act(async()=>el.click());};
 it('shows only this contributor’s photos in My uploads and no removal control on another person’s photo',async()=>{
- expect(host.querySelectorAll('.l-remove')).toHaveLength(1);
+ expect(host.querySelectorAll('.l-remove')).toHaveLength(0);
  await click(button('My uploads'));
  expect(host.querySelectorAll('.l-photo')).toHaveLength(1);
- expect(host.querySelector('.l-photo').textContent).toContain('Our day');
+ expect(host.querySelector('.l-photo img').alt).toBe('Our day');
  expect(host.querySelector('.l-own-note').textContent).toContain('this account');
  await click(button('Everyone’s photos'));
  await click(host.querySelector('[aria-label="Open Another perspective"]'));
@@ -37,7 +37,7 @@ it('shows only this contributor’s photos in My uploads and no removal control 
 });
 it('requires removal confirmation, preserves a failed removal and allows retry without admin access',async()=>{
  db.hidePhoto.mockRejectedValueOnce(new Error('Please try again.')).mockResolvedValueOnce();
- await click(host.querySelector('.l-remove'));
+ await click(host.querySelector('[aria-label="Open Our day"]'));await click(button('Remove from album'));
  expect(db.hidePhoto).not.toHaveBeenCalled();
  await click(button('Remove from album'));
  expect(db.hidePhoto).toHaveBeenCalledWith('own','');
@@ -111,17 +111,17 @@ it('opens family video postcards through the compact invitation',async()=>{
 
 it('saves a thank-you reaction on the photo and lets a parent undo it',async()=>{
  db.setThanks.mockResolvedValue();
- await click(button('Thanks for sharing'));
+ await click(host.querySelector('[aria-label="Send thanks"]'));
  expect(db.setThanks).toHaveBeenLastCalledWith('own',true);
- expect(button('Thanks sent').getAttribute('aria-pressed')).toBe('true');
- await click(button('Thanks sent'));
+ expect(host.querySelector('[aria-label="Remove thanks"]').getAttribute('aria-pressed')).toBe('true');
+ await click(host.querySelector('[aria-label="Remove thanks"]'));
  expect(db.setThanks).toHaveBeenLastCalledWith('own',false);
 });
 it('keeps a failed reaction available to retry',async()=>{
  db.setThanks.mockRejectedValueOnce(new Error('offline'));
- await click(button('Thanks for sharing'));
+ await click(host.querySelector('[aria-label="Send thanks"]'));
  expect(host.querySelector('[role="alert"]').textContent).toContain('could not be saved');
- expect(button('Thanks for sharing').getAttribute('aria-pressed')).toBe('false');
+ expect(host.querySelector('[aria-label="Send thanks"]').getAttribute('aria-pressed')).toBe('false');
 });
 
 it('collects matching moments from different parents and keeps unrelated photos out',async()=>{
@@ -129,9 +129,9 @@ it('collects matching moments from different parents and keeps unrelated photos 
  await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App />));
  await click(button('Need an idea?'));
  await click([...host.querySelectorAll('.l-inspiration-collections button')].find(b=>b.textContent.includes('Packing bags')));
- expect(host.querySelector('.l-grid').textContent).toContain('Our day');
- expect(host.querySelector('.l-grid').textContent).toContain('Another perspective');
- expect(host.querySelector('.l-grid').textContent).not.toContain('Airport wave');
+ expect([...host.querySelectorAll('.l-grid img')].map(x=>x.alt)).toContain('Our day');
+ expect([...host.querySelectorAll('.l-grid img')].map(x=>x.alt)).toContain('Another perspective');
+ expect([...host.querySelectorAll('.l-grid img')].map(x=>x.alt)).not.toContain('Airport wave');
  expect(host.querySelectorAll('.l-photo')).toHaveLength(2);
  await click(button('Back to all postcards'));
  expect(host.querySelectorAll('.l-photo')).toHaveLength(3);
@@ -153,7 +153,7 @@ it('keeps organizing out of uploads and lets parents label another contributor�
  db.categorizePhoto.mockResolvedValue();
  expect(host.querySelector('.l-collection-editor')).toBeNull();
  await click(button('Parent tools'));
- const article=[...host.querySelectorAll('.l-photo')].find(el=>el.textContent.includes('Another perspective'));
+ const article=[...host.querySelectorAll('.l-photo')].find(el=>el.querySelector('img')?.alt==='Another perspective');
  const select=article.querySelector('select');
  await act(async()=>{select.value='packing-bags';select.dispatchEvent(new Event('change',{bubbles:true}));});
  await click([...article.querySelectorAll('button')].find(b=>b.textContent.trim()==='Save label'));
@@ -271,3 +271,16 @@ it("keeps writing choices hidden by default for parent photo uploads",async()=>{
  expect(host.querySelector('textarea').value).toBe('');
  await click(button('Share your memories'));expect(upload).toHaveBeenCalledOnce();
  });
+
+it('keeps a growing gallery chronological and reveals the next batch without duplicating photos',async()=>{
+ const photos=Array.from({length:85},(_,i)=>({...own,id:`batch-${i}`,caption:`Moment ${i}`,takenAt:new Date(Date.UTC(2026,9,12,12)-i*3600000).toISOString()})).reverse();
+ db.listPhotos.mockResolvedValue(photos);
+ await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App/>));
+ expect(host.querySelectorAll('.l-grid .l-photo')).toHaveLength(60);
+ expect(host.querySelector('.l-grid img').alt).toBe('Moment 0');
+ expect([...host.querySelectorAll('.l-grid img')].every(img=>img.getAttribute('loading')==='lazy')).toBe(true);
+ expect(host.querySelectorAll('.l-gallery-day').length).toBeGreaterThan(1);
+ await click(button('Show more photos (25 more)'));
+ expect(host.querySelectorAll('.l-grid .l-photo')).toHaveLength(85);
+ expect(new Set([...host.querySelectorAll('.l-grid img')].map(img=>img.alt)).size).toBe(85);
+});

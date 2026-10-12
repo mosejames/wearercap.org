@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Heart, ArrowUpRight, X, Plane, Sparkles, Copy, ChevronLeft, ChevronRight, Download, Check, Trash2, Images, Globe2, Luggage, Landmark, Ticket, Castle, TrainFront, Crown, House, MessageCircle, Share2, PencilLine } from 'lucide-react';
 import { DAYS, PREP, VAULT, MAX_BATCH, DESTINATIONS, chapterFor, basePath, tripToday, INSPIRATIONS } from './config.js';
 import * as db from './data.js';
 import TripMap from './TripMap.jsx';
 import PhotoCredit from './PhotoCredit.jsx';
-import { newestCapturedFirst } from './timeline.js';
+import { captureTime, newestCapturedFirst } from './timeline.js';
 import LoginGate,{LoginPanel} from './LoginGate.jsx';
 import { uploadBatch } from './upload.js';
 import { makeTextCard, THOUGHT_STARTERS } from './textCard.js';
@@ -41,10 +41,12 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [profile, setProfile] = useState(db.localProfile);
+  const [visibleCount,setVisibleCount] = useState(60);
   const [album, setAlbum] = useState('all');
   const [collectionId, setCollectionId] = useState('');
   const [group, setGroup] = useState('');
   const [mine, setMine] = useState(false);
+  useEffect(()=>setVisibleCount(60),[album,collectionId,group,mine]);
   const [organizing, setOrganizing] = useState(false);
   const [modal, setModal] = useState(null);
   const [error, setError] = useState('');
@@ -78,6 +80,8 @@ export default function App() {
   const groups = useMemo(() => [...new Set(photos.map((p) => p.team).filter(Boolean))].sort(), [photos]);
   const collection = INSPIRATIONS.find((c) => c.id === collectionId);
   const shown = [...photos].sort(newestCapturedFirst).filter((p) => (!collection || p.inspiration === collection.id) && (album === 'all' || byId.get(p.eventId)?.slug === album) && (!group || p.team === group) && (!mine || p.owner === owner));
+  const visiblePhotos=shown.slice(0,visibleCount);
+  const dayLabel=p=>captureTime(p) ? new Intl.DateTimeFormat('en-US',{timeZone:'Europe/London',weekday:'long',month:'short',day:'numeric'}).format(new Date(captureTime(p))) : 'Shared moments';
   const currentDay = DAYS.find((d) => d.date === tripToday()) || (tripToday() < '2026-10-11' ? PREP : DAYS[0]);
   const familyPhotos = photos.filter((p) => byId.get(p.eventId)?.slug === PREP.slug);
   const suggestionDay = DAYS.find((d) => d.slug === album) || currentDay;
@@ -133,7 +137,7 @@ export default function App() {
         {error && <div className="l-error" role="alert">{error} <button onClick={refresh}>Try again</button></div>}
         {!loaded && <p role="status">Opening the trip album…</p>}
         {loaded && !shown.length && !error && <div className="l-empty"><div className="l-empty-icon"><Camera size={33} strokeWidth={1.4} /></div><h3>{mine ? 'Your postcards start here.' : collection ? 'A little space for this story.' : photos.length ? 'A quiet page in the story, for now.' : 'The adventure is just beginning.'}</h3><p>{mine ? 'Photos you share on this account will appear here. You can remove any accidental uploads.' : collection ? 'Moments shared here will appear together. Enjoy browsing whenever they arrive.' : photos.length ? 'Moments for this album or group will appear here when shared.' : 'When the first moments arrive, this will become a little window into their world.'}</p><button className="l-text" onClick={upload}>Have a moment to share? <ArrowUpRight size={16} /></button></div>}
-        <div className="l-grid l-thumbnail-grid">{shown.map((p) => <article key={p.id} className="l-photo l-thumbnail"><button className="l-thumbnail-open" onClick={() => setModal({kind:'photo',id:p.id})} aria-label={`Open ${p.kind === 'video' ? 'video' : 'photo'} from ${byId.get(p.eventId)?.title || 'the trip'}`}><img src={db.mediaUrl(p,'thumb')} alt={p.caption || 'A shared moment from the class trip'} loading="lazy" decoding="async"/>{p.kind==='video' && <span className="l-video">▶</span>}</button>{p.uploaderName?.startsWith('Shared on Instagram by @') && <span className="l-thumbnail-instagram" title={p.uploaderName}>Instagram</span>}<Thanks photo={p} changed={thankedPhoto} compact onOpen={()=>setModal({kind:'photo',id:p.id})}/>{organizing && <CollectionEditor photo={p} changed={categorizedPhoto}/>}</article>)}</div>
+        <div className="l-grid l-thumbnail-grid">{visiblePhotos.map((p,index) => <Fragment key={p.id}>{(index===0 || dayLabel(p)!==dayLabel(visiblePhotos[index-1])) && <h3 className="l-gallery-day">{dayLabel(p)}</h3>}<article key={p.id} className="l-photo l-thumbnail"><button className="l-thumbnail-open" onClick={() => setModal({kind:'photo',id:p.id})} aria-label={`Open ${p.caption || byId.get(p.eventId)?.title || 'trip photo'}`}><img src={db.mediaUrl(p,'thumb')} alt={p.caption || 'A shared moment from the class trip'} loading="lazy" decoding="async"/>{p.kind==='video' && <span className="l-video" aria-label="Video">▶<span className="l-sr-only"> Video</span></span>}</button>{p.uploaderName?.startsWith('Shared on Instagram by @') && <span className="l-thumbnail-instagram" title={p.uploaderName}>Instagram</span>}<Thanks photo={p} changed={thankedPhoto} compact onOpen={()=>setModal({kind:'photo',id:p.id})}/>{organizing && <CollectionEditor photo={p} changed={categorizedPhoto}/>}</article></Fragment>)}</div>{shown.length>visibleCount && <button className="l-button l-load-more" onClick={()=>setVisibleCount(n=>n+60)}>Show more photos ({shown.length-visibleCount} more)</button>}
         {!ideaHidden && !collection && <aside className="l-idea l-inspiration-strip"><Sparkles size={19} /><div><b>A little inspiration, if you’d like</b><div className="l-inspiration-chips">{INSPIRATIONS.filter((c) => c.album === suggestionDay.slug || c.albums?.includes(suggestionDay.slug)).slice(0, 3).map((c) => <button className="l-text" key={c.id} onClick={() => openCollection(c.id)}>{c.title} <ArrowUpRight size={13} /></button>)}<button className="l-text" onClick={() => setIdea(suggestionDay.slug)}>More ideas <ArrowUpRight size={13} /></button></div></div><button className="l-dismiss" aria-label="Dismiss photo ideas for this visit" onClick={() => { setIdeaHidden(true); try { sessionStorage.setItem('london-idea-hidden', 'yes'); } catch { /* private mode */ } }}><X size={17} /></button></aside>}
         <button className="l-text l-ideas-link" onClick={() => setIdea(suggestionDay.slug)}><Sparkles size={16} /> A few optional photo ideas</button>
       </section>
@@ -243,7 +247,7 @@ function Thanks({ photo, changed, compact = false, onOpen }) {
   return <><button className={`l-text l-photo-thanks ${compact ? 'l-thumbnail-heart' : ''}`} aria-label={thanked ? 'Remove thanks' : 'Send thanks'} aria-pressed={thanked} disabled={busy} onClick={async () => {
     setBusy(true); setError('');
     try { await db.setThanks(photo.id, !thanked); changed(photo.id, !thanked); setThanked(!thanked); }
-    catch { if(compact && onOpen) onOpen(); else setError('Your thanks could not be saved. Please try again.'); }
+    catch { setError('Your thanks could not be saved. Please try again.'); }
     finally { setBusy(false); }
   }}><Heart size={16} fill={thanked ? 'currentColor' : 'none'} />{!compact && (thanked ? 'Thanks sent' : 'Thanks for sharing')}</button>{error && <p className="l-error" role="alert">{error}</p>}</>;
 }
