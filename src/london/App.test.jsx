@@ -25,6 +25,19 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 const button=(text)=>[...host.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
 const click=async(el)=>{expect(el).toBeTruthy();await act(async()=>el.click());};
+it('opens From Their Stories directly and preserves ordinary uploads outside that source view',async()=>{
+ const story={...other,id:'story',caption:'Instagram trip moment',uploaderName:'Shared on Instagram by @the.cam_'};
+ db.listPhotos.mockResolvedValue([own,story]);
+ await act(async()=>root.unmount());root=createRoot(host);
+ window.location.hash='#/from-their-stories';
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.l-section-head h2').textContent).toBe('From Their Stories');
+ expect(host.querySelectorAll('.l-grid .l-photo')).toHaveLength(1);
+ expect(host.querySelector('.l-grid img').alt).toBe('Instagram trip moment');
+ expect(host.textContent).toContain('Trip moments shared on Instagram by our chaperones and RCA');
+ await click([...host.querySelectorAll('a')].find(x=>x.textContent==='All moments'));
+ expect(host.querySelectorAll('.l-grid .l-photo')).toHaveLength(2);
+});
 it('shows only this contributor’s photos in My uploads and no removal control on another person’s photo',async()=>{
  expect(host.querySelectorAll('.l-remove')).toHaveLength(0);
  await click(button('My uploads'));
