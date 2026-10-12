@@ -14,6 +14,8 @@ const {data:events,error:e}=await client.from('m3_events').select('id,slug,title
 const {data:existing,error:p}=await client.rpc('m3_list_photos',{p_token:'0'.repeat(48),p_vault:'london-2028',p_mode:'recent',p_limit:5000});if(p)throw p;
 const storage=await(await fetch('https://wearercap.org/api/london-sign')).json();if(!storage.publicBase)throw Error('Missing R2 base');
 const photos=existing.map(({photo:r})=>({id:r.id,eventId:r.event_id,owner:r.owner,uploaderName:r.uploader_name,scholarName:r.scholar_name||'',team:r.team||'',storage:r.storage,key:r.key,webKey:r.web_key,thumbKey:r.thumb_key,caption:r.caption||'',kind:r.kind,createdAt:r.created_at,takenAt:r.taken_at}));
+const registeredSources=JSON.parse(await fs.readFile('src/london/storySources.json','utf8'));
+const importedMediaIds=new Set(Object.values(registeredSources).flatMap(s=>(s.credits||[]).map(c=>c.identity).filter(Boolean)));
 const ledger=[];const seen=new Set();
 for(const account of await fs.readdir('.deploy/stories-source')){
  if(!/^[a-zA-Z0-9_.]+$/.test(account))continue;
@@ -35,7 +37,7 @@ for(const account of await fs.readdir('.deploy/stories-source')){
   const event=events.find(e=>e.slug===slug)||events[0];
   const row={id,eventId:event.id,owner:'instagram-preview',uploaderName:'Shared on Instagram by @'+account,scholarName:'',caption:'',kind:video?'video':'photo',createdAt:meta.taken_at,takenAt:meta.taken_at,previewMedia:true,key:orig,webKey:web,thumbKey:thumb,instagram:{account,mediaId:String(meta.media_pk),permalink:meta.permalink,credit:'Shared on Instagram by @'+account}};
   // Exact source hashes prevent duplicate media in this staged batch.
-  const duplicate=ledger.find(r=>r.sha256===hash);const liveId=`${id.slice(0,8)}-${id.slice(8,12)}-5${id.slice(13,16)}-a${id.slice(17,20)}-${id.slice(20,32)}`;if(!duplicate&&!photos.some(p=>p.id===liveId))photos.push(row);
+  const duplicate=ledger.find(r=>r.sha256===hash);const liveId=`${id.slice(0,8)}-${id.slice(8,12)}-5${id.slice(13,16)}-a${id.slice(17,20)}-${id.slice(20,32)}`;if(!duplicate&&!importedMediaIds.has(String(meta.media_pk))&&!photos.some(p=>p.id===liveId))photos.push(row);
   ledger.push({mediaId:String(meta.media_pk),account,sha256:hash,original:orig,duplicateOf:duplicate?.mediaId||null,takenAt:meta.taken_at});
  }
 }
