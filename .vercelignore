@@ -1,0 +1,10 @@
+# Private local imports, credentials, and handoff notes must never deploy.
+.deploy/
+.env
+.env.*
+HANDOFF-CODEX.md
+.git/
+node_modules/
+dist/
+.superpowers/
+supabase/.temp/
