@@ -133,7 +133,7 @@ export default function App() {
         {error && <div className="l-error" role="alert">{error} <button onClick={refresh}>Try again</button></div>}
         {!loaded && <p role="status">Opening the trip album…</p>}
         {loaded && !shown.length && !error && <div className="l-empty"><div className="l-empty-icon"><Camera size={33} strokeWidth={1.4} /></div><h3>{mine ? 'Your postcards start here.' : collection ? 'A little space for this story.' : photos.length ? 'A quiet page in the story, for now.' : 'The adventure is just beginning.'}</h3><p>{mine ? 'Photos you share on this account will appear here. You can remove any accidental uploads.' : collection ? 'Moments shared here will appear together. Enjoy browsing whenever they arrive.' : photos.length ? 'Moments for this album or group will appear here when shared.' : 'When the first moments arrive, this will become a little window into their world.'}</p><button className="l-text" onClick={upload}>Have a moment to share? <ArrowUpRight size={16} /></button></div>}
-        <div className="l-grid">{shown.map((p, index) => <article key={p.id} className="l-photo"><button onClick={() => setModal({ kind: 'photo', id: p.id })} aria-label={`Open ${p.caption || byId.get(p.eventId)?.title || 'trip photo'}`}><img src={db.mediaUrl(p, 'thumb')} alt={p.caption || 'A shared moment from the class trip'} loading={index < 4 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} />{p.kind === 'video' && <span className="l-video">▶ Video</span>}</button><div><small>{byId.get(p.eventId)?.title}</small>{p.caption && <p>{p.caption}</p>}{p.scholarName && <p className="l-scholar-credit">From {p.scholarName}</p>}<PhotoCredit photo={p}/><Thanks key={p.id} photo={p} changed={thankedPhoto} /><button className="l-text" onClick={()=>setModal({kind:'photo',id:p.id})}><MessageCircle size={15}/>React or comment</button>{organizing && <CollectionEditor photo={p} changed={categorizedPhoto} />}{p.owner === owner && <button className="l-text l-remove" aria-label={`Remove ${p.caption || 'your photo'} from album`} onClick={() => setModal({ kind: 'photo', id: p.id, remove: true })}><Trash2 size={14} /> Remove</button>}</div></article>)}</div>
+        <div className="l-grid l-thumbnail-grid">{shown.map((p) => <article key={p.id} className="l-photo l-thumbnail"><button className="l-thumbnail-open" onClick={() => setModal({kind:'photo',id:p.id})} aria-label={`Open ${p.kind === 'video' ? 'video' : 'photo'} from ${byId.get(p.eventId)?.title || 'the trip'}`}><img src={db.mediaUrl(p,'thumb')} alt={p.caption || 'A shared moment from the class trip'} loading="lazy" decoding="async"/>{p.kind==='video' && <span className="l-video">▶</span>}</button>{p.uploaderName?.startsWith('Shared on Instagram by @') && <span className="l-thumbnail-instagram" title={p.uploaderName}>Instagram</span>}<Thanks photo={p} changed={thankedPhoto} compact onOpen={()=>setModal({kind:'photo',id:p.id})}/>{organizing && <CollectionEditor photo={p} changed={categorizedPhoto}/>}</article>)}</div>
         {!ideaHidden && !collection && <aside className="l-idea l-inspiration-strip"><Sparkles size={19} /><div><b>A little inspiration, if you’d like</b><div className="l-inspiration-chips">{INSPIRATIONS.filter((c) => c.album === suggestionDay.slug || c.albums?.includes(suggestionDay.slug)).slice(0, 3).map((c) => <button className="l-text" key={c.id} onClick={() => openCollection(c.id)}>{c.title} <ArrowUpRight size={13} /></button>)}<button className="l-text" onClick={() => setIdea(suggestionDay.slug)}>More ideas <ArrowUpRight size={13} /></button></div></div><button className="l-dismiss" aria-label="Dismiss photo ideas for this visit" onClick={() => { setIdeaHidden(true); try { sessionStorage.setItem('london-idea-hidden', 'yes'); } catch { /* private mode */ } }}><X size={17} /></button></aside>}
         <button className="l-text l-ideas-link" onClick={() => setIdea(suggestionDay.slug)}><Sparkles size={16} /> A few optional photo ideas</button>
       </section>
@@ -235,17 +235,17 @@ function CollectionEditor({ photo, changed }) {
     finally { setBusy(false); }
   }}>{busy ? 'Saving…' : 'Save label'}</button>{error && <p role="alert" className="l-error">{error}</p>}</div>;
 }
-function Thanks({ photo, changed }) {
+function Thanks({ photo, changed, compact = false, onOpen }) {
   const [thanked, setThanked] = useState(Boolean(photo.thanked));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => { setThanked(Boolean(photo.thanked)); }, [photo.thanked]);
-  return <><button className="l-text l-photo-thanks" aria-pressed={thanked} disabled={busy} onClick={async () => {
+  return <><button className={`l-text l-photo-thanks ${compact ? 'l-thumbnail-heart' : ''}`} aria-label={thanked ? 'Remove thanks' : 'Send thanks'} aria-pressed={thanked} disabled={busy} onClick={async () => {
     setBusy(true); setError('');
     try { await db.setThanks(photo.id, !thanked); changed(photo.id, !thanked); setThanked(!thanked); }
-    catch { setError('Your thanks could not be saved. Please try again.'); }
+    catch { if(compact && onOpen) onOpen(); else setError('Your thanks could not be saved. Please try again.'); }
     finally { setBusy(false); }
-  }}><Heart size={16} fill={thanked ? 'currentColor' : 'none'} />{thanked ? 'Thanks sent' : 'Thanks for sharing'}</button>{error && <p className="l-error" role="alert">{error}</p>}</>;
+  }}><Heart size={16} fill={thanked ? 'currentColor' : 'none'} />{!compact && (thanked ? 'Thanks sent' : 'Thanks for sharing')}</button>{error && <p className="l-error" role="alert">{error}</p>}</>;
 }
 export function Conversation({photoId,sharePhoto,onUpload}) {
  const [pending,setPending]=useState(null);
