@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { VAULT } from './config.js';
+import videoPlayback from './videoPlayback.json';
+import {playbackKey} from './playback.js';
 export const client = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
   auth: { storageKey: 'london-verified-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
@@ -54,7 +56,7 @@ export async function storageConfig() {
 }
 export function mediaUrl(photo, which = 'web') {
   if (!config || photo.storage !== 'r2') return '';
-  const key = which === 'orig' ? photo.key : which === 'thumb' ? photo.thumbKey : photo.webKey;
+  const key = which === 'playback' ? playbackKey(photo,videoPlayback) : which === 'orig' ? photo.key : which === 'thumb' ? photo.thumbKey : photo.webKey;
   return `${config.publicBase}/${key}`;
 }
 const photoFromRow = (row) => ({
