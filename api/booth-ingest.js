@@ -27,6 +27,7 @@
 
 import crypto from 'node:crypto';
 import sharp from 'sharp';
+import londonStoriesWebhook from '../server/london-stories/webhook.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -187,6 +188,7 @@ async function renditions(buf, isGif) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.source === 'london-stories') return londonStoriesWebhook(req, res);
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');

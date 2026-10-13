@@ -8,3 +8,6 @@ node_modules/
 dist/
 .superpowers/
 supabase/.temp/
+# Test modules must not become production serverless functions.
+**/*.test.js
+**/*.test.jsx

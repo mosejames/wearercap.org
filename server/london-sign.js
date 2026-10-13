@@ -2,7 +2,7 @@ import { AwsClient } from 'aws4fetch';
 const VAULT = 'london-2028';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OWNER = /^[0-9a-f]{64}$/;
-const TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', heic: 'image/heic', heif: 'image/heif', mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };
+const TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', heic: 'image/heic', heif: 'image/heif', mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };
 export function r2Config() {
   return { account: process.env.R2_ACCOUNT_ID, key: process.env.R2_ACCESS_KEY_ID, secret: process.env.R2_SECRET_ACCESS_KEY, bucket: process.env.R2_BUCKET, publicBase: (process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, '') };
 }
@@ -63,7 +63,10 @@ export default async function handler(req, res) {
   try {
     const items = await Promise.all(body.files.map(async (f) => {
       const keys = keysFor(event.slug, f.id, f.ext, body.owner);
-      return { id: f.id, keys, urls: { orig: await sign(keys.orig, f.contentType), web: await sign(keys.web, 'image/jpeg'), thumb: await sign(keys.thumb, 'image/jpeg') } };
+      if (f.ext === 'm4v') keys.playback = keys.orig.replace('/orig.m4v', '/playback.mp4');
+      const urls = { orig: await sign(keys.orig, f.contentType), web: await sign(keys.web, 'image/jpeg'), thumb: await sign(keys.thumb, 'image/jpeg') };
+      if (keys.playback) urls.playback = await sign(keys.playback, 'video/mp4');
+      return { id: f.id, keys, urls };
     }));
     return res.status(200).json({ mode: 'r2', publicBase: r2.publicBase, items });
   } catch { return res.status(503).json({ error: 'Could not prepare photo storage. Please try again.' }); }

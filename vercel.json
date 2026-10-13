@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/london-stories-webhook",
+      "destination": "/api/booth-ingest?source=london-stories"
+    },
+    {
       "source": "/2028-london/e/:slug/p/:photo",
       "destination": "/api/m3-link?vault=london&slug=:slug&photo=:photo"
     },
@@ -140,5 +144,18 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/london-stories-worker.js": {
+      "maxDuration": 300,
+      "includeFiles": "node_modules/ffmpeg-static/ffmpeg",
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "london-instagram-import",
+          "maxConcurrency": 1
+        }
+      ]
+    }
+  }
 }
