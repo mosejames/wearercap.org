@@ -274,9 +274,26 @@ export function Conversation({photoId,sharePhoto,onUpload}) {
 }
 function Photo({ photo, photos, owner, admin, close, navigate, hidden, initialRemove = false, sharePhoto, changed, onUpload }) {
   const [error, setError] = useState(''); const [confirm, setConfirm] = useState(initialRemove); const [busy, setBusy] = useState(false);
+  const swipeStart = useRef(null);
+  const viewer = useRef(null);
+  useEffect(() => { viewer.current?.scrollIntoView?.({ block: 'nearest' }); }, [photo?.id]);
   if (!photo) return null;
   const index = photos.findIndex((p) => p.id === photo.id);
-  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close}><div className="l-viewer">{photo.kind === 'video' ? <video src={db.mediaUrl(photo, 'playback')} preload="metadata" poster={db.mediaUrl(photo, 'thumb')} controls playsInline /> : <img src={db.mediaUrl(photo)} alt={photo.caption || 'A moment from the class trip'} />}</div>{photo.scholarName && <p className="l-scholar-credit">From <b>{photo.scholarName}</b></p>}<PhotoCredit photo={photo}/><Conversation key={photo.id} photoId={photo.id} sharePhoto={()=>sharePhoto(photo)} onUpload={onUpload} /><div className="l-viewer-actions"><button className="l-text" disabled={index <= 0} onClick={() => { setConfirm(false); navigate(photos[index - 1].id); }}><ChevronLeft size={19} /> Previous</button><a className="l-text" href={db.mediaUrl(photo, 'orig')} target="_blank" rel="noreferrer"><Download size={17} /> Original</a><button className="l-text" disabled={index < 0 || index >= photos.length - 1} onClick={() => { setConfirm(false); navigate(photos[index + 1].id); }}>Next <ChevronRight size={19} /></button></div>{(photo.owner === owner || admin) && <div className="l-hide">{confirm ? <><p>Remove this photo from the shared album?</p><button className="l-button" disabled={busy} onClick={async () => { setBusy(true); try { await db.hidePhoto(photo.id, admin); hidden(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Remove from album</button><button className="l-text" onClick={() => setConfirm(false)}>Keep it visible</button></> : <button className="l-text" onClick={() => setConfirm(true)}><Trash2 size={16} /> Remove from album</button>}</div>}{error && <p className="l-error" role="alert">{error}</p>}</Dialog>;
+  const move = (step) => {
+    const next = photos[index + step];
+    if (index < 0 || !next) return;
+    setConfirm(false); setError(''); navigate(next.id);
+  };
+  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close}><div className="l-viewer" ref={viewer} onTouchStart={(e) => {
+    if (photo.kind === 'video' || e.touches.length !== 1) { swipeStart.current = null; return; }
+    swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }} onTouchCancel={() => { swipeStart.current = null; }} onTouchEnd={(e) => {
+    const start = swipeStart.current; swipeStart.current = null;
+    if (!start || !e.changedTouches.length) return;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1);
+  }}>{photo.kind === 'video' ? <video src={db.mediaUrl(photo, 'playback')} preload="metadata" poster={db.mediaUrl(photo, 'thumb')} controls playsInline /> : <img src={db.mediaUrl(photo)} alt={photo.caption || 'A moment from the class trip'} />}</div><nav className="l-photo-navigation" aria-label="Browse gallery"><button type="button" disabled={index <= 0} onClick={() => move(-1)}><ChevronLeft size={20}/> Previous</button><span aria-live="polite">{index >= 0 ? `${index + 1} of ${photos.length}` : ''}</span><button type="button" disabled={index < 0 || index >= photos.length - 1} onClick={() => move(1)}>Next <ChevronRight size={20}/></button></nav><a className="l-text l-original-link" href={db.mediaUrl(photo, 'orig')} target="_blank" rel="noreferrer"><Download size={17}/> Original</a>{photo.scholarName && <p className="l-scholar-credit">From <b>{photo.scholarName}</b></p>}<PhotoCredit photo={photo}/><Conversation key={photo.id} photoId={photo.id} sharePhoto={()=>sharePhoto(photo)} onUpload={onUpload} />{(photo.owner === owner || admin) && <div className="l-hide">{confirm ? <><p>Remove this photo from the shared album?</p><button className="l-button" disabled={busy} onClick={async () => { setBusy(true); try { await db.hidePhoto(photo.id, admin); hidden(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Remove from album</button><button className="l-text" onClick={() => setConfirm(false)}>Keep it visible</button></> : <button className="l-text" onClick={() => setConfirm(true)}><Trash2 size={16} /> Remove from album</button>}</div>}{error && <p className="l-error" role="alert">{error}</p>}</Dialog>;
 }
 function Admin({ close, setAdmin }) {
   const [pass, setPass] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
