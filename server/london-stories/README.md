@@ -2,6 +2,10 @@
 
 Source collection and upload remain on the existing VM. Do not alter them.
 
+Current collector accounts: @wynningeducation, @kimbearden, @ronclarkacademy,
+@collinsclan6, @the.cam_, @tnwoo10, and @ronclark__.
+The importer discovers account folders automatically, including new accounts.
+
 Dropbox webhook: https://wearercap.org/api/london-stories-webhook
 Only Originals/<account>/{jpg,jpeg,mp4} files are imported. JSON sidecars
 provide the source account, media_pk, and taken_at. Sidecars are never gallery
