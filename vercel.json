@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    {"source":"/api/london-activity","destination":"/api/m3-sign?vault=london-activity"},
+    {
+      "source": "/api/london-activity",
+      "destination": "/api/m3-sign?vault=london-activity"
+    },
     {
       "source": "/api/london-stories-webhook",
       "destination": "/api/booth-ingest?source=london-stories"
@@ -157,6 +160,10 @@
           "maxConcurrency": 1
         }
       ]
+    },
+    "api/m3-sign.js": {
+      "maxDuration": 60,
+      "includeFiles": "server/london-dedupe/seed.json"
     }
   }
 }

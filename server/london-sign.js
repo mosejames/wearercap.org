@@ -1,3 +1,4 @@
+import {guardUploads,galleryPhotos} from './london-dedupe/index.js';
 import { AwsClient } from 'aws4fetch';
 const VAULT = 'london-2028';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -53,6 +54,7 @@ export default async function handler(req, res) {
   if (!event || event.slug !== body.eventSlug || !/^[a-z0-9-]{1,60}$/.test(event.slug)) return res.status(403).json({ error: 'Please choose an open London trip album.' });
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   if (!event.ongoing && event.starts_on > today) return res.status(403).json({ error: 'This album is not open yet.' });
+  if(!body.adminPass && body.files.some(f=>!f.sourceHash || f.contentType.startsWith('image/')&&!f.duplicateThumb)) return res.status(409).json({error:'Please refresh this page before sharing photos.'});
   const aws = new AwsClient({ accessKeyId: r2.key, secretAccessKey: r2.secret, service: 's3', region: 'auto' });
   async function sign(key, contentType) {
     const target = new URL(`https://${r2.account}.r2.cloudflarestorage.com/${r2.bucket}/${key}`);
@@ -61,7 +63,10 @@ export default async function handler(req, res) {
     return signed.url;
   }
   try {
+    const hasChecks=body.files.some(f=>f.sourceHash||f.duplicateThumb);
+    const duplicates=hasChecks?await guardUploads(body.files,await galleryPhotos(),body.owner):new Map();
     const items = await Promise.all(body.files.map(async (f) => {
+      if(duplicates.get(f.id)?.duplicate)return duplicates.get(f.id);
       const keys = keysFor(event.slug, f.id, f.ext, body.owner);
       if (f.ext === 'm4v') keys.playback = keys.orig.replace('/orig.m4v', '/playback.mp4');
       const urls = { orig: await sign(keys.orig, f.contentType), web: await sign(keys.web, 'image/jpeg'), thumb: await sign(keys.thumb, 'image/jpeg') };
@@ -69,5 +74,5 @@ export default async function handler(req, res) {
       return { id: f.id, keys, urls };
     }));
     return res.status(200).json({ mode: 'r2', publicBase: r2.publicBase, items });
-  } catch { return res.status(503).json({ error: 'Could not prepare photo storage. Please try again.' }); }
+  } catch (e) { return res.status(503).json({ error: e.message==='This photo is already being shared. Please try again shortly.'?e.message:'Could not prepare photo storage. Please try again.' }); }
 }

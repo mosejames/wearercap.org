@@ -1,3 +1,4 @@
+import {duplicateDetails} from './duplicateCheck.js';
 // ---------------------------------------------------------------------------
 // The upload pipeline: prepare → sign → put ×3 → insert row. One file at a
 // time through prepare (the memory-hungry step on a phone), a few in flight
@@ -32,7 +33,7 @@ async function sign(event, owner, items) {
     headers: { 'Content-Type': 'application/json', ...await authHeaders() },
     body: JSON.stringify({
       eventId: event.id, eventSlug: event.slug, owner,
-      files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })),
+      files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType, ...p.duplicateDetails })),
     }),
   });
   if (!r.ok) {
@@ -64,11 +65,12 @@ export async function uploadBatch(files, { event, profile, caption = '', scholar
   await storageConfig();
   const owner = await getOwner();
   const state = {
-    total: files.length, prepared: 0, uploaded: 0, failed: [], done: [],
+    total: files.length, prepared: 0, uploaded: 0, failed: [], done: [], skipped: [],
     bytesTotal: files.reduce((n, f) => n + f.size, 0), bytesSent: 0, current: '', optimizing: false, optimizationProgress: 0,
   };
   const tick = () => onProgress && onProgress({ ...state });
 
+  const seenHashes=new Set();
   // Keep only one small batch of prepared media in memory on phones.
   for (let i = 0; i < files.length; i += SIGN_CHUNK) {
     if (signal?.aborted) break;
@@ -85,7 +87,13 @@ export async function uploadBatch(files, { event, profile, caption = '', scholar
       try {
         const video = isVideo(f);
         const p = await (video ? prepareLondonVideo(f, { signal, onProgress: (fraction) => { state.optimizing = true; state.optimizationProgress = fraction; tick(); } }) : prepareImage(f));
-        ready.push({ ...p, video });
+        const prepared={...p,video};
+        prepared.duplicateDetails=await duplicateDetails(prepared);
+        const h=prepared.duplicateDetails.sourceHash;
+        if(seenHashes.has(h)){state.skipped.push({name:p.name});state.bytesTotal-=f.size;state.prepared++;tick();continue;}
+        seenHashes.add(h);
+        prepared.id=`${h.slice(0,8)}-${h.slice(8,12)}-5${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`;
+        ready.push(prepared);
         state.bytesTotal += p.orig.size + p.web.size + p.thumb.size - f.size;
       } catch (e) {
         state.failed.push({ name: f.name, error: e.message || 'Could not read' });
@@ -107,6 +115,7 @@ export async function uploadBatch(files, { event, profile, caption = '', scholar
         const p = chunk[cursor++];
         const s = byId.get(p.id);
         state.current = p.name;
+        if(s?.duplicate){state.skipped.push({name:p.name,existingId:s.existingId});state.bytesTotal-=p.orig.size+p.web.size+p.thumb.size;state.uploaded++;tick();continue;}
         try {
           await putAll(p, s, mode, (n) => { state.bytesSent += n; tick(); }, signal);
           const [row] = await insertPhotos([{
@@ -128,7 +137,8 @@ export async function uploadBatch(files, { event, profile, caption = '', scholar
           }]);
           state.done.push(row);
         } catch (e) {
-          state.failed.push({ name: p.name, error: e.message || 'Upload failed' });
+          if(e.code==='23505')state.skipped.push({name:p.name,existingId:p.id});
+          else state.failed.push({ name: p.name, error: e.message || 'Upload failed' });
         }
         state.uploaded++;
         tick();

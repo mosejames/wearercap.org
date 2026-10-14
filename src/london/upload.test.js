@@ -2,6 +2,7 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { uploadBatch } from './upload.js';
 import { prepareLondonVideo } from './video.js';
 import { insertPhotos } from './data.js';
+vi.mock('./duplicateCheck.js',()=>({duplicateDetails:vi.fn(async()=>({sourceHash:'a'.repeat(64)}))}));
 vi.mock('./video.js', () => ({ prepareLondonVideo: vi.fn() }));
 vi.mock('./data.js', () => ({ authHeaders:vi.fn(async()=>({Authorization:'Bearer test'})), getOwner: vi.fn(async () => 'owner'), storageConfig: vi.fn(async () => ({ mode: 'r2' })), insertPhotos: vi.fn(async (rows) => rows) }));
 const sent = [];
@@ -34,4 +35,15 @@ it('does not sign, upload or create a gallery row when compression fails', async
  expect(fetch).not.toHaveBeenCalled();
  expect(sent).toHaveLength(0);
  expect(insertPhotos).not.toHaveBeenCalled();
+});
+it('skips an existing photo before uploading bytes or inserting another row',async()=>{
+ const orig=new Blob(['existing']),web=new Blob(['poster']),thumb=new Blob(['thumb']);prepareLondonVideo.mockResolvedValue({id:'old-id',name:'renamed.mov',orig,web,thumb,ext:'mp4',contentType:'video/mp4'});
+ vi.stubGlobal('fetch',vi.fn(async(_,options)=>({ok:true,json:async()=>({mode:'r2',items:JSON.parse(options.body).files.map(f=>({id:f.id,duplicate:true,existingId:'kept-photo'}))})})));
+ const result=await uploadBatch([{name:'renamed.mov',type:'video/mp4',size:8}],context);
+ expect(result.skipped).toEqual([{name:'renamed.mov',existingId:'kept-photo'}]);expect(result.failed).toEqual([]);expect(sent).toHaveLength(0);expect(insertPhotos).not.toHaveBeenCalled();
+});
+it('does not transfer a file twice when it is repeated in one selection',async()=>{
+ const orig=new Blob(['same']),web=new Blob(['poster']),thumb=new Blob(['thumb']);prepareLondonVideo.mockResolvedValue({id:'random',name:'same.mov',orig,web,thumb,ext:'mp4',contentType:'video/mp4'});
+ const file={name:'same.mov',type:'video/mp4',size:4};const result=await uploadBatch([file,file],context);
+ expect(result.done).toHaveLength(1);expect(result.skipped).toHaveLength(1);expect(insertPhotos).toHaveBeenCalledTimes(1);expect(sent).toHaveLength(3);
 });

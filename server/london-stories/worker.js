@@ -171,6 +171,8 @@ export async function importMedia(path) {
         files: [
           {
             id: sourceId,
+            sourceHash: hash,
+            duplicateThumb: meta.kind==='photo'?r.thumb.toString('base64'):undefined,
             ext,
             contentType: meta.kind === "video" ? "video/mp4" : "image/jpeg",
           },
@@ -181,6 +183,7 @@ export async function importMedia(path) {
     if (!sign.ok) throw Error("London signing failed: " + sign.status);
     const signed = await sign.json(),
       item = signed.items?.[0];
+    if(item?.duplicate){ledger.items.push({sourceId,mediaId:meta.mediaId,hash,fp,id:item.existingId,duplicate:true});await writeState('ledger',ledger,current.etag);return {duplicate:true,id:item.existingId};}
     if (signed.mode !== "r2" || !item?.urls)
       throw Error("Invalid London signing response");
     const parts = [

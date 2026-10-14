@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import handler from './london-sign.js';
+vi.mock('./london-dedupe/index.js',()=>({guardUploads:vi.fn(async()=>new Map()),galleryPhotos:vi.fn(async()=>[])}));
 import entryHandler from '../api/m3-sign.js';
 const id = '11111111-1111-4111-8111-111111111111';
 function response() { return { statusCode: 200, body: null, setHeader: vi.fn(), status(n) { this.statusCode=n; return this; }, json(body) { this.body=body; return this; } }; }
-const body = () => ({ owner: 'a'.repeat(64), eventId: id, eventSlug: 'hello-london', files: [{ id, ext: 'jpg', contentType: 'image/jpeg' }] });
+const body = () => ({ owner: 'a'.repeat(64), eventId: id, eventSlug: 'hello-london', files: [{ id, ext: 'jpg', contentType: 'image/jpeg', sourceHash:'a'.repeat(64),duplicateThumb:'dGVzdA==' }] });
 beforeEach(() => { for (const key of ['ACCOUNT_ID','ACCESS_KEY_ID','SECRET_ACCESS_KEY','BUCKET','PUBLIC_BASE']) vi.stubEnv(`R2_${key}`, key === 'PUBLIC_BASE' ? 'https://media.example.com/' : 'test'); vi.stubEnv('SUPABASE_URL', 'https://db.example.com'); vi.stubEnv('SUPABASE_ANON_KEY', 'anon'); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 describe('London R2 uploads', () => {
@@ -39,4 +40,7 @@ it('allows an authorized administrator to import a Dropbox video with the same a
 });
 it('does not sign anything when the import passphrase is invalid',async()=>{
  const fetch=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>false});vi.stubGlobal('fetch',fetch);const res=response();await handler({method:'POST',body:{...body(),adminPass:'wrong'}},res);expect(res.statusCode).toBe(403);expect(fetch).toHaveBeenCalledTimes(1);expect(res.body.items).toBeUndefined();
+});
+it('asks stale upload pages to refresh instead of bypassing the duplicate gate',async()=>{
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce({ok:true,json:async()=>'a'.repeat(64)}).mockResolvedValue({ok:true,json:async()=>[{slug:'hello-london',ongoing:true}]}));const input=body();delete input.files[0].sourceHash;delete input.files[0].duplicateThumb;const res=response();await handler({method:'POST',headers:{authorization:'Bearer verified'},body:input},res);expect(res.statusCode).toBe(409);expect(res.body.items).toBeUndefined();
 });
