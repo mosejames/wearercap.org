@@ -74,7 +74,7 @@ it('uses the map to select the corresponding guide chapter',async()=>{
 });
 it('shares a clean link to the exact gallery photo instead of a hash-only album link',async()=>{
  const share=vi.fn().mockResolvedValue();Object.defineProperty(navigator,'share',{configurable:true,value:share});
- await click(host.querySelector('[aria-label="Open Our day"]'));await click(button('Share this photo'));
+ await click(host.querySelector('[aria-label="Open Our day"]'));await click(button('Share gallery link'));
  expect(share).toHaveBeenCalledWith({title:'The whole adventure · Class of 2028',url:`${window.location.origin}/e/the-whole-adventure/p/own`});
  delete navigator.share;
 });
@@ -270,7 +270,7 @@ it("keeps writing choices hidden by default for parent photo uploads",async()=>{
 it('posts an anonymous comment immediately, with sharing and uploading still available',async()=>{
  const {Conversation}=await import('./App.jsx');db.syncAccount.mockResolvedValue(null);const share=vi.fn(),upload=vi.fn();
  await act(async()=>root.render(<Conversation photoId="own" sharePhoto={share} onUpload={upload}/>));
- await click(host.querySelector('[aria-label="Share this photo"]'));expect(share).toHaveBeenCalledOnce();
+ await click(host.querySelector('[aria-label="Share gallery link"]'));expect(share).toHaveBeenCalledOnce();
  await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'Have a wonderful adventure!');el.dispatchEvent(new Event('input',{bubbles:true}));});
  await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
  expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'Have a wonderful adventure!',p_name:'Test chaperone'});expect(db.syncAccount).not.toHaveBeenCalled();expect(host.querySelector('textarea').value).toBe('');expect(host.textContent).not.toContain('Complete sign-in');
