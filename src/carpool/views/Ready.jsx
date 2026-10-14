@@ -86,7 +86,7 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
               // correct regardless of mount state; only setState needs the
               // mount guard, so it comes after.
               if (!active) return;
-              if (applied) fam = applied;
+              if (applied) fam = { ...fam, ...applied };
             } else {
               clearPendingFamily();
             }
@@ -122,7 +122,7 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
 
   const adminBar = isAdmin ? (
     <div className="carpool-shell cp-bar">
-      <button className="cp-btn cp-btn--dark cp-btn--block" onClick={() => setShowApprovals(true)}>
+      <button className="cp-btn cp-btn--quiet" onClick={() => setShowApprovals(true)}>
         Admin <span className="cp-arr" aria-hidden="true">→</span>
       </button>
     </div>
@@ -147,7 +147,7 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
           onSubmitData={async (payload) => {
             const record = buildFamilyRecord({ ...payload, userId });
             await saveFamily(record);
-            setFamily(record);
+            setFamily((previous) => ({ ...previous, ...record }));
             setEditing(false);
           }}
         />
@@ -160,10 +160,19 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
       {pendingBanner}
       {adminBar}
       <div className="carpool-shell">
-        <h1 className="cp-h1">Your <span className="cp-hl">family.</span></h1>
-        {/* Collapsed by default: a parent knows their own details, so this is
-            the least-needed block. The former "Your account" kicker becomes the
-            tap header. */}
+        <h1 className="cp-h1">Share the <span className="cp-hl">drive.</span></h1>
+        <p className="cp-lede">Find a family, start a conversation, and see if sharing the school drive works for you.</p>
+        {family.paused_at && (
+          <div className="cp-banner cp-banner--info" role="status">
+            <strong>Nearby matching is paused.</strong>
+            <p>You are hidden from nearby family searches, and your nearby family list is hidden too. Your existing groups and their contact sharing remain unchanged.</p>
+          </div>
+        )}
+        {/* Existing groups and the next step come before account settings or the map.
+            Keep groups mounted while paused: pausing does not end a membership. */}
+        {!isPending && <Groups family={family} userId={userId} />}
+        {!family.paused_at && <MapView family={family} isPending={isPending} reloadKey={nearbyReloadKey} />}
+        {/* Account details are secondary to finding and connecting with families. */}
         <Collapsible id="cp-family" title="Your account" defaultOpen={false}>
           <div className="cp-card">
             <p className="cp-item-name">{family.parent_name}</p>
@@ -184,11 +193,7 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
             />
           </div>
         </Collapsible>
-        <MapView family={family} isPending={isPending} reloadKey={nearbyReloadKey} />
-        {/* Same branch as MapView, so family (and therefore
-            family.area_lat/area_lng) is always present: rankGroups measures
-            every distance against it. Approved members only. */}
-        {!isPending && <Groups family={family} userId={userId} />}
+
         <hr className="cp-rule" />
         <button className="cp-btn cp-btn--quiet" onClick={() => supabase.auth.signOut()}>Sign out</button>
       </div>

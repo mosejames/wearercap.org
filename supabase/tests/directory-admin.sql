@@ -1,0 +1,11 @@
+begin;
+select set_config('request.jwt.claim.sub',(select user_id::text from public.directory_admins limit 1),true);
+set local role authenticated;
+do $$ declare n int; begin update public.directory_settings set partner_heading=true where id=true; get diagnostics n = row_count; if n<>1 then raise exception 'Admin update failed'; end if; end $$;
+rollback;
+begin;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+set local role authenticated;
+do $$ declare n int; begin update public.directory_settings set partner_heading=true where id=true; get diagnostics n = row_count; if n<>0 then raise exception 'Non-admin update allowed'; end if; end $$;
+rollback;
+select 'Admin can update; non-admin cannot; changes rolled back' as result;

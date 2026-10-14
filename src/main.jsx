@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { COMMITTEES } from './committee/data.js';
 import './styles.css';
+import MembershipThermometer from './membership/MembershipThermometer.jsx';
 
 // Pulled straight from the Find Your Place data so the two can never drift.
 // Editing src/committee/data.js updates the pills, the count, and the form.
@@ -154,11 +155,15 @@ const navLinks = [
 // Split into month / day / weekday so each date can be set like a calendar
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
+// Fill these with the approved event links before publishing the feature.
+const karaokeEvent = {
+  rsvpHref: '',
+  playlistHref: '',
+  youtubeEmbedUrl: '',
+};
+
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Thu', day: '10', label: 'Parent Orientation Day', time: '8am to 3pm', description: 'A new year. Familiar faces. A whole community to meet.', image: '/images/rcap-community-table.jpg' },
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '15', label: 'Bingo Night, games at 5:30pm' },
-  { month: 'Sept', year: '2026', weekday: 'Thu', day: '17', label: 'Open House' },
-  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed' },
+  { month: 'Sept', year: '2026', weekday: 'Thu + Fri', day: '24 & 25', label: 'RCA EXP, parent volunteers needed', href: volunteerHref, linkLabel: 'Sign up for EXP' },
   { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
 ];
 
@@ -184,6 +189,17 @@ const committeePop = {
 // wearercap.org as its own page. Add a row here when a new one goes live; the
 // section renders straight from this list.
 const tools = [
+  {
+    variant: 'committee',
+    icon: Users,
+    title: 'The RCAP Collective',
+    body:
+      'What you need might be right here. Discover businesses, services, ' +
+      'creative work, and student ventures from our own RCA community.',
+    href: '/directory/',
+    badge: 'New',
+    action: 'Explore the Collective',
+  },
   {
     variant: 'committee',
     icon: Users,
@@ -583,6 +599,7 @@ function App() {
 
   return (
     <main className="site-shell homepage-refresh">
+      <MembershipThermometer />
       <section className="hero" aria-label="We Are RCAP">
         {/* Photo, scrim and edge travel together. Above 1100px this block is
             absolutely positioned behind the copy; below it, it becomes a band
@@ -612,24 +629,21 @@ function App() {
 
         <div className="hero-content">
           <p className="kicker">Welcome to RCAP</p>
-          <h1>If your child is at RCA,<br /> you are already <span>RCAP.</span></h1>
+          <h1>R&amp;B<br /><span>Karaoke Night.</span></h1>
           <p className="hero-copy">
-            First year or fifth, an hour or a whole season. There is a place
-            here with your name on it.
+            Your favorite songs. Your RCAP people. A night to sing together.
+            Grab your crew and get ready for the karaoke party.
           </p>
-          {/* Both of these move you down the page rather than leaving it. The
-              video opens from its own card in the story section, and Find Your
-              Place is reached from Serve, so the hero introduces the page
-              instead of jumping past it. */}
+          {/* Keep the featured gathering and its playlist within easy reach. */}
           <div className="hero-actions">
-            <a className="button primary" href="#serve">
-              Get involved
+            <a className="button primary" href="#events">
+              Join the karaoke party
               <ArrowDown size={18} aria-hidden="true" />
             </a>
-            <a className="button ghost" href="#story">
-              <PlayCircle size={18} aria-hidden="true" />
-              Watch the video
-            </a>
+            {karaokeEvent.playlistHref && <a className="button ghost" href={karaokeEvent.playlistHref} target="_blank" rel="noopener noreferrer">
+              Listen on Spotify
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </a>}
           </div>
         </div>
 
@@ -646,9 +660,9 @@ function App() {
           pass and pull the next few forward. */}
       <section id="events" className="content-section events-section">
         <div className="section-heading">
-          <p className="section-label">Happening Now</p>
-          <h2>Make room for a little RCA.</h2>
-          <p>Come connect, cheer someone on, or lend a hand. Here is what is next.</p>
+          <p className="section-label">The Karaoke Party</p>
+          <h2>R&amp;B Karaoke Night</h2>
+          <p>Warm up your vocals, find your song, and bring your RCAP people.</p>
           <a className="text-link heading-link" href={calendarHref} target="_blank" rel="noopener noreferrer">
             Open the full school calendar
             <ArrowUpRight size={15} aria-hidden="true" />
@@ -656,19 +670,25 @@ function App() {
         </div>
         <article className="featured-event">
           <div className="featured-event-photo">
-            <img src={upcomingEvents[0].image} alt="Parents gathered at RCA" loading="lazy" width="1800" height="1200" />
-            <span className="featured-event-tag">Next on the calendar</span>
+            {karaokeEvent.youtubeEmbedUrl ? (
+              <iframe className="karaoke-video" title="R&B Karaoke Night video" src={karaokeEvent.youtubeEmbedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen loading="lazy" />
+            ) : (
+              <img src="/images/rcap-community-table.jpg" alt="Parents gathered at RCA" loading="lazy" width="1800" height="1200" />
+            )}
           </div>
           <div className="featured-event-copy">
-            <p className="section-label">{upcomingEvents[0].weekday}, {upcomingEvents[0].month} {upcomingEvents[0].day} · {upcomingEvents[0].year}</p>
-            <h3>{upcomingEvents[0].label}</h3>
-            <p className="featured-event-time"><Clock size={18} aria-hidden="true" />{upcomingEvents[0].time}</p>
-            <p>{upcomingEvents[0].description}</p>
-            <a className="button primary" href={calendarHref} target="_blank" rel="noopener noreferrer">View school calendar <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <p className="section-label">Find your song</p>
+            <h3>Your people. Your playlist. Your mic.</h3>
+            <p>A little practice, a lot of R&amp;B, and a room full of RCAP. RSVP for Karaoke Night and connect to the Spotify playlist to get ready.</p>
+            <div className="karaoke-actions">
+              {karaokeEvent.rsvpHref && <a className="button primary" href={karaokeEvent.rsvpHref} target="_blank" rel="noopener noreferrer">RSVP for Karaoke Night <ArrowUpRight size={18} aria-hidden="true" /></a>}
+              {karaokeEvent.playlistHref && <a className="button ghost" href={karaokeEvent.playlistHref} target="_blank" rel="noopener noreferrer">Listen on Spotify <ArrowUpRight size={18} aria-hidden="true" /></a>}
+            </div>
           </div>
         </article>
+        <h3 className="calendar-heading">On the RCAP calendar</h3>
         <div className="event-grid" aria-label="More upcoming RCAP dates">
-          {upcomingEvents.slice(1).map(({ month, year, weekday, day, label }) => (
+          {upcomingEvents.map(({ month, year, weekday, day, label, href, linkLabel }) => (
             <article
               className={`event-card${day.length > 2 ? ' is-range' : ''}`}
               key={`${month}-${day}-${label}`}
@@ -681,6 +701,7 @@ function App() {
               </header>
               <p className="event-day">{day}</p>
               <p className="event-what">{label}</p>
+              {href && <a className="text-link event-signup" href={href} target="_blank" rel="noopener noreferrer">{linkLabel} <ArrowUpRight size={15} aria-hidden="true" /></a>}
             </article>
           ))}
         </div>
@@ -850,6 +871,7 @@ function App() {
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
           <a href="#tools">Tools</a>
+          <a href="/directory/">The RCAP Collective</a>
           <a href="/uniform-exchange/">Uniform Exchange</a>
           <a href="/carpool/">Carpool</a>
           <a href="/committee-interest/">Find Your Place</a>
