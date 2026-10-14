@@ -263,7 +263,7 @@ function Thanks({ photo, changed, compact = false, onOpen }) {
   useEffect(() => { setThanked(Boolean(photo.thanked)); }, [photo.thanked]);
   return <><button className={`l-text l-photo-thanks ${compact ? 'l-thumbnail-heart' : ''}`} aria-label={thanked ? 'Remove thanks' : 'Send thanks'} aria-pressed={thanked} disabled={busy} onClick={async () => {
     setBusy(true); setError('');
-    try { await db.setThanks(photo.id, !thanked); changed(photo.id, !thanked); setThanked(!thanked); }
+    try { await db.setThanks(photo.id, !thanked); trackActivity('reactions'); changed(photo.id, !thanked); setThanked(!thanked); }
     catch { setError('Your thanks could not be saved. Please try again.'); }
     finally { setBusy(false); }
   }}><Heart size={16} fill={thanked ? 'currentColor' : 'none'} />{!compact && (thanked ? 'Thanks sent' : 'Thanks for sharing')}</button>{error && <p className="l-error" role="alert">{error}</p>}</>;
