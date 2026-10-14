@@ -21,7 +21,7 @@ afterEach(() => {
   act(() => root?.unmount());
   host?.remove();
 });
-function setup(receipts) {
+function setup(receipts, vendor = "Party City") {
   host = document.createElement("div");
   document.body.append(host);
   const onError = vi.fn();
@@ -40,6 +40,7 @@ function setup(receipts) {
           {
             ...d.items[0],
             date: today(),
+            vendor,
             description: "Supplies",
             amount: "12.50",
             document_total: "12.50",
@@ -85,6 +86,7 @@ it("keeps receipts when moving between steps and requires final confirmation", (
   expect(panel().textContent).toContain("Expense 1");
   advance();
   expect(panel().textContent).toContain("receipt.jpg");
+  expect(panel().textContent).toContain("Party City");
   expect(panel().textContent).toContain("$12.50");
   expect(host.querySelector("form").checkValidity()).toBe(false);
   act(() =>
@@ -112,5 +114,23 @@ it("blocks review when an expense has no receipt", () => {
   expect(panel().textContent).toContain("Expense 1");
   expect(onError).toHaveBeenLastCalledWith(
     "Add supporting documents and a positive requested amount no greater than the combined receipt or invoice total.",
+  );
+});
+it("asks for the vendor name on every reimbursement expense", () => {
+  const onError = setup(
+    [
+      {
+        name: "receipt.jpg",
+        file: new File(["receipt"], "receipt.jpg", { type: "image/jpeg" }),
+      },
+    ],
+    "",
+  );
+  advance();
+  expect(panel().querySelector('input[placeholder^="Store or business"]')).not.toBeNull();
+  advance();
+  expect(panel().textContent).toContain("Expense 1");
+  expect(onError).toHaveBeenLastCalledWith(
+    "Enter the vendor name for every expense.",
   );
 });

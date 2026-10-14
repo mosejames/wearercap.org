@@ -45,6 +45,11 @@ export function validateDraft(d) {
     return "Include between 1 and 20 expenses.";
   for (let i = 0; i < d.items.length; i++) {
     const item = d.items[i];
+    if (
+      d.request_type === "reimbursement" &&
+      (item.vendor || "").trim().length < 2
+    )
+      return `Enter the vendor name for expense ${i + 1}.`;
     if (item.description.trim().length < 2) return `Describe expense ${i + 1}.`;
     if (!item.date || item.date > today())
       return `Choose a valid date for expense ${i + 1}.`;
@@ -102,6 +107,7 @@ export function actionAllowed(r, role, email, action) {
 export const newItem = () => ({
   key: crypto.randomUUID(),
   date: "",
+  vendor: "",
   description: "",
   amount: "",
   document_total: "",
@@ -134,6 +140,7 @@ export function fromRecord(r) {
     items: r.items.map((i) => ({
       ...i,
       key: crypto.randomUUID(),
+      vendor: i.vendor || "",
       amount: (i.amount_cents / 100).toFixed(2),
       document_total: (
         (i.document_total_cents || i.amount_cents) / 100

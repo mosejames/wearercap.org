@@ -344,6 +344,13 @@ export function RequestForm({
       return;
     }
     if (step === 1) {
+      if (
+        draft.request_type === "reimbursement" &&
+        draft.items.some((item) => (item.vendor || "").trim().length < 2)
+      ) {
+        onError("Enter the vendor name for every expense.");
+        return;
+      }
       const expenseError = draft.items.some(
         (item) =>
           !item.receipts.length ||
@@ -636,16 +643,35 @@ export function RequestForm({
                         }
                         placeholder="0.00"
                       />
+                      {draft.request_type === "reimbursement" && (
+                        <Field
+                          full
+                          label="Vendor name"
+                          required
+                          maxLength={150}
+                          value={item.vendor || ""}
+                          onChange={(e) => setItem(i, "vendor", e.target.value)}
+                          placeholder="Store or business you paid, e.g. Party City"
+                        />
+                      )}
                       <Field
                         full
-                        label="Merchant, covered items & amounts"
+                        label={
+                          draft.request_type === "reimbursement"
+                            ? "Covered items & amounts"
+                            : "Merchant, covered items & amounts"
+                        }
                         required
                         maxLength={300}
                         value={item.description}
                         onChange={(e) =>
                           setItem(i, "description", e.target.value)
                         }
-                        placeholder="e.g. Grocery store, supplies for the event"
+                        placeholder={
+                          draft.request_type === "reimbursement"
+                            ? "e.g. Balloons and table covers for the social"
+                            : "e.g. Grocery store, supplies for the event"
+                        }
                       />
                     </div>
                     <div className="upload">
@@ -812,6 +838,9 @@ export function RequestForm({
                       <strong>{dollars(toCents(item.amount) || 0)}</strong>
                     </div>
                     <p className="muted">
+                      {draft.request_type === "reimbursement" && item.vendor
+                        ? `${item.vendor} · `
+                        : ""}
                       {item.date} · {item.receipts.length} receipt
                       {item.receipts.length === 1 ? "" : "s"}
                     </p>
@@ -1176,8 +1205,27 @@ function Detail({
                   <strong>{item.description}</strong>
                   <strong>{dollars(item.amount_cents)}</strong>
                 </div>
+<<<<<<< Updated upstream
                 <p className="muted">Purchased {item.date}</p>
                 <ReceiptThumbs receipts={item.receipts} labels />
+=======
+                <p className="muted">
+                  {item.vendor ? `Vendor: ${item.vendor} · ` : ""}Purchased{" "}
+                  {item.date}
+                </p>
+                <div className="actions">
+                  {item.receipts.map((receipt) => (
+                    <button
+                      key={receipt.path}
+                      className="secondary"
+                      onClick={() => openReceipt(receipt)}
+                    >
+                      <Download size={15} />
+                      {receipt.name}
+                    </button>
+                  ))}
+                </div>
+>>>>>>> Stashed changes
               </div>
             ))}
             <div className="total">

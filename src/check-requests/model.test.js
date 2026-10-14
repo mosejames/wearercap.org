@@ -39,6 +39,7 @@ describe("check request validation", () => {
       items: [
         {
           date: "2026-01-01",
+          vendor: "Party City",
           description: "Supplies",
           amount: "25.00",
           document_total: "25.00",
@@ -155,6 +156,7 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
     items: [
       {
         date: "2026-01-01",
+        vendor: "Party City",
         description: "Covered supplies",
         amount: "20",
         document_total: "30",
@@ -179,4 +181,16 @@ it("enforces budget, Zelle rules, and supported amounts for vendor and parent re
   expect(
     validateDraft({ ...d, items: [{ ...d.items[0], amount: "30.01" }] }),
   ).toMatch(/must not exceed/);
+  expect(
+    validateDraft({ ...d, items: [{ ...d.items[0], vendor: " " }] }),
+  ).toMatch(/vendor name for expense 1/);
+  expect(
+    validateDraft({
+      ...d,
+      request_type: "vendor",
+      delivery: "debit_card",
+      zelle_contact: "",
+      items: [{ ...d.items[0], vendor: "" }],
+    }),
+  ).toBeNull();
 });

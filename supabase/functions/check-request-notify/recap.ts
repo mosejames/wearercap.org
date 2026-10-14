@@ -45,7 +45,7 @@ export function requesterRecap(snapshot: any, attached = true) {
     "Expenses:",
     ...r.items.map(
       (item: any, i: number) =>
-        `${i + 1}. ${item.description} | ${item.date} | ${money(item.amount_cents)} | ${item.receipts.length} document(s)${item.document_total_cents ? ` | Document total: ${money(item.document_total_cents)}` : ""}`,
+        `${i + 1}. ${item.vendor ? `Vendor: ${item.vendor} | ` : ""}${item.description} | ${item.date} | ${money(item.amount_cents)} | ${item.receipts.length} document(s)${item.document_total_cents ? ` | Document total: ${money(item.document_total_cents)}` : ""}`,
     ),
     ...(event.note ? ["", `Review / activity note: ${event.note}`] : []),
     ...(r.payment_reference

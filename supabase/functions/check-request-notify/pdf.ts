@@ -77,7 +77,7 @@ export async function summaryPdf(snapshot: any) {
   line("EXPENSES", true);
   r.items.forEach((item: any, i: number) => {
     line(
-      `${i + 1}. ${item.description} | ${item.date} | ${money(item.amount_cents)}`,
+      `${i + 1}. ${item.vendor ? `${item.vendor}: ` : ""}${item.description} | ${item.date} | ${money(item.amount_cents)}`,
       true,
     );
     if (item.document_total_cents)
