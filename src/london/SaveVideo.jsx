@@ -31,5 +31,5 @@ export default function SaveVideo({id,url}) {
    else setError(e.message||'Couldn’t save this video. Please try again.');
   }finally{if(alive.current)setBusy(false);}
  }
- return <div className="l-video-save"><button type="button" className="l-text l-original-link" disabled={busy} onClick={save}><Download size={17}/>{busy?'Preparing video…':'Save video'}</button>{notice&&<p className="l-small" role="status">{notice}</p>}{fallback&&file.current&&<button type="button" className="l-text" onClick={()=>downloadVideoFile(file.current)}>Download video file</button>}{error&&<p className="l-error" role="alert">{error}</p>}</div>;
+ return <div className="l-video-save"><button type="button" className="l-text l-original-link" disabled={busy} onClick={save}><Download size={17}/>{busy?'Preparing video…':'Save video'}</button>{notice&&<p className="l-small" role="status">{notice}</p>}{fallback&&file.current&&<button type="button" className="l-text" onClick={()=>{downloadVideoFile(file.current);setNotice('Video download started.');setFallback(false);}}>Download video file</button>}{error&&<p className="l-error" role="alert">{error}</p>}</div>;
 }
