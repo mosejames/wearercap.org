@@ -14,7 +14,7 @@ const own={id:'own',owner:'me',eventId:'event',uploaderName:'Test chaperone',cap
 const other={...own,id:'other',owner:'someone-else',caption:'Another perspective'};
 beforeEach(async()=>{
  globalThis.IS_REACT_ACT_ENVIRONMENT=true;
- vi.clearAllMocks(); window.location.hash='';sessionStorage.clear();
+ vi.clearAllMocks(); window.location.hash='';sessionStorage.clear();window.localStorage?.removeItem('london-comment-name');db.conversation.mockResolvedValue({reactions:[],comments:[]});
  HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
  Element.prototype.scrollIntoView=vi.fn();
  db.localProfile.mockReturnValue({displayName:'Test chaperone',team:''});db.getOwner.mockResolvedValue('me');
@@ -23,7 +23,7 @@ beforeEach(async()=>{
  await act(async()=>root.render(<App />));
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
-const button=(text)=>[...host.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
+const button=(text)=>[...host.querySelectorAll('button')].find(b=>b.textContent.trim()===text||b.getAttribute('aria-label')===text);
 const click=async(el)=>{expect(el).toBeTruthy();await act(async()=>el.click());};
 it('opens From Their Stories directly and preserves ordinary uploads outside that source view',async()=>{
  const story={...other,id:'story',caption:'Instagram trip moment',uploaderName:'Shared on Instagram by @the.cam_'};
@@ -244,7 +244,7 @@ it('offers only positive reactions and posts comments on the selected moment',as
  const {Conversation}=await import('./App.jsx');
  db.conversation.mockResolvedValue({reactions:[],comments:[]});
  await act(async()=>root.render(<Conversation photoId="own"/>));
- expect([...host.querySelectorAll('.l-positive-reactions button')].map(b=>b.textContent)).toEqual(['❤️ Love','🎉 Celebrate','💙 Thanks']);
+ expect([...host.querySelectorAll('.l-positive-reactions button')].map(b=>b.getAttribute('aria-label'))).toEqual(['Love','Celebrate','Thank you','Amazing','Bravo']);
  await click(host.querySelectorAll('.l-positive-reactions button')[1]);
  expect(db.conversation).toHaveBeenCalledWith('own','react',{p_reaction:'celebrate'});
  await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'So excited for you!');el.dispatchEvent(new Event('input',{bubbles:true}));});
@@ -267,23 +267,35 @@ it('keeps chaperone uploads focused on media without parent prompts or writing c
 
 it("keeps writing choices hidden by default for parent photo uploads",async()=>{await act(async()=>root.render(<Upload parentOnly events={[{id:"prep",slug:"before-the-adventure"}]} initialAlbum="before-the-adventure" profile={{displayName:"Parent",team:""}} setProfile={()=>{}} close={()=>{}} done={()=>{}} viewUploads={()=>{}}/>));expect(host.querySelector("[role=tablist]")).toBeNull();expect(host.querySelector("input[type=file]")).toBeTruthy();expect(host.textContent).not.toContain("Finish a thought");});
 
- it('keeps an anonymous comment until sign-in and then posts it once',async()=>{
- const {Conversation}=await import('./App.jsx');
- db.syncAccount.mockResolvedValueOnce(null);
- db.conversation.mockResolvedValue({reactions:[],comments:[]});
- const share=vi.fn();const upload=vi.fn();
+it('posts an anonymous comment immediately, with sharing and uploading still available',async()=>{
+ const {Conversation}=await import('./App.jsx');db.syncAccount.mockResolvedValue(null);const share=vi.fn(),upload=vi.fn();
  await act(async()=>root.render(<Conversation photoId="own" sharePhoto={share} onUpload={upload}/>));
- expect(host.textContent).not.toContain('Complete sign-in');
- await click(button('Share this photo'));expect(share).toHaveBeenCalledOnce();
+ await click(host.querySelector('[aria-label="Share this photo"]'));expect(share).toHaveBeenCalledOnce();
  await act(async()=>{const el=host.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'Have a wonderful adventure!');el.dispatchEvent(new Event('input',{bubbles:true}));});
  await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
- expect(db.conversation).not.toHaveBeenCalledWith('own','comment',expect.anything());
- expect(host.querySelector('textarea').value).toBe('Have a wonderful adventure!');
- await click(button('Complete sign-in'));
- expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'Have a wonderful adventure!',p_name:'Test chaperone'});
- expect(host.querySelector('textarea').value).toBe('');
- await click(button('Share your memories'));expect(upload).toHaveBeenCalledOnce();
- });
+ expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'Have a wonderful adventure!',p_name:'Test chaperone'});expect(db.syncAccount).not.toHaveBeenCalled();expect(host.querySelector('textarea').value).toBe('');expect(host.textContent).not.toContain('Complete sign-in');
+ await click(button('Share your own memory'));expect(upload).toHaveBeenCalledOnce();
+});
+it('suggestions fill an editable comment and a first name is optional',async()=>{
+ const {Conversation}=await import('./App.jsx');db.localProfile.mockReturnValue(null);
+ await act(async()=>root.render(<Conversation photoId="own"/>));expect(host.querySelector('input')).toBeNull();
+ await click(button('Thank you!'));expect(host.querySelector('textarea').value).toBe('Thank you for sharing this moment!');expect(host.querySelector('input').required).toBe(false);
+ await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(db.conversation).toHaveBeenCalledWith('own','comment',{p_body:'Thank you for sharing this moment!',p_name:'A family from home'});
+});
+it('saves extra positive reactions anonymously and keeps failed words editable',async()=>{
+ const {Conversation}=await import('./App.jsx');await act(async()=>root.render(<Conversation photoId="own"/>));
+ await click(host.querySelector('[aria-label="Amazing"]'));expect(db.conversation).toHaveBeenCalledWith('own','react',{p_reaction:'amazing'});
+ await click(host.querySelector('[aria-label="Bravo"]'));expect(db.conversation).toHaveBeenCalledWith('own','react',{p_reaction:'bravo'});
+ await click(host.querySelector('.l-comment-suggestions summary'));await click(button('Cheering you on!'));db.conversation.mockRejectedValueOnce(Error('Network'));
+ await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+ expect(host.querySelector('textarea').value).toBe('We’re cheering you on from home!');expect(host.querySelector('[role=alert]')).toBeTruthy();expect(host.textContent).not.toContain('Complete sign-in');
+});
+it('shows only two recent comments until the reader asks for more',async()=>{
+ const {Conversation}=await import('./App.jsx');db.conversation.mockResolvedValue({reactions:[],comments:Array.from({length:4},(_,i)=>({id:String(i),author_name:'A parent',body:'A kind word '+i,mine:false}))});
+ await act(async()=>root.render(<Conversation photoId="own"/>));expect(host.querySelectorAll('.l-comment-list article')).toHaveLength(2);
+ await click(button('Read all comments (4)'));expect(host.querySelectorAll('.l-comment-list article')).toHaveLength(4);
+});
 
 it('keeps a growing gallery chronological and reveals the next batch without duplicating photos',async()=>{
  const photos=Array.from({length:85},(_,i)=>({...own,id:`batch-${i}`,caption:`Moment ${i}`,takenAt:new Date(Date.UTC(2026,9,12,12)-i*3600000).toISOString()})).reverse();
