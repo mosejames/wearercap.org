@@ -1,3 +1,4 @@
+import {startActivity} from '../london/activity.js';
 import { Component, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
@@ -8,3 +9,5 @@ class Boundary extends Component {
   render() { return this.state.failed ? <main><h1>The album needs a moment.</h1><p>Please reload to try again.</p><button onClick={() => window.location.reload()}>Reload</button></main> : this.props.children; }
 }
 createRoot(document.getElementById('root')).render(<StrictMode><Boundary><App /></Boundary></StrictMode>);
+
+startActivity('gallery');
