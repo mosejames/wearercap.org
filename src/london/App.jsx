@@ -14,7 +14,7 @@ import LoginGate,{LoginPanel} from './LoginGate.jsx';
 import { uploadBatch } from './upload.js';
 import { makeTextCard, THOUGHT_STARTERS } from './textCard.js';
 
-function Dialog({ title, close, children, className = '' }) {
+function Dialog({ title, close, children, className = '', onKeyDown }) {
   const ref = useRef(null);
   useEffect(() => {
     const before = document.activeElement;
@@ -22,7 +22,7 @@ function Dialog({ title, close, children, className = '' }) {
     dialog.showModal();
     return () => { dialog.close(); before?.focus?.(); };
   }, []);
-  return <dialog ref={ref} className={`l-dialog ${className}`} onCancel={close} onClick={(event) => { if (event.target === ref.current) close(); }}>
+  return <dialog ref={ref} className={`l-dialog ${className}`} onKeyDown={onKeyDown} onCancel={close} onClick={(event) => { if (event.target === ref.current) close(); }}>
     <button className="l-close" aria-label="Close" onClick={close}><X size={22} /></button>
     <h2>{title}</h2>{children}
   </dialog>;
@@ -307,7 +307,13 @@ function Photo({ photo, photos, owner, admin, close, navigate, hidden, initialRe
     if (index < 0 || !next) return;
     setConfirm(false); setError(''); navigate(next.id);
   };
-  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close}><div className="l-viewer" ref={viewer} onTouchStart={(e) => {
+  return <Dialog title={photo.caption || 'A postcard from the adventure'} close={close} onKeyDown={(event) => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), video, audio, [role="slider"]')) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    move(event.key === 'ArrowRight' ? 1 : -1);
+  }}><div className="l-viewer" ref={viewer} onTouchStart={(e) => {
     if (photo.kind === 'video' || e.touches.length !== 1) { swipeStart.current = null; return; }
     swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }} onTouchCancel={() => { swipeStart.current = null; }} onTouchEnd={(e) => {

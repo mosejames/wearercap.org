@@ -309,3 +309,20 @@ it('keeps a growing gallery chronological and reveals the next batch without dup
  expect(host.querySelectorAll('.l-grid .l-photo')).toHaveLength(85);
  expect(new Set([...host.querySelectorAll('.l-grid img')].map(img=>img.alt)).size).toBe(85);
 });
+
+it('browses photos with keyboard arrows, respects the ends and leaves editing controls alone',async()=>{
+ await click(host.querySelector('[aria-label="Open Our day"]'));
+ const press=async(target,key,options={})=>{await act(async()=>target.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...options})));};
+ const title=()=>host.querySelector('dialog h2').textContent;
+ await press(host.querySelector('dialog'),'ArrowLeft');expect(title()).toBe('Our day');
+ await press(host.querySelector('dialog'),'ArrowRight',{ctrlKey:true});expect(title()).toBe('Our day');
+ for(const tag of ['input','textarea','select','video']){
+  const control=document.createElement(tag);host.querySelector('dialog').append(control);
+  await press(control,'ArrowRight');expect(title()).toBe('Our day');control.remove();
+ }
+ const editable=document.createElement('div');editable.setAttribute('contenteditable','true');host.querySelector('dialog').append(editable);
+ await press(editable,'ArrowRight');expect(title()).toBe('Our day');editable.remove();
+ await press(host.querySelector('dialog'),'ArrowRight');expect(title()).toBe('Another perspective');
+ await press(host.querySelector('dialog'),'ArrowRight');expect(title()).toBe('Another perspective');
+ await press(host.querySelector('dialog'),'ArrowLeft');expect(title()).toBe('Our day');
+});
