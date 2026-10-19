@@ -43,6 +43,16 @@ describe('email rendering', () => {
     expect(html).not.toContain('Coming up.');
     expect(html).not.toContain('<img src=""');
   });
+  it('tags parts for tap-to-edit only in the builder preview', () => {
+    const c = issue();
+    expect(renderEmail(c)).not.toContain('data-nb');
+    const marked = renderEmail(c, { mark: true });
+    expect(marked).toContain('data-nb="opening"');
+    expect(marked).toContain('data-nb="closing"');
+    for (const b of c.blocks.slice(0, 3)) expect(marked).toContain(`data-nb="block:${b.id}"`);
+    expect(marked).not.toContain(`data-nb="block:${c.blocks[3].id}"`);
+  });
+
   it('adds a web link only when one exists', () => {
     expect(renderEmail(issue())).not.toContain('VIEW ON THE WEB');
     expect(renderEmail(issue(), { webUrl: 'https://wearercap.org/newsletter/oct-25' })).toContain('VIEW ON THE WEB');

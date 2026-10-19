@@ -170,7 +170,11 @@ const RENDER = { story: storyBlock, photo: photoBlock, quote: quoteBlock, dates:
 // ---------------------------------------------------------------------------
 // The email
 // ---------------------------------------------------------------------------
-export function renderEmail(c = {}, { webUrl = '' } = {}) {
+// mark: the builder preview tags each part with data-nb so a tap in the
+// preview can open that part in the editor. Never set for the copied email.
+const tagRow = (html, key, mark) => (mark && html.startsWith('<tr>') ? `<tr data-nb="${esc(key)}">` + html.slice(4) : html);
+
+export function renderEmail(c = {}, { webUrl = '', mark = false } = {}) {
   const pre = c.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${esc(c.preheader)}</div>` : '';
   const view = safeUrl(webUrl) ? `<p style="margin:14px 0 0;font-size:10px;letter-spacing:2px;"><a href="${esc(safeUrl(webUrl))}" style="color:${C.mist};text-decoration:underline;">VIEW ON THE WEB</a></p>` : '';
   const masthead = `<tr><td style="padding:30px 26px;background:${C.navy};"><a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/newsletter-assets/we-are-rcap-header.png" alt="We Are RCAP. Ron Clark Academy Parents" width="240" style="display:block;width:240px;max-width:100%;height:auto;border:0;margin:0 0 20px;"></a>`
@@ -178,14 +182,14 @@ export function renderEmail(c = {}, { webUrl = '' } = {}) {
   const opener = kicker(c.kicker) + h1(c.headline)
     + (c.greeting ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.greeting)}</p>` : '')
     + paragraphs(c.body) + button(c.button);
-  const blocks = (c.blocks || []).map((b) => (RENDER[b.type] || storyBlock)(b)).join('');
+  const blocks = (c.blocks || []).map((b) => tagRow((RENDER[b.type] || storyBlock)(b), `block:${b.id}`, mark)).join('');
   const closing = `<tr><td style="padding:30px 26px;background:${C.paper};">`
     + (c.signoff ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.signoff)}</p>` : '')
     + (c.signer ? `<p style="margin:0 0 20px;font-size:17px;font-weight:800;color:${C.navy};">${esc(c.signer)}${c.role ? `<br><span style="font-size:12px;font-weight:400;">${esc(c.role)}</span>` : ''}</p>` : '')
     + `<a href="${SITE}" style="display:block;margin:28px 0 0;"><img src="${SITE}/newsletter-assets/rcap-footer.png" alt="RCAP. Ron Clark Academy Parents" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;"></a>`
     + `<p style="margin:22px 0 0;font-size:12px;color:${C.soft};">Built by parents, for our community.<br><a href="${SITE}" style="${linkStyle}">wearercap.org</a></p></td></tr>`;
   return pre + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:640px;margin:0 auto;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;color:${C.navy};background:${C.paper};">`
-    + masthead + row(C.paper, '30px 26px', opener.trim() ? opener : '') + blocks + closing + '</table>';
+    + tagRow(masthead, 'sending', mark) + tagRow(row(C.paper, '30px 26px', opener.trim() ? opener : ''), 'opening', mark) + blocks + tagRow(closing, 'closing', mark) + '</table>';
 }
 
 export function renderDocument(c, opts = {}) {

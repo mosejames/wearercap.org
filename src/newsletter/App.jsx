@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowDown, ArrowUp, ArrowRight, Check, Copy, Download, ExternalLink, Globe, ImagePlus,
+  ArrowLeft, ArrowDown, ArrowUp, ArrowRight, Check, ChevronDown, Copy, Download, ExternalLink, Globe, ImagePlus,
   LogOut, Mail, Plus, Sparkles, Trash2, UserPlus, Users, X,
 } from 'lucide-react';
 import { supabase, call, uploadPhoto } from './api.js';
@@ -195,24 +195,90 @@ function Dashboard({ me, onOpen, onError }) {
 // ---------------------------------------------------------------------------
 // Fields
 // ---------------------------------------------------------------------------
-function Field({ label, hint, value, onChange, area, rows = 3, ...rest }) {
+// Text boxes grow with their words, so nothing scrolls inside a box.
+function grow(el) { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight + 2}px`; } }
+// Bold and Link buttons wrap the selected words in the same marks the
+// renderer reads (**bold**, [words](link)), so nobody has to learn them.
+function wrapSelection(el, value, onChange, kind) {
+  const a = el.selectionStart ?? value.length, b = el.selectionEnd ?? value.length;
+  const sel = value.slice(a, b);
+  let insert, cursor;
+  if (kind === 'bold') {
+    insert = `**${sel || 'bold words'}**`;
+    cursor = [a + 2, a + 2 + (sel || 'bold words').length];
+  } else {
+    const url = window.prompt('Paste the link for these words', 'https://');
+    if (!url || url === 'https://') return;
+    insert = `[${sel || 'link words'}](${url.trim()})`;
+    cursor = [a + 1, a + 1 + (sel || 'link words').length];
+  }
+  onChange(value.slice(0, a) + insert + value.slice(b));
+  requestAnimationFrame(() => { el.focus(); el.setSelectionRange(...cursor); });
+}
+function Field({ label, hint, value, onChange, area, rows = 3, tools = false, ...rest }) {
   const id = useMemo(() => `f-${Math.random().toString(36).slice(2, 9)}`, []);
+  const box = useRef(null);
+  useEffect(() => { if (area) grow(box.current); }, [area, value]);
   return (
     <div className="nb-field">
-      <label htmlFor={id}>{label}</label>
+      <div className="nb-label-row">
+        <label htmlFor={id}>{label}</label>
+        {tools && <span className="nb-format" aria-label="Formatting">
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => wrapSelection(box.current, value || '', onChange, 'bold')} aria-label="Bold the selected words"><strong>B</strong></button>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => wrapSelection(box.current, value || '', onChange, 'link')} aria-label="Link the selected words">Link</button>
+        </span>}
+      </div>
       {area
-        ? <textarea id={id} rows={rows} value={value || ''} onChange={(e) => onChange(e.target.value)} {...rest} />
+        ? <textarea ref={box} id={id} rows={rows} value={value || ''} onChange={(e) => { onChange(e.target.value); grow(e.target); }} {...rest} />
         : <input id={id} value={value || ''} onChange={(e) => onChange(e.target.value)} {...rest} />}
       {hint && <p className="nb-help">{hint}</p>}
     </div>
   );
 }
 
-function LinkPair({ label, value = {}, onChange, labelHint = 'Button words' }) {
+function LinkPair({ label = 'Button', value = {}, onChange, wordsLabel = 'Button words', wordsHint = 'Sign up to volunteer' }) {
   return (
     <div className="nb-pair">
-      <Field label={`${label}: ${labelHint}`} value={value.label} onChange={(v) => onChange({ ...value, label: v })} placeholder="RSVP for the social" />
-      <Field label={`${label}: link`} value={value.url} onChange={(v) => onChange({ ...value, url: v })} placeholder="wearercap.org/karaoke" inputMode="url" autoCapitalize="off" />
+      <Field label={wordsLabel} value={value.label} onChange={(v) => onChange({ ...value, label: v })} placeholder={wordsHint} />
+      <Field label={`${label} link`} value={value.url} onChange={(v) => onChange({ ...value, url: v })} placeholder="wearercap.org/..." inputMode="url" autoCapitalize="off" />
+    </div>
+  );
+}
+
+// A collapsible row. Closed, it shows a one-line summary so the whole issue
+// reads like a table of contents; open, it shows the fields.
+function Fold({ id, open, onToggle, title, summary, accent, thumb, swatch, badge, actions, children, className = '' }) {
+  return (
+    <article id={id} className={`nb-fold ${open ? 'open' : ''} ${className}`} style={accent ? { '--accent': accent } : undefined}>
+      <header className="nb-fold-head">
+        <button type="button" className="nb-fold-toggle" aria-expanded={open} onClick={onToggle}>
+          {badge && <span className="num">{badge}</span>}
+          {thumb ? <img className="nb-fold-thumb" src={thumb} alt="" /> : null}
+          <span className="nb-fold-text">
+            <span className="nb-fold-title">{title}{swatch && <i className={`nb-swatch ${swatch}`} aria-label={`${swatch} background`} />}</span>
+            {summary ? <span className="nb-fold-sum">{summary}</span> : null}
+          </span>
+          <ChevronDown className="nb-chev" size={18} aria-hidden="true" />
+        </button>
+        {actions && <div className="nb-row-actions">{actions}</div>}
+      </header>
+      {open && <div className="nb-fold-body">{children}</div>}
+    </article>
+  );
+}
+
+// Optional extras stay out of the way until asked for: a row of small chips,
+// and each chip opens its own little panel with a remove button.
+function Chips({ items }) {
+  const shown = items.filter((i) => !i.on);
+  if (!shown.length) return null;
+  return <div className="nb-chips">{shown.map((i) => <button key={i.key} type="button" className="nb-chip" onClick={i.add}><Plus size={14} /> {i.label}</button>)}</div>;
+}
+function Extra({ title, onRemove, children }) {
+  return (
+    <div className="nb-extra">
+      <div className="nb-extra-head"><span>{title}</span><button type="button" className="nb-text muted" onClick={onRemove}><X size={14} /> Remove</button></div>
+      {children}
     </div>
   );
 }
@@ -220,6 +286,7 @@ function LinkPair({ label, value = {}, onChange, labelHint = 'Button words' }) {
 function ImageField({ issueId, value = {}, onChange, onError }) {
   const input = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [paste, setPaste] = useState(false);
   async function pick(e) {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -227,32 +294,53 @@ function ImageField({ issueId, value = {}, onChange, onError }) {
     setBusy(true);
     try { onChange({ ...value, url: await uploadPhoto(issueId, file) }); } catch (err) { onError(err.message); } finally { setBusy(false); }
   }
-  return (
-    <div className="nb-image">
-      {value.url ? <img src={value.url} alt="" /> : <div className="nb-image-empty"><ImagePlus size={22} /></div>}
-      <div className="nb-image-fields">
-        <div className="nb-image-actions">
-          <button type="button" className="nb-btn ghost small" disabled={busy} onClick={() => input.current?.click()}><ImagePlus size={15} /> {busy ? 'Adding…' : value.url ? 'Replace photo' : 'Add a photo'}</button>
-          {value.url && <button type="button" className="nb-btn ghost small" onClick={() => onChange({ url: '', alt: '' })}>Remove</button>}
-        </div>
-        <input ref={input} type="file" accept="image/*,.heic,.heif" hidden onChange={pick} />
-        <Field label="Or paste an image link" value={value.url} onChange={(v) => onChange({ ...value, url: v })} placeholder="https://wearercap.org/images/..." inputMode="url" autoCapitalize="off" />
-        <Field label="Describe the photo" value={value.alt} onChange={(v) => onChange({ ...value, alt: v })} placeholder="Parents greeting guests at EXP" />
+  const file = <input ref={input} type="file" accept="image/*,.heic,.heif" hidden onChange={pick} />;
+  if (!value.url) {
+    return (
+      <div className="nb-photo-empty">
+        <button type="button" className="nb-btn ghost small" disabled={busy} onClick={() => input.current?.click()}><ImagePlus size={15} /> {busy ? 'Adding…' : 'Upload a photo'}</button>
+        {paste
+          ? <Field label="Image link" value={value.url} onChange={(v) => onChange({ ...value, url: v })} placeholder="https://..." inputMode="url" autoCapitalize="off" />
+          : <button type="button" className="nb-text muted" onClick={() => setPaste(true)}>or paste a link</button>}
+        {file}
       </div>
+    );
+  }
+  return (
+    <div className="nb-photo">
+      <img src={value.url} alt="" />
+      <div className="nb-photo-fields">
+        <Field label="Describe the photo" value={value.alt} onChange={(v) => onChange({ ...value, alt: v })} placeholder="Parents decorating trunks" />
+        <div className="nb-photo-actions">
+          <button type="button" className="nb-text" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Adding…' : 'Replace'}</button>
+          <button type="button" className="nb-text" onClick={() => onChange({ url: '', alt: '' })}>Remove</button>
+        </div>
+      </div>
+      {file}
     </div>
   );
 }
 
-const BODY_HINT = 'Blank line for a new paragraph. **Bold** a phrase. [Link words](wearercap.org/page) for a link.';
+const BODY_HINT = 'Select words, then tap B or Link. A blank line starts a new paragraph. (You can also type **bold** or [words](link).)';
+const blank = { label: '', url: '' };
+const hasLink = (l) => !!(l?.label || l?.url);
 
 function BlockEditor({ block, update, issueId, onError }) {
   const set = (k) => (v) => update({ ...block, [k]: v });
+  const [reveal, setReveal] = useState({});
+  const show = (k) => setReveal((r) => ({ ...r, [k]: true }));
+  const hide = (k, patch) => { setReveal((r) => ({ ...r, [k]: false })); update({ ...block, ...patch }); };
   switch (block.type) {
-    case 'photo':
+    case 'photo': {
+      const tap = !!block.href || reveal.tap;
       return <>
         <ImageField issueId={issueId} value={block.image} onChange={set('image')} onError={onError} />
-        <Field label="Where a tap goes (optional)" value={block.href} onChange={set('href')} placeholder="wearercap.org/rcap-capsule" inputMode="url" autoCapitalize="off" />
+        {tap && <Extra title="Where a tap goes" onRemove={() => hide('tap', { href: '' })}>
+          <Field label="Link" value={block.href} onChange={set('href')} placeholder="wearercap.org/rcap-capsule" inputMode="url" autoCapitalize="off" />
+        </Extra>}
+        <Chips items={[{ key: 'tap', label: 'Tap link', on: tap, add: () => show('tap') }]} />
       </>;
+    }
     case 'quote':
       return <>
         <Field area rows={3} label="What the student said" value={block.quote} onChange={set('quote')} placeholder="We have feet, not roots." hint="Real words from a real student. Never invent one." />
@@ -265,57 +353,90 @@ function BlockEditor({ block, update, issueId, onError }) {
           <Field label="Heading" value={block.heading} onChange={set('heading')} />
         </div>
         <ol className="nb-dates">
-          {(block.items || []).map((item, n) => {
+          {(block.items || []).map((item) => {
             const put = (patch) => update({ ...block, items: block.items.map((x) => (x.id === item.id ? { ...x, ...patch } : x)) });
             return (
               <li key={item.id}>
-                <div className="nb-pair">
+                <div className="nb-date-row">
                   <Field label="When" value={item.when} onChange={(v) => put({ when: v })} placeholder="Thu, Nov 5" />
                   <Field label="What" value={item.what} onChange={(v) => put({ what: v })} placeholder="RCA EXP" />
+                  {block.items.length > 1 && <button type="button" className="nb-icon small" onClick={() => update({ ...block, items: block.items.filter((x) => x.id !== item.id) })} aria-label={`Remove ${item.what || 'this date'}`}><X size={14} /></button>}
                 </div>
                 <div className="nb-pair">
-                  <Field label="Details" value={item.detail} onChange={(v) => put({ detail: v })} placeholder="Volunteers needed, 7:30 a.m." />
-                  <Field label="Link (optional)" value={item.url} onChange={(v) => put({ url: v })} placeholder="signupgenius.com/..." inputMode="url" autoCapitalize="off" />
+                  <Field label="Details" value={item.detail} onChange={(v) => put({ detail: v })} placeholder="Optional" />
+                  <Field label="Link" value={item.url} onChange={(v) => put({ url: v })} placeholder="Optional" inputMode="url" autoCapitalize="off" />
                 </div>
-                {block.items.length > 1 && <button type="button" className="nb-text" onClick={() => update({ ...block, items: block.items.filter((x) => x.id !== item.id) })}>Remove date {n + 1}</button>}
               </li>
             );
           })}
         </ol>
-        {(block.items || []).length < 10 && <button type="button" className="nb-btn ghost small" onClick={() => update({ ...block, items: [...(block.items || []), newDate()] })}><Plus size={15} /> Add a date</button>}
+        {(block.items || []).length < 10 && <div className="nb-chips"><button type="button" className="nb-chip" onClick={() => update({ ...block, items: [...(block.items || []), newDate()] })}><Plus size={14} /> Date</button></div>}
       </>;
-    case 'note':
+    case 'note': {
+      const link = hasLink(block.link) || reveal.link;
       return <>
         <div className="nb-pair">
           <Field label="Small label" value={block.kicker} onChange={set('kicker')} />
-          <Field label="Heading" value={block.heading} onChange={set('heading')} placeholder="Missed the meeting?" />
+          <Field area rows={1} label="Heading" value={block.heading} onChange={set('heading')} placeholder="Missed the meeting?" />
         </div>
-        <Field area label="A few words" value={block.body} onChange={set('body')} hint={BODY_HINT} />
-        <LinkPair label="Link" labelHint="link words" value={block.link} onChange={set('link')} />
+        <Field area label="A few words" value={block.body} onChange={set('body')} hint={BODY_HINT} tools />
+        {link && <Extra title="Link" onRemove={() => hide('link', { link: blank })}><LinkPair label="Link" wordsLabel="Link words" wordsHint="Catch up on the meeting" value={block.link} onChange={set('link')} /></Extra>}
+        <Chips items={[{ key: 'link', label: 'Link', on: link, add: () => show('link') }]} />
       </>;
-    default:
+    }
+    default: {
+      const photo = !!block.image?.url || reveal.photo;
+      const button = hasLink(block.button) || reveal.button;
+      const link = hasLink(block.link) || reveal.link;
+      const tone = block.tone || 'paper';
       return <>
         <div className="nb-pair">
-          <Field label="Small label" value={block.kicker} onChange={set('kicker')} placeholder="Sunday, September 27" />
-          <Field label="Heading" value={block.heading} onChange={set('heading')} placeholder="Your Sunday plans." />
+          <Field label="Small label" value={block.kicker} onChange={set('kicker')} placeholder="Friday, October 30" />
+          <Field area rows={1} label="Heading" value={block.heading} onChange={set('heading')} placeholder="Trunk or Treat." />
         </div>
-        <Field area rows={5} label="The story" value={block.body} onChange={set('body')} hint={BODY_HINT} />
-        <ImageField issueId={issueId} value={block.image} onChange={set('image')} onError={onError} />
-        <LinkPair label="Button" value={block.button} onChange={set('button')} />
-        <LinkPair label="Extra link" labelHint="link words" value={block.link} onChange={set('link')} />
-        <div className="nb-tone" role="radiogroup" aria-label="Background">
-          {[['paper', 'Paper'], ['sand', 'Sand']].map(([v, l]) => (
-            <button key={v} type="button" role="radio" aria-checked={(block.tone || 'paper') === v} className={(block.tone || 'paper') === v ? 'on' : ''} onClick={() => update({ ...block, tone: v })}><i className={v} />{l}</button>
-          ))}
+        <Field area rows={3} label="The story" value={block.body} onChange={set('body')} hint={BODY_HINT} tools />
+        {photo && <Extra title="Photo" onRemove={() => hide('photo', { image: { url: '', alt: '' } })}><ImageField issueId={issueId} value={block.image} onChange={set('image')} onError={onError} /></Extra>}
+        {button && <Extra title="Button" onRemove={() => hide('button', { button: blank })}><LinkPair value={block.button} onChange={set('button')} /></Extra>}
+        {link && <Extra title="Extra link" onRemove={() => hide('link', { link: blank })}><LinkPair label="Link" wordsLabel="Link words" wordsHint="See what to expect" value={block.link} onChange={set('link')} /></Extra>}
+        <div className="nb-chip-row">
+          <Chips items={[
+            { key: 'photo', label: 'Photo', on: photo, add: () => show('photo') },
+            { key: 'button', label: 'Button', on: button, add: () => show('button') },
+            { key: 'link', label: 'Link', on: link, add: () => show('link') },
+          ]} />
+          <div className="nb-tone" role="radiogroup" aria-label="Background">
+            {[['paper', 'Paper'], ['sand', 'Sand']].map(([v, l]) => (
+              <button key={v} type="button" role="radio" aria-checked={tone === v} className={tone === v ? 'on' : ''} onClick={() => update({ ...block, tone: v })}><i className={v} />{l}</button>
+            ))}
+          </div>
         </div>
       </>;
+    }
   }
 }
+
+// One line that says what a closed section holds.
+const firstLine = (t) => String(t || '').replace(/\*\*|\[|\]\([^)]*\)/g, '').split('\n').map((x) => x.trim()).find(Boolean) || '';
+export function blockSummary(b) {
+  switch (b.type) {
+    case 'photo': return b.image?.url ? (b.image.alt || 'Photo added') : 'No photo yet';
+    case 'quote': return b.quote ? `“${firstLine(b.quote)}”` : 'No quote yet';
+    case 'dates': { const n = (b.items || []).filter((i) => i.what || i.when).length; return n ? `${n} date${n === 1 ? '' : 's'}` : 'No dates yet'; }
+    default: return firstLine(b.heading) || firstLine(b.kicker) || firstLine(b.body) || 'Empty';
+  }
+}
+const ACCENT = { story: '#f7a81c', photo: '#f26a1b', quote: '#1a2a56', dates: '#6f86b8', note: '#8a7a6a' };
 
 // ---------------------------------------------------------------------------
 // Editor
 // ---------------------------------------------------------------------------
-function Preview({ html, active }) {
+// Tap any part of the preview to edit it. The preview is tagged with data-nb
+// (renderEmail's mark option); a tap reports which part and the words under
+// the finger so the editor can put the cursor right there.
+const PREVIEW_STYLE = '<style>[data-nb]{cursor:pointer;transition:box-shadow .15s}[data-nb]:hover{box-shadow:inset 0 0 0 2px #f26a1b}</style>';
+function Preview({ html, active, onPick }) {
+  const pick = useRef(onPick);
+  pick.current = onPick;
   const frame = useRef(null);
   const [height, setHeight] = useState(900);
   // A hidden iframe (phone Edit tab) measures as zero, so measure again
@@ -330,13 +451,24 @@ function Preview({ html, active }) {
     if (!f) return;
     const onLoad = () => {
       fit();
+      const doc = f.contentDocument;
+      doc?.addEventListener('click', (e) => {
+        const part = e.target.closest?.('[data-nb]');
+        if (!part) return;
+        e.preventDefault();
+        let text = '', offset = 0;
+        const r = doc.caretRangeFromPoint?.(e.clientX, e.clientY);
+        if (r && r.startContainer.nodeType === 3) { text = r.startContainer.data; offset = r.startOffset; }
+        else { const p = doc.caretPositionFromPoint?.(e.clientX, e.clientY); if (p && p.offsetNode.nodeType === 3) { text = p.offsetNode.data; offset = p.offset; } }
+        pick.current?.({ key: part.getAttribute('data-nb'), text, offset });
+      });
       for (const img of f.contentDocument?.images || []) img.addEventListener('load', fit, { once: true });
     };
     f.addEventListener('load', onLoad);
     return () => f.removeEventListener('load', onLoad);
   }, [fit]);
   useEffect(() => { if (active) { const t = setTimeout(fit, 30); return () => clearTimeout(t); } }, [active, fit, html]);
-  return <iframe ref={frame} className="nb-frame" title="Newsletter preview" srcDoc={html} style={{ height }} sandbox="allow-same-origin" />;
+  return <iframe ref={frame} className="nb-frame" title="Newsletter preview. Tap any part to edit it." srcDoc={html.replace('</head>', `${PREVIEW_STYLE}</head>`)} style={{ height }} sandbox="allow-same-origin" />;
 }
 
 function Editor({ id, me, onBack, onError, demo = null }) {
@@ -348,6 +480,36 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   const [notice, setNotice] = useState('');
   const [slug, setSlug] = useState('');
   const [adding, setAdding] = useState(false);
+  // Which parts are open. A brand new issue opens Sending and Opening; an
+  // issue with words in it starts closed so it reads like a table of contents.
+  const jump = useRef(null);
+  const [jumpTick, setJumpTick] = useState(0);
+  const [openSet, setOpenSet] = useState(() => new Set());
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!content || seeded.current) return;
+    seeded.current = true;
+    if (!content.subject && !content.headline) setOpenSet(new Set(['sending', 'opening']));
+  }, [content]);
+  useEffect(() => {
+    const j = jump.current;
+    if (!j) return;
+    jump.current = null;
+    requestAnimationFrame(() => {
+      const fold = document.getElementById(`fold-${j.k}`);
+      if (!fold) return;
+      fold.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const fields = [...fold.querySelectorAll('.nb-fold-body textarea, .nb-fold-body input:not([type=file]):not([type=date])')];
+      const words = String(j.text || '').trim();
+      let target = null, at = 0;
+      if (words.length > 1) {
+        for (const f of fields) { const i = f.value.indexOf(words); if (i >= 0) { target = f; at = i + Math.max(0, j.offset - (j.text.length - j.text.trimStart().length)); break; } }
+      }
+      target = target || fields.find((f) => f.tagName === 'TEXTAREA') || fields[0];
+      if (!target) return;
+      setTimeout(() => { target.focus({ preventScroll: true }); try { target.setSelectionRange(at, at); } catch { /* date inputs */ } }, 350);
+    });
+  }, [jumpTick]);
   const revision = useRef(0);
   const timer = useRef(null);
   const pending = useRef(null);
@@ -391,12 +553,24 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   }, [flush]);
 
   const html = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue) }) : ''), [content, issue]);
+  const previewHtml = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue), mark: true }) : ''), [content, issue]);
   const notes = useMemo(() => (content ? styleCheck(content) : []), [content]);
   if (!content) return <p className="nb-loading" role="status">Opening the issue…</p>;
 
   const edit = (patch) => { const c = { ...content, ...patch }; setContent(c); queue(c, meta); };
   const editMeta = (patch) => { const m = { ...meta, ...patch }; setMeta(m); queue(content, m); };
   const blocks = content.blocks || [];
+  const isOpen = (k) => openSet.has(k);
+  const toggle = (k) => setOpenSet((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  // Tap in the preview: open that part, scroll to it, and place the cursor on
+  // the words that were tapped when they can be found.
+  const jumpTo = ({ key, text, offset }) => {
+    const k = key.startsWith('block:') ? key.slice(6) : key;
+    setOpenSet((o) => new Set(o).add(k));
+    setView('edit');
+    jump.current = { k, text, offset };
+    setJumpTick((t) => t + 1);
+  };
   const setBlocks = (b) => edit({ blocks: b });
   const move = (n, d) => { const b = [...blocks]; [b[n], b[n + d]] = [b[n + d], b[n]]; setBlocks(b); };
   const flash = (t) => { setNotice(t); setTimeout(() => setNotice(''), 3000); };
@@ -455,61 +629,62 @@ function Editor({ id, me, onBack, onError, demo = null }) {
             <Field label="Name for your list (families never see this)" value={meta.title} onChange={(v) => editMeta({ title: v })} />
           </header>
 
-          <section className="nb-card">
-            <h3><span className="num">1</span> Sending</h3>
+          <Fold id="fold-sending" className="nb-top" badge="1" title="Sending" summary={content.subject || 'Add a subject line'} open={isOpen('sending')} onToggle={() => toggle('sending')}>
             <Field label="Subject line" value={content.subject} onChange={(v) => edit({ subject: v })} placeholder="This is how we do it, RCAP" />
             <Field label="Preview text" value={content.preheader} onChange={(v) => edit({ preheader: v })} hint="The gray line people see after the subject in their inbox." placeholder="Karaoke, EXP, and the Bingo Night photos." />
             <div className="nb-pair">
               <Field label="Issue date" type="date" value={meta.issue_date} onChange={(v) => editMeta({ issue_date: v })} />
               <Field label="Line under the logo" value={content.dateline} onChange={(v) => edit({ dateline: v })} />
             </div>
-          </section>
+          </Fold>
 
-          <section className="nb-card">
-            <h3><span className="num">2</span> Opening</h3>
+          <Fold id="fold-opening" className="nb-top" badge="2" title="Opening" summary={firstLine(content.headline) || 'Add a headline'} open={isOpen('opening')} onToggle={() => toggle('opening')}>
             <Field label="Small label" value={content.kicker} onChange={(v) => edit({ kicker: v })} />
             <Field area rows={2} label="Headline" value={content.headline} onChange={(v) => edit({ headline: v })} placeholder={'This is how\nwe do it.'} hint="Press return to choose where the line breaks." />
             <Field label="Greeting" value={content.greeting} onChange={(v) => edit({ greeting: v })} />
-            <Field area rows={issue.format === 'full' ? 7 : 4} label={issue.format === 'full' ? 'Your letter' : 'Your note'} value={content.body} onChange={(v) => edit({ body: v })} hint={BODY_HINT} />
-            <LinkPair label="Button" value={content.button} onChange={(v) => edit({ button: v })} />
-          </section>
+            <Field area rows={3} label={issue.format === 'full' ? 'Your letter' : 'Your note'} value={content.body} onChange={(v) => edit({ body: v })} hint={BODY_HINT} tools />
+            {(hasLink(content.button) || isOpen('opening-button'))
+              ? <Extra title="Button" onRemove={() => { toggle('opening-button'); edit({ button: blank }); }}><LinkPair value={content.button} onChange={(v) => edit({ button: v })} /></Extra>
+              : <Chips items={[{ key: 'b', label: 'Button', on: false, add: () => toggle('opening-button') }]} />}
+          </Fold>
 
-          <section className="nb-card">
-            <h3><span className="num">3</span> Sections</h3>
+          <section className="nb-sections">
+            <div className="nb-sections-head">
+              <h3><span className="num">3</span> Sections</h3>
+              {blocks.length > 1 && <button type="button" className="nb-text muted" onClick={() => setOpenSet((o) => { const n = new Set(o); const all = blocks.every((b) => n.has(b.id)); blocks.forEach((b) => (all ? n.delete(b.id) : n.add(b.id))); return n; })}>{blocks.every((b) => openSet.has(b.id)) ? 'Close all' : 'Open all'}</button>}
+            </div>
             {blocks.length === 0 && <p className="nb-help">No sections yet. Add one below.</p>}
             {blocks.map((b, n) => (
-              <article key={b.id} className="nb-block">
-                <header>
-                  <span className="nb-block-name">{BLOCKS[b.type]?.label}</span>
-                  <div className="nb-row-actions">
-                    <button className="nb-icon" disabled={n === 0} onClick={() => move(n, -1)} aria-label="Move up"><ArrowUp size={16} /></button>
-                    <button className="nb-icon" disabled={n === blocks.length - 1} onClick={() => move(n, 1)} aria-label="Move down"><ArrowDown size={16} /></button>
-                    <button className="nb-icon" onClick={() => setBlocks(blocks.filter((x) => x.id !== b.id))} aria-label={`Remove ${BLOCKS[b.type]?.label}`}><Trash2 size={16} /></button>
-                  </div>
-                </header>
+              <Fold key={b.id} id={`fold-${b.id}`} accent={ACCENT[b.type]} title={BLOCKS[b.type]?.label} summary={blockSummary(b)}
+                thumb={b.image?.url || null} swatch={b.type === 'story' && b.tone === 'sand' ? 'sand' : null}
+                open={isOpen(b.id)} onToggle={() => toggle(b.id)}
+                actions={<>
+                  <button className="nb-icon small" disabled={n === 0} onClick={() => move(n, -1)} aria-label="Move up"><ArrowUp size={15} /></button>
+                  <button className="nb-icon small" disabled={n === blocks.length - 1} onClick={() => move(n, 1)} aria-label="Move down"><ArrowDown size={15} /></button>
+                  <button className="nb-icon small" onClick={() => { if (window.confirm(`Remove this ${BLOCKS[b.type]?.label.toLowerCase()} section?`)) setBlocks(blocks.filter((x) => x.id !== b.id)); }} aria-label={`Remove ${BLOCKS[b.type]?.label}`}><Trash2 size={15} /></button>
+                </>}>
                 <BlockEditor block={b} issueId={id} onError={onError} update={(nb) => setBlocks(blocks.map((x) => (x.id === b.id ? nb : x)))} />
-              </article>
+              </Fold>
             ))}
             {adding ? (
               <div className="nb-add">
                 {FORMATS[issue.format].blocks.map((t) => (
-                  <button key={t} className="nb-add-option" onClick={() => { setBlocks([...blocks, newBlock(t)]); setAdding(false); }}>
+                  <button key={t} className="nb-add-option" style={{ '--accent': ACCENT[t] }} onClick={() => { const nb = newBlock(t); setBlocks([...blocks, nb]); setOpenSet((o) => new Set(o).add(nb.id)); setAdding(false); }}>
                     <strong>{BLOCKS[t].label}</strong><span>{BLOCKS[t].hint}</span>
                   </button>
                 ))}
                 <button className="nb-text" onClick={() => setAdding(false)}>Cancel</button>
               </div>
-            ) : <button className="nb-btn ghost" onClick={() => setAdding(true)}><Plus size={16} /> Add a section</button>}
+            ) : <button className="nb-add-btn" onClick={() => setAdding(true)}><Plus size={16} /> Add a section</button>}
           </section>
 
-          <section className="nb-card">
-            <h3><span className="num">4</span> Closing</h3>
+          <Fold id="fold-closing" className="nb-top" badge="4" title="Closing" summary={[content.signoff, content.signer].filter(Boolean).join(' ') || 'Add a sign-off'} open={isOpen('closing')} onToggle={() => toggle('closing')}>
             <Field label="Sign-off" value={content.signoff} onChange={(v) => edit({ signoff: v })} />
             <div className="nb-pair">
-              <Field label="Name" value={content.signer} onChange={(v) => edit({ signer: v })} />
-              <Field label="Role" value={content.role} onChange={(v) => edit({ role: v })} placeholder="Or Your RCAP Family" />
+              <Field label="Name" value={content.signer} onChange={(v) => edit({ signer: v })} placeholder="Your RCAP Family" />
+              <Field label="Role" value={content.role} onChange={(v) => edit({ role: v })} placeholder="Optional" />
             </div>
-          </section>
+          </Fold>
 
           <section className="nb-card check">
             <h3><Sparkles size={17} /> House style</h3>
@@ -545,8 +720,8 @@ function Editor({ id, me, onBack, onError, demo = null }) {
           <div ref={copyRef} className="nb-copy-buffer" aria-hidden="true" />
         </div>
         <aside className="nb-preview" aria-label="Preview">
-          <p className="nb-kicker on-dark">What families will see</p>
-          <Preview html={html} active={view === 'preview' || window.matchMedia?.('(min-width: 1001px)').matches} />
+          <p className="nb-kicker on-dark">What families will see <span className="nb-tip">Tap any part to edit it</span></p>
+          <Preview html={previewHtml} onPick={jumpTo} active={view === 'preview' || window.matchMedia?.('(min-width: 1001px)').matches} />
         </aside>
       </div>
     </div>
