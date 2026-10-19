@@ -383,7 +383,11 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   useEffect(() => {
     const leave = (e) => { if (pending.current) { flush(); e.preventDefault(); e.returnValue = ''; } };
     window.addEventListener('beforeunload', leave);
-    return () => { window.removeEventListener('beforeunload', leave); clearTimeout(timer.current); };
+    return () => {
+      window.removeEventListener('beforeunload', leave);
+      // Closing the editor (All issues or the back button) saves what is waiting.
+      if (pending.current) flush(); else clearTimeout(timer.current);
+    };
   }, [flush]);
 
   const html = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue) }) : ''), [content, issue]);
@@ -592,11 +596,30 @@ export default function App() {
     return () => { live = false; };
   }, [user?.id, onError]);
 
-  const go = (id) => {
-    setOpen(id);
+  // Opening an issue adds a browser history entry, so the phone or browser
+  // back button returns to All issues instead of leaving the site.
+  const urlFor = (id) => {
     const u = new URL(location.href);
     if (id) u.searchParams.set('issue', id); else u.searchParams.delete('issue');
-    history.replaceState(null, '', u);
+    return u;
+  };
+  useEffect(() => {
+    // Arriving straight on ?issue=… (a shared link): put the list underneath
+    // it so the first back press lands on All issues.
+    const first = new URLSearchParams(location.search).get('issue');
+    if (first && !history.state?.nbIssue) {
+      history.replaceState(null, '', urlFor(null));
+      history.pushState({ nbIssue: first }, '', urlFor(first));
+    }
+    const onPop = () => { setOpen(new URLSearchParams(location.search).get('issue')); window.scrollTo(0, 0); };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  const go = (id) => {
+    if (!id && history.state?.nbIssue) { history.back(); return; }
+    setOpen(id);
+    if (id) history.pushState({ nbIssue: id }, '', urlFor(id));
+    else history.replaceState(null, '', urlFor(null));
     window.scrollTo(0, 0);
   };
 
