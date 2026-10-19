@@ -33,13 +33,33 @@ renderer is pure so the builder, the public page and the tests share it.
 
 ## Sending
 
-"Copy for Gmail" puts the formatted email on the clipboard; paste into a new
-Gmail message on a computer. Kim's version planned a Gmail API draft button,
-which needed a Google Cloud OAuth app and stalled there. Copy and paste is the
-method already proven with the September 20 issue, so it is the default here.
+Sending happens from the shared RCAP Gmail, rcaparents@ronclarkacademy.com.
+The "Open in RCAP Gmail" button copies the formatted newsletter and opens a
+new Gmail message in that account (Gmail's compose link, `authuser` set to the
+RCAP address) with the subject, To (the RCAP address itself) and a hidden BCC
+already filled. Gmail's compose link only carries plain text, so the sender
+pastes the copied newsletter into the body. The BCC defaults to the five class
+lists, rcap2027 through rcap2031@ronclarkacademy.com, and can be changed per
+issue in Sending ("Sends to").
 
-Publishing an issue gives it a web address. Publish before copying and the
-email carries a "View on the web" link.
+Steps for whoever sends, also shown in the builder's Send it card:
+
+1. Use a computer, signed in to rcaparents@ronclarkacademy.com in that
+   browser. Personal Google accounts can stay signed in alongside it.
+2. Optional: put the issue on the website first so the email carries a
+   "View on the web" link.
+3. Click Open in RCAP Gmail. The newsletter is copied and a new message opens
+   from the RCAP account with subject and recipients filled in.
+4. Click in the message body and paste (Cmd+V on a Mac, Ctrl+V on Windows).
+5. Check the From line shows the RCAP address, then Send.
+
+If the browser blocks the new tab, the builder shows a link to open the
+message by hand. "Copy only", "Copy subject" and "Download" remain as
+fallbacks.
+
+A true one-click draft (Gmail API) would need a Google Cloud OAuth app with
+the gmail.compose scope and approval from RCA's Google Workspace admin, since
+ronclarkacademy.com is the school's domain. Not built.
 
 ## Access
 

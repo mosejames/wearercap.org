@@ -214,6 +214,15 @@ export function plainText(c = {}) {
   return out.filter((s) => String(s || '').trim()).join('\n\n');
 }
 
+// Sending happens from the shared RCAP Gmail. Gmail's compose link carries the
+// subject and recipients but only plain text, so the formatted newsletter is
+// copied to the clipboard and pasted into the body.
+export const RCAP_SENDER = 'rcaparents@ronclarkacademy.com';
+export const DEFAULT_BCC = ['rcap2027', 'rcap2028', 'rcap2029', 'rcap2030', 'rcap2031'].map((c) => `${c}@ronclarkacademy.com`).join(', ');
+export function gmailComposeUrl(c = {}) {
+  const q = new URLSearchParams({ authuser: RCAP_SENDER, view: 'cm', fs: '1', to: RCAP_SENDER, bcc: (c.bcc ?? DEFAULT_BCC).replace(/\s+/g, ''), su: c.subject || '' });
+  return `https://mail.google.com/mail/?${q.toString()}`;
+}
 export function slugify(s) {
   return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
     .replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');

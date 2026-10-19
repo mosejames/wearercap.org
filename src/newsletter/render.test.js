@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderEmail, renderDocument, plainText, inline, safeUrl, styleCheck, fixDashes, template, newBlock, suggestSlug, slugify } from './render.js';
+import { renderEmail, renderDocument, plainText, inline, safeUrl, styleCheck, fixDashes, template, newBlock, suggestSlug, slugify, gmailComposeUrl, DEFAULT_BCC } from './render.js';
 
 describe('newsletter text', () => {
   it('escapes markup and keeps only safe links', () => {
@@ -86,6 +86,15 @@ describe('house style check', () => {
 });
 
 describe('web addresses', () => {
+  it('opens Gmail compose in the RCAP account with subject and hidden recipients', () => {
+    const url = new URL(gmailComposeUrl({ subject: 'Ready, set, treat.' }));
+    expect(url.hostname).toBe('mail.google.com');
+    expect(url.searchParams.get('authuser')).toBe('rcaparents@ronclarkacademy.com');
+    expect(url.searchParams.get('su')).toBe('Ready, set, treat.');
+    expect(url.searchParams.get('bcc')).toBe(DEFAULT_BCC.replace(/\s+/g, ''));
+    expect(url.searchParams.get('bcc')).toContain('rcap2031@ronclarkacademy.com');
+    expect(new URL(gmailComposeUrl({ subject: 'x', bcc: 'a@b.com, c@d.com' })).searchParams.get('bcc')).toBe('a@b.com,c@d.com');
+  });
   it('suggests a readable slug', () => {
     expect(suggestSlug({ headline: 'This is how we do it.' }, '2026-10-25')).toBe('october-25-this-is-how-we-do');
     expect(slugify('R&B Karaoke Night!')).toBe('r-and-b-karaoke-night');

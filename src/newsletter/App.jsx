@@ -6,7 +6,7 @@ import {
 import { supabase, call, uploadPhoto } from './api.js';
 import {
   BLOCKS, FORMATS, newBlock, newDate, template, renderEmail, renderDocument, plainText,
-  styleCheck, fixDashes, suggestSlug, slugify, longDate, SITE,
+  styleCheck, fixDashes, suggestSlug, slugify, longDate, SITE, RCAP_SENDER, DEFAULT_BCC, gmailComposeUrl,
 } from './render.js';
 import { loadGoogleIdentity, createGoogleNonce, GOOGLE_CLIENT_ID } from '../carpool/googleIdentity.js';
 
@@ -484,6 +484,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   // issue with words in it starts closed so it reads like a table of contents.
   const jump = useRef(null);
   const [jumpTick, setJumpTick] = useState(0);
+  const [gmailLink, setGmailLink] = useState('');
   const [openSet, setOpenSet] = useState(() => new Set());
   const seeded = useRef(false);
   useEffect(() => {
@@ -575,11 +576,12 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   const move = (n, d) => { const b = [...blocks]; [b[n], b[n + d]] = [b[n + d], b[n]]; setBlocks(b); };
   const flash = (t) => { setNotice(t); setTimeout(() => setNotice(''), 3000); };
 
-  async function copyEmail() {
+  // Copies the formatted email. Returns true when the clipboard took it.
+  async function copyHtml() {
     const inner = renderEmail(content, { webUrl: webUrl(issue) });
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([inner], { type: 'text/html' }), 'text/plain': new Blob([plainText(content)], { type: 'text/plain' }) })]);
-      flash('Copied with formatting. Open a new Gmail message and paste.');
+      return true;
     } catch {
       const el = copyRef.current;
       el.innerHTML = inner;
@@ -587,8 +589,22 @@ function Editor({ id, me, onBack, onError, demo = null }) {
       const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
       let ok = false; try { ok = document.execCommand('copy'); } catch { /* fall through */ }
       sel.removeAllRanges(); el.innerHTML = '';
-      flash(ok ? 'Copied. Paste into a new Gmail message.' : 'Your browser blocked copying. Use Download instead.');
+      return ok;
     }
+  }
+  async function copyEmail() {
+    flash((await copyHtml()) ? 'Copied with formatting. Open a new Gmail message and paste.' : 'Your browser blocked copying. Use Download instead.');
+  }
+  // One click: copy the newsletter, then open a new message in the RCAP Gmail
+  // with the subject and recipients filled in. If the browser blocks the new
+  // tab, a link appears so the sender can open it by hand.
+  async function openInGmail() {
+    await flush();
+    const ok = await copyHtml();
+    const url = gmailComposeUrl(content);
+    const tab = window.open(url, '_blank');
+    if (tab) { try { tab.opener = null; } catch { /* cross-origin */ } setGmailLink(''); } else setGmailLink(url);
+    flash(ok ? 'Copied. In the Gmail tab, click the message body, paste, check it, and send.' : 'Gmail is opening, but copying was blocked. Come back and click Copy for Gmail, then paste.');
   }
   async function copySubject() {
     try { await navigator.clipboard.writeText(content.subject || ''); flash('Subject copied.'); } catch { flash(`Subject: ${content.subject}`); }
@@ -636,6 +652,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
               <Field label="Issue date" type="date" value={meta.issue_date} onChange={(v) => editMeta({ issue_date: v })} />
               <Field label="Line under the logo" value={content.dateline} onChange={(v) => edit({ dateline: v })} />
             </div>
+            <Field area rows={2} label="Sends to (hidden BCC)" value={content.bcc ?? DEFAULT_BCC} onChange={(v) => edit({ bcc: v })} hint="Separate addresses with commas. Families cannot see each other's addresses. It sends from the RCAP Gmail." autoCapitalize="off" />
           </Fold>
 
           <Fold id="fold-opening" className="nb-top" badge="2" title="Opening" summary={firstLine(content.headline) || 'Add a headline'} open={isOpen('opening')} onToggle={() => toggle('opening')}>
@@ -696,11 +713,21 @@ function Editor({ id, me, onBack, onError, demo = null }) {
 
           <section className="nb-card send">
             <h3><Mail size={17} /> Send it</h3>
-            <p className="nb-help">Copy, open a new message in Gmail on your computer, paste. Check it once, then send from your RCAP email.</p>
+            <ol className="nb-steps">
+              <li>Use a computer, signed in to <strong>{RCAP_SENDER}</strong> in this browser. Your own Google accounts can stay signed in too.</li>
+              <li>Optional: put it on the website first (below) so the email carries a “View on the web” link.</li>
+              <li>Click <strong>Open in RCAP Gmail</strong>. The newsletter is copied, and a new message opens from the RCAP account with the subject and recipients filled in.</li>
+              <li>Click in the message body and paste: <strong>Cmd+V</strong> on a Mac, <strong>Ctrl+V</strong> on Windows.</li>
+              <li>Check that the From line shows the RCAP address and the newsletter looks right. Then hit Send.</li>
+            </ol>
             <div className="nb-actions">
-              <button className="nb-btn primary" onClick={copyEmail}><Copy size={16} /> Copy for Gmail</button>
-              <button className="nb-btn ghost" onClick={copySubject}>Copy subject</button>
-              <button className="nb-btn ghost" onClick={download}><Download size={16} /> Download</button>
+              <button className="nb-btn primary" onClick={openInGmail}><Mail size={16} /> Open in RCAP Gmail</button>
+            </div>
+            {gmailLink && <p className="nb-help">The browser held back the new tab. <a href={gmailLink} target="_blank" rel="noreferrer">Open the RCAP Gmail message</a>, then paste.</p>}
+            <div className="nb-actions secondary">
+              <button className="nb-btn ghost small" onClick={copyEmail}><Copy size={15} /> Copy only</button>
+              <button className="nb-btn ghost small" onClick={copySubject}>Copy subject</button>
+              <button className="nb-btn ghost small" onClick={download}><Download size={15} /> Download</button>
             </div>
             <div className="nb-publish">
               <p className="nb-kicker"><Globe size={14} /> On wearercap.org</p>
