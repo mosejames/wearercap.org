@@ -24,6 +24,8 @@
 // label in the school car park, so there's nothing to protect.
 // ---------------------------------------------------------------------------
 
+import newsletterPage from '../server/newsletter-page.js';
+
 const SITE = 'https://wearercap.org';
 const BASE = `${SITE}/uniform-exchange/`;
 
@@ -119,6 +121,9 @@ async function describeBin(code) {
 
 export default async function handler(req, res) {
   const { p = 'bin', v = '' } = req.query || {};
+  // Published RCAP newsletter issues share this function to stay inside the
+  // hosting function limit. See server/newsletter-page.js.
+  if (p === 'newsletter') return newsletterPage(req, res);
   const c = card(p, v);
 
   if (p === 'bin') {

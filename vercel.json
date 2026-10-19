@@ -18,6 +18,26 @@
       "destination": "/api/m3-link?vault=london&slug=:slug"
     },
     {
+      "source": "/api/newsletter-sign",
+      "destination": "/api/m3-sign?vault=newsletter"
+    },
+    {
+      "source": "/newsletter/builder",
+      "destination": "/newsletter/builder/index.html"
+    },
+    {
+      "source": "/newsletter/september-20",
+      "destination": "/newsletter/september-20/index.html"
+    },
+    {
+      "source": "/newsletter",
+      "destination": "/api/link?p=newsletter"
+    },
+    {
+      "source": "/newsletter/:slug",
+      "destination": "/api/link?p=newsletter&v=:slug"
+    },
+    {
       "source": "/api/london-sign",
       "destination": "/api/m3-sign?vault=london"
     },
