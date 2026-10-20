@@ -3,7 +3,7 @@
 Base: current main 1921119. Clean checkout: /private/tmp/rca-nyc-preview.
 Preview: http://127.0.0.1:5186/nyc-vault/ . Start with npm run dev -- --port 5186.
 
-Confirmed sixth-grade trip, October 21–23, 2026, America/New_York. No class year inferred. Reported stops are unassigned to dates. No imported London media or Instagram collectors.
+Confirmed sixth-grade trip, October 21–23, 2026, America/New_York. Class of 2029 confirmed by the user on October 20. Reported stops are unassigned to dates. No imported London media or Instagram collectors.
 
 ## Reviewable now
 
