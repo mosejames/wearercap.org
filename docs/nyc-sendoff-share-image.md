@@ -1,5 +1,13 @@
 # NYC send-off Times Square share image
 
+## Full-class corner billboard
+
+The owner supplied the full sixth-grade class photograph and requested replacing the individual portraits with the whole class. Built-in image editing integrated the class photograph across the large corner billboard, with navy/yellow Class of 2029 panels on either side. This is an AI-edited imagined advertising scene, not a real Times Square installation. The original class photograph remains unchanged and is not committed separately. Export: public/nyc/nyc-sendoff-times-square-class-2029-og.jpg, 1200 by 630 JPEG.
+
+Edit prompt:
+
+Edit reference 1, the daylight Times Square RCA billboard scene, using the COMPLETE real class group photograph in reference 2. Replace the central giant corner billboard artwork with the actual full class photograph printed/displayed as one large panoramic campaign across BOTH sides of the corner, with perspective matching the real billboard planes. Every student from reference 2 must remain present with their actual face, exact individual likeness, hairstyle, uniforms and relative group arrangement. Treat the group photograph as a finished photographic asset being placed on the billboard: DO NOT redraw, invent, replace, duplicate or omit any child. Fit the ENTIRE class group within the central billboard, with a comfortable margin around the people. You may crop unneeded empty architecture above the class, but do not crop any student. Make this the dominant visual, large enough to show the group clearly. A small navy header strip above the photo can carry the actual existing white Ron Clark Academy wordmark. Keep large legible CLASS OF 2029 lettering on the left and right surrounding billboard panels in navy and yellow. Remove all individual invented student portraits from surrounding billboard panels and use simple RCA/2029 graphics there instead, so this one authentic whole-class photo is the only student imagery in the advertisement. Maintain convincing daylight photographic realism, natural billboard surfaces, precise corner perspective, architecture, crowd, subway entrance and streetscape. No fantasy, no new people in the class photograph, no names. Wide landscape 1200:630 social card composition. The finished result should look like the real class photo has been professionally installed on a Times Square corner billboard, not a re-created group of generic children.
+
 ## Daylight logo revision
 
 Edited the owner's supplied daylight Times Square photograph, using public/london/ron-clark-academy.png as the actual logo reference. The billboard takeover is imagined; the portraits on the billboard artwork are generated. Export: public/nyc/nyc-sendoff-times-square-logo-2029-og.jpg, 1200 by 630 JPEG.
