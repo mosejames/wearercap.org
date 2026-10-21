@@ -8,10 +8,12 @@ export function frameLayout(frame, scholar, family) {
   background:gold?'golden-ticket-v1.jpg':'autumn-postcard-v1.jpg',
   ink:gold?'#102a49':'#fff5df',accent:gold?'#102a49':'#ffc342',
   x:gold?145:600,w:gold?550:535,brandY:gold?116:62,
-  headlineY:gold?157:165,headlineSize:gold?54:58,
-  bylineY:gold?334:105,byline,bylineSize:byline.length>80?17:byline.length>55?19:23,
-  supportY:gold?390:374,supportX:gold?210:600,
-  ticket:gold?{x:290,y:460,w:390,h:38}:{x:795,y:448,w:360,h:90},
+  headlineY:gold?145:165,headlineSize:gold?50:58,
+  bylineY:gold?316:105,byline,bylineSize:byline.length>80?13:byline.length>55?18:21,
+  supportY:gold?378:355,supportX:gold?210:600,
+  supportLines:['Supporting RCAP’s efforts.','Main Teacher Appreciation Week fundraiser.'],
+  supportSize:18,supportLeading:25,
+  ticket:gold?{x:280,y:438,w:390,h:34}:{x:795,y:448,w:360,h:90},
  };
 }
 export function wrapName(text,maxChars) {
