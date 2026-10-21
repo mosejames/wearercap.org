@@ -4,6 +4,8 @@ import {NYC,dayOf} from './config.js';
 import {newestCapturedFirst} from '../london/timeline.js';
 import * as db from './sharedData.js';
 import SharingLogin from './SharingLogin.jsx';
+import './trip.css';
+import './sendoff.css';
 import {GROUPS,groupLabel,matchesGroup,initialGroupFilter,rememberedUploadGroup,rememberUploadGroup} from './groups.js';
 function GroupSelect({value,onChange,disabled=false,label='Uploading to'}){const name=useId();return <fieldset className="group-select" disabled={disabled}><legend>{label}</legend><div className="group-toggle">{GROUPS.map(([key,text])=><label key={key}><input type="radio" name={name} value={key} checked={value===key} onChange={()=>onChange(key)}/><span>{text}</span></label>)}</div></fieldset>;}
 
