@@ -132,6 +132,11 @@
   ],
   "redirects": [
     {
+      "source": "/nyc-sendoff/",
+      "destination": "/nyc-vault/",
+      "permanent": true
+    },
+    {
       "source": "/nyc-sendoff/:path*",
       "destination": "/nyc-vault/",
       "permanent": true
