@@ -1,41 +1,42 @@
+import { frameLayout, wrapName } from './layout.js';
 const $ = id => document.getElementById(id);
 const form = $('form');
 const scholar = $('credit-name').textContent;
 const family = form.elements.family.value;
 const params = new URLSearchParams(location.search);
 const invitationId = params.get('id');
-const message = `Our family is cheering on ${scholar} in the RCAP Fall Raffle! Tickets are $1 and support Teacher Appreciation Week. Please credit ${scholar} at checkout.`;
+const message = `Help ${scholar} celebrate their awesome teachers! Every $1 RCAP raffle ticket supports Teacher Appreciation Week. Please credit ${scholar} at checkout.`;
 let photo = null;
 let busy = false;
 const canvas = $('photo-preview');
 const context = canvas.getContext('2d');
 const crop = document.createElement('canvas'); crop.width=1300;crop.height=1164;
 function roundRect(x,y,w,h,r,color) {context.fillStyle=color;context.beginPath();context.roundRect(x,y,w,h,r);context.fill();}
-function lines(text,x,y,maxWidth,size,color,weight=800,lineHeight=1.1,maxLines=3) {
- context.fillStyle=color;context.font=`${weight} ${size}px system-ui`;
- const words=text.split(' ');let line='';let count=0;
- for(const word of words){const next=line?`${line} ${word}`:word;if(context.measureText(next).width>maxWidth && line){context.fillText(line,x,y);y+=size*lineHeight;count++;line=word;if(count>=maxLines-1)break;}else line=next;}
- // Names are capped and the font shrinks for long input, keeping the preview tidy.
- context.fillText(line,x,y);return y+size*lineHeight;
-}
+const backgrounds = {navy:new Image(),gold:new Image()};
+for(const [key,img] of Object.entries(backgrounds)){img.onload=()=>draw();img.src=`/raffle-share/${key==='gold'?'golden-ticket-v1.jpg':'autumn-postcard-v1.jpg'}`;}
+document.fonts.load('900 58px Figtree').then(()=>document.fonts.load('500 23px Figtree')).then(()=>draw());
 function drawCrop() {
  if(!photo)return;
+ const layout=frameLayout(form.elements.frame.value);crop.width=layout.photo.w*2;crop.height=layout.photo.h*2;
  const zoom=Number($('zoom').value);const fit=Math.max(crop.width/photo.width,crop.height/photo.height)*zoom;
  const width=crop.width/fit,height=crop.height/fit;
  crop.getContext('2d').drawImage(photo,(photo.width-width)*Number($('pan-x').value),(photo.height-height)*Number($('pan-y').value),width,height,0,0,crop.width,crop.height);
 }
+function text(text,x,y,size,color,weight=900){context.fillStyle=color;context.font=`${weight} ${size}px Figtree,system-ui`;context.textBaseline='top';context.fillText(text,x,y);}
 function draw() {
- const gold=form.elements.frame.value==='gold';const bg=gold?'#edb744':'#1b2c56',ink=gold?'#1b2c56':'#faf4ea',accent=gold?'#1b2c56':'#f7a81c';
- context.fillStyle=bg;context.fillRect(0,0,1200,630);
- context.save();context.beginPath();context.roundRect(24,24,650,582,14);context.clip();
- if(photo){drawCrop();context.drawImage(crop,24,24,650,582);}else{context.fillStyle=gold?'#fae3a5':'#e9e1d1';context.fillRect(24,24,650,582);}context.restore();
- lines('RCAP FALL RAFFLE',706,68,440,20,accent,900);
- const name=form.elements.scholar.value.trim()||'your scholar';const last=form.elements.family.value.trim();
- lines(last ? `The ${last} family invites you` : 'Your family invites you',706,163,438,last.length>25?18:22,ink,500,1.2,3);
- lines(`Cheer on ${name}.`,706,270,438,name.length>25?32:43,ink,900,1.12,3);
- lines('Give our teachers a little love.',706,410,438,28,ink,800,1.15,2);
- roundRect(706,482,438,60,8,accent);lines('Buy $1 raffle tickets',728,522,400,28,bg,900);
- lines('Supporting Teacher Appreciation Week',706,574,440,17,ink,500);lines('wearercap.org',706,603,438,16,ink,500);
+ const key=form.elements.frame.value==='gold'?'gold':'navy';const l=frameLayout(key,form.elements.scholar.value.trim(),form.elements.family.value.trim());
+ context.fillStyle='#092847';context.fillRect(0,0,1200,630);
+ if(backgrounds[key].complete && backgrounds[key].naturalWidth)context.drawImage(backgrounds[key],0,0,1200,630);
+ const p=l.photo;const prompt=$('photo-prompt');prompt.style.left=`${p.x/12}%`;prompt.style.top=`${p.y/6.3}%`;prompt.style.width=`${p.w/12}%`;prompt.style.height=`${p.h/6.3}%`;prompt.style.right='auto';prompt.style.bottom='auto';
+ context.save();context.beginPath();context.roundRect(p.x,p.y,p.w,p.h,16);context.clip();
+ if(photo){drawCrop();context.drawImage(crop,p.x,p.y,p.w,p.h);}else{context.fillStyle='#f2e8d5';context.fillRect(p.x,p.y,p.w,p.h);}context.restore();
+ text('RCAP FALL RAFFLE',l.x,l.brandY,22,l.accent);
+ ['Help me celebrate','my awesome','teachers.'].forEach((line,i)=>text(line,l.x,l.headlineY+i*(l.headlineSize+1),l.headlineSize,i===2?l.accent:l.ink));
+ wrapName(l.byline,l.gold?53:44).forEach((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500));
+ ['Every $1 raffle ticket supports','Teacher Appreciation Week.'].forEach((line,i)=>text(line,l.supportX,l.supportY+i*25,22,l.ink,500));
+ const t=l.ticket;
+ if(l.gold){roundRect(t.x,t.y,t.w,t.h,7,'#102a49');text('Buy $1 raffle tickets',t.x+47,t.y+6,26,'#ffcf5a');}
+ else{context.save();context.translate(t.x+t.w/2,t.y+t.h/2);context.rotate(-8*Math.PI/180);context.textAlign='center';text('Buy $1',0,-27,29,'#102a49');text('raffle tickets',0,5,29,'#102a49');context.restore();}
 }
 draw();
 form.addEventListener('input',draw);

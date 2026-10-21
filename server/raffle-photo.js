@@ -5,6 +5,7 @@ import { randomUUID, randomBytes, createHash, timingSafeEqual } from 'node:crypt
 import sharp from 'sharp';
 import { shareNames, rafflePhotoImage } from './raffle-share.js';
 import { readFileSync } from 'node:fs';
+import { frameLayout } from '../public/raffle-share/layout.js';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ROOT = 'raffle/2026/invitations';
 const MAX_BASE64 = 1900000;
@@ -46,7 +47,8 @@ export async function createRafflePhoto(body) {
   const input=sharp(bytes,{limitInputPixels:16000000,failOn:'error'});
   const meta=await input.metadata();
   if(meta.format!=='jpeg') throw new Error('Not a JPEG');
-  web=await input.rotate().resize(1300,1164,{fit:'cover'}).jpeg({quality:88}).toBuffer();
+  const area=frameLayout(body.frame).photo;
+  web=await input.rotate().resize(area.w*2,area.h*2,{fit:'cover'}).jpeg({quality:88}).toBuffer();
  } catch {const e=new Error('We could not read that photo. Please choose another image.');e.status=400;throw e;}
  const id=randomUUID(); const token=randomBytes(32).toString('hex');
  const names=shareNames(body);const frame=body.frame==='gold'?'gold':'navy';

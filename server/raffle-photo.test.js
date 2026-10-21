@@ -22,9 +22,9 @@ describe('photo invitations',()=>{
  expect(acceptsPhotoRequest({scholar:'Alex',family:'Johnson',image:'https://example.org/private'})).toBe(false);
  expect(acceptsPhotoRequest({scholar:'Alex',family:'Johnson',image:'data:image/jpeg;base64,'+'a'.repeat(1900000)})).toBe(false);
  });
- it('saves cropped JPEGs without metadata and hides only with the owner capability',async()=>{
+ it.each(['navy','gold'])('saves the %s photo card without metadata and hides only with the owner capability',async(frame)=>{
  const bytes=await sharp({create:{width:120,height:120,channels:3,background:'#f7a81c'}}).jpeg().toBuffer();
- const created=await createRafflePhoto({scholar:'Alex',family:'Johnson',frame:'gold',image:`data:image/jpeg;base64,${bytes.toString('base64')}`});
+ const created=await createRafflePhoto({scholar:'Alex',family:'Johnson',frame,image:`data:image/jpeg;base64,${bytes.toString('base64')}`});
  expect(created.token).toMatch(/^[a-f0-9]{64}$/);
  expect(records.size).toBe(3);
  const photo=await getRafflePhoto(created.id);
