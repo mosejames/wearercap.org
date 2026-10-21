@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { COMMITTEES } from './committee/data.js';
 import './styles.css';
-import HomeCollective from './components/HomeCollective.jsx';
+import HomeRaffle, { RAFFLE_URL } from './components/HomeRaffle.jsx';
 import MembershipThermometer from './membership/MembershipThermometer.jsx';
 
 // Pulled straight from the Find Your Place data so the two can never drift.
@@ -168,11 +168,12 @@ const navLinks = [
 // Split into month / day / weekday so each date can be set like a calendar
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
-// School dates remain below the Collective feature.
+// School dates remain below the current raffle feature.
 const upcomingEvents = [
-  { month: 'Sept', year: '2026', weekday: 'Tue', day: '29', label: 'Picture Day' },
-  { month: 'Oct', year: '2026', weekday: 'Thu + Fri', day: '1 & 2', label: 'Admin Conference' },
-  { month: 'Oct', year: '2026', weekday: 'Mon', day: '5', label: 'Holiday Raffle' },
+  { month: 'Oct', year: '2026', weekday: 'Sun', day: '25', label: 'First raffle drawing', detail: 'Enter by Oct 24 at 11:59 p.m.', href: RAFFLE_URL, cta: 'Buy tickets' },
+  { month: 'Oct', year: '2026', weekday: 'Fri', day: '30', label: 'Trunk or Treat', detail: '2:30 to 3:30 p.m., RCA Courtyard', href: 'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk', cta: 'Help with the event' },
+  { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '5 & 6', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
+  { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '19 & 20', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
 ];
 
 
@@ -796,14 +797,14 @@ function App() {
           pass and pull the next few forward. */}
       <section id="events" className="content-section events-section">
         <div className="section-heading">
-          <p className="section-label">Our community, connected</p>
-          <h2>Good things are happening in-house.</h2>
-          <p>Get to know the resources and talents within our RCA family.</p>
+          <p className="section-label">The RCAP Fall Raffle</p>
+          <h2>Your first chance to win is Sunday.</h2>
+          <p>Tickets are on sale. Help celebrate our teachers, one ticket at a time.</p>
         </div>
-        <HomeCollective />
+        <HomeRaffle />
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
-        <div className="event-grid" aria-label="More upcoming RCAP dates">
-          {upcomingEvents.map(({ month, year, weekday, day, label, href, cta }) => (
+        <div className="event-grid home-upcoming-dates" aria-label="More upcoming RCAP dates">
+          {upcomingEvents.map(({ month, year, weekday, day, label, detail, href, cta }) => (
             <article
               className={`event-card${day.length > 2 ? ' is-range' : ''}`}
               key={`${month}-${day}-${label}`}
@@ -816,6 +817,7 @@ function App() {
               </header>
               <p className="event-day">{day}</p>
               <p className="event-what">{label}</p>
+              {detail && <p className="home-event-detail">{detail}</p>}
               {href && <a className="event-cta" href={href}>{cta || 'Details'} <ArrowUpRight size={15} aria-hidden="true" /></a>}
             </article>
           ))}

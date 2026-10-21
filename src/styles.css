@@ -2614,3 +2614,11 @@ button {
 .home-collective-invite .home-collective-join{grid-column:2;grid-row:1/4;align-self:center;margin:0;white-space:nowrap}
 @media(max-width:760px){.home-collective{grid-template-columns:1fr}.home-collective-invite{display:block}.home-collective-invite .home-collective-join{margin-top:18px}.home-collective-visual{transform:none}}
 @media(prefers-reduced-motion:reduce){.home-collective-visual{transition:none;transform:none}.home-collective-visual:hover{transform:none}}
+
+/* The current homepage feature reuses the established community feature layout. */
+.home-raffle .home-collective-visual { transform: none; }
+.home-raffle .home-collective-copy > p.home-raffle-note { font-size: 13px; line-height: 1.5; margin-top: 18px; color: #d3dae8; }
+.homepage-refresh .events-section .home-upcoming-dates { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.home-event-detail { font-size: 14px; line-height: 1.5; margin: 4px 14px 14px; color: var(--muted); }
+@media (max-width: 1000px) { .homepage-refresh .events-section .home-upcoming-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .homepage-refresh .events-section .home-upcoming-dates { grid-template-columns: 1fr; } }
