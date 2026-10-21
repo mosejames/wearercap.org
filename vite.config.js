@@ -22,6 +22,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        events2026: resolve(__dirname, "events/2026/index.html"),
+        trunk2026: resolve(__dirname, "events/2026/trunk-or-treat/index.html"),
+        raffle2026: resolve(__dirname, "events/2026/fall-raffle/index.html"),
+        travel2026: resolve(__dirname, "events/2026/student-adventures/index.html"),
         karaokecloseout: resolve(__dirname, "karaoke/closeout/index.html"),
         uniformplaybook: resolve(__dirname, 'uniform-playbook/index.html'),
       raffleplaybook: resolve(__dirname, 'raffle-playbook/index.html'),
