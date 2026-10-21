@@ -2,6 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/nyc-sign",
+      "destination": "/api/m3-sign?vault=nyc"
+    },
+    {
+      "source": "/nyc-vault/e/:slug/p/:photo",
+      "destination": "/api/m3-link?vault=nyc&slug=:slug&photo=:photo"
+    },
+    {
+      "source": "/nyc-vault/e/:slug",
+      "destination": "/api/m3-link?vault=nyc&slug=:slug"
+    },
+    {
       "source": "/api/london-activity",
       "destination": "/api/m3-sign?vault=london-activity"
     },

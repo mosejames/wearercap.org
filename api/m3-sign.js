@@ -17,6 +17,7 @@
 // ---------------------------------------------------------------------------
 
 import { AwsClient } from 'aws4fetch';
+import nycHandler from '../server/nyc-sign.js';
 import londonHandler from '../server/london-sign.js';
 import activityHandler from '../server/london-activity/index.js';
 import newsletterHandler from '../server/newsletter-sign.js';
@@ -86,6 +87,7 @@ export default async function handler(req, res) {
   if (req.query?.vault === 'london-activity') return activityHandler(req, res);
   // London has its own album validation and R2-only storage rules. Sharing
   // this entry point keeps the deployment within the existing function limit.
+  if (req.query?.vault === 'nyc') return nycHandler(req,res);
   if (req.query?.vault === 'london') return londonHandler(req, res);
   // The newsletter builder signs officer photo uploads through this same entry.
   if (req.query?.vault === 'newsletter') return newsletterHandler(req, res);

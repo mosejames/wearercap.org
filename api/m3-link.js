@@ -1,3 +1,4 @@
+import nycHandler from '../server/nyc-link.js';
 import londonHandler from '../server/london-link.js';
 // ---------------------------------------------------------------------------
 // Share cards for the M³ Vault. Same trick as api/vault-link.js: the app is a
@@ -46,6 +47,7 @@ async function describe(slug) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.vault === 'nyc') return nycHandler(req,res);
   if (req.query?.vault === 'london') return londonHandler(req, res);
   const slug = String((req.query && req.query.slug) || '').trim();
   const ev = await describe(slug);
