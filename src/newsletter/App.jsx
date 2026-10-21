@@ -443,7 +443,9 @@ function Preview({ html, active, onPick }) {
   // whenever the preview becomes visible, and after images arrive.
   const fit = useCallback(() => {
     const doc = frame.current?.contentDocument;
-    const h = doc?.documentElement?.scrollHeight || 0;
+    // Measure the content, not scrollHeight, which cannot shrink below the
+    // iframe's current viewport after a longer draft or image has resized it.
+    const h = doc?.body?.getBoundingClientRect().height || 0;
     if (h > 50) setHeight(h + 8);
   }, []);
   useEffect(() => {
