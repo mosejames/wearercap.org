@@ -1,3 +1,15 @@
+# Activation completed
+
+The user approved NYC database activation and publication on October 20, 2026. The send-off page is live at https://wearercap.org/nyc-sendoff/ and the shared album at https://wearercap.org/nyc-vault/. The approved schema was applied to kcsrtwwpnekqdrfgcfys and recorded as migration 20261021021846_nyc_shared_gallery.sql.
+
+Verification passed: full build and 869 tests; rollback-only SQL checks under anonymous and authenticated roles; actual signed R2 uploads of original/web/thumb; browser upload CORS; the same synthetic image visible in both galleries; same-byte duplicate skipping; exact-photo link opening the actual image in the browser; social crawler image retrieval; fresh hidden-photo fallback with no-store; branded page share cards. Test photo was hidden afterward and the synthetic account disabled, with its sessions revoked. No real texts or emails were sent, so actual SMS delivery was not tested in this session. London remained at 907 photos before and after activation; its page still loads.
+
+Database advisors reported only INFO notices for the two intentionally private RLS tables with no direct grants or policies. Narrow private definer functions and public invoker wrappers are the only access paths. Other project notices predate this work and were not modified.
+
+Videos remain in the approved NYC Dropbox collection until separately prepared for the gallery. No automatic video ingestion or Instagram collection is enabled.
+
+---
+
 # NYC send-off activation review
 
 Prepared October 20 for the confirmed Class of 2029 trip, October 21–23.
