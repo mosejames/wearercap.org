@@ -3,15 +3,17 @@ export function frameLayout(frame, scholar, family) {
  const gold=frame==='gold';
  const name=scholar||'your scholar';
  const byline=scholar&&family?`From ${name} & the ${family} family`:scholar?`From ${name}`:'From your scholar & family';
+ const bylineSize=gold?(byline.length>80?18:byline.length>45?26:34):(byline.length>80?14:byline.length>55?18:28);
+ const bylineWrap=gold?(byline.length>80?52:40):(byline.length>55?48:36);
  return {
   gold, photo:gold?{x:800,y:50,w:350,h:530}:{x:30,y:40,w:515,h:550},
   background:gold?'golden-ticket-v1.jpg':'autumn-postcard-v1.jpg',
   ink:gold?'#102a49':'#fff5df',accent:gold?'#102a49':'#ffc342',
   x:gold?145:600,w:gold?550:535,brandY:gold?116:62,
-  headlineY:gold?145:165,headlineSize:gold?50:58,
-  bylineY:gold?330:96,byline,
-  bylineSize:gold?(byline.length>80?18:byline.length>45?26:34):(byline.length>80?14:byline.length>55?18:28),
-  bylineWrap:gold?(byline.length>80?52:40):(byline.length>55?48:36),
+  headlineY:gold?145:Math.max(205,148+wrapName(byline,bylineWrap).length*(bylineSize+3)+18),headlineSize:gold?50:58,
+  bylineY:gold?330:148,byline,
+  bylineSize,
+  bylineWrap,
   supportY:gold?456:566,supportX:gold?213:860,
   supportLines:['Supporting RCAP’s efforts.'],
   ticketLabel:gold?'Buy $1 raffle tickets':'$1 RAFFLE TICKETS',
