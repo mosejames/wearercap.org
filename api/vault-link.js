@@ -1,3 +1,4 @@
+import { raffleShareHandler } from '../server/raffle-share.js';
 import { describePrivateShare, sharePreviewCopy } from '../src/vault/sharePreview.js';
 // ---------------------------------------------------------------------------
 // Share cards for the Amistad Vault.
@@ -132,6 +133,7 @@ export async function privateShareLink(req, res) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.card === 'raffle-share') return raffleShareHandler(req, res);
   if (req.query?.share != null) return privateShareLink(req, res);
   const slug = String((req.query && req.query.slug) || '').trim();
   const V = VAULTS[String((req.query && req.query.vault) || '')] || VAULTS.amistad;

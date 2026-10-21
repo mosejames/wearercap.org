@@ -1,3 +1,4 @@
+import { raffleShareImage } from '../server/raffle-share.js';
 import { raffleCountdownImage } from '../server/raffle-countdown-image.js';
 import { describePrivateShare, sharePreviewCopy } from '../src/vault/sharePreview.js';
 import { ImageResponse } from '@vercel/og';
@@ -65,6 +66,12 @@ export function privateShareCard(info) {
 }
 
 export default async function handler(req,res) {
+  if (req.query?.card === 'raffle-share') {
+    const png = Buffer.from(await raffleShareImage(fonts, req.query).arrayBuffer());
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).send(png);
+  }
   if (req.query?.card === 'raffle-countdown') {
     const png = Buffer.from(await raffleCountdownImage(fonts).arrayBuffer());
     res.setHeader('Content-Type', 'image/png');

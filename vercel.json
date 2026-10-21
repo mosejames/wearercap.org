@@ -1,7 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/events/2026/fall-raffle/countdown.png", "destination": "/api/vault-og?card=raffle-countdown" },
+    {
+      "source": "/events/2026/fall-raffle/share",
+      "destination": "/api/vault-link?card=raffle-share"
+    },
+    {
+      "source": "/events/2026/fall-raffle/share/",
+      "destination": "/api/vault-link?card=raffle-share"
+    },
+    {
+      "source": "/events/2026/fall-raffle/countdown.png",
+      "destination": "/api/vault-og?card=raffle-countdown"
+    },
     {
       "source": "/api/nyc-download/:photo",
       "destination": "/api/m3-link?vault=nyc&download=:photo"
