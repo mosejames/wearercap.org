@@ -433,7 +433,7 @@ const ACCENT = { story: '#f7a81c', photo: '#f26a1b', quote: '#1a2a56', dates: '#
 // Tap any part of the preview to edit it. The preview is tagged with data-nb
 // (renderEmail's mark option); a tap reports which part and the words under
 // the finger so the editor can put the cursor right there.
-const PREVIEW_STYLE = '<style>[data-nb]{cursor:pointer;transition:box-shadow .15s}[data-nb]:hover{box-shadow:inset 0 0 0 2px #f26a1b}</style>';
+const PREVIEW_STYLE = '<style>body{padding:0!important;background:#1b2c56!important}[data-nb]{cursor:pointer;transition:box-shadow .15s}[data-nb]:hover{box-shadow:inset 0 0 0 2px #f26a1b}</style>';
 function Preview({ html, active, onPick }) {
   const pick = useRef(onPick);
   pick.current = onPick;
@@ -446,7 +446,7 @@ function Preview({ html, active, onPick }) {
     // Measure the content, not scrollHeight, which cannot shrink below the
     // iframe's current viewport after a longer draft or image has resized it.
     const h = doc?.body?.getBoundingClientRect().height || 0;
-    if (h > 50) setHeight(h + 8);
+    if (h > 50) setHeight(Math.ceil(h));
   }, []);
   useEffect(() => {
     const f = frame.current;
