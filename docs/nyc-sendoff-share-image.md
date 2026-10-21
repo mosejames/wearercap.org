@@ -1,0 +1,9 @@
+# NYC send-off Times Square share image
+
+Requested by the owner October 20, 2026. Replaces only the send-off landing page OG/Twitter card; exact-photo gallery cards remain unchanged.
+
+Built-in image-generation tool. Generated artwork depicts an imagined Times Square takeover, not a real school advertisement or trip photograph. Exported to 1200×630 JPEG as public/nyc/nyc-sendoff-times-square-2029-og.jpg. The static send-off page references the new versioned HTTPS URL and descriptive OG/Twitter alt text.
+
+Prompt:
+
+Create a finished 1200-by-630 style landscape social sharing thumbnail, composition ratio about 1.9:1, for a Ron Clark Academy Class of 2029 New York City trip send-off page. Fun, celebratory Times Square at blue hour, vivid illuminated electronic billboards covering the tall buildings on both sides and at center, recognizable energetic New York street perspective. Make the image feel like Times Square has been taken over by the class. On MANY large, clearly readable screens repeat EXACT text 'RCA 2029', some screens stacked as 'RCA' above '2029'. One central oversized screen should prominently read 'RCA 2029' and a smaller screen below it 'NEW YORK, HERE WE COME!'. All typography clean and legible, playful polished bold lettering. Palette centered on deep RCA navy blue #1a2a56 and sunny yellow #f0b323, with warm white lights and a few colorful confetti accents. Exciting, joyful, charming slightly stylized cinematic illustration with rich architectural detail and glossy lit screens, not corporate or somber. Tiny anonymous street silhouettes can convey scale, but no identifiable children, no close-up people. Keep important billboard lettering inside a generous safe margin for social crops. No actual commercial brands or logos, no watermarks, no extra gibberish text. Screens should be the subject, typography and class identity dominate. Entire artwork is the image; no browser, phone frame, mockup border or surrounding whitespace.
