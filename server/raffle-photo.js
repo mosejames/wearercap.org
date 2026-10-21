@@ -1,3 +1,4 @@
+import { studentDetails } from '../public/raffle-share/student.js';
 // Raffle invitations are link-only records, not a public gallery. Only the
 // cropped web photo and composed card are saved; source files are discarded.
 import { AwsClient } from 'aws4fetch';
@@ -48,14 +49,15 @@ export async function getRafflePhoto(id) {
   }
  }
 
- return {id,scholar,family,frame:record.frame==='gold'?'gold':'navy',storage:'r2',photoUrl:`${config().base}/${ROOT}/${id}/web.jpg`,imageUrl:`${config().base}/${ROOT}/${id}/card-v2.jpg`,ownerHash:record.ownerHash};
+ return {id,scholar,family,...studentDetails(record),frame:record.frame==='gold'?'gold':'navy',storage:'r2',photoUrl:`${config().base}/${ROOT}/${id}/web.jpg`,imageUrl:`${config().base}/${ROOT}/${id}/card-v2.jpg`,ownerHash:record.ownerHash};
 }
 export function acceptsPhotoRequest(body) {
  const names=shareNames(body);
- return Boolean(names.scholar && names.family && typeof body?.image==='string' && body.image.length<MAX_BASE64 && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(body.image));
+ const details=studentDetails(body);
+ return Boolean(names.scholar && names.family && details.classYear && details.house && typeof body?.image==='string' && body.image.length<MAX_BASE64 && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(body.image));
 }
 export async function createRafflePhoto(body) {
- if(!acceptsPhotoRequest(body)) {const e=new Error('Add the scholar and family names, then choose a photo again.');e.status=400;throw e;}
+ if(!acceptsPhotoRequest(body)) {const e=new Error('Add the student’s name, family name, class and house, then choose a photo again.');e.status=400;throw e;}
  const bytes=Buffer.from(body.image.split(',')[1],'base64');
  let web;
  try {
@@ -69,7 +71,7 @@ export async function createRafflePhoto(body) {
  const names=shareNames(body);const frame=body.frame==='gold'?'gold':'navy';
  const image=Buffer.from(await rafflePhotoImage(fonts,{...names,frame,photo:`data:image/jpeg;base64,${web.toString('base64')}`}).arrayBuffer());
  const card=await sharp(image).jpeg({quality:90}).toBuffer();
- const record={id,...names,frame,storage:'r2',status:'visible',cardVersion:2,ownerHash:hash(token),createdAt:new Date().toISOString()};
+ const record={id,...names,...studentDetails(body),frame,storage:'r2',status:'visible',cardVersion:2,ownerHash:hash(token),createdAt:new Date().toISOString()};
  // Publish the manifest last. Partial uploads never produce a visible invitation.
  for(const [filename,data,type] of [['web.jpg',web,'image/jpeg'],['card-v2.jpg',card,'image/jpeg'],['record.json',JSON.stringify(record),'application/json']]) {
   const r=await object(`${ROOT}/${id}/${filename}`,'PUT',data,type);
