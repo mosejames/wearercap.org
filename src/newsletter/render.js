@@ -1,3 +1,4 @@
+import { RAFFLE_COUNTDOWN_URL, RAFFLE_DETAILS_URL, RAFFLE_TICKET_URL } from '../events/raffleCountdown.js';
 // RCAP newsletter model and email renderer.
 //
 // Pure functions only: the builder (browser), the public archive page
@@ -160,12 +161,18 @@ function communityCards(b) {
 function storyBlock(b, { leading = false } = {}) {
   // A story with two actions keeps them together. Inline blocks wrap on phones
   // and survive the same Gmail paste as the existing single-button markup.
-  const primary = button(b.button);
+  const directAction = safeUrl(b.button?.url) === RAFFLE_TICKET_URL
+    || safeUrl(b.button?.url) === 'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk';
+  const primary = directAction
+    ? button(b.button).replace(`background:${C.paper};`, 'background:#f7a81c;').replace('border-radius:999px;', 'border-radius:6px;')
+    : button(b.button);
   const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
-  const actions = communityCards(b) || (secondary
+  const actions = communityCards(b) || (directAction ? primary + textLink(b.link) : secondary
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
     : primary + textLink(b.link));
-  const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + actions;
+  const countdown = safeUrl(b.button?.url) === RAFFLE_TICKET_URL && safeUrl(b.link?.url) === RAFFLE_DETAILS_URL
+    ? image({ url: RAFFLE_COUNTDOWN_URL, alt: 'Time left to enter the first raffle drawing. Entry deadline: Saturday, October 24 at 11:59 p.m. Eastern.' }, RAFFLE_TICKET_URL, true) : '';
+  const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + countdown + actions;
   return row(b.tone === 'sand' ? C.sand : C.paper, leading ? '14px 26px 30px' : '30px 26px', inner.trim() ? inner : '');
 }
 function photoBlock(b) { return row(C.paper, '0', image(b.image, b.href)); }
