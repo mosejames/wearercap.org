@@ -57,7 +57,7 @@ describe('newsletter public pages', () => {
     expect(res.body).toContain('<meta property="og:title" content="See you Sunday">');
     expect(res.body).toContain('og:image" content="https://media.example.com/a.jpg"');
     expect(res.body).toContain('https://wearercap.org/newsletter/october-25');
-    expect(res.body).toContain('we-are-rcap-header.png');
+    expect(res.body).toContain('we-are-rcap-logo.png');
   });
   it('returns 404 for drafts and unknown issues', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => null }));

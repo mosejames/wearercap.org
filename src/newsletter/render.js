@@ -65,7 +65,7 @@ export function template(format, isoDate) {
   return {
     ...base,
     subject: '',
-    dateline: `THE WEEK AHEAD · ${when}`,
+    dateline: `RCAP UPDATE · ${when}`,
     kicker: 'Your week with RCAP',
     headline: '',
     greeting: 'Dear Ron Clark Academy Families,',
@@ -241,7 +241,7 @@ const tagRow = (html, key, mark) => (mark && html.startsWith('<tr>') ? `<tr data
 export function renderEmail(c = {}, { webUrl = '', mark = false } = {}) {
   const pre = c.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${esc(c.preheader)}</div>` : '';
   const view = safeUrl(webUrl) ? `<p style="margin:14px 0 0;font-size:10px;letter-spacing:2px;"><a href="${esc(safeUrl(webUrl))}" style="color:${C.mist};text-decoration:underline;">VIEW ON THE WEB</a></p>` : '';
-  const masthead = `<tr><td style="padding:30px 26px;background:${C.navy};"><a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/newsletter-assets/we-are-rcap-header.png" alt="We Are RCAP. Ron Clark Academy Parents" width="240" style="display:block;width:240px;max-width:100%;height:auto;border:0;margin:0 0 20px;"></a>`
+  const masthead = `<tr><td style="padding:30px 26px;background:${C.navy};"><a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/images/we-are-rcap-logo.png" alt="We Are RCAP" width="160" style="display:block;width:160px;max-width:100%;height:auto;border:0;margin:0 0 20px;"></a>`
     + (c.dateline ? `<p style="margin:8px 0 0;color:${C.mist};font-size:10px;letter-spacing:2px;">${esc(c.dateline)}</p>` : '') + view + '</td></tr>';
   const opener = kicker(c.kicker) + h1(c.headline)
     + (c.greeting ? `<p style="margin:0 0 10px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.greeting)}</p>` : '')

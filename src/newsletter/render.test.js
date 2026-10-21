@@ -32,7 +32,7 @@ describe('email rendering', () => {
     const html = renderEmail(issue());
     expect(html).toContain('<table role="presentation"');
     expect(html).not.toMatch(/<style|class=|<script/);
-    expect(html).toContain('we-are-rcap-header.png');
+    expect(html).toContain('we-are-rcap-logo.png');
     expect(html).toContain('This is how<br>we do it.');
     expect(html).toContain('https://signupgenius.com/x');
     expect(html).toContain('We have feet, not roots.');
