@@ -10,11 +10,11 @@ export function frameLayout(frame, scholar, family) {
   x:gold?145:600,w:gold?550:535,brandY:gold?116:62,
   headlineY:gold?145:165,headlineSize:gold?50:58,
   bylineY:gold?316:105,byline,bylineSize:byline.length>80?13:byline.length>55?18:21,
-  supportY:gold?378:355,supportX:gold?210:600,
-  supportLines:gold?['Supporting RCAP’s efforts.','Main Teacher Appreciation Week fundraiser.']:['Supporting RCAP’s efforts.'],
+  supportY:gold?456:355,supportX:gold?213:600,
+  supportLines:['Supporting RCAP’s efforts.'],
   ticketLabel:gold?'Buy $1 raffle tickets':'$1 RAFFLE TICKETS',
   supportSize:18,supportLeading:25,
-  ticket:gold?{x:280,y:438,w:390,h:34}:{x:795,y:448,w:360,h:90},
+  ticket:gold?{x:213,y:410,w:463,h:40}:{x:795,y:448,w:360,h:90},
  };
 }
 export function wrapName(text,maxChars) {
