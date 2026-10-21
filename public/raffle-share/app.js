@@ -36,8 +36,9 @@ function draw() {
  text('RCAP FALL RAFFLE',l.x,l.brandY,22,l.accent);
  ['Help me celebrate','my awesome','teachers.'].forEach((line,i)=>text(line,l.x,l.headlineY+i*(l.headlineSize+1),l.headlineSize,i===2?l.accent:l.ink));
  wrapName(l.byline,l.gold?53:44).forEach((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500));
- context.save();if(l.gold)context.textAlign='center';
- l.supportLines.forEach((line,i)=>text(line,l.gold?l.ticket.x+l.ticket.w/2:l.supportX,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500));context.restore();
+ context.save();context.textAlign='center';
+ if(l.gold){l.supportLines.forEach((line,i)=>text(line,l.ticket.x+l.ticket.w/2,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500));}
+ else{context.translate(995,579);context.rotate(-8*Math.PI/180);text(l.supportLines[0],0,-9,l.supportSize,l.ink,500);}context.restore();
  const t=l.ticket;
  if(l.gold){roundRect(t.x,t.y,t.w,t.h,7,'#102a49');context.save();context.textAlign='center';text(l.ticketLabel,t.x+t.w/2,t.y+6,28,'#ffcf5a');context.restore();}
  else{context.save();context.translate(t.x+t.w/2,t.y+t.h/2);context.rotate(-8*Math.PI/180);context.textAlign='center';text(l.ticketLabel,0,-15,28,'#102a49');context.restore();}

@@ -10,7 +10,7 @@ export function frameLayout(frame, scholar, family) {
   x:gold?145:600,w:gold?550:535,brandY:gold?116:62,
   headlineY:gold?145:165,headlineSize:gold?50:58,
   bylineY:gold?316:105,byline,bylineSize:byline.length>80?13:byline.length>55?18:21,
-  supportY:gold?456:355,supportX:gold?213:600,
+  supportY:gold?456:566,supportX:gold?213:860,
   supportLines:['Supporting RCAP’s efforts.'],
   ticketLabel:gold?'Buy $1 raffle tickets':'$1 RAFFLE TICKETS',
   supportSize:18,supportLeading:25,

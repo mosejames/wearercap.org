@@ -54,7 +54,7 @@ export function rafflePhotoImage(fonts, {photo,scholar,family,frame}) {
  text('RCAP FALL RAFFLE',l.x,l.brandY,22,l.accent),
  ...['Help me celebrate','my awesome','teachers.'].map((line,i)=>text(line,l.x,l.headlineY+i*(l.headlineSize+1),l.headlineSize,i===2?l.accent:l.ink)),
  ...wrapName(l.byline,l.gold?53:44).map((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500)),
- ...l.supportLines.map((line,i)=>text(line,l.supportX,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500,l.gold?{width:t.w,justifyContent:'center'}:{})),
+ l.gold?text(l.supportLines[0],l.supportX,l.supportY,l.supportSize,l.ink,500,{width:t.w,justifyContent:'center'}):box({position:'absolute',left:855,top:568,width:280,height:22,transform:'rotate(-8deg)',justifyContent:'center',alignItems:'center',fontSize:l.supportSize,color:l.ink,fontWeight:500},l.supportLines[0]),
  l.gold?box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,borderRadius:7,background:'#102a49',alignItems:'center',justifyContent:'center',fontSize:28,color:'#ffcf5a',fontWeight:900},l.ticketLabel):
  box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,transform:'rotate(-8deg)',flexDirection:'column',alignItems:'center',justifyContent:'center',fontSize:29,lineHeight:1.1,fontWeight:900,color:'#102a49'},box({fontSize:28},l.ticketLabel))),{width:1200,height:630,fonts});
 }
