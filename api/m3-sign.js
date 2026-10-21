@@ -84,6 +84,10 @@ async function albumAccepts(eventId) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.vault === 'raffle-photo') {
+    const { default: rafflePhotoHandler } = await import('../server/raffle-photo.js');
+    return rafflePhotoHandler(req, res);
+  }
   if (req.query?.vault === 'london-activity') return activityHandler(req, res);
   // London has its own album validation and R2-only storage rules. Sharing
   // this entry point keeps the deployment within the existing function limit.
