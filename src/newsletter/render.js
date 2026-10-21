@@ -149,7 +149,7 @@ function communityCards(b) {
       + `<tr><td valign="top" style="padding:12px 14px 6px;"><img src="${SITE}/newsletter-assets/${icon}.png" width="24" height="24" alt="" style="display:block;width:24px;height:24px;border:0;margin:0 0 8px;">`
       + `<h3 style="margin:0 0 6px;font-size:16px;line-height:1.2;color:${color};">${esc(label)}</h3>`
       + `<p style="margin:0;font-size:12px;line-height:1.4;color:${dark ? C.mist : C.body};">${esc(description)}</p></td></tr>`
-      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${dark ? '#f7a81c' : C.navy};text-decoration:underline;">${esc(action)} &#8599;</a></td></tr></table></td>`;
+      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${dark ? '#f7a81c' : C.navy};text-decoration:underline;">${esc(action)}</a></td></tr></table></td>`;
   };
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;table-layout:fixed;border-collapse:collapse;"><tr>`
     + card(first, b.button.label, 'Meet the leads. Find your team.', 'committee-team-icon', false, 'Explore the teams')
@@ -210,7 +210,7 @@ function catchUpCards(b) {
     + `<span style="display:block;font-size:9px;font-weight:800;letter-spacing:1.3px;color:${C.gold};margin:0 0 9px;">${eyebrow}</span>`
     + `<strong style="display:block;font-size:15px;line-height:1.25;margin:0 0 8px;">${esc(label)}</strong>`
     + `<span style="display:block;font-size:12px;line-height:1.4;color:${C.body};margin:0 0 12px;">${description}</span>`
-    + `<span style="display:block;font-size:12px;font-weight:800;text-decoration:underline;">${action} &#8599;</span></a>`
+    + `<span style="display:block;font-size:12px;font-weight:800;text-decoration:underline;">${action}</span></a>`
     + `</td></tr></table></td></tr></table></div>`).join('') + '</div>';
 }
 function noteBlock(b) {
