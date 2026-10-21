@@ -1,4 +1,4 @@
-export const GROUPS=[['A','Group A'],['AA','Group AA'],['both','Both groups']];
+export const GROUPS=[['A','Group A'],['AA','Group AA'],['both','Mixed']];
 export const validGroup=value=>GROUPS.some(([key])=>key===value);
 export const groupLabel=value=>GROUPS.find(([key])=>key===value)?.[1]||'Not assigned';
 export const matchesGroup=(photo,group)=>!group||!photo.group||photo.group==='both'||photo.group===group;
