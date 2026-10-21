@@ -123,6 +123,26 @@ const advisors = [
   { key: 'g8', grade: '8th grade', name: 'Camille Cunningham', photo: '/images/board/camille.jpg' },
 ];
 
+// Confirmed committee leads from the October newsletter roster.
+const committeeLeads = [
+  { name: 'Trunk or Treat', lead: 'Donna Jenkins', about: 'Brings families together for decorated trunks, candy and a fall celebration for our students.' },
+  { name: 'Fall Raffle', lead: 'Jamelia Jones and Ashley Carter', about: 'Organizes ticket sales, prize donations and drawings that support Teacher Appreciation Week.' },
+  { name: 'Teacher Appreciation Week', lead: 'Amanda Brown', about: 'Plans a week of thoughtful ways to thank the faculty and staff who pour into our children.' },
+  { name: 'Holiday Decor', lead: 'Brandy Mahaffey', about: 'Helps make the school feel festive, from planning decorations to setting them up and taking them down.' },
+  { name: 'Concessions', lead: 'Tim Evans', about: 'Keeps the concession stand stocked and staffed for home basketball games.' },
+  { name: 'Marketing and Communications', lead: 'Tamara Smith', about: 'Helps families stay connected through photos, video, writing and community updates.' },
+  { name: 'Men of RCAP', lead: 'Steve Johnson', about: 'Brings hands and a welcoming presence to events, setup, teardown and the work that needs doing.' },
+  { name: 'Uniform Swap', lead: 'Shekita James', about: 'Connects outgrown uniforms with the families who can use them, through sorting and handoffs.' },
+  { name: 'EXP Support', lead: 'Nathan Jones', about: 'Helps recruit and welcome parent volunteers when educators visit for the RCA Experience.' },
+];
+const christmasLeads = [
+  ['2027', 'Brooke Everette'],
+  ['2028', 'Josette Berksteiner'],
+  ['2029', 'Adrienne Greene'],
+  ['2030', 'LaTerrica Bellamy'],
+  ['2031', 'Angelia Lumpkin'],
+];
+
 function initials(name) {
   return name
     .split(/\s+/)
@@ -161,6 +181,7 @@ function App() {
           question, an idea, or something you would like us to know? Reach out
           anytime, or come say hello at carline or the next event.
         </p>
+        <a className="text-link bd-jump" href="#committees">Meet the committee leads <ArrowUpRight size={16} aria-hidden="true" /></a>
       </section>
 
       <section className="content-section" aria-labelledby="officers-h">
@@ -210,6 +231,35 @@ function App() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section id="committees" className="content-section bd-committees" aria-labelledby="committees-h">
+        <div className="section-heading">
+          <p className="section-label">Your 2026-27 committee leads</p>
+          <h2 id="committees-h">The parents who stepped up.</h2>
+          <p>These parents are helping turn good ideas into experiences our students and teachers will remember. Meet the people leading each team, and find a place to lend a hand.</p>
+        </div>
+        <ul className="bd-committee-list">
+          {committeeLeads.map(({ name, lead, about }) => (
+            <li className="bd-committee" key={name}>
+              <div><h3>{name}</h3><p className="bd-committee-lead">{lead}</p></div>
+              <p className="bd-committee-about">{about}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="bd-christmas">
+          <h3>4 Days of Christmas</h3>
+          <p>Each class helps bring a little holiday joy to our faculty and staff. Your class lead brings the parents together and helps plan its part of the celebration.</p>
+          <dl className="bd-class-leads">
+            {christmasLeads.map(([year, name]) => (
+              <div key={year}><dt>Class of {year}</dt><dd>{name}</dd></div>
+            ))}
+          </dl>
+        </div>
+        <div className="bd-committee-invite">
+          <div><h3>There is room for you, too.</h3><p>You do not have to lead a committee to make a difference. Explore the teams and tell us where you would like to help.</p></div>
+          <a className="button primary" href="/committee-interest/">Join a committee <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </div>
       </section>
 
       {recaps.length ? (

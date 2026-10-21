@@ -137,7 +137,14 @@ function image(img, href, inset) {
 const row = (bg, padding, html) => html ? `<tr><td style="padding:${padding};background:${bg};">${html}</td></tr>` : '';
 
 function storyBlock(b) {
-  const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + button(b.button) + textLink(b.link);
+  // A story with two actions keeps them together. Inline blocks wrap on phones
+  // and survive the same Gmail paste as the existing single-button markup.
+  const primary = button(b.button);
+  const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
+  const actions = secondary
+    ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
+    : primary + textLink(b.link);
+  const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + actions;
   return row(b.tone === 'sand' ? C.sand : C.paper, '30px 26px', inner.trim() ? inner : '');
 }
 function photoBlock(b) { return row(C.paper, '0', image(b.image, b.href)); }

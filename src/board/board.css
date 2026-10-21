@@ -287,3 +287,26 @@
 @media (max-width: 560px) {
   .bd-recap-points li { font-size: 15px; padding-left: 22px; }
 }
+
+/* Committee leads use text rows, keeping the board portraits distinct. */
+.bd-jump { margin-top: 24px; }
+.bd-committees { scroll-margin-top: 28px; }
+.bd-committee-list { list-style: none; margin: 32px 0; padding: 0; border-top: 1px solid var(--line); }
+.bd-committee { display: grid; grid-template-columns: minmax(220px, 1fr) 1.4fr; gap: 32px; padding: 24px 0; border-bottom: 1px solid var(--line); }
+.bd-committee h3, .bd-christmas h3, .bd-committee-invite h3 { margin: 0 0 8px; font-size: 23px; line-height: 1.2; }
+.bd-committee-lead { margin: 0; color: var(--gold-deep); font-weight: 800; font-size: 17px; }
+.bd-committee-about, .bd-christmas > p, .bd-committee-invite p { margin: 0; color: var(--muted); line-height: 1.65; max-width: 65ch; }
+.bd-christmas { padding: 28px; border-radius: 16px; background: var(--paper-2); }
+.bd-class-leads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 26px 0 0; }
+.bd-class-leads dt { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.bd-class-leads dd { margin: 6px 0 0; font-weight: 800; font-size: 17px; }
+.bd-committee-invite { display: flex; justify-content: space-between; align-items: center; gap: 30px; margin-top: 32px; }
+.bd-committee-invite .button { flex-shrink: 0; }
+.bd-jump:focus-visible, .bd-committee-invite a:focus-visible { outline: 3px solid var(--gold-deep); outline-offset: 5px; }
+@media (max-width: 640px) {
+  .bd-committee { grid-template-columns: 1fr; gap: 12px; }
+  .bd-class-leads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bd-christmas { padding: 22px; }
+  .bd-committee-invite { align-items: flex-start; flex-direction: column; gap: 20px; }
+}
+@media (max-width: 360px) { .bd-class-leads { grid-template-columns: 1fr; } }
