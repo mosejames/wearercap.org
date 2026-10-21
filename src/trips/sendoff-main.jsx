@@ -1,4 +1,2 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import SharedTrip from './SharedTrip.jsx';
-createRoot(document.getElementById('root')).render(<StrictMode><SharedTrip sendoff/></StrictMode>);
+// Retired send-off entry: keep local previews and direct HTML visits aligned with production.
+window.location.replace('/nyc-vault/' + window.location.search + window.location.hash);
