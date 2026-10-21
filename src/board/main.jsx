@@ -75,36 +75,6 @@ const officers = [
   },
 ];
 
-// One parent per grade level, nominated by the officers. Names to come.
-// General membership meetings, set by the board at its third meeting. Quarterly,
-// Mondays at 7pm. Only April is in person, because that is the election.
-// May 10 is its backup. Same shape as the homepage tiles so they render through
-// the same markup and stylesheet; nothing here is styled twice.
-// After every general meeting, build its page and add `recap` to that row. The
-// tile then carries a "Read the recap" link and nothing else needs touching:
-// the meetings still to come simply have no recap yet, which is the honest
-// state rather than a dead link.
-// After every general meeting, add an entry to the TOP of this list and the
-// section renders itself. `points` is the short version for a parent who will
-// not click; `href` is the full recap page. Keep it to three or four points:
-// this is the summary, not the minutes.
-//
-// No balances, no revenue, no budget figures here. Financials are reported to
-// parents in the meeting and in the recap page, not on a public board page.
-const recaps = [
-  {
-    key: 'sept-14',
-    date: 'Monday, September 14',
-    href: '/meeting/sept-14/',
-    headline: 'The room hit its limit before 7:00.',
-    points: [
-      'Dues are $25 per family for the whole year, and every RCA family is already a member.',
-      'The year ahead: the parents\u2019 social on Sept 27, the fall raffle, Trunk or Treat, holiday decor, 4 Days of Christmas, and Teacher Appreciation Week in the last week of April.',
-      'Committee sign-ups opened, and Latasha asked for two or three parents to join a new audit team.',
-    ],
-  },
-];
-
 const meetings = [
   { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual', recap: '/meeting/sept-14/' },
   { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
@@ -243,22 +213,11 @@ function App() {
         </a>
       </header>
 
-      <section className="content-section bd-hero">
+      <section className="content-section bd-hero" aria-labelledby="officers-h">
         <p className="section-label">Your 2026-27 board</p>
-        <h1>Meet your RCAP board.</h1>
-        <p className="bd-lede">
-          We are RCA parents, here to support our families and school. Have a
-          question, an idea, or something you would like us to know? Reach out
-          anytime, or come say hello at carline or the next event.
-        </p>
+        <h1 id="officers-h">Your parent leadership team.</h1>
+        <p className="bd-lede">We are RCA parents, here to support our families, scholars and teachers. Thank you for trusting us with this year. Bring us your questions and ideas, or come say hello at carline.</p>
         <a className="text-link bd-jump" href="#committees">Meet the committee leads <ArrowUpRight size={16} aria-hidden="true" /></a>
-      </section>
-
-      <section className="content-section" aria-labelledby="officers-h">
-        <div className="section-heading">
-          <p className="section-label">Executive board</p>
-          <h2 id="officers-h">Your parent leadership team.</h2>
-        </div>
         <ul className="bd-grid">
           {officers.map((o, i) => (
             <li className="bd-card" key={o.key}>
@@ -280,14 +239,12 @@ function App() {
         </ul>
       </section>
 
-      <section className="content-section band story-section" aria-labelledby="advisory-h">
+      <section className="content-section band story-section bd-advisory" aria-labelledby="advisory-h">
         <div className="section-heading">
           <p className="section-label">Advisory board</p>
-          <h2 id="advisory-h">Someone from your child&rsquo;s grade, at the table.</h2>
+          <h2 id="advisory-h">A voice from every grade.</h2>
           <p>
-            Each officer nominated a parent from a different grade level, so
-            every hallway in the building has someone at the table. They are
-            the ones we ask before we decide anything that touches your child.
+            These parents bring perspectives from each grade to the board's conversations.
           </p>
         </div>
         <ul className="bd-grid bd-grid-five">
@@ -316,44 +273,18 @@ function App() {
         </div>
       </section>
 
-      {recaps.length ? (
-        <section className="content-section bd-recaps" aria-labelledby="recaps-h">
-          <div className="section-heading">
-            <p className="section-label">Last meeting</p>
-            <h2 id="recaps-h">{recaps[0].headline}</h2>
-            <p>
-              {recaps[0].date}. Here is the short version for anyone who could
-              not make it.
-            </p>
-          </div>
-
-          <ul className="bd-recap-points">
-            {recaps[0].points.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul>
-
-          <a className="button primary" href={recaps[0].href}>
-            Everything from the meeting
-            <ArrowUpRight size={18} aria-hidden="true" />
-          </a>
-        </section>
-      ) : null}
-
-      <section className="content-section" aria-labelledby="meetings-h">
+      <section className="content-section bd-meetings" aria-labelledby="meetings-h">
         <div className="section-heading">
           <p className="section-label">Meeting calendar</p>
-          <h2 id="meetings-h">Join us at the next RCAP meeting.</h2>
+          <h2 id="meetings-h">Join the next meeting.</h2>
           <p>
-            Every RCA parent is a member, so every one of these is yours. Please
-            come. This is where the decisions get made, and the parents in the
-            room are the ones who make them. Bring a question, bring an idea, or
-            bring a friend who has been meaning to get involved.
+            Every RCA parent is welcome. Bring a question, an idea or a friend.
+            Our next meeting is Monday, November 16 at 7 p.m., online.
           </p>
         </div>
 
         <div className="event-grid">
-          {meetings.map(({ month, year, weekday, day, label, recap }) => (
+          {meetings.filter((meeting) => !meeting.recap).map(({ month, year, weekday, day, label, recap }) => (
             <article className="event-card" key={`${month}-${day}`}>
               <header className="event-banner">
                 <span>
@@ -373,33 +304,9 @@ function App() {
           ))}
         </div>
 
-        <p className="bd-social">
-          The parents&rsquo; social is Sunday, September 27, in person.
-        </p>
-      </section>
-
-      <section className="content-section bd-letter" aria-labelledby="letter-h">
-        <p className="section-label">From the board</p>
-        <h2 id="letter-h">We are excited to serve.</h2>
-        <div className="bd-letter-body">
-          <p>
-            Thank you for trusting us with this year. None of us took a seat
-            because we wanted to be in front. We took it because RCA gives our
-            children something rare, and the least we can do is hold up our end.
-          </p>
-          <p>
-            So here is the ask. If you see one of our faces, please come up and
-            speak. Tell us what is working and what is not. Tell us what your
-            family needs. We would rather hear it in the hallway than never hear
-            it at all.
-          </p>
-          <p>
-            We are here to make this the best experience it can be, for every one
-            of our children and for the school that pours into them. We are not
-            here to run anything. We are here to be the support. That is the job,
-            and we are glad to have it.
-          </p>
-          <p className="bd-sign">Your 2026-27 RCAP Board</p>
+        <div className="bd-past-meeting">
+          <span>Past meeting: September 14, 2026</span>
+          <a className="text-link" href="/meeting/sept-14/">Read the recap <ArrowUpRight size={15} aria-hidden="true" /></a>
         </div>
       </section>
 

@@ -139,35 +139,6 @@
   line-height: 1.55;
 }
 
-/* The letter */
-
-.bd-letter h2 {
-  margin: 0;
-  max-width: 720px;
-  font-size: clamp(30px, 4.2vw, 52px);
-  line-height: 1;
-}
-
-.bd-letter-body {
-  max-width: 640px;
-  margin-top: 24px;
-}
-
-.bd-letter-body p {
-  margin: 0 0 18px;
-  font-size: 18px;
-  line-height: 1.65;
-}
-
-.bd-sign {
-  margin-top: 26px !important;
-  color: var(--gold-deep);
-  font-size: 13px !important;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 @media (max-width: 1000px) {
   .bd-grid,
   .bd-grid-five {
@@ -237,57 +208,6 @@
   }
 }
 
-/* The one line under the meeting tiles. */
-.bd-social {
-  margin: 18px 0 0;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* The recap link on a meeting tile. Only past meetings carry one, so the tiles
-   still ahead simply end after the time, rather than offering a dead link. */
-.event-recap {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 10px 14px 14px;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 800;
-  text-decoration: none;
-}
-.event-recap:hover { text-decoration: underline; }
-
-/* Last meeting. A short version for the parent who will not click through, and
-   a way in for the one who will. Sits above the meeting calendar, so the page
-   reads: what happened, then what is next. */
-.bd-recap-points {
-  margin: 26px 0 28px;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--line);
-  max-width: 68ch;
-}
-.bd-recap-points li {
-  position: relative;
-  padding: 15px 0 15px 26px;
-  border-bottom: 1px solid var(--line);
-  font-size: 16px;
-  line-height: 1.55;
-}
-.bd-recap-points li::before {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 25px;
-  width: 9px;
-  height: 2px;
-  background: var(--gold-deep);
-}
-@media (max-width: 560px) {
-  .bd-recap-points li { font-size: 15px; padding-left: 22px; }
-}
-
 /* Compact committee tiles reveal the details only when a family wants them. */
 .bd-jump { margin-top: 24px; }
 .bd-committees { scroll-margin-top: 28px; }
@@ -330,3 +250,17 @@
 }
 @media (max-width: 360px) { .bd-team-tile { aspect-ratio: auto; min-height: 210px; } }
 @media (prefers-reduced-motion: reduce) { .bd-team-detail, .bd-team-dialog.is-closing .bd-team-detail { animation: none; } .bd-team-tile { transition: none; } .bd-team-tile:hover { transform: none; } }
+
+/* One introduction, quieter subheadings, and less space between each group. */
+.board-page > .content-section { padding-top: 42px; padding-bottom: 42px; }
+.board-page > .bd-hero { padding-top: 32px; }
+.bd-hero h1 { font-size: clamp(32px, 4vw, 52px); max-width: 920px; }
+.bd-lede { max-width: 760px; margin-top: 16px; font-size: 17px; line-height: 1.6; }
+.bd-jump { margin-top: 16px; }
+.bd-advisory .section-heading, .bd-meetings .section-heading { display: block; }
+.bd-advisory .section-heading h2 { font-size: clamp(24px, 2.5vw, 32px); max-width: none; }
+.bd-advisory .section-heading p:not(.section-label), .bd-meetings .section-heading p:not(.section-label) { max-width: 66ch; margin-top: 14px; font-size: 16px; }
+.bd-meetings .section-heading h2 { font-size: clamp(28px, 3vw, 40px); }
+.bd-meetings .event-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bd-past-meeting { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 22px; margin-top: 26px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+@media (max-width: 600px) { .board-page > .content-section { padding-top: 30px; padding-bottom: 30px; } .bd-meetings .event-grid { grid-template-columns: 1fr; } }
