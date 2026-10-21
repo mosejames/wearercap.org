@@ -143,18 +143,18 @@ function communityCards(b) {
   const first = safeUrl(b.button?.url);
   const second = safeUrl(b.link?.url);
   if (first !== `${SITE}/board/#committees` || second !== 'https://www.paypal.com/ncp/payment/EWP8R298MW83A') return '';
-  const card = (href, label, description, icon, dark, action) => {
-    const color = dark ? C.paper : C.navy;
-    return `<td width="50%" valign="top" style="width:50%;padding:${dark ? '0 0 0 7px' : '0 7px 0 0'};">`
-      + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" height="135" style="width:100%;height:135px;border-collapse:separate;background:${dark ? C.navy : C.paper};border:1px solid ${C.navy};border-top:5px solid ${C.gold};border-radius:8px;">`
+  const card = (href, label, description, icon, last, action) => {
+    const color = C.navy;
+    return `<td width="50%" valign="top" style="width:50%;padding:${last ? '0 0 0 7px' : '0 7px 0 0'};">`
+      + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" height="150" style="width:100%;height:150px;border-collapse:separate;background:${C.paper};border:1px solid ${C.line};border-top:3px solid ${C.line};border-radius:8px;">`
       + `<tr><td valign="top" style="padding:12px 14px 6px;"><img src="${SITE}/newsletter-assets/${icon}.png" width="24" height="24" alt="" style="display:block;width:24px;height:24px;border:0;margin:0 0 8px;">`
       + `<h3 style="margin:0 0 6px;font-size:16px;line-height:1.2;color:${color};">${esc(label)}</h3>`
-      + `<p style="margin:0;font-size:12px;line-height:1.4;color:${dark ? C.mist : C.body};">${esc(description)}</p></td></tr>`
-      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${dark ? '#f7a81c' : C.navy};text-decoration:underline;">${esc(action)}</a></td></tr></table></td>`;
+      + `<p style="margin:0;font-size:12px;line-height:1.4;color:${C.body};">${esc(description)}</p></td></tr>`
+      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${C.navy};text-decoration:underline;">${esc(action)}</a></td></tr></table></td>`;
   };
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;table-layout:fixed;border-collapse:collapse;"><tr>`
     + card(first, b.button.label, 'Meet the leads. Find your team.', 'committee-team-icon', false, 'Explore the teams')
-    + card(second, b.link.label, '$25 per family supports scholars and teachers.', 'community-giving-icon', true, 'Give by November 4')
+    + card(second, b.link.label, 'Already given? Thank you. You’re all set.', 'community-giving-icon', true, 'Membership donation')
     + '</tr></table>';
 }
 
@@ -167,7 +167,10 @@ function storyBlock(b, { leading = false } = {}) {
     ? button(b.button).replace(`background:${C.paper};`, 'background:#f7a81c;').replace('border-radius:999px;', 'border-radius:6px;')
     : button(b.button);
   const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
-  const actions = communityCards(b) || (directAction ? primary + textLink(b.link) : secondary
+  const directActions = safeUrl(b.button?.url) === RAFFLE_TICKET_URL
+    ? `<div style="text-align:center;">${primary}${textLink(b.link)}</div>`
+    : primary + textLink(b.link);
+  const actions = communityCards(b) || (directAction ? directActions : secondary
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
     : primary + textLink(b.link));
   const countdown = safeUrl(b.button?.url) === RAFFLE_TICKET_URL && safeUrl(b.link?.url) === RAFFLE_DETAILS_URL
