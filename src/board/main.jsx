@@ -1,7 +1,7 @@
 import Brand from '../components/Brand.jsx';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, ArrowUpRight, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Mail, Candy, Ticket, HeartHandshake, TreePine, Popcorn, Megaphone, HandHelping, Shirt, DoorOpen, Gift } from 'lucide-react';
 import '../styles.css';
 import './board.css';
 
@@ -125,15 +125,15 @@ const advisors = [
 
 // Confirmed committee leads from the October newsletter roster.
 const committeeLeads = [
-  { name: 'Trunk or Treat', lead: 'Donna Jenkins', about: 'Brings families together for decorated trunks, candy and a fall celebration for our students.' },
-  { name: 'Fall Raffle', lead: 'Jamelia Jones and Ashley Carter', about: 'Organizes ticket sales, prize donations and drawings that support Teacher Appreciation Week.' },
-  { name: 'Teacher Appreciation Week', lead: 'Amanda Brown', about: 'Plans a week of thoughtful ways to thank the faculty and staff who pour into our children.' },
-  { name: 'Holiday Decor', lead: 'Brandy Mahaffey', about: 'Helps make the school feel festive, from planning decorations to setting them up and taking them down.' },
-  { name: 'Concessions', lead: 'Tim Evans', about: 'Keeps the concession stand stocked and staffed for home basketball games.' },
-  { name: 'Marketing and Communications', lead: 'Tamara Smith', about: 'Helps families stay connected through photos, video, writing and community updates.' },
-  { name: 'Men of RCAP', lead: 'Steve Johnson', about: 'Brings hands and a welcoming presence to events, setup, teardown and the work that needs doing.' },
-  { name: 'Uniform Swap', lead: 'Shekita James', about: 'Connects outgrown uniforms with the families who can use them, through sorting and handoffs.' },
-  { name: 'EXP Support', lead: 'Nathan Jones', about: 'Helps recruit and welcome parent volunteers when educators visit for the RCA Experience.' },
+  { name: 'Trunk or Treat', icon: Candy, lead: 'Donna Jenkins', about: 'Brings families together for decorated trunks, candy and a fall celebration for our students.' },
+  { name: 'Fall Raffle', icon: Ticket, lead: 'Jamelia Jones and Ashley Carter', about: 'Organizes ticket sales, prize donations and drawings that support Teacher Appreciation Week.' },
+  { name: 'Teacher Appreciation Week', icon: HeartHandshake, lead: 'Amanda Brown', about: 'Plans a week of thoughtful ways to thank the faculty and staff who pour into our children.' },
+  { name: 'Holiday Decor', icon: TreePine, lead: 'Brandy Mahaffey', about: 'Helps make the school feel festive, from planning decorations to setting them up and taking them down.' },
+  { name: 'Concessions', icon: Popcorn, lead: 'Tim Evans', about: 'Keeps the concession stand stocked and staffed for home basketball games.' },
+  { name: 'Marketing and Communications', icon: Megaphone, lead: 'Tamara Smith', about: 'Helps families stay connected through photos, video, writing and community updates.' },
+  { name: 'Men of RCAP', icon: HandHelping, lead: 'Steve Johnson', about: 'Brings hands and a welcoming presence to events, setup, teardown and the work that needs doing.' },
+  { name: 'Uniform Swap', icon: Shirt, lead: 'Shekita James', about: 'Connects outgrown uniforms with the families who can use them, through sorting and handoffs.' },
+  { name: 'EXP Support', icon: DoorOpen, lead: 'Nathan Jones', about: 'Helps recruit and welcome parent volunteers when educators visit for the RCA Experience.' },
 ];
 const christmasLeads = [
   ['2027', 'Brooke Everette'],
@@ -142,6 +142,70 @@ const christmasLeads = [
   ['2030', 'LaTerrica Bellamy'],
   ['2031', 'Angelia Lumpkin'],
 ];
+
+const committeeTiles = [...committeeLeads, {
+  name: '4 Days of Christmas', icon: Gift, lead: 'Your class teams',
+  about: 'Each class helps bring a little holiday joy to our faculty and staff. Your class lead brings the parents together and helps plan its part of the celebration.',
+  classes: christmasLeads,
+}];
+
+function CommitteeDirectory() {
+  const [selected, setSelected] = React.useState(null);
+  const [closing, setClosing] = React.useState(false);
+  const dialog = React.useRef(null);
+  React.useEffect(() => {
+    if (!selected) return undefined;
+    const node = dialog.current;
+    const trigger = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    node.showModal();
+    return () => {
+      node.close();
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus();
+    };
+  }, [selected]);
+  function close() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setSelected(null);
+    else setClosing(true);
+  }
+  const Icon = selected?.icon;
+  return <>
+    <ul className="bd-committee-grid">
+      {committeeTiles.map((team) => {
+        const TileIcon = team.icon;
+        return <li key={team.name}>
+          <button type="button" className="bd-team-tile" aria-haspopup="dialog"
+            aria-label={`Meet the ${team.name} team`} onClick={() => { setClosing(false); setSelected(team); }}>
+            <span className="bd-committee-icon" aria-hidden="true"><TileIcon size={32} strokeWidth={2.2} /></span>
+            <span className="bd-tile-name">{team.name}</span>
+            <span className="bd-committee-lead">{team.lead}</span>
+            <span className="bd-tile-hint">Meet the team <ArrowUpRight size={14} aria-hidden="true" /></span>
+          </button>
+        </li>;
+      })}
+    </ul>
+    <dialog ref={dialog} className={`bd-team-dialog${closing ? ' is-closing' : ''}`}
+      aria-labelledby="team-title" onCancel={(event) => { event.preventDefault(); close(); }}
+      onClick={(event) => { if (event.target === event.currentTarget) close(); }}
+      onClose={() => { setSelected(null); setClosing(false); }}>
+      {selected && <article className="bd-team-detail" onAnimationEnd={(event) => {
+        if (closing && event.target === event.currentTarget) { setSelected(null); setClosing(false); }
+      }}>
+        <button type="button" className="bd-team-back" onClick={close}><ArrowLeft size={16} aria-hidden="true" /> Back to committees</button>
+        <span className="bd-committee-icon" aria-hidden="true"><Icon size={32} strokeWidth={2.2} /></span>
+        <h3 id="team-title">{selected.name}</h3>
+        <p className="bd-committee-lead">{selected.lead}</p>
+        <p className="bd-team-about">{selected.about}</p>
+        {selected.classes && <dl className="bd-class-leads">
+          {selected.classes.map(([year, name]) => <div key={year}><dt>Class of {year}</dt><dd>{name}</dd></div>)}
+        </dl>}
+        <a className="button primary" href="/committee-interest/" onClick={() => { setSelected(null); setClosing(false); }}>Join the team <ArrowUpRight size={18} aria-hidden="true" /></a>
+      </article>}
+    </dialog>
+  </>;
+}
 
 function initials(name) {
   return name
@@ -242,26 +306,10 @@ function App() {
       <section id="committees" className="content-section bd-committees" aria-labelledby="committees-h">
         <div className="section-heading">
           <p className="section-label">Your 2026-27 committee leads</p>
-          <h2 id="committees-h">The parents who stepped up.</h2>
-          <p>These parents are helping turn good ideas into experiences our students and teachers will remember. Meet the people leading each team, and find a place to lend a hand.</p>
+          <h2 id="committees-h">Meet your committee leads.</h2>
+          <p>Good things happen when families bring their time, ideas and care together. Get to know the parents coordinating our committees and the teams you can be part of.</p>
         </div>
-        <ul className="bd-committee-list">
-          {committeeLeads.map(({ name, lead, about }) => (
-            <li className="bd-committee" key={name}>
-              <div><h3>{name}</h3><p className="bd-committee-lead">{lead}</p></div>
-              <p className="bd-committee-about">{about}</p>
-            </li>
-          ))}
-        </ul>
-        <div className="bd-christmas">
-          <h3>4 Days of Christmas</h3>
-          <p>Each class helps bring a little holiday joy to our faculty and staff. Your class lead brings the parents together and helps plan its part of the celebration.</p>
-          <dl className="bd-class-leads">
-            {christmasLeads.map(([year, name]) => (
-              <div key={year}><dt>Class of {year}</dt><dd>{name}</dd></div>
-            ))}
-          </dl>
-        </div>
+        <CommitteeDirectory />
         <div className="bd-committee-invite">
           <div><h3>There is room for you, too.</h3><p>You do not have to lead a committee to make a difference. Explore the teams and tell us where you would like to help.</p></div>
           <a className="button primary" href="/committee-interest/">Join a committee <ArrowUpRight size={18} aria-hidden="true" /></a>

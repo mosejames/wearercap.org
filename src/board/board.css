@@ -288,25 +288,45 @@
   .bd-recap-points li { font-size: 15px; padding-left: 22px; }
 }
 
-/* Committee leads use text rows, keeping the board portraits distinct. */
+/* Compact committee tiles reveal the details only when a family wants them. */
 .bd-jump { margin-top: 24px; }
 .bd-committees { scroll-margin-top: 28px; }
-.bd-committee-list { list-style: none; margin: 32px 0; padding: 0; border-top: 1px solid var(--line); }
-.bd-committee { display: grid; grid-template-columns: minmax(220px, 1fr) 1.4fr; gap: 32px; padding: 24px 0; border-bottom: 1px solid var(--line); }
-.bd-committee h3, .bd-christmas h3, .bd-committee-invite h3 { margin: 0 0 8px; font-size: 23px; line-height: 1.2; }
-.bd-committee-lead { margin: 0; color: var(--gold-deep); font-weight: 800; font-size: 17px; }
-.bd-committee-about, .bd-christmas > p, .bd-committee-invite p { margin: 0; color: var(--muted); line-height: 1.65; max-width: 65ch; }
-.bd-christmas { padding: 28px; border-radius: 16px; background: var(--paper-2); }
-.bd-class-leads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 26px 0 0; }
-.bd-class-leads dt { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.bd-class-leads dd { margin: 6px 0 0; font-weight: 800; font-size: 17px; }
-.bd-committee-invite { display: flex; justify-content: space-between; align-items: center; gap: 30px; margin-top: 32px; }
+.bd-committee-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 30px 0; padding: 0; }
+.bd-committee-grid li { min-width: 0; }
+.bd-team-tile { appearance: none; width: 100%; aspect-ratio: 1; padding: 22px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 16px; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; }
+.bd-team-tile:hover { transform: translateY(-4px); border-color: var(--gold-deep); box-shadow: 0 12px 26px #1a2a5612; }
+.bd-committee-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; background: #f4e9cc; color: #1a2a56; }
+.bd-tile-name { font-size: 19px; font-weight: 900; line-height: 1.15; margin: 16px 0 9px; }
+.bd-committee-lead { margin: 0; color: var(--gold-deep); font-weight: 800; font-size: 14px; line-height: 1.4; }
+.bd-tile-hint { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; margin-top: auto; padding-top: 14px; color: var(--muted); }
+.bd-team-dialog { padding: 0; border: 0; background: transparent; color: var(--ink); width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 40px); overflow: auto; border-radius: 20px; perspective: 1000px; }
+.bd-team-dialog::backdrop { background: #101d38a6; backdrop-filter: blur(4px); }
+.bd-team-detail { padding: 28px; background: var(--paper); animation: bd-team-flip-in .28s ease-out both; transform-origin: center; }
+.bd-team-detail h3 { font-size: 30px; line-height: 1.1; margin: 20px 0 10px; }
+.bd-team-about { font-size: 16px; line-height: 1.65; color: var(--muted); margin: 20px 0 24px; }
+.bd-team-back { display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--ink); padding: 8px 0; margin-bottom: 20px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.bd-team-dialog.is-closing .bd-team-detail { animation: bd-team-flip-out .18s ease-in both; }
+.bd-class-leads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 22px 0 26px; }
+.bd-class-leads dt { font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.bd-class-leads dd { margin: 4px 0 0; font-weight: 800; font-size: 14px; }
+.bd-committee-invite { display: flex; justify-content: space-between; align-items: center; gap: 30px; margin-top: 28px; }
+.bd-committee-invite h3 { margin: 0 0 8px; font-size: 23px; }
+.bd-committee-invite p { margin: 0; color: var(--muted); line-height: 1.65; max-width: 65ch; }
 .bd-committee-invite .button { flex-shrink: 0; }
-.bd-jump:focus-visible, .bd-committee-invite a:focus-visible { outline: 3px solid var(--gold-deep); outline-offset: 5px; }
-@media (max-width: 640px) {
-  .bd-committee { grid-template-columns: 1fr; gap: 12px; }
-  .bd-class-leads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bd-christmas { padding: 22px; }
+.bd-team-tile:focus-visible, .bd-team-back:focus-visible, .bd-team-dialog a:focus-visible, .bd-jump:focus-visible { outline: 3px solid var(--gold-deep); outline-offset: 4px; }
+@keyframes bd-team-flip-in { from { opacity: 0; transform: rotateY(-80deg) scale(.92); } to { opacity: 1; transform: rotateY(0) scale(1); } }
+@keyframes bd-team-flip-out { to { opacity: 0; transform: rotateY(80deg) scale(.92); } }
+@media (max-width: 1000px) { .bd-committee-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .bd-committee-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) {
+  .bd-committee-grid { gap: 12px; }
+  .bd-team-tile { padding: 14px; }
+  .bd-tile-name { font-size: 15px; margin: 10px 0 6px; }
+  .bd-team-tile .bd-committee-icon { width: 36px; height: 36px; flex-basis: 36px; border-radius: 9px; }
+  .bd-team-tile .bd-committee-icon svg { width: 24px; height: 24px; }
+  .bd-committee-lead { font-size: 12px; }
+  .bd-tile-hint { font-size: 10px; padding-top: 10px; }
   .bd-committee-invite { align-items: flex-start; flex-direction: column; gap: 20px; }
 }
-@media (max-width: 360px) { .bd-class-leads { grid-template-columns: 1fr; } }
+@media (max-width: 360px) { .bd-team-tile { aspect-ratio: auto; min-height: 210px; } }
+@media (prefers-reduced-motion: reduce) { .bd-team-detail, .bd-team-dialog.is-closing .bd-team-detail { animation: none; } .bd-team-tile { transition: none; } .bd-team-tile:hover { transform: none; } }
