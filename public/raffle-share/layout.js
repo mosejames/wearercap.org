@@ -10,8 +10,8 @@ export function frameLayout(frame, scholar, family) {
   x:gold?145:600,w:gold?550:535,brandY:gold?116:62,
   headlineY:gold?157:165,headlineSize:gold?54:58,
   bylineY:gold?334:105,byline,bylineSize:byline.length>80?17:byline.length>55?19:23,
-  supportY:gold?406:374,supportX:gold?210:600,
-  ticket:gold?{x:290,y:460,w:390,h:38}:{x:813,y:475,w:340,h:90},
+  supportY:gold?390:374,supportX:gold?210:600,
+  ticket:gold?{x:290,y:460,w:390,h:38}:{x:795,y:448,w:360,h:90},
  };
 }
 export function wrapName(text,maxChars) {

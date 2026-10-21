@@ -27,13 +27,20 @@ describe('photo invitations',()=>{
  const created=await createRafflePhoto({scholar:'Alex',family:'Johnson',frame,image:`data:image/jpeg;base64,${bytes.toString('base64')}`});
  expect(created.token).toMatch(/^[a-f0-9]{64}$/);
  expect(records.size).toBe(3);
+ // Simulate an invitation saved before the copy correction.
+ const prefix=`/rcap/raffle/2026/invitations/${created.id}/`;
+ const oldRecord=JSON.parse(records.get(prefix+'record.json').toString());oldRecord.cardVersion=1;
+ records.set(prefix+'record.json',Buffer.from(JSON.stringify(oldRecord)));
+ records.set(prefix+'card.jpg',records.get(prefix+'card-v2.jpg'));records.delete(prefix+'card-v2.jpg');
  const photo=await getRafflePhoto(created.id);
- expect(photo.imageUrl).toBe(`https://images.example.org/raffle/2026/invitations/${created.id}/card.jpg`);
+ expect(records.has(prefix+'card-v2.jpg')).toBe(true);
+ expect(JSON.parse(records.get(prefix+'record.json').toString()).status).toBe('visible');
+ expect(photo.imageUrl).toBe(`https://images.example.org/raffle/2026/invitations/${created.id}/card-v2.jpg`);
  expect(photo.storage).toBe('r2');
  const html=response();await raffleShareHandler({query:{id:created.id}},html);
  expect(html.body).toContain(`property="og:image" content="${photo.imageUrl}"`);
  expect(html.body).toContain(`name="twitter:image" content="${photo.imageUrl}"`);
- const card=records.get(`/rcap/raffle/2026/invitations/${created.id}/card.jpg`);
+ const card=records.get(`/rcap/raffle/2026/invitations/${created.id}/card-v2.jpg`);
  const meta=await sharp(card).metadata();expect([meta.width,meta.height]).toEqual([1200,630]);expect(meta.exif).toBeUndefined();
  const denied=response();await handler({method:'DELETE',headers:{},body:{id:created.id,token:'a'.repeat(64)}},denied);expect(denied.code).toBe(403);
  const hidden=response();await handler({method:'DELETE',headers:{},body:{id:created.id,token:created.token}},hidden);expect(hidden.code).toBe(200);

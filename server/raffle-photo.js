@@ -33,7 +33,22 @@ export async function getRafflePhoto(id) {
  const record=await response.json();
  if(record.id!==id || record.storage!=='r2' || record.status!=='visible') return null;
  const {scholar,family}=shareNames(record);
- return {id,scholar,family,frame:record.frame==='gold'?'gold':'navy',storage:'r2',photoUrl:`${config().base}/${ROOT}/${id}/web.jpg`,imageUrl:`${config().base}/${ROOT}/${id}/card.jpg`,ownerHash:record.ownerHash};
+ // Refresh earlier cards without changing their share link or publishing a
+ // hidden manifest again. A new filename also bypasses cached old artwork.
+ if(record.cardVersion!==2){
+  const current=await object(`${ROOT}/${id}/card-v2.jpg`,'HEAD');
+  if(!current.ok){
+   const source=await object(`${ROOT}/${id}/web.jpg`);
+   if(!source.ok)return null;
+   const bytes=Buffer.from(await source.arrayBuffer());
+   const rendered=Buffer.from(await rafflePhotoImage(fonts,{scholar,family,frame:record.frame,photo:`data:image/jpeg;base64,${bytes.toString('base64')}`}).arrayBuffer());
+   const card=await sharp(rendered).jpeg({quality:90}).toBuffer();
+   const saved=await object(`${ROOT}/${id}/card-v2.jpg`,'PUT',card,'image/jpeg');
+   if(!saved.ok)throw new Error('Could not refresh this invitation.');
+  }
+ }
+
+ return {id,scholar,family,frame:record.frame==='gold'?'gold':'navy',storage:'r2',photoUrl:`${config().base}/${ROOT}/${id}/web.jpg`,imageUrl:`${config().base}/${ROOT}/${id}/card-v2.jpg`,ownerHash:record.ownerHash};
 }
 export function acceptsPhotoRequest(body) {
  const names=shareNames(body);
@@ -54,9 +69,9 @@ export async function createRafflePhoto(body) {
  const names=shareNames(body);const frame=body.frame==='gold'?'gold':'navy';
  const image=Buffer.from(await rafflePhotoImage(fonts,{...names,frame,photo:`data:image/jpeg;base64,${web.toString('base64')}`}).arrayBuffer());
  const card=await sharp(image).jpeg({quality:90}).toBuffer();
- const record={id,...names,frame,storage:'r2',status:'visible',ownerHash:hash(token),createdAt:new Date().toISOString()};
+ const record={id,...names,frame,storage:'r2',status:'visible',cardVersion:2,ownerHash:hash(token),createdAt:new Date().toISOString()};
  // Publish the manifest last. Partial uploads never produce a visible invitation.
- for(const [filename,data,type] of [['web.jpg',web,'image/jpeg'],['card.jpg',card,'image/jpeg'],['record.json',JSON.stringify(record),'application/json']]) {
+ for(const [filename,data,type] of [['web.jpg',web,'image/jpeg'],['card-v2.jpg',card,'image/jpeg'],['record.json',JSON.stringify(record),'application/json']]) {
   const r=await object(`${ROOT}/${id}/${filename}`,'PUT',data,type);
   if(!r.ok) throw new Error('Could not save your invitation. Please try again.');
  }
