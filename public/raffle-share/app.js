@@ -38,8 +38,8 @@ function draw() {
  wrapName(l.byline,l.gold?53:44).forEach((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500));
  l.supportLines.forEach((line,i)=>text(line,l.supportX,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500));
  const t=l.ticket;
- if(l.gold){roundRect(t.x,t.y,t.w,t.h,7,'#102a49');text('Buy $1 raffle tickets',t.x+58,t.y+5,24,'#ffcf5a');}
- else{context.save();context.translate(t.x+t.w/2,t.y+t.h/2);context.rotate(-8*Math.PI/180);context.textAlign='center';text('$1 RAFFLE TICKETS',0,-15,28,'#102a49');context.restore();}
+ if(l.gold){roundRect(t.x,t.y,t.w,t.h,7,'#102a49');text(l.ticketLabel,t.x+58,t.y+5,24,'#ffcf5a');}
+ else{context.save();context.translate(t.x+t.w/2,t.y+t.h/2);context.rotate(-8*Math.PI/180);context.textAlign='center';text(l.ticketLabel,0,-15,28,'#102a49');context.restore();}
 }
 draw();
 form.addEventListener('input',draw);

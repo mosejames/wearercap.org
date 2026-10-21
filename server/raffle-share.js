@@ -55,6 +55,6 @@ export function rafflePhotoImage(fonts, {photo,scholar,family,frame}) {
  ...['Help me celebrate','my awesome','teachers.'].map((line,i)=>text(line,l.x,l.headlineY+i*(l.headlineSize+1),l.headlineSize,i===2?l.accent:l.ink)),
  ...wrapName(l.byline,l.gold?53:44).map((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500)),
  ...l.supportLines.map((line,i)=>text(line,l.supportX,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500)),
- l.gold?box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,borderRadius:7,background:'#102a49',alignItems:'center',justifyContent:'center',fontSize:24,color:'#ffcf5a',fontWeight:900},'Buy $1 raffle tickets'):
- box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,transform:'rotate(-8deg)',flexDirection:'column',alignItems:'center',justifyContent:'center',fontSize:29,lineHeight:1.1,fontWeight:900,color:'#102a49'},box({fontSize:28},'$1 RAFFLE TICKETS'))),{width:1200,height:630,fonts});
+ l.gold?box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,borderRadius:7,background:'#102a49',alignItems:'center',justifyContent:'center',fontSize:24,color:'#ffcf5a',fontWeight:900},l.ticketLabel):
+ box({position:'absolute',left:t.x,top:t.y,width:t.w,height:t.h,transform:'rotate(-8deg)',flexDirection:'column',alignItems:'center',justifyContent:'center',fontSize:29,lineHeight:1.1,fontWeight:900,color:'#102a49'},box({fontSize:28},l.ticketLabel))),{width:1200,height:630,fonts});
 }
