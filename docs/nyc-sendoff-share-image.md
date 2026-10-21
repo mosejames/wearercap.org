@@ -1,5 +1,13 @@
 # NYC send-off Times Square share image
 
+## Daylight logo revision
+
+Edited the owner's supplied daylight Times Square photograph, using public/london/ron-clark-academy.png as the actual logo reference. The billboard takeover is imagined; the portraits on the billboard artwork are generated. Export: public/nyc/nyc-sendoff-times-square-logo-2029-og.jpg, 1200 by 630 JPEG.
+
+Edit prompt:
+
+Edit the first reference photograph into a highly realistic photographic Times Square school-trip social sharing image. Preserve the real daylight, architecture, street-level camera angle, perspective, people, traffic lights, subway entrance, building reflections and photographic texture of the original. Replace the large movie advertisement billboard surfaces with a coordinated Ron Clark Academy Class of 2029 takeover. Use the EXACT Ron Clark Academy wordmark supplied in reference 2, preserving its letterforms, spelling and proportions. Place the logo clearly on the largest main billboard, with large legible CLASS OF 2029 below it. Secondary billboard surfaces can show the same logo or large 2029 typography. Design the billboard artwork in deep navy, warm yellow and off-white, celebratory yet polished. The advertisements must sit convincingly on the actual angled billboard planes, with realistic seams, illumination, ambient daylight and surface texture. No fantasy architecture, no cartoon style, no confetti, no artificial neon glow, no invented logo. Maintain the feeling of a candid professional travel photograph, with the crowd naturally present at the bottom. Compose a wide landscape social card approximately 1.9:1, keeping the main logo and Class of 2029 within a safe central crop. This is a photorealistic imagined billboard campaign.
+
 Requested by the owner October 20, 2026. Replaces only the send-off landing page OG/Twitter card; exact-photo gallery cards remain unchanged.
 
 Built-in image-generation tool. Generated artwork depicts an imagined Times Square takeover, not a real school advertisement or trip photograph. Exported to 1200×630 JPEG as public/nyc/nyc-sendoff-times-square-2029-og.jpg. The static send-off page references the new versioned HTTPS URL and descriptive OG/Twitter alt text.
