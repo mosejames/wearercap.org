@@ -30,3 +30,7 @@ Accept trip name/grade/slug/dates/timezone, brand card, places, contribution pol
 Build passed. Full suite: 112 files, 860 tests passed. New tests cover NYC day boundaries, unknown date handling, data/storage isolation, exact-photo card selection, hidden/missing/wrong-vault fallback, fresh visibility checks, duplicate skipping and invalid photo inputs. Browser verified local image preparation, success state, recent/full galleries, one-photo viewer end bounds, anonymous positive reaction and suggested comment. Test image was the generated branded card, not a scholar photo; removed by reload after testing.
 
 OG image verified as JPEG, 1200×630. Static metadata and renderer tested locally. Production URLs are intentionally not live yet. Responsive CSS is included; actual narrow-screen and iPhone interaction, touch gestures, multiple-photo keyboard navigation and native video saving are not device-verified. Existing site build reports its pre-existing large chunks. No source files in the London app or server handlers were modified.
+
+## NYC video collection
+
+User approved creating and publishing the dedicated Dropbox request. Title: RCA Class of 2029 NYC Trip Videos. Destination: /RCA 2029 NYC Trip Videos. URL: https://www.dropbox.com/request/tyv8e6kq7zeoaj18ywsk . Request ID: tyv8e6kq7zeoaj18ywsk. Open, no deadline. Independent of London. Video button sends contributors to this upload request; no automatic gallery ingestion is enabled.
