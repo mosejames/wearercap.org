@@ -164,6 +164,12 @@ function Headshot({ name, photo, tone }) {
 }
 
 function App() {
+  // The newsletter links straight into a section rendered by React.
+  React.useEffect(() => {
+    if (window.location.hash !== '#committees') return undefined;
+    const frame = window.requestAnimationFrame(() => document.getElementById('committees')?.scrollIntoView());
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
   return (
     <main className="site-shell board-page">
       <header className="bd-top">
