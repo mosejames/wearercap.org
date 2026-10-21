@@ -136,14 +136,35 @@ function image(img, href, inset) {
 }
 const row = (bg, padding, html) => html ? `<tr><td style="padding:${padding};background:${bg};">${html}</td></tr>` : '';
 
+// This known pair gets richer email-safe cards; other newsletter actions retain
+// their current layout. Raster icons survive copying into Gmail.
+function communityCards(b) {
+  const first = safeUrl(b.button?.url);
+  const second = safeUrl(b.link?.url);
+  if (first !== `${SITE}/board/#committees` || second !== 'https://www.paypal.com/ncp/payment/EWP8R298MW83A') return '';
+  const card = (href, label, description, icon, dark, action) => {
+    const color = dark ? C.paper : C.navy;
+    return `<td width="50%" valign="top" style="width:50%;padding:${dark ? '0 0 0 7px' : '0 7px 0 0'};">`
+      + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" height="135" style="width:100%;height:135px;border-collapse:separate;background:${dark ? C.navy : C.paper};border:1px solid ${C.navy};border-top:5px solid ${C.gold};border-radius:8px;">`
+      + `<tr><td valign="top" style="padding:12px 14px 6px;"><img src="${SITE}/newsletter-assets/${icon}.png" width="24" height="24" alt="" style="display:block;width:24px;height:24px;border:0;margin:0 0 8px;">`
+      + `<h3 style="margin:0 0 6px;font-size:16px;line-height:1.2;color:${color};">${esc(label)}</h3>`
+      + `<p style="margin:0;font-size:12px;line-height:1.4;color:${dark ? C.mist : C.body};">${esc(description)}</p></td></tr>`
+      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${dark ? '#f7a81c' : C.navy};text-decoration:underline;">${esc(action)} &#8599;</a></td></tr></table></td>`;
+  };
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;table-layout:fixed;border-collapse:collapse;"><tr>`
+    + card(first, b.button.label, 'Meet the leads. Find your team.', 'committee-team-icon', false, 'Explore the teams')
+    + card(second, b.link.label, '$25 per family supports scholars and teachers.', 'community-giving-icon', true, 'Give by November 4')
+    + '</tr></table>';
+}
+
 function storyBlock(b) {
   // A story with two actions keeps them together. Inline blocks wrap on phones
   // and survive the same Gmail paste as the existing single-button markup.
   const primary = button(b.button);
   const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
-  const actions = secondary
+  const actions = communityCards(b) || (secondary
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
-    : primary + textLink(b.link);
+    : primary + textLink(b.link));
   const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + actions;
   return row(b.tone === 'sand' ? C.sand : C.paper, '30px 26px', inner.trim() ? inner : '');
 }
