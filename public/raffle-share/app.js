@@ -1,3 +1,4 @@
+import {track} from '/campaign-activity.js';
 import { cropRect, moveCrop, zoomCrop } from './crop.js';
 import { frameLayout, wrapName } from './layout.js';
 const $ = id => document.getElementById(id);
@@ -7,6 +8,9 @@ const family = form.elements.family.value;
 const credit=[scholar,$('credit-class').textContent.replace(/^ · /,''),$('credit-house').textContent.replace(/^ · /,'')].filter(Boolean).join(' · ');
 const params = new URLSearchParams(location.search);
 const invitationId = params.get('id');
+track(invitationId?'invitationView':'creatorView');
+$('buy').addEventListener('click',()=>track('ticketClick'));
+form.elements.frame.forEach(input=>input.addEventListener('change',()=>track('frameChanged')));
 const message = `Help ${scholar} celebrate their awesome teachers! Every $1 raffle ticket supports RCAP’s efforts, including Teacher Appreciation Week. Please credit ${credit} at checkout.`;
 let photo = null;
 let busy = false;
@@ -50,7 +54,7 @@ $('photo-input').addEventListener('change',async event=>{
  const file=event.target.files[0];if(!file)return;
  if(file.size>25000000){$('create-status').textContent='Please choose a photo smaller than 25 MB.';return;}
  const url=URL.createObjectURL(file);const image=new Image();
- image.onload=()=>{photo=image;URL.revokeObjectURL(url);$('photo-prompt').hidden=true;$('crop-controls').hidden=false;$('change-photo').textContent='Change photo';cropState={zoom:1,x:image.width/2,y:image.height/2};$('photo-touch').hidden=false;$('create-status').textContent='';draw();};
+ image.onload=()=>{track('photoSelected');photo=image;URL.revokeObjectURL(url);$('photo-prompt').hidden=true;$('crop-controls').hidden=false;$('change-photo').textContent='Change photo';cropState={zoom:1,x:image.width/2,y:image.height/2};$('photo-touch').hidden=false;$('create-status').textContent='';draw();};
  image.onerror=()=>{URL.revokeObjectURL(url);$('create-status').textContent='This photo could not be opened. Try a JPG, PNG or WebP photo, or a screenshot of your photo.';};
  image.src=url;
 });
@@ -75,25 +79,25 @@ $('reset-photo').onclick=()=>{if(photo){cropState={zoom:1,x:photo.width/2,y:phot
 form.addEventListener('submit', async event => {
  event.preventDefault();if(busy)return;
  if(!photo){$('create-status').textContent='Choose a photo of your scholar or family first.';return;}
- busy=true;$('create-button').disabled=true;$('create-button').textContent='Creating your invitation…';$('create-status').textContent='Saving your photo card. This may take a moment.';
+ track('creationStarted');busy=true;$('create-button').disabled=true;$('create-button').textContent='Creating your invitation…';$('create-status').textContent='Saving your photo card. This may take a moment.';
  try {
  drawCrop();const image=crop.toDataURL('image/jpeg',0.85);
  const response=await fetch('/api/raffle-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,scholar:form.elements.scholar.value.trim(),family:form.elements.family.value.trim(),classYear:form.elements.classYear.value,house:form.elements.house.value,frame:form.elements.frame.value})});
  const result=await response.json();if(!response.ok)throw new Error(result.error||'Could not save your invitation.');
  try{localStorage.setItem(`rcap-raffle-${result.id}`,result.token);}catch{}
  location.href=result.url;
- }catch(error){$('create-status').textContent=error.message||'Could not save your invitation. Please try again.';busy=false;$('create-button').disabled=false;$('create-button').textContent='Create my raffle invitation';}
+ }catch(error){track('creationFailed');$('create-status').textContent=error.message||'Could not save your invitation. Please try again.';busy=false;$('create-button').disabled=false;$('create-button').textContent='Create my raffle invitation';}
 });
-async function copy(text, success) {
- try { await navigator.clipboard.writeText(text); $('share-status').textContent = success; }
+async function copy(text, success, event='linkCopied') {
+ try { await navigator.clipboard.writeText(text); track(event); $('share-status').textContent = success; }
  catch { $('share-status').textContent = 'Copy the invitation link from your browser’s address bar.'; }
 }
-$('copy').onclick = () => copy(location.href, 'Invitation link copied. Ready to send!');
-$('copy-name').onclick = () => copy(credit, 'Student’s name, class and house copied. Paste them into the raffle checkout.');
+$('copy').onclick = () => copy(location.href, 'Invitation link copied. Ready to send!', 'linkCopied');
+$('copy-name').onclick = () => copy(credit, 'Student’s name, class and house copied. Paste them into the raffle checkout.', 'creditCopied');
 $('share').onclick = async () => {
  if (!navigator.share) return copy(`${message} ${location.href}`, 'Invitation and link copied. Paste them into your message.');
- try { await navigator.share({title:`Support ${scholar} in the RCAP Fall Raffle`,text:message,url:location.href}); }
- catch (error) { if(error.name !== 'AbortError') await copy(`${message} ${location.href}`,'Invitation copied. Ready to send!'); }
+ try { await navigator.share({title:`Support ${scholar} in the RCAP Fall Raffle`,text:message,url:location.href}); track('shareCompleted'); }
+ catch (error) { if(error.name==='AbortError')track('shareCancelled'); if(error.name !== 'AbortError') await copy(`${message} ${location.href}`,'Invitation copied. Ready to send!'); }
 };
 $('download').onclick = async () => {
  const button = $('download'); button.disabled = true;
@@ -103,7 +107,7 @@ $('download').onclick = async () => {
  if(!image.ok) throw new Error('Image unavailable');
  const blob = await image.blob(); const url = URL.createObjectURL(blob);
  const a = document.createElement('a'); a.href=url; a.download=`rcap-fall-raffle-invitation.${saved?'jpg':'png'}`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),10000);
- $('share-status').textContent='Card saved. Send it with your invitation link so friends can buy tickets.';
+ track('cardSaved'); $('share-status').textContent='Card saved. Send it with your invitation link so friends can buy tickets.';
  } catch { $('share-status').textContent='The card could not be saved. You can still share your invitation link.'; }
  finally { button.disabled=false; }
 };

@@ -81,6 +81,7 @@ body{margin:0;background:#dfe3ea;font:16px/1.5 Arial,Helvetica,sans-serif;color:
 </head>
 <body>
 ${body}
+<script type="module" src="/campaign-activity.js"></script>
 </body>
 </html>`;
 }
@@ -120,6 +121,6 @@ export default async function newsletterPage(req, res) {
   return res.status(200).send(shell({
     title, desc, canonical: `${SITE}/newsletter/${issue.slug}`,
     image: img?.url || OG, imageAlt: img?.alt || 'The RCAP Newsletter',
-    body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c)}</main>`,
+    body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c,{analytics:true,webUrl:`${SITE}/newsletter/${issue.slug}`})}</main>`,
   }));
 }

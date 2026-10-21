@@ -1,3 +1,4 @@
+import CampaignAnalytics from './CampaignAnalytics.jsx';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowDown, ArrowUp, ArrowRight, Check, ChevronDown, Copy, Download, ExternalLink, Globe, ImagePlus,
@@ -555,7 +556,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
     };
   }, [flush]);
 
-  const html = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue) }) : ''), [content, issue]);
+  const html = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue), analytics: true }) : ''), [content, issue]);
   const previewHtml = useMemo(() => (content ? renderDocument(content, { webUrl: webUrl(issue), mark: true }) : ''), [content, issue]);
   const notes = useMemo(() => (content ? styleCheck(content) : []), [content]);
   if (!content) return <p className="nb-loading" role="status">Opening the issue…</p>;
@@ -580,7 +581,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
 
   // Copies the formatted email. Returns true when the clipboard took it.
   async function copyHtml() {
-    const inner = renderEmail(content, { webUrl: webUrl(issue) });
+    const inner = renderEmail(content, { webUrl: webUrl(issue), analytics: true });
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([inner], { type: 'text/html' }), 'text/plain': new Blob([plainText(content)], { type: 'text/plain' }) })]);
       return true;
@@ -634,6 +635,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
     <div className={`nb-editor view-${view}`}>
       <div className="nb-toolbar">
         <button className="nb-text" onClick={async () => { await flush(); onBack(); }}><ArrowLeft size={16} /> All issues</button>
+        <CampaignAnalytics issueId={id} />
         <span className={`nb-save ${save}`} role="status">{label}</span>
         <div className="nb-switch" role="tablist" aria-label="Edit or preview">
           <button role="tab" aria-selected={view === 'edit'} onClick={() => setView('edit')}>Edit</button>

@@ -84,6 +84,7 @@ async function albumAccepts(eventId) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.vault === 'campaign-activity') {const {default:handler}=await import('../server/campaign-activity.js');return handler(req,res);}
   if (req.query?.vault === 'raffle-photo') {
     const { default: rafflePhotoHandler } = await import('../server/raffle-photo.js');
     return rafflePhotoHandler(req, res);

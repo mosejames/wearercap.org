@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/campaign-activity",
+      "destination": "/api/m3-sign?vault=campaign-activity"
+    },
+    {
       "source": "/api/raffle-photo",
       "destination": "/api/m3-sign?vault=raffle-photo"
     },

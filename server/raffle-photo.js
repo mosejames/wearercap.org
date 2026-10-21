@@ -1,3 +1,4 @@
+import {recordActivity} from './campaign-activity.js';
 import { studentDetails } from '../public/raffle-share/student.js';
 // Raffle invitations are link-only records, not a public gallery. Only the
 // cropped web photo and composed card are saved; source files are discarded.
@@ -100,6 +101,8 @@ export default async function rafflePhotoHandler(req,res) {
   for(const [key,value] of attempts) if(now-value.start>3600000) attempts.delete(key);
   const rate=attempts.get(ip)||{start:now,count:0};rate.count++;attempts.set(ip,rate);
   if(rate.count>100) return res.status(429).json({error:'You’ve made several invitations. Please try again in an hour.'});
-  return res.status(201).json(await createRafflePhoto(body));
+  const result=await createRafflePhoto(body);
+  try{await recordActivity('created');}catch{/* Analytics must not block a saved invitation. */}
+  return res.status(201).json(result);
  } catch(error) {return res.status(error.status||503).json({error:error.status?error.message:'Could not save or load your invitation. Please try again shortly.'});}
 }
