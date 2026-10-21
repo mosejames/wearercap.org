@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import SharedTrip from './SharedTrip.jsx';
 import * as db from './sharedData.js';
-vi.mock('./sharedData.js',()=>({listPhotos:vi.fn(async()=>[]),uploadPhotos:vi.fn(),hidePhoto:vi.fn(),setPhotoGroup:vi.fn(),client:{auth:{onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})}}}));
+vi.mock('./sharedData.js',()=>({listPhotos:vi.fn(async()=>[]),uploadPhotos:vi.fn(),conversation:vi.fn(async()=>({reactions:[],comments:[]})),hidePhoto:vi.fn(),setPhotoGroup:vi.fn(),client:{auth:{onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})}}}));
 let root,host;
 beforeEach(async()=>{const storage=new Map();Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)}});globalThis.IS_REACT_ACT_ENVIRONMENT=true;HTMLDialogElement.prototype.showModal=vi.fn();HTMLDialogElement.prototype.close=vi.fn();host=document.createElement('div');document.body.append(host);root=createRoot(host);db.listPhotos.mockResolvedValue([]);});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.clearAllMocks();});

@@ -1,0 +1,9 @@
+# NYC photo reactions and comments
+
+Opened photos on the NYC vault and parent send-off page have five positive reactions, the same choices as London: Love, Celebrate, Thank you, Amazing and Bravo. Tapping again undoes a reaction. Quick editable comments include That's my child and Thank you. Names are optional, saved on the device, and default to A family from home. Two recent comments show initially, with an option to expand the thread. People can remove their own comments from the same browser.
+
+Identity is a separate random 256-bit NYC response token stored locally; the database stores only its SHA-256 hash. No Instagram access or integration is involved. Responses need no sign-in, matching London; uploads retain their existing sign-in requirements.
+
+The scoped public invoker function calls a private definer function. Private tables have RLS and no API table grants. Every operation checks a currently visible NYC photo. Writes serialize per response token, are limited to 120 per minute, and comments are limited to 60 per hour. Text is length-limited, rendered as React text, and never interpreted as HTML. Reactions toggle an active flag; comment removal is soft hiding. No London tables or functions were changed. Exact-photo share-card behavior is unchanged.
+
+Validation: build passed; 877 tests passed, including reaction toggle, editable suggestions, failed-comment preservation, compact thread expansion and own-comment removal. Live database checks ran as anon within a rolled-back transaction: saved/undid Love, posted/read/removed a comment, checked another device cannot remove it, rejected invalid reactions and hidden-photo reads. Advisor informational RLS-without-policy notices are intentional for the private tables with no raw grants. Migration version matches the applied production record.

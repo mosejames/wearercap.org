@@ -25,3 +25,7 @@ export async function uploadPhotos(files,{album,name,scholar,group,onProgress=()
  }
  return {uploaded,skipped,errors};
 }
+
+let responseToken;
+function conversationToken(){if(responseToken)return responseToken;try{const saved=window.localStorage.getItem('nyc-conversation-token');if(/^[a-f0-9]{64}$/.test(saved||''))return responseToken=saved;}catch{}const bytes=crypto.getRandomValues(new Uint8Array(32));responseToken=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');try{window.localStorage.setItem('nyc-conversation-token',responseToken);}catch{}return responseToken;}
+export async function conversation(photoId,action='read',values={}){return await rpc('trip_conversation',{p_photo:photoId,p_token:conversationToken(),p_action:action,...values})||{reactions:[],comments:[]};}
