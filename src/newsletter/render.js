@@ -213,7 +213,7 @@ function catchUpCards(b) {
   });
   if (items.length !== 3 || items.some((item) => !item)) return '';
   return `<div style="font-size:0;text-align:center;">` + items.map(({ label, url, copy: [eyebrow, description, action] }) =>
-    `<div style="display:inline-block;width:100%;max-width:196px;vertical-align:top;text-align:left;">`
+    `<div class="nb-missed" style="display:inline-block;width:100%;max-width:196px;vertical-align:top;text-align:left;">`
     + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate;"><tr><td style="padding:4px;">`
     + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:${C.sand};border:1px solid ${C.line};border-top:4px solid ${C.gold};border-radius:8px;"><tr><td valign="top">`
     + `<a href="${esc(url)}" style="display:block;padding:14px 12px;min-height:132px;color:${C.navy};text-decoration:none;">`
@@ -255,7 +255,7 @@ export function renderEmail(c = {}, { webUrl = '', mark = false } = {}) {
 }
 
 export function renderDocument(c, opts = {}) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.subject || 'RCAP newsletter')}</title></head>`
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.subject || 'RCAP newsletter')}</title><style>@media (max-width:620px){.nb-missed{display:block!important;max-width:none!important}}</style></head>`
     + `<body style="margin:0;padding:24px 0;background:#dce0e7;">${renderEmail(c, opts)}</body></html>`;
 }
 

@@ -76,6 +76,7 @@ body{margin:0;background:#dfe3ea;font:16px/1.5 Arial,Helvetica,sans-serif;color:
 .nl-card span{font-size:14px;font-weight:700;text-decoration:underline}
 .nl-empty{background:#faf4ea;border-radius:16px;padding:26px;text-align:center}
 @media (max-width:480px){.nl-hero{padding:28px 20px}.nl-hero h1{font-size:32px}}
+@media (max-width:620px){.nb-missed{display:block!important;max-width:none!important}}
 </style>
 </head>
 <body>
