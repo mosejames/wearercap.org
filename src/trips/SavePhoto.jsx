@@ -7,6 +7,6 @@ export async function savePhotoFile(file){if(navigator.share&&navigator.canShare
 export default function SavePhoto({photo,onNotice}){
  const[file,setFile]=useState(null),[busy,setBusy]=useState(false);
  useEffect(()=>{const controller=new AbortController();setFile(null);prepareSavePhoto(photo,controller.signal).then(value=>{if(!controller.signal.aborted)setFile(value);}).catch(()=>{/* The same-origin attachment remains available directly. */});return()=>controller.abort();},[photo.id]);
- async function save(){if(busy)return;if(!file){downloadPhoto(photo);onNotice('Photo download started.');return;}setBusy(true);try{const result=await savePhotoFile(file);onNotice(result==='share'?'Choose Save Image or your photo app in the share sheet.':'Photo download started.');}catch(e){if(e.name!=='AbortError')onNotice('Couldn’t open the save options. Please try again.');}finally{setBusy(false);}}
+ async function save(){if(busy)return;if(!file||!window.matchMedia?.('(pointer: coarse)').matches){downloadPhoto(photo);onNotice('Photo download started.');return;}setBusy(true);try{const result=await savePhotoFile(file);onNotice(result==='share'?'Choose Save Image or your photo app in the share sheet.':'Photo download started.');}catch(e){if(e.name!=='AbortError'){downloadPhoto(photo);onNotice('Photo download started.');}}finally{setBusy(false);}}
  return <button type="button" className="text-link" disabled={busy} onClick={save}><Download size={17}/>{busy?'Opening…':'Download photo'}</button>;
 }
