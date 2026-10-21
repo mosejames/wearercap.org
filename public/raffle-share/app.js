@@ -35,7 +35,7 @@ function draw() {
  if(photo){drawCrop();context.drawImage(crop,p.x,p.y,p.w,p.h);}else{context.fillStyle='#f2e8d5';context.fillRect(p.x,p.y,p.w,p.h);}context.restore();
  text('RCAP FALL RAFFLE',l.x,l.brandY,22,l.accent);
  ['Help me celebrate','my awesome','teachers.'].forEach((line,i)=>text(line,l.x,l.headlineY+i*(l.headlineSize+1),l.headlineSize,i===2?l.accent:l.ink));
- wrapName(l.byline,l.gold?53:44).forEach((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,500));
+ wrapName(l.byline,l.bylineWrap).forEach((line,i)=>text(line,l.x,l.bylineY+i*(l.bylineSize+3),l.bylineSize,l.ink,900));
  context.save();context.textAlign='center';
  if(l.gold){l.supportLines.forEach((line,i)=>text(line,l.ticket.x+l.ticket.w/2,l.supportY+i*l.supportLeading,l.supportSize,l.ink,500));}
  else{context.translate(995,579);context.rotate(-8*Math.PI/180);text(l.supportLines[0],0,-9,l.supportSize,l.ink,500);}context.restore();
