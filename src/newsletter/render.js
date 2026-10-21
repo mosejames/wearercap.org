@@ -115,7 +115,7 @@ const plain = (text) => String(text || '').replace(/\*\*([^*]+)\*\*/g, '$1').rep
 // Pieces
 // ---------------------------------------------------------------------------
 const kicker = (t) => t ? `<p style="margin:0 0 10px;font-size:11px;letter-spacing:2px;font-weight:800;text-transform:uppercase;color:${C.gold};">${esc(t)}</p>` : '';
-const h1 = (t) => t ? `<h1 style="margin:0 0 18px;font-size:44px;line-height:1.02;letter-spacing:-2px;color:${C.navy};">${inline(t)}</h1>` : '';
+const h1 = (t) => t ? `<h1 style="margin:0 0 12px;font-size:44px;line-height:1.02;letter-spacing:-2px;color:${C.navy};">${inline(t)}</h1>` : '';
 const h2 = (t, small) => t ? `<h2 style="margin:0 0 ${small ? 12 : 16}px;font-size:${small ? 23 : 30}px;line-height:${small ? 1.2 : 1.1};letter-spacing:${small ? 0 : -1}px;color:${C.navy};">${inline(t)}</h2>` : '';
 function button(b, onNavy) {
   const href = safeUrl(b?.url);
@@ -157,7 +157,7 @@ function communityCards(b) {
     + '</tr></table>';
 }
 
-function storyBlock(b) {
+function storyBlock(b, { leading = false } = {}) {
   // A story with two actions keeps them together. Inline blocks wrap on phones
   // and survive the same Gmail paste as the existing single-button markup.
   const primary = button(b.button);
@@ -166,7 +166,7 @@ function storyBlock(b) {
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
     : primary + textLink(b.link));
   const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + actions;
-  return row(b.tone === 'sand' ? C.sand : C.paper, '30px 26px', inner.trim() ? inner : '');
+  return row(b.tone === 'sand' ? C.sand : C.paper, leading ? '14px 26px 30px' : '30px 26px', inner.trim() ? inner : '');
 }
 function photoBlock(b) { return row(C.paper, '0', image(b.image, b.href)); }
 function quoteBlock(b) {
@@ -208,16 +208,16 @@ export function renderEmail(c = {}, { webUrl = '', mark = false } = {}) {
   const masthead = `<tr><td style="padding:30px 26px;background:${C.navy};"><a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/newsletter-assets/we-are-rcap-header.png" alt="We Are RCAP. Ron Clark Academy Parents" width="240" style="display:block;width:240px;max-width:100%;height:auto;border:0;margin:0 0 20px;"></a>`
     + (c.dateline ? `<p style="margin:8px 0 0;color:${C.mist};font-size:10px;letter-spacing:2px;">${esc(c.dateline)}</p>` : '') + view + '</td></tr>';
   const opener = kicker(c.kicker) + h1(c.headline)
-    + (c.greeting ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.greeting)}</p>` : '')
-    + paragraphs(c.body) + button(c.button);
-  const blocks = (c.blocks || []).map((b) => tagRow((RENDER[b.type] || storyBlock)(b), `block:${b.id}`, mark)).join('');
+    + (c.greeting ? `<p style="margin:0 0 10px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.greeting)}</p>` : '')
+    + paragraphs(c.body).replaceAll('margin:0 0 16px;', 'margin:0 0 10px;') + button(c.button);
+  const blocks = (c.blocks || []).map((b, index) => tagRow((RENDER[b.type] || storyBlock)(b, { leading: index === 0 }), `block:${b.id}`, mark)).join('');
   const closing = `<tr><td style="padding:30px 26px;background:${C.paper};">`
     + (c.signoff ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.65;color:${C.body};">${esc(c.signoff)}</p>` : '')
     + (c.signer ? `<p style="margin:0 0 20px;font-size:17px;font-weight:800;color:${C.navy};">${esc(c.signer)}${c.role ? `<br><span style="font-size:12px;font-weight:400;">${esc(c.role)}</span>` : ''}</p>` : '')
     + `<a href="${SITE}" style="display:block;margin:28px 0 0;"><img src="${SITE}/newsletter-assets/rcap-footer.png" alt="RCAP. Ron Clark Academy Parents" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;"></a>`
     + `<p style="margin:22px 0 0;font-size:12px;color:${C.soft};">Built by parents, for our community.<br><a href="${SITE}" style="${linkStyle}">wearercap.org</a></p></td></tr>`;
   return pre + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:640px;margin:0 auto;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;color:${C.navy};background:${C.paper};">`
-    + tagRow(masthead, 'sending', mark) + tagRow(row(C.paper, '30px 26px', opener.trim() ? opener : ''), 'opening', mark) + blocks + tagRow(closing, 'closing', mark) + '</table>';
+    + tagRow(masthead, 'sending', mark) + tagRow(row(C.paper, '22px 26px 0', opener.trim() ? opener : ''), 'opening', mark) + blocks + tagRow(closing, 'closing', mark) + '</table>';
 }
 
 export function renderDocument(c, opts = {}) {
