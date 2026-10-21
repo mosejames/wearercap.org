@@ -168,7 +168,7 @@ function storyBlock(b, { leading = false } = {}) {
     : button(b.button);
   const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
   const directActions = safeUrl(b.button?.url) === RAFFLE_TICKET_URL
-    ? `<div style="text-align:center;">${primary}${textLink({ label: "Share the raffle with my friends", url: "https://wearercap.org/events/2026/fall-raffle/share/" })}${textLink(b.link)}</div>`
+    ? `<div style="text-align:center;">${primary}${textLink({ label: "Share the raffle with friends", url: "https://wearercap.org/events/2026/fall-raffle/share/" })}${textLink(b.link)}</div>`
     : primary + textLink(b.link);
   const actions = communityCards(b) || (directAction ? directActions : secondary
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`

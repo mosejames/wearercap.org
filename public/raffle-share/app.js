@@ -82,7 +82,7 @@ form.addEventListener('submit', async event => {
  const result=await response.json();if(!response.ok)throw new Error(result.error||'Could not save your invitation.');
  try{localStorage.setItem(`rcap-raffle-${result.id}`,result.token);}catch{}
  location.href=result.url;
- }catch(error){$('create-status').textContent=error.message||'Could not save your invitation. Please try again.';busy=false;$('create-button').disabled=false;$('create-button').textContent='Create my photo invitation';}
+ }catch(error){$('create-status').textContent=error.message||'Could not save your invitation. Please try again.';busy=false;$('create-button').disabled=false;$('create-button').textContent='Create my raffle invitation';}
 });
 async function copy(text, success) {
  try { await navigator.clipboard.writeText(text); $('share-status').textContent = success; }
