@@ -1,0 +1,6 @@
+import {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {it,expect,vi} from 'vitest';
+import PhotoMilestones,{milestoneFor} from './PhotoMilestones.jsx';
+it('advances at exactly 100, 250 and 500 and continues beyond the named milestones',()=>{expect(milestoneFor(99).next[0]).toBe(100);expect(milestoneFor(100).next[0]).toBe(250);expect(milestoneFor(250).next[0]).toBe(500);expect(milestoneFor(500).next[0]).toBe(1000);expect(milestoneFor(10000).next[0]).toBe(15000);expect(milestoneFor(15200).next[0]).toBe(20000);});
+it('renders an exact count with reduced motion and keeps a failed count distinct from zero',async()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;vi.stubGlobal('matchMedia',()=>({matches:true}));const host=document.createElement('div');document.body.append(host);const root=createRoot(host);await act(async()=>root.render(<PhotoMilestones count={250}/>));expect(host.querySelector('.nyc-count-digits').textContent).toBe('250');expect(host.textContent).toContain('Broadway bound');expect(host.querySelector('[role=progressbar]').getAttribute('aria-valuenow')).toBe('250');await act(async()=>root.render(<PhotoMilestones count={null}/>));expect(host.textContent).toContain('…');expect(host.querySelector('[role=progressbar]')).toBeNull();await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();});
