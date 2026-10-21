@@ -171,7 +171,7 @@ function storyBlock(b, { leading = false } = {}) {
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
     : primary + textLink(b.link));
   const countdown = safeUrl(b.button?.url) === RAFFLE_TICKET_URL && safeUrl(b.link?.url) === RAFFLE_DETAILS_URL
-    ? image({ url: RAFFLE_COUNTDOWN_URL, alt: 'Time left to enter the first raffle drawing. Entry deadline: Saturday, October 24 at 11:59 p.m. Eastern.' }, RAFFLE_TICKET_URL, true) : '';
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:0 0 18px;"><a href="${RAFFLE_TICKET_URL}" style="text-decoration:none;"><img src="${RAFFLE_COUNTDOWN_URL}" alt="Time left to enter the first raffle drawing. Entry deadline: Saturday, October 24 at 11:59 p.m. Eastern." width="400" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"></a></td></tr></table>` : '';
   const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(b.body) + countdown + actions;
   return row(b.tone === 'sand' ? C.sand : C.paper, leading ? '14px 26px 30px' : '30px 26px', inner.trim() ? inner : '');
 }
