@@ -189,8 +189,32 @@ function datesBlock(b) {
   return row(C.paper, '30px 26px', kicker(b.kicker) + h2(b.heading)
     + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">${rows}</table>`);
 }
+function catchUpCards(b) {
+  if (String(b.heading || '').replace(/[.\s]+$/, '').toLowerCase() !== 'things you may have missed') return '';
+  const copy = {
+    [`${SITE}/rcap-capsule/#/e/bingo-night`]: ['PHOTOS', 'Find your family. Relive the fun.', 'View photos'],
+    [`${SITE}/rcap-capsule/#/e/chick-fil-a-spirit-night`]: ['PHOTOS', 'A night of food and school spirit.', 'View photos'],
+    [`${SITE}/feedback/rb-karaoke`]: ['YOUR VOICE', 'Share your take in about 3 minutes.', 'Take the survey'],
+  };
+  const items = String(b.body || '').trim().split(/\n\s*\n/).map((part) => {
+    const match = part.trim().match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    const url = match && safeUrl(match[2]);
+    return match && copy[url] ? { label: match[1], url, copy: copy[url] } : null;
+  });
+  if (items.length !== 3 || items.some((item) => !item)) return '';
+  return `<div style="font-size:0;text-align:center;">` + items.map(({ label, url, copy: [eyebrow, description, action] }) =>
+    `<div style="display:inline-block;width:100%;max-width:196px;vertical-align:top;text-align:left;">`
+    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate;"><tr><td style="padding:4px;">`
+    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:${C.sand};border:1px solid ${C.line};border-top:4px solid ${C.gold};border-radius:8px;"><tr><td valign="top">`
+    + `<a href="${esc(url)}" style="display:block;padding:14px 12px;min-height:132px;color:${C.navy};text-decoration:none;">`
+    + `<span style="display:block;font-size:9px;font-weight:800;letter-spacing:1.3px;color:${C.gold};margin:0 0 9px;">${eyebrow}</span>`
+    + `<strong style="display:block;font-size:15px;line-height:1.25;margin:0 0 8px;">${esc(label)}</strong>`
+    + `<span style="display:block;font-size:12px;line-height:1.4;color:${C.body};margin:0 0 12px;">${description}</span>`
+    + `<span style="display:block;font-size:12px;font-weight:800;text-decoration:underline;">${action} &#8599;</span></a>`
+    + `</td></tr></table></td></tr></table></div>`).join('') + '</div>';
+}
 function noteBlock(b) {
-  const inner = kicker(b.kicker) + h2(b.heading, true) + paragraphs(b.body) + (safeUrl(b.link?.url) && b.link?.label ? `<a href="${esc(safeUrl(b.link.url))}" style="${linkStyle}">${esc(b.link.label)}</a>` : '');
+  const inner = kicker(b.kicker) + h2(b.heading, true) + (catchUpCards(b) || paragraphs(b.body)) + (safeUrl(b.link?.url) && b.link?.label ? `<a href="${esc(safeUrl(b.link.url))}" style="${linkStyle}">${esc(b.link.label)}</a>` : '');
   return row(C.paper, '30px 26px', (b.heading || b.body) ? inner : '');
 }
 const RENDER = { story: storyBlock, photo: photoBlock, quote: quoteBlock, dates: datesBlock, note: noteBlock };
