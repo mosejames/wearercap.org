@@ -16,14 +16,16 @@
 @media(max-width:650px){.sendoff-intro::before{background-position:center,center,63% center}}
 
 /* A compact, modern invitation with a clear class identity. */
-.sendoff-page h1,.sendoff-page h2,.sendoff-page h3{font-family:'DM Sans',Arial,sans-serif}
-.sendoff-page h1{font-weight:900;letter-spacing:-2.5px;line-height:1.03}
-.sendoff-page h1 em{font-style:normal;font-weight:900;color:#946809}
-.sendoff-page h2{font-weight:750;letter-spacing:-.8px}
-.sendoff-page .trip-cohort{font-weight:800;font-size:30px;letter-spacing:1px;margin-bottom:17px}
-.sendoff-page .sendoff-lede{font-size:16px;line-height:1.55;margin:18px 0 25px}
-.sendoff-page .sendoff-intro .primary{font-size:16px;font-weight:800;min-width:215px}
-.sendoff-page .sendoff-video-link{display:flex;width:fit-content;margin:5px auto 0;font-size:14px;font-weight:700}
-.sendoff-page .sendoff-intro .sendoff-note:last-child{max-width:360px;font-size:11px}
-.sendoff-page .sendoff-shared{padding:30px 0}.sendoff-page .sendoff-shared h2{font-size:27px}
-@media(max-width:650px){.sendoff-page .trip-cohort{font-size:26px}.sendoff-page .sendoff-intro h1{font-size:48px;letter-spacing:-2px}.sendoff-page .sendoff-lede{font-size:14px;margin:15px 0 22px}.sendoff-page .section-head h2{font-size:28px}.sendoff-page .sendoff-shared h2{font-size:24px}}
+.modern-trip h1,.modern-trip h2,.modern-trip h3{font-family:'DM Sans',Arial,sans-serif}
+.modern-trip h1{font-weight:900;letter-spacing:-2.5px;line-height:1.03}
+.modern-trip h1 em{font-style:normal;font-weight:900;color:#946809}
+.modern-trip h2{font-weight:750;letter-spacing:-.8px}
+.modern-trip .trip-cohort{font-weight:800;font-size:30px;letter-spacing:1px;margin-bottom:17px}
+.modern-trip .sendoff-lede{font-size:16px;line-height:1.55;margin:18px 0 25px}
+.modern-trip .sendoff-intro .primary{font-size:16px;font-weight:800;min-width:215px}
+.modern-trip .sendoff-video-link{display:flex;width:fit-content;margin:5px auto 0;font-size:14px;font-weight:700}
+.modern-trip .sendoff-intro .sendoff-note:last-child{max-width:360px;font-size:11px}
+.modern-trip .sendoff-shared{padding:30px 0}.modern-trip .sendoff-shared h2{font-size:27px}
+@media(max-width:650px){.modern-trip .trip-cohort{font-size:26px}.modern-trip .sendoff-intro h1{font-size:48px;letter-spacing:-2px}.modern-trip .sendoff-lede{font-size:14px;margin:15px 0 22px}.modern-trip .section-head h2{font-size:28px}.modern-trip .sendoff-shared h2{font-size:24px}}
+
+body:has(.modern-trip) dialog h2{font-family:'DM Sans',Arial,sans-serif;font-weight:750;letter-spacing:-.6px}
