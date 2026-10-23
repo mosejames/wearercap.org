@@ -61,8 +61,8 @@ export default async function handler(req,res){
  if(req.headers?.origin&&!['https://wearercap.org','https://www.wearercap.org'].includes(req.headers.origin))return res.status(403).json({error:'Origin not allowed'});
  try{
   const body=typeof req.body==='string'?JSON.parse(req.body):req.body||{};
-  if(JSON.stringify(body).length>12000)return res.status(413).json({error:'Too large'});
-  if(['submit','inbox','review'].includes(body.action))return res.status(200).json(await intakeAction(req,body));
+  if(JSON.stringify(body).length>(body.action==='uploadAttachment'?4250000:12000))return res.status(413).json({error:'Too large'});
+  if(['submit','inbox','review','uploadSession','uploadAttachment','attachment'].includes(body.action))return res.status(200).json(await intakeAction(req,body));
   if(['dashboard','plan','sent','trackingLinks'].includes(body.action)){return res.status(200).json(await consoleAction(req,body,report));}
   if(body.action==='report'){
    if(!await authorized(req,body))return res.status(403).json({error:'Sign in as a newsletter editor to see analytics.'});
