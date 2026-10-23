@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase, call, uploadPhoto } from './api.js';
 import {
-  BLOCKS, FORMATS, newBlock, newDate, template, renderEmail, renderDocument, plainText,
+  BLOCKS, FORMATS, newBlock, newDate, newCard, editableCardBlock, template, renderEmail, renderDocument, plainText,
   styleCheck, fixDashes, suggestSlug, slugify, longDate, SITE, RCAP_SENDER, DEFAULT_BCC, gmailComposeUrl,
 } from './render.js';
 import { loadGoogleIdentity, createGoogleNonce, GOOGLE_CLIENT_ID } from '../carpool/googleIdentity.js';
@@ -326,12 +326,42 @@ const BODY_HINT = 'Select words, then tap B or Link. A blank line starts a new p
 const blank = { label: '', url: '' };
 const hasLink = (l) => !!(l?.label || l?.url);
 
+function CountdownEditor({value={},onChange}) {
+ return <><Field label="Countdown label" value={value.label} onChange={label=>onChange({...value,label})}/><Field label="Deadline (Eastern time)" type="datetime-local" value={value.deadline} onChange={deadline=>onChange({...value,deadline})}/><Field label="Message after the deadline" value={value.finished} onChange={finished=>onChange({...value,finished})}/><p className="nb-help">Compact and centered. The image refreshes when requested, but email apps may cache it. The deadline is always Eastern time.</p></>;
+}
+
+function CardEditor({block,update,embedded=false}) {
+  const items=block.items||[];
+  const put=(id,patch)=>update({...block,items:items.map(item=>item.id===id?{...item,...patch}:item)});
+  const move=(index,step)=>{const next=[...items];[next[index],next[index+step]]=[next[index+step],next[index]];update({...block,items:next});};
+  return <>
+    {!embedded&&<div className="nb-pair"><Field label="Small label" value={block.kicker} onChange={kicker=>update({...block,kicker})}/><Field label="Heading" value={block.heading} onChange={heading=>update({...block,heading})}/></div>}
+    <div className="nb-tone" role="radiogroup" aria-label="Cards per row">{[2,3].map(columns=><button key={columns} type="button" role="radio" aria-checked={(block.columns||3)===columns} className={(block.columns||3)===columns?'on':''} onClick={()=>update({...block,columns})}>{columns} across</button>)}</div>
+    <p className="nb-help">Cards fill the width and stack on phones. Add up to six.</p>
+    <ol className="nb-dates">{items.map((item,index)=><li key={item.id}>
+      <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:12}}><strong style={{flex:1}}>Card {index+1}{item.title?`: ${item.title}`:''}</strong>
+        <button type="button" className="nb-icon small" disabled={index===0} aria-label={`Move card ${index+1} up`} onClick={()=>move(index,-1)}><ArrowUp size={15}/></button>
+        <button type="button" className="nb-icon small" disabled={index===items.length-1} aria-label={`Move card ${index+1} down`} onClick={()=>move(index,1)}><ArrowDown size={15}/></button>
+        <button type="button" className="nb-icon small" disabled={items.length===1} aria-label={`Remove card ${index+1}`} onClick={()=>update({...block,items:items.filter(i=>i.id!==item.id)})}><X size={15}/></button>
+      </div>
+      <div className="nb-pair"><Field label="Icon (optional)" value={item.icon} onChange={icon=>put(item.id,{icon})} placeholder="📷, team, or heart"/><Field label="Small label" value={item.eyebrow} onChange={eyebrow=>put(item.id,{eyebrow})} placeholder="Photos"/></div>
+      <Field label="Card title" value={item.title} onChange={title=>put(item.id,{title})} placeholder="Bingo Night"/>
+      <Field area rows={2} label="Description" value={item.description} onChange={description=>put(item.id,{description})} placeholder="A short invitation to click."/>
+      <div className="nb-pair"><Field label="Button words" value={item.action} onChange={action=>put(item.id,{action})} placeholder="View photos"/><Field label="Destination link" value={item.url} onChange={url=>put(item.id,{url})} inputMode="url" autoCapitalize="off" placeholder="https://wearercap.org/..."/></div>
+    </li>)}</ol>
+    {items.length<6&&<button type="button" className="nb-chip" onClick={()=>update({...block,items:[...items,newCard()]})}><Plus size={14}/> Add a card</button>}
+  </>;
+}
+
 function BlockEditor({ block, update, issueId, onError }) {
   const set = (k) => (v) => update({ ...block, [k]: v });
   const [reveal, setReveal] = useState({});
   const show = (k) => setReveal((r) => ({ ...r, [k]: true }));
   const hide = (k, patch) => { setReveal((r) => ({ ...r, [k]: false })); update({ ...block, ...patch }); };
+  block=editableCardBlock(block);
   switch (block.type) {
+    case 'countdown': return <><Field label="Heading" value={block.heading} onChange={set('heading')}/><CountdownEditor value={block.countdown} onChange={set('countdown')}/><LinkPair value={block.button} onChange={set('button')}/><LinkPair label="Extra link" value={block.link} onChange={set('link')}/></>;
+    case 'cards': return <CardEditor block={block} update={update} />;
     case 'photo': {
       const tap = !!block.href || reveal.tap;
       return <>
@@ -387,8 +417,8 @@ function BlockEditor({ block, update, issueId, onError }) {
     }
     default: {
       const photo = !!block.image?.url || reveal.photo;
-      const button = hasLink(block.button) || reveal.button;
-      const link = hasLink(block.link) || reveal.link;
+      const button = !block.cards&&(hasLink(block.button) || reveal.button);
+      const link = !block.cards&&(hasLink(block.link) || reveal.link);
       const tone = block.tone || 'paper';
       return <>
         <div className="nb-pair">
@@ -399,11 +429,16 @@ function BlockEditor({ block, update, issueId, onError }) {
         {photo && <Extra title="Photo" onRemove={() => hide('photo', { image: { url: '', alt: '' } })}><ImageField issueId={issueId} value={block.image} onChange={set('image')} onError={onError} /></Extra>}
         {button && <Extra title="Button" onRemove={() => hide('button', { button: blank })}><LinkPair value={block.button} onChange={set('button')} /></Extra>}
         {link && <Extra title="Extra link" onRemove={() => hide('link', { link: blank })}><LinkPair label="Link" wordsLabel="Link words" wordsHint="See what to expect" value={block.link} onChange={set('link')} /></Extra>}
+        {!block.cards&&(button||link)&&<div className="nb-pair"><div className="nb-tone" role="radiogroup" aria-label="Button appearance">{[['outline','Outline'],['solid','Gold']].map(([value,label])=><button key={value} type="button" role="radio" aria-checked={(block.actionStyle||'outline')===value} className={(block.actionStyle||'outline')===value?'on':''} onClick={()=>update({...block,actionStyle:value})}>{label}</button>)}</div><label><input type="checkbox" checked={!!block.centerActions} onChange={e=>update({...block,centerActions:e.target.checked})}/> Center actions</label></div>}
+        {block.cards&&<Extra title="Link cards" onRemove={()=>update({...block,cards:null})}><CardEditor embedded block={block.cards} update={cards=>update({...block,cards})}/></Extra>}
+        {block.countdown&&<Extra title="Countdown" onRemove={()=>update({...block,countdown:null})}><CountdownEditor value={block.countdown} onChange={set('countdown')}/></Extra>}
         <div className="nb-chip-row">
           <Chips items={[
+            { key:'cards',label:'Link cards',on:!!block.cards,add:()=>update({...block,cards:{columns:2,items:[newCard(),newCard()]}}) },
+            { key:'countdown',label:'Countdown',on:!!block.countdown,add:()=>update({...block,countdown:{label:'COUNTING DOWN',deadline:'',finished:'The countdown has ended.'}}) },
             { key: 'photo', label: 'Photo', on: photo, add: () => show('photo') },
-            { key: 'button', label: 'Button', on: button, add: () => show('button') },
-            { key: 'link', label: 'Link', on: link, add: () => show('link') },
+            { key: 'button', label: 'Button', on: !!block.cards||button, add: () => show('button') },
+            { key: 'link', label: 'Link', on: !!block.cards||link, add: () => show('link') },
           ]} />
           <div className="nb-tone" role="radiogroup" aria-label="Background">
             {[['paper', 'Paper'], ['sand', 'Sand']].map(([v, l]) => (
@@ -420,13 +455,15 @@ function BlockEditor({ block, update, issueId, onError }) {
 const firstLine = (t) => String(t || '').replace(/\*\*|\[|\]\([^)]*\)/g, '').split('\n').map((x) => x.trim()).find(Boolean) || '';
 export function blockSummary(b) {
   switch (b.type) {
+    case 'countdown': return b.countdown?.label || 'Choose a deadline';
+    case 'cards': return b.heading || `${(b.items||[]).length} link cards`;
     case 'photo': return b.image?.url ? (b.image.alt || 'Photo added') : 'No photo yet';
     case 'quote': return b.quote ? `“${firstLine(b.quote)}”` : 'No quote yet';
     case 'dates': { const n = (b.items || []).filter((i) => i.what || i.when).length; return n ? `${n} date${n === 1 ? '' : 's'}` : 'No dates yet'; }
     default: return firstLine(b.heading) || firstLine(b.kicker) || firstLine(b.body) || 'Empty';
   }
 }
-const ACCENT = { story: '#f7a81c', photo: '#f26a1b', quote: '#1a2a56', dates: '#6f86b8', note: '#8a7a6a' };
+const ACCENT = { story: '#f7a81c', photo: '#f26a1b', quote: '#1a2a56', dates: '#6f86b8', note: '#8a7a6a', cards: '#8f5e04', countdown:'#1a2a56' };
 
 // ---------------------------------------------------------------------------
 // Editor
@@ -521,7 +558,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
 
   useEffect(() => {
     (demo ? Promise.resolve(demo) : call('load', { id })).then((d) => {
-      setIssue(d); setContent(d.content); setMeta({ title: d.title, issue_date: d.issue_date });
+      setIssue(d); setContent({...d.content,blocks:(d.content.blocks||[]).map(editableCardBlock)}); setMeta({ title: d.title, issue_date: d.issue_date });
       setSlug(d.slug || suggestSlug(d.content, d.issue_date)); revision.current = d.revision;
     }).catch((e) => onError(e.message));
   }, [id, onError, demo]);

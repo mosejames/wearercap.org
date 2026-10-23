@@ -1,5 +1,5 @@
 import { raffleShareImage } from '../server/raffle-share.js';
-import { raffleCountdownImage } from '../server/raffle-countdown-image.js';
+import { raffleCountdownImage, newsletterCountdownImage } from '../server/raffle-countdown-image.js';
 import { describePrivateShare, sharePreviewCopy } from '../src/vault/sharePreview.js';
 import { ImageResponse } from '@vercel/og';
 import { createElement as h } from 'react';
@@ -71,6 +71,10 @@ export default async function handler(req,res) {
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).send(png);
+  }
+  if(req.query?.card==='newsletter-countdown'){
+    res.setHeader('Cache-Control','no-store');
+    try{const png=Buffer.from(await newsletterCountdownImage(fonts,req.query).arrayBuffer());res.setHeader('Content-Type','image/png');return res.status(200).send(png);}catch{return res.status(400).send('Invalid countdown');}
   }
   if (req.query?.card === 'raffle-countdown') {
     const png = Buffer.from(await raffleCountdownImage(fonts).arrayBuffer());

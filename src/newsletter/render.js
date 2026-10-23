@@ -1,5 +1,6 @@
+import {countdownConfig,countdownImageUrl} from './countdown.js';
 import {campaignLinks} from '../../public/campaign-links.js';
-import { RAFFLE_COUNTDOWN_URL, RAFFLE_DETAILS_URL, RAFFLE_TICKET_URL } from '../events/raffleCountdown.js';
+import { RAFFLE_DETAILS_URL, RAFFLE_TICKET_URL } from '../events/raffleCountdown.js';
 // RCAP newsletter model and email renderer.
 //
 // Pure functions only: the builder (browser), the public archive page
@@ -20,11 +21,13 @@ export const BLOCKS = {
   photo: { label: 'Photo', hint: 'One full-width picture. Tap it to open a link.' },
   quote: { label: 'Student quote', hint: 'Real words from a real student. Never invent one.' },
   dates: { label: 'Dates to circle', hint: 'A short list of what is coming up.' },
+  countdown: { label: 'Countdown', hint: 'A compact countdown to your deadline, with optional actions.' },
+  cards: { label: 'Link cards', hint: 'A row of clickable cards with your own words, icons and links.' },
   note: { label: 'One more thing', hint: 'A small aside with a link.' },
 };
 export const FORMATS = {
-  quick: { label: 'Quick Hello', blurb: 'A short note, the dates, one link. For most weeks.', blocks: ['dates', 'note', 'story'] },
-  full: { label: 'Full Issue', blurb: 'A letter, photos, a student quote, thank-yous, and the ask. For the issues worth dressing up.', blocks: ['story', 'photo', 'quote', 'dates', 'note'] },
+  quick: { label: 'Quick Hello', blurb: 'A short note, the dates, one link. For most weeks.', blocks: ['dates', 'note', 'story', 'cards', 'countdown'] },
+  full: { label: 'Full Issue', blurb: 'A letter, photos, a student quote, thank-yous, and the ask. For the issues worth dressing up.', blocks: ['story', 'photo', 'quote', 'dates', 'note', 'cards', 'countdown'] },
 };
 
 const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -32,6 +35,8 @@ const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID(
 export function newBlock(type) {
   const id = uid();
   switch (type) {
+    case 'countdown': return { id, type, heading:'', countdown:{label:'COUNTING DOWN',deadline:'',finished:'The countdown has ended.'},button:{label:'',url:''},link:{label:'',url:''} };
+    case 'cards': return { id, type, kicker: '', heading: '', columns: 3, items: [newCard(), newCard(), newCard()] };
     case 'photo': return { id, type, image: { url: '', alt: '' }, href: '' };
     case 'quote': return { id, type, quote: '', by: '' };
     case 'dates': return { id, type, kicker: 'Dates to circle', heading: 'Coming up.', items: [{ id: uid(), when: '', what: '', detail: '', url: '' }] };
@@ -39,6 +44,7 @@ export function newBlock(type) {
     default: return { id, type: 'story', tone: 'paper', kicker: '', heading: '', body: '', image: { url: '', alt: '' }, button: { label: '', url: '' }, link: { label: '', url: '' } };
   }
 }
+export const newCard = () => ({ id: uid(), icon: '', eyebrow: '', title: '', description: '', action: 'Learn more', url: '' });
 export const newDate = () => ({ id: uid(), when: '', what: '', detail: '', url: '' });
 
 export function longDate(iso) {
@@ -138,44 +144,22 @@ function image(img, href, inset) {
 }
 const row = (bg, padding, html) => html ? `<tr><td style="padding:${padding};background:${bg};">${html}</td></tr>` : '';
 
-// This known pair gets richer email-safe cards; other newsletter actions retain
-// their current layout. Raster icons survive copying into Gmail.
-function communityCards(b) {
-  const first = safeUrl(b.button?.url);
-  const second = safeUrl(b.link?.url);
-  if (first !== `${SITE}/board/#committees` || second !== 'https://www.paypal.com/ncp/payment/EWP8R298MW83A') return '';
-  const card = (href, label, description, icon, last, action) => {
-    const color = C.navy;
-    return `<td width="50%" valign="top" style="width:50%;padding:${last ? '0 0 0 7px' : '0 7px 0 0'};">`
-      + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" height="150" style="width:100%;height:150px;border-collapse:separate;background:${C.paper};border:1px solid ${C.line};border-top:3px solid ${C.line};border-radius:8px;">`
-      + `<tr><td valign="top" style="padding:12px 14px 6px;"><img src="${SITE}/newsletter-assets/${icon}.png" width="24" height="24" alt="" style="display:block;width:24px;height:24px;border:0;margin:0 0 8px;">`
-      + `<h3 style="margin:0 0 6px;font-size:16px;line-height:1.2;color:${color};">${esc(label)}</h3>`
-      + `<p style="margin:0;font-size:12px;line-height:1.4;color:${C.body};">${esc(description)}</p></td></tr>`
-      + `<tr><td style="padding:4px 14px 12px;"><a href="${esc(href)}" style="display:inline-block;font-size:12px;font-weight:800;line-height:1.4;color:${C.navy};text-decoration:underline;">${esc(action)}</a></td></tr></table></td>`;
-  };
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;table-layout:fixed;border-collapse:collapse;"><tr>`
-    + card(first, b.button.label, 'Meet the leads. Find your team.', 'committee-team-icon', false, 'Explore the teams')
-    + card(second, b.link.label, 'Already given? Thank you. You’re all set.', 'community-giving-icon', true, 'Membership donation')
-    + '</tr></table>';
-}
-
 function storyBlock(b, { leading = false } = {}) {
+  b=editableCardBlock(b);
   // A story with two actions keeps them together. Inline blocks wrap on phones
   // and survive the same Gmail paste as the existing single-button markup.
-  const directAction = safeUrl(b.button?.url) === RAFFLE_TICKET_URL
-    || safeUrl(b.button?.url) === 'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk';
+  const directAction = b.actionStyle==='solid';
   const primary = directAction
     ? button(b.button).replace(`background:${C.paper};`, 'background:#f7a81c;').replace('border-radius:999px;', 'border-radius:6px;')
     : button(b.button);
   const secondary = primary && safeUrl(b.link?.url) && String(b.link?.label || '').trim() ? button(b.link) : '';
-  const directActions = safeUrl(b.button?.url) === RAFFLE_TICKET_URL
-    ? `<div style="text-align:center;">${primary}${textLink({ label: "Share the raffle with friends", url: "https://wearercap.org/events/2026/fall-raffle/share/" })}</div>`
+  const directActions = b.centerActions || b.countdown
+    ? `<div style="text-align:center;">${primary}${textLink(b.link)}</div>`
     : primary + textLink(b.link);
-  const actions = communityCards(b) || (directAction ? directActions : secondary
+  const actions = b.cards ? cardItems(b.cards) : (b.centerActions||b.countdown) ? directActions : (directAction ? directActions : secondary
     ? `<div style="font-size:0;">${primary.replace('display:inline-block;', 'display:inline-block;margin:0 10px 10px 0;')}${secondary.replace('display:inline-block;', 'display:inline-block;margin:0 0 10px;')}</div>`
     : primary + textLink(b.link));
-  const countdown = safeUrl(b.button?.url) === RAFFLE_TICKET_URL && safeUrl(b.link?.url) === RAFFLE_DETAILS_URL
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:0 0 18px;"><a href="${RAFFLE_TICKET_URL}" style="text-decoration:none;"><img src="${RAFFLE_COUNTDOWN_URL}" alt="Time left to enter the first raffle drawing. Entry deadline: Saturday, October 24 at 11:59 p.m. Eastern." width="400" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"></a></td></tr></table>` : '';
+  const countdown = countdownMarkup(b.countdown,b.button?.url);
   const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(safeUrl(b.button?.url) === RAFFLE_TICKET_URL ? String(b.body || '').replace('Every ticket supports Teacher Appreciation Week.', 'Every ticket supports RCAP’s efforts. This is our main fundraiser for Teacher Appreciation Week.') : b.body) + countdown + actions;
   return row(b.tone === 'sand' ? C.sand : C.paper, leading ? '14px 26px 30px' : '30px 26px', inner.trim() ? inner : '');
 }
@@ -200,8 +184,9 @@ function datesBlock(b) {
   return row(C.paper, '30px 26px', kicker(b.kicker) + h2(b.heading)
     + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">${rows}</table>`);
 }
-function catchUpCards(b) {
-  if (String(b.heading || '').replace(/[.\s]+$/, '').toLowerCase() !== 'things you may have missed') return '';
+export function legacyLinkCards(b) {
+  if (b.type !== 'note') return null;
+  if (String(b.heading || '').replace(/[.\s]+$/, '').toLowerCase() !== 'things you may have missed') return null;
   const copy = {
     [`${SITE}/rcap-capsule/#/e/bingo-night`]: ['PHOTOS', 'Find your family. Relive the fun.', 'View photos'],
     [`${SITE}/rcap-capsule/#/e/chick-fil-a-spirit-night`]: ['PHOTOS', 'A night of food and school spirit.', 'View photos'],
@@ -212,25 +197,54 @@ function catchUpCards(b) {
     const url = match && safeUrl(match[2]);
     return match && copy[url] ? { label: match[1], url, copy: copy[url] } : null;
   });
-  if (items.length !== 3 || items.some((item) => !item)) return '';
-  // Inline fluid sizing survives Gmail paste: below 560px each card fills the
-  // row; above it the three cards share the row without a head-only media query.
-  return `<div style="font-size:0;text-align:center;">` + items.map(({ label, url, copy: [eyebrow, description, action] }) =>
-    `<div class="nb-missed" style="display:inline-block;width:100%;width:calc((560px - 100%) * 1000);min-width:33.333%;max-width:100%;vertical-align:top;text-align:left;">`
-    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate;"><tr><td style="padding:4px;">`
-    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:${C.sand};border:1px solid ${C.line};border-top:4px solid ${C.gold};border-radius:8px;"><tr><td valign="top">`
-    + `<a href="${esc(url)}" style="display:block;padding:16px 14px;color:${C.navy};text-decoration:none;">`
-    + `<span style="display:block;font-size:9px;font-weight:800;letter-spacing:1.3px;color:${C.gold};margin:0 0 9px;">${eyebrow}</span>`
-    + `<strong style="display:block;font-size:15px;line-height:1.25;margin:0 0 8px;">${esc(label)}</strong>`
-    + `<span style="display:block;font-size:12px;line-height:1.4;color:${C.body};margin:0 0 12px;">${description}</span>`
-    + `<span style="display:block;font-size:12px;font-weight:800;text-decoration:underline;">${action}</span></a>`
-    + `</td></tr></table></td></tr></table></div>`).join('') + '</div>';
+  if (items.length !== 3 || items.some((item) => !item)) return null;
+  return { id:b.id, type:'cards', kicker:b.kicker||'', heading:b.heading, columns:3, items:items.map(({label,url,copy:[eyebrow,description,action]},i)=>({id:`${b.id}-card-${i}`,icon:'',eyebrow,title:label,description,action,url})) };
 }
+
+export function editableCardBlock(block) {
+ const legacy=legacyLinkCards(block);if(legacy)return legacy;
+ if(block.type!=='story')return block;
+ if(!block.cards&&safeUrl(block.button?.url)===`${SITE}/board/#committees`&&safeUrl(block.link?.url)==='https://www.paypal.com/ncp/payment/EWP8R298MW83A')return {...block,button:{label:'',url:''},link:{label:'',url:''},cards:{columns:2,style:'community',items:[
+  {id:`${block.id}-committee`,icon:'team',eyebrow:'',title:block.button.label,description:'Meet the leads. Find your team.',action:'Explore the teams',url:block.button.url},
+  {id:`${block.id}-membership`,icon:'heart',eyebrow:'',title:block.link.label,description:'Already given? Thank you. You’re all set.',action:'Membership donation',url:block.link.url}
+ ]}};
+ if(!Object.hasOwn(block,'countdown')&&safeUrl(block.button?.url)===RAFFLE_TICKET_URL&&safeUrl(block.link?.url)===RAFFLE_DETAILS_URL)return {...block,actionStyle:'solid',centerActions:true,countdown:{label:'FIRST-DRAWING ENTRY CLOSES IN',deadline:'2026-10-24T23:59',finished:'See the raffle page for upcoming drawings.'},link:{label:'Share the raffle with friends',url:`${SITE}/events/2026/fall-raffle/share/`}};
+ if(!Object.hasOwn(block,'actionStyle')&&[RAFFLE_TICKET_URL,'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk'].includes(safeUrl(block.button?.url)))return {...block,actionStyle:'solid',centerActions:safeUrl(block.button?.url)===RAFFLE_TICKET_URL};
+ return block;
+}
+function cardItems(b) {
+  const items=(b.items||[]).slice(0,6).filter(i=>i.title||i.description||i.eyebrow||i.icon);
+  if(!items.length)return '';
+  const columns=Math.min(items.length,b.columns===2?2:3);
+  return '<div style="font-size:0;text-align:center;">'+items.map(item=>{
+    const url=safeUrl(item.url),element=url?'a':'div';
+    return `<div class="nb-missed" style="display:inline-block;width:100%;width:calc((560px - 100%) * 1000);min-width:${100/columns}%;max-width:100%;vertical-align:top;text-align:left;">`
+      +`<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:separate;"><tr><td style="padding:4px;">`
+      +`<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:${b.style==='community'?C.paper:C.sand};border:1px solid ${C.line};border-top:4px solid ${b.style==='community'?C.line:C.gold};border-radius:8px;"><tr><td valign="top">`
+      +`<${element}${url?` href="${esc(url)}"`:''} style="display:block;padding:16px 14px;color:${C.navy};text-decoration:none;">`
+      +(['team','heart'].includes(item.icon)?`<img src="${SITE}/newsletter-assets/${item.icon==='team'?'committee-team-icon':'community-giving-icon'}.png" width="24" height="24" alt="" style="display:block;margin:0 0 9px;border:0;">`:item.icon?`<span aria-hidden="true" style="display:block;font-size:22px;margin:0 0 9px;">${esc(item.icon)}</span>`:'')
+      +(item.eyebrow?`<span style="display:block;font-size:9px;font-weight:800;letter-spacing:1.3px;color:${C.gold};margin:0 0 9px;">${esc(item.eyebrow)}</span>`:'')
+      +(item.title?`<strong style="display:block;font-size:15px;line-height:1.25;margin:0 0 8px;">${esc(item.title)}</strong>`:'')
+      +(item.description?`<span style="display:block;font-size:12px;line-height:1.4;color:${C.body};margin:0 0 12px;">${esc(item.description)}</span>`:'')
+      +(url&&item.action?`<span style="display:block;font-size:12px;font-weight:800;text-decoration:underline;">${esc(item.action)}</span>`:'')
+      +`</${element}></td></tr></table></td></tr></table></div>`;
+  }).join('')+'</div>';
+}
+function countdownMarkup(value,url) {
+ if(!value)return '';
+ const src=countdownImageUrl(value);if(!src)return '';
+ const alt=`${countdownConfig(value).label}. Deadline ${value.deadline.replace('T',' at ')} Eastern.`;
+ const img=`<img src="${esc(src)}" alt="${esc(alt)}" width="400" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;">`;
+ return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td align="center" style="padding:0 0 18px;">${safeUrl(url)?`<a href="${esc(safeUrl(url))}" style="text-decoration:none;">${img}</a>`:img}</td></tr></table>`;
+}
+function countdownBlock(b) {return row(C.paper,'30px 26px',h2(b.heading)+countdownMarkup(b.countdown,b.button?.url)+`<div style="text-align:center;">${button(b.button)}${textLink(b.link)}</div>`);}
+function cardsBlock(b) { return row(C.paper,'30px 26px',kicker(b.kicker)+h2(b.heading,true)+cardItems(b)); }
 function noteBlock(b) {
-  const inner = kicker(b.kicker) + h2(b.heading, true) + (catchUpCards(b) || paragraphs(b.body)) + (safeUrl(b.link?.url) && b.link?.label ? `<a href="${esc(safeUrl(b.link.url))}" style="${linkStyle}">${esc(b.link.label)}</a>` : '');
+  const legacy=legacyLinkCards(b);if(legacy)return cardsBlock(legacy);
+  const inner = kicker(b.kicker) + h2(b.heading, true) + paragraphs(b.body) + (safeUrl(b.link?.url) && b.link?.label ? `<a href="${esc(safeUrl(b.link.url))}" style="${linkStyle}">${esc(b.link.label)}</a>` : '');
   return row(C.paper, '30px 26px', (b.heading || b.body) ? inner : '');
 }
-const RENDER = { story: storyBlock, photo: photoBlock, quote: quoteBlock, dates: datesBlock, note: noteBlock };
+const RENDER = { countdown:countdownBlock, cards: cardsBlock, story: storyBlock, photo: photoBlock, quote: quoteBlock, dates: datesBlock, note: noteBlock };
 
 // ---------------------------------------------------------------------------
 // The email
@@ -266,7 +280,11 @@ export function renderDocument(c, opts = {}) {
 export function plainText(c = {}) {
   const out = [c.dateline, c.kicker, plain(c.headline), c.greeting, plain(c.body)];
   if (c.button?.label && safeUrl(c.button.url)) out.push(`${c.button.label}: ${safeUrl(c.button.url)}`);
-  for (const b of c.blocks || []) {
+  for (const original of c.blocks || []) {
+    const b=editableCardBlock(original);
+    if(b.countdown&&countdownConfig(b.countdown).valid)out.push(`${b.countdown.label}: ${b.countdown.deadline.replace('T',' at ')} Eastern.`);
+    if(b.cards)out.push(...b.cards.items.map(i=>`${i.title}\n${i.description}\n${i.action}: ${safeUrl(i.url)}`));
+    if(b.type==='cards'){out.push([b.kicker,b.heading,...(b.items||[]).flatMap(i=>[i.eyebrow,i.title,i.description,safeUrl(i.url)?`${i.action||'Learn more'}: ${safeUrl(i.url)}`:''])].filter(Boolean).join('\n'));continue;}
     if (b.type === 'quote' && b.quote) out.push(`"${plain(b.quote)}"${b.by ? ` (${b.by})` : ''}`);
     else if (b.type === 'dates') out.push([b.heading, ...(b.items || []).filter((i) => i.what).map((i) => `${i.when}: ${i.what}${i.detail ? `. ${plain(i.detail)}` : ''}`)].filter(Boolean).join('\n'));
     else if (b.type === 'photo') continue;
@@ -310,8 +328,11 @@ export function styleCheck(c = {}) {
   const fields = [['Subject', c.subject], ['Headline', c.headline], ['Opening note', c.body], ['Masthead line', c.dateline], ['Kicker', c.kicker]];
   (c.blocks || []).forEach((b, n) => {
     const name = `${BLOCKS[b.type]?.label || 'Section'} ${n + 1}`;
-    fields.push([name, [b.kicker, b.heading, b.body, b.quote, b.by, ...(b.items || []).flatMap((i) => [i.when, i.what, i.detail])].filter(Boolean).join(' ')]);
+    fields.push([name, [b.kicker, b.heading, b.body, b.quote, b.by, ...(b.items || []).flatMap((i) => [i.when, i.what, i.detail, i.eyebrow, i.title, i.description, i.action])].filter(Boolean).join(' ')]);
     if ((b.type === 'photo' || b.type === 'story') && safeUrl(b.image?.url) && !String(b.image?.alt || '').trim()) notes.push({ field: name, kind: 'alt', text: 'Add a short photo description so screen readers and blocked images still make sense.' });
+    if(b.countdown&&!countdownConfig(b.countdown).valid)notes.push({field:name,kind:'deadline',text:'Choose a valid Eastern deadline for the countdown.'});
+    if(b.cards&&(b.cards.items||[]).some(i=>(i.title||i.description)&&!safeUrl(i.url)))notes.push({field:name,kind:'link',text:'Add a valid destination to each link card before sending.'});
+    if(b.type==='cards'&&(b.items||[]).some(i=>(i.title||i.description)&&!safeUrl(i.url))) notes.push({field:name,kind:'link',text:'Add a valid destination to each link card before sending.'});
     if (b.type === 'quote' && b.quote && !b.by) notes.push({ field: name, kind: 'quote', text: 'Name the student who said it. Quotes stay real.' });
   });
   for (const [field, text] of fields) {
