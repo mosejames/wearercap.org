@@ -1,3 +1,4 @@
+import {attachmentSize} from './attachmentSize';
 import React,{useEffect,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import './builder.css';
@@ -11,7 +12,7 @@ async function intakeCall(action,payload={}){
 function FilePreview({file,onRemove,disabled}){
  const[url,setUrl]=useState('');
  useEffect(()=>{if(!/^image\/(jpeg|png|webp)$/.test(file.type))return;const preview=URL.createObjectURL(file);setUrl(preview);return()=>URL.revokeObjectURL(preview);},[file]);
- return <li className="nc-file">{url?<img src={url} alt={`Selected attachment: ${file.name}`}/>:<span className="nc-file-symbol" aria-hidden="true">{file.type==='application/pdf'?'PDF':'PHOTO'}</span>}<div><strong>{file.name}</strong><small>{(file.size/1024/1024).toFixed(1)} MB</small></div><button type="button" disabled={disabled} onClick={onRemove} aria-label={`Remove ${file.name}`}>Remove</button></li>;
+ return <li className="nc-file">{url?<img src={url} alt={`Selected attachment: ${file.name}`}/>:<span className="nc-file-symbol" aria-hidden="true">{file.type==='application/pdf'?'PDF':'PHOTO'}</span>}<div><strong>{file.name}</strong><small>{attachmentSize(file.size)}</small></div><button type="button" disabled={disabled} onClick={onRemove} aria-label={`Remove ${file.name}`}>Remove</button></li>;
 }
 function Intake(){
  const[done,setDone]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[files,setFiles]=useState([]),[progress,setProgress]=useState('');
