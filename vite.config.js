@@ -60,6 +60,7 @@ export default defineConfig({
         board: resolve(__dirname, "board/index.html"),
         rsvp: resolve(__dirname, "rsvp/index.html"),
         parentplaylist: resolve(__dirname, "karaoke/playlist/index.html"),
+        newsletterintake: resolve(__dirname, "newsletter/submit/index.html"),
         newsletterbuilder: resolve(__dirname, "newsletter/builder/index.html"),
       },
     },

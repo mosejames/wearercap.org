@@ -11,8 +11,10 @@ export const CAMPAIGN_LINKS={
  survey:'https://wearercap.org/feedback/rb-karaoke',
  calendar:'https://wearercap.org/rca-calendar-2026-2027.pdf'
 };
-export function campaignLinks(html,issue='current') {
+export function campaignLinks(html,issue='current',signedLinks={}) {
  return html.replace(/href="([^"]+)"/g,(all,url)=>{
+  const decoded=url.replace(/&amp;/g,'&').replace(/&quot;/g,'\"').replace(/&#39;/g,"'");
+  if(Object.hasOwn(signedLinks,decoded))return `href="${signedLinks[decoded].replace(/&/g,'&amp;').replace(/"/g,'&quot;')}"`;
   const key=Object.keys(CAMPAIGN_LINKS).find(k=>CAMPAIGN_LINKS[k]===url);
   return key?`href="https://wearercap.org/api/campaign-activity?link=${key}&amp;issue=${encodeURIComponent(issue)}"`:all;
  });

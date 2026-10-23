@@ -1,8 +1,11 @@
+import {intakeAction} from './newsletter-intake.js';
+import {consoleAction} from './newsletter-console.js';
+import {verifyNewsletterLink} from './newsletter-links.js';
 import {randomUUID,createHash} from 'node:crypto';
 import {objectRequest,encrypt,decrypt} from './london-stories/storage.js';
 import {CAMPAIGN_LINKS} from '../public/campaign-links.js';
 const PREFIX='_analytics/rcap-campaign/';
-export const EVENTS=['newsletterView','creatorView','invitationView','photoSelected','frameChanged','creationStarted','creationFailed','created','shareCompleted','shareCancelled','linkCopied','cardSaved','ticketClick','creditCopied',...Object.keys(CAMPAIGN_LINKS).map(k=>'newsletter_'+k)];
+export const EVENTS=['newsletterView','creatorView','invitationView','photoSelected','frameChanged','creationStarted','creationFailed','created','shareCompleted','shareCancelled','linkCopied','cardSaved','ticketClick','creditCopied','newsletter_link',...Object.keys(CAMPAIGN_LINKS).map(k=>'newsletter_'+k)];
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const rates=new Map();
 export function cleanEvent(body){
@@ -19,9 +22,9 @@ export function summarizeEvents(rows){
  return {total:rows.length,counts:Object.fromEntries(EVENTS.map(event=>[event,rows.filter(r=>r.event===event).length]))};
 }
 const xmlDecode=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
-async function report(){
+export async function report({days=30}={}){
  const rows=[];let truncated=false;
- for(let day=0;day<30&&!truncated;day++){
+ for(let day=0;day<days&&!truncated;day++){
   let token;
   do{
    const date=new Date(Date.now()-day*86400000).toISOString().slice(0,10);
@@ -35,7 +38,7 @@ async function report(){
    truncated=rows.length>=5000;if(truncated)break;
   }while(token);
  }
- return {...summarizeEvents(rows),days:30,truncated,byIssue:[...new Set(rows.map(r=>r.issue))].map(issue=>({issue,...summarizeEvents(rows.filter(r=>r.issue===issue))}))};
+ return {...summarizeEvents(rows),days,truncated,byDay:Array.from({length:days},(_,i)=>{const day=new Date(Date.now()-(days-i-1)*86400000).toISOString().slice(0,10);return {day,...summarizeEvents(rows.filter(r=>new Date(r.at).toISOString().slice(0,10)===day))};}),byIssue:[...new Set(rows.map(r=>r.issue))].map(issue=>({issue,...summarizeEvents(rows.filter(r=>r.issue===issue))}))};
 }
 async function authorized(req,body){
  const auth=req.headers?.authorization;if(!auth?.startsWith('Bearer ')||!UUID.test(body.issueId||''))return false;
@@ -47,17 +50,20 @@ export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('X-Robots-Tag','noindex');
  const link=req.query?.link;
  if(req.method==='GET'){
-  if(!Object.hasOwn(CAMPAIGN_LINKS,link))return res.status(400).json({error:'Unknown link'});
+  const signed=verifyNewsletterLink(req.query?.issue,req.query?.target,req.query?.sig);
+  if(!signed&&!Object.hasOwn(CAMPAIGN_LINKS,link))return res.status(400).json({error:'Unknown link'});
   if(!/bot|crawler|spider|preview|slack|facebookexternalhit|proofpoint|safelinks/i.test(req.headers?.['user-agent']||'')){
-   try{await recordActivity('newsletter_'+link,req.query?.issue);}catch{/* A tracking outage must never break a newsletter link. */}
+   try{await recordActivity(signed?(Object.keys(CAMPAIGN_LINKS).find(k=>CAMPAIGN_LINKS[k]===req.query.target)?'newsletter_'+Object.keys(CAMPAIGN_LINKS).find(k=>CAMPAIGN_LINKS[k]===req.query.target):'newsletter_link'):'newsletter_'+link,req.query?.issue);}catch{/* A tracking outage must never break a newsletter link. */}
   }
-  res.setHeader('Location',CAMPAIGN_LINKS[link]);return res.status(302).end();
+  res.setHeader('Location',signed?req.query.target:CAMPAIGN_LINKS[link]);return res.status(302).end();
  }
  if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
  if(req.headers?.origin&&!['https://wearercap.org','https://www.wearercap.org'].includes(req.headers.origin))return res.status(403).json({error:'Origin not allowed'});
  try{
   const body=typeof req.body==='string'?JSON.parse(req.body):req.body||{};
-  if(JSON.stringify(body).length>1024)return res.status(413).json({error:'Too large'});
+  if(JSON.stringify(body).length>12000)return res.status(413).json({error:'Too large'});
+  if(['submit','inbox','review'].includes(body.action))return res.status(200).json(await intakeAction(req,body));
+  if(['dashboard','plan','sent','trackingLinks'].includes(body.action)){return res.status(200).json(await consoleAction(req,body,report));}
   if(body.action==='report'){
    if(!await authorized(req,body))return res.status(403).json({error:'Sign in as a newsletter editor to see analytics.'});
    return res.status(200).json(await report());
@@ -70,5 +76,5 @@ export default async function handler(req,res){
   const rate=rates.get(ip)||{at:now,n:0};rate.n++;rates.set(ip,rate);if(rate.n>120)return res.status(429).json({error:'Please try later'});
   if(!/bot|crawler|spider|preview/i.test(req.headers?.['user-agent']||''))await recordActivity(value.event,value.issue,value.id);
   return res.status(200).json({ok:true});
- }catch{return res.status(503).json({error:'Analytics are temporarily unavailable.'});}
+ }catch(error){return res.status(error.status||503).json({error:error.status?error.message:'Analytics and calendar are temporarily unavailable.'});}
 }

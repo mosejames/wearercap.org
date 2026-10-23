@@ -28,3 +28,9 @@ export async function uploadPhoto(issueId, file) {
   if (!put.ok) throw new Error('The photo did not finish uploading. Please try again.');
   return `${body.publicBase}/${item.key}`;
 }
+
+export async function consoleCall(action,payload={}) {
+ const {data:{session}}=await supabase.auth.getSession();
+ const r=await fetch('/api/campaign-activity',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({action,...payload})});
+ const body=await r.json();if(!r.ok)throw Error(body.error||'The newsletter console is unavailable.');return body;
+}

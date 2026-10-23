@@ -1,3 +1,4 @@
+import {signedNewsletterLinks} from './newsletter-links.js';
 // Public pages for published RCAP newsletter issues.
 //
 //   /newsletter          → every published issue, newest first
@@ -121,6 +122,6 @@ export default async function newsletterPage(req, res) {
   return res.status(200).send(shell({
     title, desc, canonical: `${SITE}/newsletter/${issue.slug}`,
     image: img?.url || OG, imageAlt: img?.alt || 'The RCAP Newsletter',
-    body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c,{analytics:true,webUrl:`${SITE}/newsletter/${issue.slug}`})}</main>`,
+    body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c,{analytics:true,trackingLinks:signedNewsletterLinks(c,issue.slug),webUrl:`${SITE}/newsletter/${issue.slug}`})}</main>`,
   }));
 }

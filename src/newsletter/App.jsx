@@ -1,10 +1,11 @@
+import NewsletterConsole from './NewsletterConsole.jsx';
 import CampaignAnalytics from './CampaignAnalytics.jsx';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowDown, ArrowUp, ArrowRight, Check, ChevronDown, Copy, Download, ExternalLink, Globe, ImagePlus,
   LogOut, Mail, Plus, Sparkles, Trash2, UserPlus, Users, X,
 } from 'lucide-react';
-import { supabase, call, uploadPhoto } from './api.js';
+import { supabase, call, uploadPhoto, consoleCall } from './api.js';
 import {
   BLOCKS, FORMATS, newBlock, newDate, newCard, editableCardBlock, template, renderEmail, renderDocument, plainText,
   styleCheck, fixDashes, suggestSlug, slugify, longDate, SITE, RCAP_SENDER, DEFAULT_BCC, gmailComposeUrl,
@@ -156,6 +157,7 @@ function Dashboard({ me, onOpen, onError }) {
         <p className="nb-kicker">Welcome back{me.name ? `, ${me.name.split(' ')[0]}` : ''}</p>
         <h1>What are we <span className="hl">sending?</span></h1>
       </section>
+      <NewsletterConsole me={me} issues={issues||[]} onOpen={onOpen}/>
       <section className="nb-starts">
         {Object.entries(FORMATS).map(([key, f]) => (
           <button key={key} className={`nb-start ${key}`} disabled={busy} onClick={() => start(key)}>
@@ -618,7 +620,9 @@ function Editor({ id, me, onBack, onError, demo = null }) {
 
   // Copies the formatted email. Returns true when the clipboard took it.
   async function copyHtml() {
-    const inner = renderEmail(content, { webUrl: webUrl(issue), analytics: true });
+    await flush();
+    let trackingLinks={};try{trackingLinks=(await consoleCall('trackingLinks',{issueId:id})).links;}catch{flash('Custom link tracking is unavailable. Known campaign links remain tracked.');}
+    const inner = renderEmail(content, { webUrl: webUrl(issue), analytics: true, trackingLinks });
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([inner], { type: 'text/html' }), 'text/plain': new Blob([plainText(content)], { type: 'text/plain' }) })]);
       return true;
@@ -649,9 +653,12 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   async function copySubject() {
     try { await navigator.clipboard.writeText(content.subject || ''); flash('Subject copied.'); } catch { flash(`Subject: ${content.subject}`); }
   }
-  function download() {
+  async function download() {
+    await flush();
+    let trackingLinks={};try{trackingLinks=(await consoleCall('trackingLinks',{issueId:id})).links;}catch{flash('Custom link tracking is temporarily unavailable.');}
+    const exported=renderDocument(content,{webUrl:webUrl(issue),analytics:true,trackingLinks});
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.href = URL.createObjectURL(new Blob([exported], { type: 'text/html' }));
     a.download = `rcap-newsletter-${meta.issue_date}.html`;
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
