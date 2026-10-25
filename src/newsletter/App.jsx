@@ -394,7 +394,7 @@ function BlockEditor({ block, update, issueId, onError }) {
 }
 
 // One line that says what a closed section holds.
-const firstLine = (t) => String(t || '').replace(/\*\*|\[|\]\([^)]*\)/g, '').split('\n').map((x) => x.trim()).find(Boolean) || '';
+const firstLine = (t) => String(t || '').replace(/\*\*|\[|\]\([^)]*\)|\]/g, '').split('\n').map((x) => x.trim()).find(Boolean) || '';
 export function blockSummary(b) {
   switch (b.type) {
     case 'countdown': return b.countdown?.label || 'Choose a deadline';
