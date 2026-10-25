@@ -228,7 +228,7 @@
       ]
     },
     "api/m3-sign.js": {
-      "maxDuration": 60,
+      "maxDuration": 180,
       "includeFiles": "server/london-dedupe/seed.json"
     }
   }
