@@ -5,7 +5,10 @@ import {newsletterRpc} from './newsletter-console.js';
 const ROOT='_newsletter/intake/';const rates=new Map();
 export function cleanSubmission(body){
  const text=(key,max,required=false)=>{const value=String(body[key]||'').trim();if(value.length>max||(required&&!value))throw Object.assign(Error(`Please check ${key}.`),{status:400});return value;};
- const item={name:text('name',100,true),email:text('email',200,true),title:text('title',160,true),details:text('details',6000,true),links:text('links',2000),requestedDate:text('requestedDate',10),category:text('category',40)};
+ const item={name:text('name',100,true),email:text('email',200,true),title:text('title',160),details:text('details',6000,true),links:text('links',2000),requestedDate:text('requestedDate',10),category:text('category',40)||'Other',phone:text('phone',40),relationship:text('relationship',40)};
+ if(!item.title)item.title=item.details.replace(/\s+/g,' ').slice(0,100);
+ if(item.relationship&&!['Parent or family member','Staff member','Student','Community member'].includes(item.relationship))throw Object.assign(Error('Choose how you are sharing.'),{status:400});
+ if(item.phone&&(!/^[+0-9().\s-]+$/.test(item.phone)||item.phone.replace(/\D/g,'').length<7))throw Object.assign(Error('Please check your phone number, or leave it blank.'),{status:400});
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item.email))throw Object.assign(Error('Enter your email address.'),{status:400});
  if(item.requestedDate&&!/^\d{4}-\d{2}-\d{2}$/.test(item.requestedDate))throw Object.assign(Error('Choose a requested date.'),{status:400});
  if(!['Announcement','Event','Photos or recap','Volunteer opportunity','Other'].includes(item.category))throw Object.assign(Error('Choose a category.'),{status:400});
