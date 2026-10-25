@@ -35,3 +35,17 @@ All actions pass the existing invited-editor RPC gate. Assigned editors must
 be in the editor list, and linked issues must exist. Comments are bounded and
 rendered as React text. Team members refresh the workspace to see others' latest
 changes; live presence and simultaneous rich-text editing are not included.
+
+Starter version 2 includes editable sample copy, branded raster placeholders,
+example action destinations, and a sample event countdown one week after the
+issue date. These are examples, not confirmed event facts or real past photos.
+Style checks flag remaining sample markers, template images, example links,
+and the sample countdown label. The starter picker also offers read-only
+previews via `?preview=weekly`, `?preview=event`, and `?preview=recap`.
+
+When opening an old starter, the editor upgrades it only if its subject,
+headline, opening, preview text, primary action, and section content are still
+untouched. Section structure and defaults must match exactly. The upgrade keeps
+existing signature, greeting, dateline, recipients, and other metadata, and uses
+the issue revision to prevent overwriting a concurrent edit. Customized drafts
+are left alone. New starters are already versioned and never rehydrated.

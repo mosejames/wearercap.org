@@ -1,3 +1,4 @@
+import {starterContent,upgradeBlankStarter,STARTERS,nextWednesday} from './workspaceModel';
 import Workspace from './Workspace.jsx';
 import CampaignAnalytics from './CampaignAnalytics.jsx';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -498,7 +499,9 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   const copyRef = useRef(null);
 
   useEffect(() => {
-    (demo ? Promise.resolve(demo) : call('load', { id })).then((d) => {
+    (demo ? Promise.resolve(demo) : call('load', { id })).then(async (d) => {
+      const upgraded=upgradeBlankStarter(d.content,d.issue_date||today());
+      if(upgraded!==d.content&&!demo){const saved=await call('save',{id,content:upgraded,title:d.title,issue_date:d.issue_date,expected_revision:d.revision});d={...d,...saved,content:upgraded};}
       setIssue(d); setContent({...d.content,blocks:(d.content.blocks||[]).map(editableCardBlock)}); setMeta({ title: d.title, issue_date: d.issue_date });
       setSlug(d.slug || suggestSlug(d.content, d.issue_date)); revision.current = d.revision;
     }).catch((e) => onError(e.message));
@@ -770,7 +773,7 @@ export default function App() {
   // ?preview=quick or ?preview=full opens the editor with sample words and no
   // saving, so anyone can see how the builder works before an invite.
   const demoFormat = new URLSearchParams(location.search).get('preview');
-  const demo = useMemo(() => (FORMATS[demoFormat] ? sampleIssue(demoFormat) : null), [demoFormat]);
+  const demo = useMemo(() => STARTERS.some(s=>s.id===demoFormat)?{id:'preview',format:'full',status:'draft',title:STARTERS.find(s=>s.id===demoFormat).label+' preview',issue_date:nextWednesday(),revision:0,content:starterContent(demoFormat,nextWednesday())}:(FORMATS[demoFormat]?sampleIssue(demoFormat):null),[demoFormat]);
   const onError = useCallback((m) => setError(String(m || 'Something went wrong.')), []);
 
   useEffect(() => {

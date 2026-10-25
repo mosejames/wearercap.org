@@ -325,6 +325,8 @@ export function suggestSlug(c, isoDate) {
 // ---------------------------------------------------------------------------
 export function styleCheck(c = {}) {
   const notes = [];
+  const source=JSON.stringify(c);
+  if(/\[Add |newsletter\/templates\/|example\.com\/replace-this-|SAMPLE DATE/.test(source))notes.push({field:'Template',kind:'template',text:'Replace sample wording, images, links, and the sample countdown date before sending.'});
   const fields = [['Subject', c.subject], ['Headline', c.headline], ['Opening note', c.body], ['Masthead line', c.dateline], ['Kicker', c.kicker]];
   (c.blocks || []).forEach((b, n) => {
     const name = `${BLOCKS[b.type]?.label || 'Section'} ${n + 1}`;
