@@ -22,7 +22,10 @@ at 90 seconds.
 
 Search is restricted to selected government, school and international-agency
 sources. Model-provided citations must match actual search sources or the exact
-public school calendar. Tracking parameters are normalized before matching.
+public school calendar. Tracking parameters are normalized before matching. Additional cited pages may
+be checked directly over HTTPS on the same restricted official domains; redirects
+are revalidated and unavailable pages are excluded. General refreshes must
+include a grounded external-calendar idea before being cached.
 Invalid or out-of-window dates and ungrounded external suggestions are dropped.
 Calendar ideas are editorial proposals, not independently guaranteed facts:
 editors still confirm details before publication. Civic suggestions must be

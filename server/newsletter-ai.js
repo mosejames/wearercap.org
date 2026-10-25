@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {objectRequest,encrypt,decrypt} from './london-stories/storage.js';
 import {newsletterRpc} from './newsletter-console.js';
 export const SCHOOL_CALENDAR='https://wearercap.org/rca-calendar-2026-2027.pdf';
-const CACHE='_newsletter/ai-calendar-suggestions',LOCK=CACHE+'-lock';
+const CACHE='_newsletter/ai-calendar-suggestions-v2',LOCK=CACHE+'-lock';
 const fail=(message,status=503)=>Object.assign(Error(message),{status});
 const limits=new Map();
 const sourceSchema={type:'object',additionalProperties:false,required:['title','url'],properties:{title:{type:'string'},url:{type:'string'}}};
@@ -29,13 +29,27 @@ export function cleanAiResult(response,now=new Date(),allowEmpty=false){
   return {id:randomUUID(),title:clean(i.title).slice(0,160),pitch:clean(i.pitch).slice(0,1500),timing:clean(i.timing).slice(0,300),date,category:i.category,outline:(i.outline||[]).slice(0,4).map(x=>clean(x).slice(0,400)),sources};
  }).filter(Boolean);
  if(!ideas.length&&!(allowEmpty&&Array.isArray(parsed.ideas)&&parsed.ideas.length===0&&parsed.message))throw fail('No sourced suggestions were returned. Please try again.',502);
- return {message:clean(parsed.message).split(/\n\s*\n/)[0].slice(0,350),ideas,generatedAt:now.toISOString(),schoolCalendar:SCHOOL_CALENDAR};
+ return {message:ideas.length?'Here are a few timely angles to consider. Each includes a source and a starting outline.':clean(parsed.message).split(/\n\s*\n/)[0].slice(0,350),ideas,generatedAt:now.toISOString(),schoolCalendar:SCHOOL_CALENDAR};
+}
+const TRUSTED_SOURCES=['sos.ga.gov','georgia.gov','usa.gov','vote.gov','opm.gov','un.org','unesco.org','unicef.org','who.int','loc.gov','si.edu','nasa.gov','noaa.gov','ed.gov','ronclarkacademy.com','wearercap.org'];
+export function trustedSource(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&TRUSTED_SOURCES.some(host=>u.hostname===host||u.hostname.endsWith('.'+host));}catch{return false;}}
+async function completeSourceChecks(response){
+ const message=(response.output||[]).filter(o=>o.type==='message').flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('');let parsed;try{parsed=JSON.parse(message);}catch{return;}
+ const candidates=[...new Set((parsed.ideas||[]).flatMap(i=>(i.sources||[]).map(s=>s.url)).filter(u=>u!==SCHOOL_CALENDAR&&trustedSource(u)))].slice(0,8);
+ const verified=await Promise.all(candidates.map(async initial=>{try{let url=initial;for(let n=0;n<3;n++){
+  if(!trustedSource(url))return null;
+  const r=await fetch(url,{redirect:'manual',signal:AbortSignal.timeout(6000),headers:{Accept:'text/html,application/pdf'}});
+  if([301,302,303,307,308].includes(r.status)){url=new URL(r.headers.get('location'),url).href;r.body?.cancel();continue;}
+  if(!r.ok){r.body?.cancel();return null;}
+  const type=r.headers.get('content-type')||'';r.body?.cancel();return /text\/html|application\/pdf/.test(type)?{url:initial}:null;
+ }}catch{return null;}return null;}));
+ response.output.push({type:'web_search_call',action:{sources:verified.filter(Boolean)}});
 }
 export async function generateIdeas(prompt,messages=[],allowEmpty=false){
  const key=process.env.OPENAI_API_KEY;if(!key)throw fail('The editorial assistant is not connected yet.');
  const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(aiRequest(prompt,new Date(),messages)),signal:AbortSignal.timeout(90000)});
  if(!r.ok){const info=await r.json().catch(()=>({}));const error=fail(r.status===429?'The assistant has reached its current usage limit. Try again later.':'The assistant is temporarily unavailable. Please try again.',r.status===429?429:503);error.upstreamCode=info.error?.code;error.upstreamParam=info.error?.param;throw error;}
- return cleanAiResult(await r.json(),new Date(),allowEmpty);
+ const response=await r.json();await completeSourceChecks(response);return cleanAiResult(response,new Date(),allowEmpty);
 }
 async function read(key){const r=await objectRequest(key);if(r.status===404)return {value:null,etag:null};if(!r.ok)throw Error('Could not load suggestions');return {value:decrypt(Buffer.from(await r.arrayBuffer())),etag:r.headers.get('etag')};}
 function throttle(email){const now=Date.now();for(const[k,v]of limits)if(now-v.at>3600000)limits.delete(k);const usage=limits.get(email)||{at:now,count:0};if(++usage.count>8)throw fail('Let’s give the assistant a little time. Try again later.',429);limits.set(email,usage);}
@@ -53,6 +67,7 @@ export default async function aiAction(req,body){
  if(!claimed.ok)return {...(cached.value||{ideas:[]}),refreshing:true};
  try{
   throttle(me.email);const result=await generateIdeas('Find timely, well-rounded RCAP newsletter ideas for the next 60 days. Read the school calendar and search primary sources for upcoming civic dates, holidays and world observances. Include useful travel and seasonal school-life angles when supported. Give a balanced mix of 4-6 suggestions.');
+  if(!result.ideas.some(i=>i.category!=='School'&&i.category!=='Evergreen'))throw fail('The broader calendar check did not finish. Please try again.');
   const saved=await objectRequest(CACHE,{method:'PUT',headers:{'Content-Type':'application/octet-stream','Cache-Control':'no-store'},body:encrypt(result)});if(!saved.ok)throw Error('Could not save suggestions');return result;
  }catch(e){if(cached.value)return {...cached.value,stale:true,error:'Showing the last suggestions because the refresh could not finish.'};throw e;}
  finally{await objectRequest(LOCK,{method:'DELETE'}).catch(()=>{});}
