@@ -15,3 +15,6 @@ supabase/.temp/
 
 # Local handoff notes with passcodes. This repo is public.
 HANDOFF-CODEX.md
+
+# Private raffle chair dashboard must never be committed.
+RCA-Fall-Raffle-*.html

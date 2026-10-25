@@ -1,0 +1,48 @@
+{
+  "asOf": "Saturday, October 24 at 11:59 p.m.",
+  "goal": 20000,
+  "total": 3226,
+  "unassigned": 2,
+  "houses": [
+    {
+      "name": "Isibindi",
+      "amount": 1452
+    },
+    {
+      "name": "Rêveur",
+      "amount": 795
+    },
+    {
+      "name": "Amistad",
+      "amount": 627
+    },
+    {
+      "name": "Altruismo",
+      "amount": 350
+    }
+  ],
+  "classes": [
+    {
+      "name": "2031",
+      "amount": 1577
+    },
+    {
+      "name": "2030",
+      "amount": 890
+    },
+    {
+      "name": "2028",
+      "amount": 482
+    },
+    {
+      "name": "2027",
+      "amount": 175
+    },
+    {
+      "name": "2029",
+      "amount": 100
+    }
+  ],
+  "topFive": null,
+  "winners": []
+}

@@ -1,0 +1,103 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import {
+  parseDashboard, buildPublicResults, publicName, cleanAsOf, normalizeHouse,
+  segmentWidths, milestones,
+} from './raffleResults.js';
+import published from './raffle-results.json';
+
+const rows = [
+  { student: 'Ryleigh Baker', cls: '2031', house: 'Isibindi', n: 1217 },
+  { student: 'Kamden White', cls: '2028', house: 'Amistad', n: 216 },
+  { student: 'Ian Watson', cls: '2030', house: 'Reveur', n: 190 },
+  { student: 'Xavier Carter Jr.', cls: '2028', house: 'Reveur', n: 125 },
+  { student: 'Gywinn (Jr) Lewis', cls: '2030', house: 'Amistad', n: 111 },
+  { student: 'Karson', cls: '2031', house: 'Altruismo', n: 111 },
+  { student: 'Drew Thomas', cls: '2031', house: 'Altruismo', n: 3 },
+  { student: 'No student named', cls: 'Not given', house: 'Not given', n: 2 },
+];
+const html = `<p class="asof">Updates as of Saturday, October 24th at 11:59PM.</p>
+<script>const DATA = ${JSON.stringify(rows)};\nconst NONE = 'x';</script>`;
+
+describe('reading the committee dashboard', () => {
+  it('pulls the rows and the as-of line from the dashboard file', () => {
+    const parsed = parseDashboard(html);
+    expect(parsed.rows).toHaveLength(8);
+    expect(parsed.asOf).toBe('Saturday, October 24 at 11:59 p.m.');
+  });
+  it('fails loudly when the format changes instead of publishing zeros', () => {
+    expect(() => parseDashboard('<p>no data</p>')).toThrow(/DATA block/);
+    expect(() => parseDashboard('const DATA = [{"n":-4}];')).toThrow(/Unexpected amount/);
+  });
+});
+
+describe('public results', () => {
+  const results = buildPublicResults(parseDashboard(html), { goal: 20000 });
+
+  it('reconciles houses and classes with the total', () => {
+    expect(results.total).toBe(1975);
+    const houses = results.houses.reduce((s, h) => s + h.amount, 0);
+    const classes = results.classes.reduce((s, c) => s + c.amount, 0);
+    expect(houses + results.unassigned).toBe(results.total);
+    expect(classes + results.unassigned).toBe(results.total);
+  });
+
+  it('spells Rêveur with its accent and keeps all four houses', () => {
+    expect(results.houses.map((h) => h.name).sort()).toEqual(['Altruismo', 'Amistad', 'Isibindi', 'Rêveur']);
+    expect(normalizeHouse('Alturismo')).toBe('Altruismo');
+  });
+
+  it('publishes no student names while the top five is locked', () => {
+    expect(results.topFive).toBeNull();
+    const text = JSON.stringify(results);
+    for (const r of rows) expect(text).not.toContain(r.student.split(' ')[0]);
+  });
+
+  it('shows first name and last initial once the top five is released', () => {
+    const released = buildPublicResults(parseDashboard(html), { goal: 20000, releaseTopFive: true });
+    expect(released.topFive.map((s) => s.name)).toEqual(['Ryleigh B.', 'Kamden W.', 'Ian W.', 'Xavier C.', 'Gywinn L.', 'Karson']);
+    expect(JSON.stringify(released)).not.toContain('Baker');
+  });
+});
+
+describe('name and date formatting', () => {
+  it('handles suffixes, parentheticals and single names', () => {
+    expect(publicName('Mose James IV')).toBe('Mose J.');
+    expect(publicName('Dean-Arrington Jones')).toBe('Dean-Arrington J.');
+    expect(publicName('Karson')).toBe('Karson');
+    expect(publicName('  ')).toBeNull();
+  });
+  it('writes times the RCAP way', () => {
+    expect(cleanAsOf('Updates as of Wednesday, November 4th at 11AM.')).toBe('Wednesday, November 4 at 11 a.m.');
+    expect(cleanAsOf('Updates as of Friday, November 6th at 9:30am.')).toBe('Friday, November 6 at 9:30 a.m.');
+  });
+});
+
+describe('progress bar math', () => {
+  it('fills to total over goal, and never overflows past the goal', () => {
+    const under = segmentWidths({ goal: 1000, total: 500, unassigned: 0, houses: [{ name: 'Amistad', amount: 500 }] });
+    expect(under[0].width).toBe(50);
+    const over = segmentWidths({ goal: 1000, total: 2000, unassigned: 0, houses: [{ name: 'Amistad', amount: 2000 }] });
+    expect(over[0].width).toBe(100);
+    expect(milestones(20000)).toEqual([5000, 10000, 15000, 20000]);
+  });
+});
+
+describe('what is actually published', () => {
+  it('ships no student-level data until approved', () => {
+    expect(published.topFive).toBeNull();
+    expect(published.winners).toEqual([]);
+    expect(JSON.stringify(published)).not.toMatch(/student/i);
+    expect(Object.keys(published).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners'].sort());
+    for (const group of [published.houses, published.classes]) {
+      for (const row of group) expect(Object.keys(row).sort()).toEqual(['amount', 'name']);
+    }
+    for (const row of rows) expect(JSON.stringify(published)).not.toContain(row.student.split(' ')[0]);
+  });
+  it('keeps the page out of search and off the menus', () => {
+    const page = readFileSync(`${process.cwd()}/events/2026/fall-raffle/results/index.html`, 'utf8');
+    expect(page).toContain('noindex');
+    expect(page).not.toMatch(/—/);
+    expect(page).not.toMatch(/[^<]!/);
+  });
+});
