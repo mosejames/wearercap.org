@@ -1,4 +1,4 @@
-import NewsletterConsole from './NewsletterConsole.jsx';
+import Workspace from './Workspace.jsx';
 import CampaignAnalytics from './CampaignAnalytics.jsx';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -130,69 +130,8 @@ function Officers({ me, onError }) {
   );
 }
 
-function Dashboard({ me, onOpen, onError }) {
-  const [issues, setIssues] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const load = useCallback(() => call('list').then(setIssues).catch((e) => onError(e.message)), [onError]);
-  useEffect(() => { load(); }, [load]);
-  async function start(format) {
-    setBusy(true);
-    try {
-      const d = today();
-      const issue = await call('create', { format, title: `${FORMATS[format].label}, ${longDate(d)}`, content: template(format, d) });
-      onOpen(issue.id);
-    } catch (e) { onError(e.message); } finally { setBusy(false); }
-  }
-  async function copyIssue(id) {
-    setBusy(true);
-    try { const issue = await call('create', { from: id }); onOpen(issue.id); } catch (e) { onError(e.message); } finally { setBusy(false); }
-  }
-  async function remove(issue) {
-    if (!window.confirm(`Delete the draft "${issue.title}"? This cannot be undone.`)) return;
-    try { await call('delete', { id: issue.id }); load(); } catch (e) { onError(e.message); }
-  }
-  return (
-    <main className="nb-dash">
-      <section className="nb-dash-head">
-        <p className="nb-kicker">Welcome back{me.name ? `, ${me.name.split(' ')[0]}` : ''}</p>
-        <h1>What are we <span className="hl">sending?</span></h1>
-      </section>
-      <NewsletterConsole me={me} issues={issues||[]} onOpen={onOpen}/>
-      <section className="nb-starts">
-        {Object.entries(FORMATS).map(([key, f]) => (
-          <button key={key} className={`nb-start ${key}`} disabled={busy} onClick={() => start(key)}>
-            <span className="nb-kicker">{key === 'quick' ? 'Most weeks' : 'Worth dressing up'}</span>
-            <strong>{f.label}</strong>
-            <span>{f.blurb}</span>
-            <em>Start <ArrowRight size={16} className="arr" /></em>
-          </button>
-        ))}
-      </section>
-      <section className="nb-panel">
-        <p className="nb-kicker">Your issues</p>
-        {issues === null ? <p className="nb-help">Loading…</p> : issues.length === 0 ? <p className="nb-help">Nothing yet. Start a Quick Hello above.</p> : (
-          <ul className="nb-issues">
-            {issues.map((i) => (
-              <li key={i.id}>
-                <button className="nb-issue-open" onClick={() => onOpen(i.id)}>
-                  <span className={`nb-pill ${i.status}`}>{i.status === 'published' ? 'On the website' : 'Draft'}</span>
-                  <strong>{i.title || 'Untitled issue'}</strong>
-                  <span>{FORMATS[i.format]?.label} · edited {stamp(i.updated_at)}</span>
-                </button>
-                <div className="nb-row-actions">
-                  {i.status === 'published' && <a className="nb-icon" href={webUrl(i)} target="_blank" rel="noreferrer" aria-label="View on the website"><ExternalLink size={16} /></a>}
-                  <button className="nb-icon" onClick={() => copyIssue(i.id)} aria-label={`Start a new issue from ${i.title}`} title="Start a new issue from this one"><Copy size={16} /></button>
-                  {i.status !== 'published' && (me.role === 'owner' || i.created_by === me.email) && <button className="nb-icon" onClick={() => remove(i)} aria-label={`Delete ${i.title}`}><Trash2 size={16} /></button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="nb-help">Copying an issue keeps its layout and words so you only change what is new.</p>
-      </section>
-      <Officers me={me} onError={onError} />
-    </main>
-  );
+function Dashboard({me,onOpen,onError}) {
+ return <Workspace me={me} onOpen={onOpen} onError={onError} renderSettings={()=> <Officers me={me} onError={onError}/>}/>;
 }
 
 // ---------------------------------------------------------------------------
@@ -678,7 +617,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
   return (
     <div className={`nb-editor view-${view}`}>
       <div className="nb-toolbar">
-        <button className="nb-text" onClick={async () => { await flush(); onBack(); }}><ArrowLeft size={16} /> All issues</button>
+        <button className="nb-text" onClick={async () => { await flush(); onBack(); }}><ArrowLeft size={16} /> Workspace</button>
         <CampaignAnalytics issueId={id} />
         <span className={`nb-save ${save}`} role="status">{label}</span>
         <div className="nb-switch" role="tablist" aria-label="Edit or preview">
@@ -877,7 +816,7 @@ export default function App() {
     <div className="nb-app">
       <header className="nb-header">
         <a href="/" aria-label="RCAP home"><img src="/brand/rcap-reversed.svg" alt="RCAP" width="92" height="31" /></a>
-        <span className="nb-header-title"><span className="long">The </span>Newsletter <i /> Builder</span>
+        <span className="nb-header-title"><span className="long">The </span>Newsletter <i /> Workspace</span>
         {user ? <button className="nb-text on-dark" onClick={() => supabase.auth.signOut()}><LogOut size={14} /> Sign out</button> : <a className="nb-text on-dark" href="/newsletter">Past issues</a>}
       </header>
       {error && <div className="nb-error" role="alert"><span>{error}</span><button aria-label="Dismiss" onClick={() => setError('')}><X size={16} /></button></div>}

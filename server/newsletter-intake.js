@@ -34,6 +34,7 @@ export async function intakeAction(req,body){
  if(body.action==='review'){
   if(!/^[a-f0-9-]{36}$/.test(body.id||'')||!['New','Reviewing','Ready','Used','Archived'].includes(body.status))throw Object.assign(Error('Choose a valid submission status.'),{status:400});
   const r=await objectRequest(ROOT+body.id);if(!r.ok)throw Object.assign(Error('Submission not found.'),{status:404});const item=decrypt(Buffer.from(await r.arrayBuffer()));item.status=body.status;
+  if(body.issueId){await newsletterRpc(req,'load',{id:body.issueId});item.issueId=body.issueId;}
   const saved=await objectRequest(ROOT+body.id,{method:'PUT',headers:{'Content-Type':'application/octet-stream','If-Match':r.headers.get('etag')},body:encrypt(item)});if(!saved.ok)throw Object.assign(Error('The submission changed. Refresh and try again.'),{status:409});return {ok:true};
  }
  throw Object.assign(Error('Unknown action.'),{status:400});
