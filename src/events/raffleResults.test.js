@@ -84,9 +84,12 @@ describe('progress bar math', () => {
 });
 
 describe('what is actually published', () => {
-  it('ships only approved abbreviated student data and no winners', () => {
+  it('ships only approved abbreviated student data and approved winner announcements', () => {
     expect(published.topFive).toBeNull();
     expect(published.winners).toEqual([expect.objectContaining({name: 'Sherinda Tolbert', prize: '$75 Amazon gift card', drawing: 'Sunday, October 25'})]);
+    for (const winner of published.winners) {
+      if (winner.announcer) expect(winner.announcer.name).toMatch(/^[\p{L}’-]+(?: [\p{L}]\.)?$/u);
+    }
     expect(Object.keys(published).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners', 'students'].sort());
     for (const group of [published.houses, published.classes]) {
       for (const row of group) expect(Object.keys(row).sort()).toEqual(['amount', 'name']);

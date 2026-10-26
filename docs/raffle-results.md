@@ -6,6 +6,8 @@ The page stays noindex and unlinked. On October 26, Mose approved the full stude
 
 The source is Ashley’s dashboard HTML attached to the October 25 email. Keep it outside the checkout. The public JSON contains only aggregates and approved abbreviated student records. Full names and source HTML must never enter the repository or build.
 
+Mose also approved a video-frame newsletter image and recognition of the October 25 announcer, Ryleigh B. (Class of 2031), as the week's top seller with 1,217 tickets. Ashley's first-week figures are $1 per ticket and 3,226 entries for $3,226. The manually approved `winners[].announcer` record is a snapshot for that drawing, preserved by the update script so future totals do not change historical recognition. Do not calculate a historic weekly seller from the current cumulative leaderboard. The newsletter photo is a frame at 1.5 seconds from the supplied announcement video, cropped to 720 by 540 for email.
+
 ```
 node scripts/raffle-results.mjs /absolute/path/outside/repo/RCA-Fall-Raffle-2026.html
 ```

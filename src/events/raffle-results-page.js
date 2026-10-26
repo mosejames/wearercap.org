@@ -88,6 +88,17 @@ function renderLocked(d) {
       }
       const caption = el('div', 'rr-winner-caption');
       caption.append(el('small', null, w.drawing), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
+      if (w.announcer) {
+        const spotlight = el('div', 'rr-announcer');
+        spotlight.append(
+          el('small', null, 'OUR TOP TICKET SELLER THIS WEEK'),
+          el('h3', null, `Take a bow, ${w.announcer.name}`),
+          el('p', 'rr-announcer-class', `Class of ${w.announcer.classOf}`),
+          el('p', 'rr-announcer-count', `${w.announcer.tickets.toLocaleString('en-US')} tickets sold`),
+          el('p', null, 'A big RCAP thank-you for leading the way. Watch her announce this week’s winner.'),
+        );
+        caption.append(spotlight);
+      }
       li.append(caption);
       list.appendChild(li);
     }

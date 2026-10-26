@@ -50,7 +50,12 @@
       "drawing": "Sunday, October 25",
       "prize": "$75 Amazon gift card",
       "video": "/videos/events/fall-raffle-2026-oct-25.mp4",
-      "poster": "/images/events/fall-raffle-2026-oct-25-poster.jpg"
+      "poster": "/images/events/fall-raffle-2026-oct-25-poster.jpg",
+      "announcer": {
+        "name": "Ryleigh B.",
+        "classOf": "2031",
+        "tickets": 1217
+      }
     }
   ],
   "students": [
