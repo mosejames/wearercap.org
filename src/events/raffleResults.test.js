@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   parseDashboard, buildPublicResults, publicName, cleanAsOf, normalizeHouse,
-  segmentWidths, milestones, rankStudents, selectStudents, findStudentsByName,
+  segmentWidths, progressSegments, milestones, rankStudents, selectStudents, findStudentsByName,
 } from './raffleResults.js';
 import published from './raffle-results.json';
 
@@ -150,5 +150,17 @@ describe('individual name lookup', () => {
     expect(findStudentsByName(students, 'Avery T.')[0].rank).toBe(12);
     expect(findStudentsByName(students, 'elodie')[0].rank).toBe(18);
     expect(findStudentsByName(students, 'no match')).toEqual([]);
+  });
+});
+
+describe('shared progress views', () => {
+  it('retains the same goal progress including unassigned contributions in both views', () => {
+    for (const view of ['house', 'class']) {
+      const segments = progressSegments(published, view);
+      expect(segments.reduce((sum, s) => sum + s.amount, 0)).toBe(published.total);
+      expect(segments.reduce((sum, s) => sum + s.width, 0)).toBeCloseTo(published.total / published.goal * 100);
+      expect(segments.filter(s => s.name === 'Unassigned')).toHaveLength(1);
+    }
+    expect(progressSegments(published, 'class').filter(s => s.name !== 'Unassigned').map(s => s.name)).toEqual(['2027','2028','2029','2030','2031']);
   });
 });

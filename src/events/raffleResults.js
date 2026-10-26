@@ -168,3 +168,8 @@ export function findStudentsByName(students, query = '') {
   if (q.length < 2 || !/\p{L}/u.test(q)) return [];
   return students.filter(student => normalize(student.name).startsWith(q)).sort((a, b) => a.rank - b.rank);
 }
+
+export function progressSegments(results, view = 'house') {
+  const groups = view === 'class' ? [...results.classes].sort((a, b) => a.name.localeCompare(b.name)) : results.houses;
+  return segmentWidths({ ...results, houses: groups });
+}

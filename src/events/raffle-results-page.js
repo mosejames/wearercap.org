@@ -1,7 +1,6 @@
 import data from './raffle-results.json';
-import { segmentWidths, findStudentsByName } from './raffleResults.js';
+import { progressSegments, findStudentsByName } from './raffleResults.js';
 
-const HOUSE_CLASS = { Amistad: 'amistad', Isibindi: 'isibindi', Altruismo: 'altruismo', 'Rêveur': 'reveur', Unassigned: 'unassigned' };
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
 const el = (tag, cls, text) => {
   const node = document.createElement(tag);
@@ -10,43 +9,34 @@ const el = (tag, cls, text) => {
   return node;
 };
 const HOUSE_COLORS = { Amistad: '#c8362f', Isibindi: '#1f9a68', Altruismo: '#141414', 'Rêveur': '#2d63c8' };
-const CLASS_COLORS = ['#1b2c56', '#f7a81c', '#7281a3', '#b17b24', '#c8d0e0'];
-function renderProgress(d) {
+const CLASS_COLORS = ['#58729a', '#7790b0', '#98adc5', '#b9c9dc', '#e0e7ef'];
+function renderProgress(d, view = 'house') {
   const fill = $('segments');
-  for (const s of segmentWidths(d)) {
-    const seg = el('span', `rr-seg rr-${HOUSE_CLASS[s.name] || 'unassigned'}`);
+  const legend = $('progress-legend');
+  fill.replaceChildren(); legend.replaceChildren();
+  $('progress-toggle').dataset.view = view;
+  const segments = progressSegments(d, view);
+  segments.forEach((s, index) => {
+    const color = s.name === 'Unassigned' ? '#b9ad99' : view === 'house' ? HOUSE_COLORS[s.name] : CLASS_COLORS[index % CLASS_COLORS.length];
+    const label = s.name === 'Unassigned' ? 'Awaiting a group' : view === 'class' ? `Class of ${s.name}` : s.name;
+    const seg = el('span', 'rr-seg');
     seg.style.setProperty('--w', `${s.width}%`);
+    seg.style.background = color;
     fill.appendChild(seg);
-  }
+    const item = el('li');
+    const swatch = el('span', 'rr-progress-swatch');
+    swatch.style.background = color; swatch.setAttribute('aria-hidden', 'true');
+    item.append(swatch, el('span', null, label)); legend.append(item);
+  });
   const progress = d.total >= d.goal ? 'Our shared goal has been reached.' : 'Together, we’re making progress toward our shared goal.';
-  $('bar').setAttribute('aria-label', progress);
+  $('bar').setAttribute('aria-label', `${progress} Colored sections show contributions by ${view}.`);
   $('next').textContent = progress;
+  $('progress-explanation').textContent = `Each colored section shows how a ${view} has contributed to our shared progress. The space ahead is what we’re working toward together.`;
   $('asof').textContent = d.asOf ? `Updated ${d.asOf} Eastern.` : '';
 }
-function renderPie(target, items, label, color) {
-  const total = items.reduce((sum, item) => sum + item.amount, 0);
-  const chart = el('div', 'rr-pie');
-  chart.setAttribute('role', 'img');
-  chart.setAttribute('aria-label', total ? `Relative contributions from ${items.map(label).join(', ')}. Each slice represents a share of our collective effort.` : 'Contributions will appear here after the next update.');
-  let start = 0;
-  const stops = items.map((item, index) => {
-    const end = start + (total ? item.amount / total * 100 : 0);
-    const stop = `${color(item, index)} ${start}% ${end}%`;
-    start = end;
-    return stop;
-  });
-  chart.style.background = total ? `conic-gradient(${stops.join(',')})` : '#e8dfcf';
-  const legend = el('ul', 'rr-pie-legend');
-  for (const [index, item] of items.entries()) {
-    const row = el('li');
-    const swatch = el('span', 'rr-pie-swatch');
-    swatch.style.background = color(item, index);
-    swatch.setAttribute('aria-hidden', 'true');
-    row.append(swatch, el('span', null, label(item)));
-    legend.append(row);
-  }
-  target.append(chart, legend);
-}
+document.querySelectorAll('input[name="progress-view"]').forEach(input => input.addEventListener('change', () => {
+  if (input.checked) renderProgress(data, input.value);
+}));
 
 function renderLocked(d) {
   if (Array.isArray(d.winners) && d.winners.length) {
@@ -83,8 +73,6 @@ function renderLocked(d) {
 }
 
 renderProgress(data);
-renderPie($('houses'), data.houses, h => h.name, h => HOUSE_COLORS[h.name] || '#b9ad99');
-renderPie($('classes'), [...data.classes].sort((a, b) => a.name.localeCompare(b.name)), c => `Class of ${c.name}`, (_, i) => CLASS_COLORS[i % CLASS_COLORS.length]);
 renderLocked(data);
 const students = data.students || [];
 function studentCard(student, showTickets = false) {
