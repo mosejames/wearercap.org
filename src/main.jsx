@@ -168,10 +168,10 @@ const navLinks = [
 // Split into month / day / weekday so each date can be set like a calendar
 // tile: banner across the top, day number large underneath. `day` may be a
 // range ("24 & 25"), which the card detects and sizes down for.
-// School dates remain below the current raffle feature.
+// School dates remain below this week’s event features.
 const upcomingEvents = [
-  { month: 'Oct', year: '2026', weekday: 'Sun', day: '25', label: 'First raffle drawing', detail: 'Enter by Oct 24 at 11:59 p.m.', href: RAFFLE_URL, cta: 'Buy tickets' },
   { month: 'Oct', year: '2026', weekday: 'Fri', day: '30', label: 'Trunk or Treat', detail: '2:30 to 3:30 p.m., RCA Courtyard', href: 'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk', cta: 'Help with the event' },
+  { month: 'Nov', year: '2026', weekday: 'Sun', day: '1', label: 'Second raffle drawing', detail: 'Enter by Oct 31 at 11:59 p.m. Eastern.', href: RAFFLE_URL, cta: 'Buy tickets' },
   { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '5 & 6', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
   { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '19 & 20', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
 ];
@@ -797,10 +797,23 @@ function App() {
           pass and pull the next few forward. */}
       <section id="events" className="content-section events-section">
         <div className="section-heading">
-          <p className="section-label">The RCAP Fall Raffle</p>
-          <h2>Your first chance to win is Sunday.</h2>
-          <p>Tickets are on sale. Help celebrate our teachers, one ticket at a time.</p>
+          <p className="section-label">This week with RCAP</p>
+          <h2>Trunk or Treat takes the spotlight.</h2>
+          <p>Help make Friday a little sweeter for our scholars.</p>
         </div>
+        <article className="home-collective home-trunk">
+          <div className="home-collective-copy">
+            <p className="section-label">Friday, October 30 · RCA Courtyard</p>
+            <h3>Ready, set, treat.</h3>
+            <p>Costumes, candy and a courtyard full of fun for all RCA 4th through 8th graders. Join us from <strong>2:30 to 3:30 p.m.</strong></p>
+            <p>Before pickup, grab a bag of individually wrapped, nut-free candy. Volunteers will collect donations <strong>October 26 and 27 at 3:30, 4:30 and 5:30 p.m.</strong> Giving is optional and appreciated.</p>
+            <a className="button primary" href="https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk">Help with Trunk or Treat <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <p><a href="/events/2026/trunk-or-treat/">See all Trunk or Treat details ↗</a></p>
+          </div>
+          <a className="home-collective-visual" href="/events/2026/trunk-or-treat/" aria-label="Trunk or Treat details for October 30">
+            <img src="/images/events/trunk-or-treat.png" alt="A decorated Halloween trunk beside RCA’s blue gates, dragon arch and clock tower." loading="lazy" />
+          </a>
+        </article>
         <HomeRaffle />
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
         <div className="event-grid home-upcoming-dates" aria-label="More upcoming RCAP dates">
@@ -838,12 +851,12 @@ function App() {
             <span className="callout-body">We’ve got some of the pictures. You’ve got the rest. Enjoy the memories and add your moments to the mix.</span>
             <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
-          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/bingo-night">
-            <img className="callout-photo" src="/images/rcap-bingo-night.jpg" alt="" loading="lazy" width="1200" height="675" />
-            <span className="callout-kicker">The RCAP Capsule</span>
-            <strong>Add your Bingo Night photos</strong>
-            <span className="callout-body">Your camera roll holds part of the night. Find your people, revisit the fun, and share your photos with the community.</span>
-            <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
+          <a className="callout callout-capsule has-photo" href="/events/2026/fall-raffle/results/">
+            <img className="callout-photo" src="/images/rcap-raffle-second-drawing.png" alt="" loading="lazy" width="1200" height="630" />
+            <span className="callout-kicker">The RCAP Fall Raffle</span>
+            <strong>A little applause. More to come.</strong>
+            <span className="callout-body">Celebrate this week’s raffle stars and winner. Then help keep the momentum going for our school.</span>
+            <span className="callout-go">See the weekly results <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
         </div>
       </section>

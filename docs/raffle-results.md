@@ -71,3 +71,12 @@ snapshot was seeded from the approved opening-week totals, with no prior sales.
 A run without `--week` refreshes only overall data, never the weekly archive.
 No automatic Sunday publishing is enabled. Test, build, privacy-scan and deploy
 the reviewed edition as usual. Sources and baselines stay outside the repo.
+
+October 26 homepage promotion: Mose explicitly authorized linking results from the raffle page (superseding the earlier unlinked rule). Added a secondary homepage weekly-results callout in place of the Bingo Night card. Results remain noindex/nofollow. Homepage now leads with Trunk or Treat, with the November 1 second drawing directly below. New second-drawing image is shared by homepage, raffle page and raffle-page OG/Twitter. Page countdown uses October 31 at 11:59 p.m. Eastern; historical first-drawing countdown image retains its original deadline for old emails.
+
+Artwork production: built-in image generation edited the existing first-drawing
+raster. Final asset: `public/images/rcap-raffle-second-drawing.png` (1200 × 630).
+Prompt: preserve navy/cream/gold style, leaves, $1 ticket and composition; replace
+First drawing with Second drawing, October 25 with November 1, and the deadline
+with Tickets $1 • Enter by Saturday, Oct 31 at 11:59 p.m.; retain This Sunday and
+Supporting Teacher Appreciation Week. No exclamation marks.
