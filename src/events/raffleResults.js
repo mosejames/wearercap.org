@@ -160,3 +160,11 @@ export function selectStudents(students, query = '', key = 'rank', ascending = t
       return (ascending ? comparison : -comparison) || a.rank - b.rank;
     });
 }
+
+// Name lookup is deliberate: no empty-query directory or class/house browsing.
+export function findStudentsByName(students, query = '') {
+  const normalize = value => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase().trim().replace(/\s+/g, ' ');
+  const q = normalize(query);
+  if (q.length < 2 || !/\p{L}/u.test(q)) return [];
+  return students.filter(student => normalize(student.name).startsWith(q)).sort((a, b) => a.rank - b.rank);
+}

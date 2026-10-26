@@ -1,5 +1,5 @@
 import data from './raffle-results.json';
-import { milestones, segmentWidths, money, selectStudents } from './raffleResults.js';
+import { milestones, segmentWidths, money, findStudentsByName } from './raffleResults.js';
 
 const HOUSE_CLASS = { Amistad: 'amistad', Isibindi: 'isibindi', Altruismo: 'altruismo', 'Rêveur': 'reveur', Unassigned: 'unassigned' };
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
@@ -87,7 +87,7 @@ function renderLocked(d) {
         li.append(video);
       }
       const caption = el('div', 'rr-winner-caption');
-      caption.append(el('small', null, w.drawing), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
+      caption.append(el('small', null, `THIS WEEK’S DRAWING · ${w.drawing}`), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
       if (w.announcer) {
         const spotlight = el('div', 'rr-announcer');
         spotlight.append(
@@ -97,7 +97,8 @@ function renderLocked(d) {
           el('p', 'rr-announcer-count', `${w.announcer.tickets.toLocaleString('en-US')} tickets sold`),
           el('p', null, 'A big RCAP thank-you for leading the way. Watch her announce this week’s winner.'),
         );
-        caption.append(spotlight);
+        caption.prepend(spotlight);
+        $('celebration-title').textContent = `Take a bow, ${w.announcer.name.split(' ')[0]}.`;
       }
       li.append(caption);
       list.appendChild(li);
@@ -111,51 +112,22 @@ renderRows($('houses'), data.houses, (h) => h.name, (h) => `rr-${HOUSE_CLASS[h.n
 renderRows($('classes'), data.classes, (c) => `Class of ${c.name}`, () => 'rr-class');
 renderLocked(data);
 const students = data.students || [];
-$('summary-total').textContent = money(data.total);
-$('summary-students').textContent = String(students.filter(s => s.amount > 0).length);
-$('summary-house').textContent = data.houses[0]?.name || 'Pending';
-$('summary-house-sub').textContent = `${money(data.houses[0]?.amount || 0)} raised`;
-$('summary-class').textContent = `Class of ${data.classes[0]?.name || 'pending'}`;
-$('summary-class-sub').textContent = `${money(data.classes[0]?.amount || 0)} raised`;
-$('take').textContent = students.length ? `${students[0].name} leads the students. ${data.houses[0].name} leads the houses, and the Class of ${data.classes[0].name} leads the classes.` : '';
-$('unassigned').textContent = data.unassigned ? `${money(data.unassigned)} has no house assigned and is included in the overall total. Entries without a named student are excluded from student rankings.` : '';
-let sortKey = 'rank', ascending = true;
+function studentCard(student) {
+  const item = el('li', 'rr-student-card');
+  const info = el('div');
+  info.append(el('h3', null, student.name), el('p', null, `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
+  const standing = el('div', 'rr-standing');
+  standing.append(el('strong', null, `${student.amount.toLocaleString('en-US')} tickets`), el('span', null, `No. ${student.rank} overall`));
+  item.append(info, standing);
+  return item;
+}
+for (const student of students.filter(student => student.rank <= 5)) $('top-students').append(studentCard(student));
 function renderStudents() {
-  const list = selectStudents(students, $('search').value, sortKey, ascending);
-  const body = $('students');
-  body.replaceChildren();
-  for (const student of list) {
-    const row = el('tr', student.rank <= 5 ? 'rr-top-student' : '');
-    row.append(el('td', 'rr-student-rank', String(student.rank)));
-    const name = el('th', 'rr-student-name');
-    name.scope = 'row';
-    name.append(el('span', null, student.name), el('small', 'rr-mobile-meta', `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
-    row.append(name, el('td', 'rr-desktop', student.classOf || 'Not given'), el('td', 'rr-desktop', student.house || 'Not given'));
-    const amount = el('td', 'rr-numeric');
-    const contribution = el('div', 'rr-contribution');
-    const track = el('span', 'rr-student-track');
-    const fill = el('span');
-    fill.style.width = `${(student.amount / Math.max(students[0]?.amount || 0, 1)) * 100}%`;
-    track.append(fill);
-    contribution.append(track, el('b', null, money(student.amount)));
-    amount.append(contribution); row.append(amount); body.append(row);
-  }
-  if (!list.length) {
-    const row = el('tr'); const cell = el('td', 'rr-empty', 'No students match. Try a first name, class year or house.');
-    cell.colSpan = 5; row.append(cell); body.append(row);
-  }
-  $('count').textContent = `${list.length} of ${students.length} students`;
-  document.querySelectorAll('.rr-table thead th').forEach(th => {
-    if (th.dataset.key === sortKey) th.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
-    else th.removeAttribute('aria-sort');
-  });
+  const query = $('search').value.trim();
+  const list = findStudentsByName(students, query);
+  $('students').replaceChildren(...list.map(studentCard));
+  $('count').textContent = query.length < 2 ? 'Your child’s progress will appear here.' : list.length ? `${list.length} ${list.length === 1 ? 'match' : 'matches'} found. Standing is based on all credited tickets, not just these results.` : 'No match yet. Check the first-name spelling. Newly credited tickets may appear in the next update.';
 }
 $('search').addEventListener('input', renderStudents);
-document.querySelectorAll('.rr-table thead button').forEach(button => button.addEventListener('click', () => {
-  const key = button.parentElement.dataset.key;
-  if (key === sortKey) ascending = !ascending;
-  else { sortKey = key; ascending = key !== 'amount'; }
-  renderStudents();
-}));
 renderStudents();
 requestAnimationFrame(() => document.body.classList.add('rr-ready'));

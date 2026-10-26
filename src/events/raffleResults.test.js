@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   parseDashboard, buildPublicResults, publicName, cleanAsOf, normalizeHouse,
-  segmentWidths, milestones, rankStudents, selectStudents,
+  segmentWidths, milestones, rankStudents, selectStudents, findStudentsByName,
 } from './raffleResults.js';
 import published from './raffle-results.json';
 
@@ -133,5 +133,22 @@ describe('approved full rankings', () => {
     expect(approved.students[0].name).toBe('Ryleigh B.');
     expect(JSON.stringify(approved.students)).not.toContain('Baker');
     expect(approved.winners).toEqual([]);
+  });
+});
+
+describe('individual name lookup', () => {
+  const students = [
+    { name: 'Avery T.', classOf: '2030', house: 'Amistad', amount: 8, rank: 12 },
+    { name: 'Avery S.', classOf: '2031', house: 'Rêveur', amount: 10, rank: 8 },
+    { name: 'Élodie J.', classOf: '2030', house: 'Amistad', amount: 5, rank: 18 },
+  ];
+  it('never returns a directory for empty, short, class or house searches', () => {
+    for (const query of ['', ' ', 'a', '2030', 'Amistad', '*']) expect(findStudentsByName(students, query)).toEqual([]);
+  });
+  it('matches first names and preserves overall standing and same-name choices', () => {
+    expect(findStudentsByName(students, '  AVERY  ').map(s => s.rank)).toEqual([8, 12]);
+    expect(findStudentsByName(students, 'Avery T.')[0].rank).toBe(12);
+    expect(findStudentsByName(students, 'elodie')[0].rank).toBe(18);
+    expect(findStudentsByName(students, 'no match')).toEqual([]);
   });
 });

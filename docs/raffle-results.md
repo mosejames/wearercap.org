@@ -19,3 +19,16 @@ Students with equal contributions share a competition rank. Filtering and sortin
 The dashboard follows Ashley’s hierarchy: timestamp and summary, four headline figures, house and class comparisons with percentages, then a searchable/sortable full leaderboard. A compact goal bar retains the earlier requested milestones. House colors appear only inside data bars. The branded 1200 by 630 OG/Twitter card is rebuilt with `node scripts/create-raffle-results-og.mjs`.
 
 Before release: run the full test suite and build, reconcile public totals/rankings against the private source, scan all build files for full student names, check published student fields and abbreviation patterns, and verify the live phone layout and share metadata. Full-name privacy checks remain required; approved first names are expected in the build.
+
+## October 26 purpose and lookup revision
+
+Mose superseded the full browseable leaderboard presentation: purpose now leads,
+followed by Ryleigh's approved weekly spotlight, top five overall ticket-sale
+ranks (including ties), and a first-name lookup. No student results appear in
+lookup until at least two characters are entered. Only name prefixes match;
+class/house browsing and sort controls are removed. Same-name results retain
+class and last initial for disambiguation. Overall ranks never change with search.
+The lookup is public and needs no password; this is a presentation choice, not
+access control. Approved abbreviated records remain in the public data bundle.
+The mission copy connects parents, school support, Teacher Appreciation Week,
+and student opportunities without claiming specific allocations of proceeds.
