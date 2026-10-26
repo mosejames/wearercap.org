@@ -1,0 +1,6 @@
+import sharp from 'sharp';
+import {mkdir} from 'node:fs/promises';
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#102448"/><rect x="64" y="55" width="95" height="70" rx="9" fill="#f5cc48"/><text x="111" y="100" font-family="Arial,sans-serif" font-weight="bold" font-size="32" text-anchor="middle" fill="#102448">RCA</text><text x="181" y="101" fill="#faf9f4" font-family="Arial,sans-serif" font-size="27" font-weight="bold">TRIP STUDIO</text><text x="64" y="275" fill="#faf9f4" font-family="Arial,sans-serif" font-size="79" font-weight="bold">Build once.</text><text x="64" y="367" fill="#faf9f4" font-family="Arial,sans-serif" font-size="79" font-weight="bold">Take it anywhere.</text><text x="67" y="492" fill="#f5cc48" font-family="Arial,sans-serif" font-size="24" letter-spacing="3">ONE HOME FOR EVERY ADVENTURE</text><text x="67" y="550" fill="#faf9f4" font-family="Arial,sans-serif" font-size="21">WE ARE RCAP · PRIVATE ADMINISTRATOR WORKSPACE</text><rect y="605" width="1200" height="25" fill="#f5cc48"/></svg>`;
+await mkdir('public/trip-studio',{recursive:true});
+await sharp(Buffer.from(svg)).jpeg({quality:92}).toFile('public/trip-studio/trip-studio-og.jpg');
+console.log('Created branded 1200 × 630 Trip Studio thumbnail.');

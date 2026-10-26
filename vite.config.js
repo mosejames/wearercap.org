@@ -1,10 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import {tripStudioDev} from "./server/trip-studio/dev.js";
 import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [
     react(),
+    tripStudioDev(),
     {
       name: "feedback-dev-routes",
       configureServer(server) {
@@ -22,6 +24,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        tripstudio: resolve(__dirname, "trip-studio/index.html"),
         raffleInformation: resolve(__dirname, "raffle/2026/information/index.html"),
         events2026: resolve(__dirname, "events/2026/index.html"),
         trunk2026: resolve(__dirname, "events/2026/trunk-or-treat/index.html"),

@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/api/trip-studio","destination":"/api/m3-sign?vault=trip-studio"},
     {"source":"/api/nyc-export/:action","destination":"/api/m3-link?vault=nyc&export=1&action=:action"},
     {
       "source": "/api/nyc-bulk",
@@ -203,6 +204,7 @@
     }
   ],
   "headers": [
+    {"source":"/trip-studio/:path*","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"Cache-Control","value":"private, no-store"},{"key":"Referrer-Policy","value":"no-referrer"}]},
     {
       "source": "/share/:token",
       "headers": [

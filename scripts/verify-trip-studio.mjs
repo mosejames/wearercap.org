@@ -1,0 +1,65 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const base=process.env.STUDIO_PREVIEW_URL || 'http://127.0.0.1:5184';
+if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw Error('This verification runs only against a local preview.');
+const browser=await chromium.launch({headless:true,...(process.env.STUDIO_BROWSER_PATH?{executablePath:process.env.STUDIO_BROWSER_PATH}:{})});
+try {
+  const context=await browser.newContext({viewport:{width:1440,height:1100}});
+  const page=await context.newPage(), errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`${base}/trip-studio/?local=1`);
+  await page.getByRole('button',{name:'Continue setup',exact:true}).click();
+  assert.equal(await page.locator('input[type=date]').first().inputValue(),'');
+  assert.equal(await page.getByPlaceholder('Required before launch').inputValue(),'');
+  await page.getByRole('button',{name:'Brand & sharing',exact:true}).click();
+  const card=page.getByAltText('Washington, DC branded share preview, 1200 by 630 pixels');
+  await card.waitFor();
+  await page.getByLabel('Choose hero',{exact:true}).setInputFiles('public/trip-studio/trip-studio-og.jpg');
+  await page.getByAltText('Selected hero crop').waitFor();
+  await page.getByRole('button',{name:'Remove hero',exact:true}).click();
+  assert.equal(await card.evaluate(img=>img.naturalWidth),1200);
+  await page.getByRole('button',{name:'Family experience',exact:true}).click();
+  await page.getByRole('button',{name:'Preview photo intake',exact:true}).click();
+  await page.getByRole('button',{name:'Group AA',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'Group AA',exact:true}).getAttribute('aria-pressed'),'true');
+  await page.getByRole('button',{name:'Phases & messages',exact:true}).click();
+  await page.getByRole('button',{name:'Active trip',exact:true}).click();
+  assert.match(await page.locator('textarea').inputValue(),/\[trip link available after launch\]/);
+  await page.getByRole('button',{name:'Media & downloads',exact:true}).click();
+  await page.locator('input[type=number]').fill('9');
+  await page.getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Draft saved on this browser.'}).waitFor();
+  await page.reload();
+  await page.getByRole('button',{name:'Continue setup',exact:true}).click();
+  assert.equal(await page.locator('input[type=date]').first().inputValue(),'');
+  assert.equal(await page.getByPlaceholder('Required before launch').inputValue(),'');
+  await page.getByRole('button',{name:'Media & downloads',exact:true}).click();
+  assert.equal(await page.locator('input[type=number]').inputValue(),'9');
+  // Keep the verified workspace on its default preferences for review.
+  await page.locator('input[type=number]').fill('7');
+  await page.getByRole('button',{name:'Save draft',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Draft saved on this browser.'}).waitFor();
+  await page.getByRole('button',{name:'All trips',exact:true}).click();
+  await page.screenshot({path:'/private/tmp/trip-studio-desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'Continue setup',exact:true}).click();
+  for(const name of ['Trip setup','Brand & sharing','Family experience','Phases & messages','Media & downloads']){
+    await page.getByRole('button',{name,exact:true}).click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,`No overflow on ${name}`);
+  }
+  await page.getByRole('button',{name:'Family experience',exact:true}).click();
+  await page.screenshot({path:'/private/tmp/trip-studio-mobile.png',fullPage:true});
+  const response=await page.request.get(`${base}/api/trip-studio`);
+  assert.equal(response.status(),401);
+  assert.equal((await response.json()).registry,undefined);
+  const meta=await page.locator('meta[property="og:image"]').getAttribute('content');
+  assert.equal(meta,'https://wearercap.org/trip-studio/trip-studio-og.jpg');
+  assert.equal(await page.locator('meta[name="twitter:card"]').getAttribute('content'),'summary_large_image');
+  const imageResponse=await page.request.get(`${base}/trip-studio/trip-studio-og.jpg`);
+  assert.equal(imageResponse.status(),200);
+  await page.goto(`${base}/trip-studio/`);
+  await page.getByRole('button',{name:'Email me a sign-in link',exact:true}).waitFor();
+  assert.equal(await page.getByText('Washington, DC',{exact:true}).count(),0);
+  assert.deepEqual(errors,[]);
+  console.log('PASS: private login, anonymous API denial, blank DC fields, branding card, batch selection, phase messages, persistent save/reload, mobile layout, OG metadata and image. No live data touched.');
+} finally {await browser.close();}
