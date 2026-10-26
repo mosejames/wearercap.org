@@ -624,7 +624,7 @@ function Editor({ id, me, onBack, onError, demo = null }) {
     <div className={`nb-editor view-${view}`}>
       <div className="nb-toolbar">
         <button className="nb-text" onClick={async () => { await flush(); onBack(); }}><ArrowLeft size={16} /> Workspace</button>
-        <CampaignAnalytics issueId={id} />
+        <CampaignAnalytics issueId={id} issueTitle={issue.title} />
         <span className={`nb-save ${save}`} role="status">{label}</span>
         <div className="nb-switch" role="tablist" aria-label="Edit or preview">
           <button role="tab" aria-selected={view === 'edit'} onClick={() => setView('edit')}>Edit</button>

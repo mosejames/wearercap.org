@@ -1,7 +1,7 @@
 import aiAction from './newsletter-ai.js';
 import {editorialAction} from './newsletter-editorial.js';
 import {intakeAction} from './newsletter-intake.js';
-import {consoleAction} from './newsletter-console.js';
+import {newsletterRpc,consoleAction} from './newsletter-console.js';
 import {verifyNewsletterLink} from './newsletter-links.js';
 import {randomUUID,createHash} from 'node:crypto';
 import {objectRequest,encrypt,decrypt} from './london-stories/storage.js';
@@ -24,7 +24,7 @@ export function summarizeEvents(rows){
  return {total:rows.length,counts:Object.fromEntries(EVENTS.map(event=>[event,rows.filter(r=>r.event===event).length]))};
 }
 const xmlDecode=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
-export async function report({days=30}={}){
+export async function report({days=30,issueKeys}={}){
  const rows=[];let truncated=false;
  for(let day=0;day<days&&!truncated;day++){
   let token;
@@ -40,8 +40,16 @@ export async function report({days=30}={}){
    truncated=rows.length>=5000;if(truncated)break;
   }while(token);
  }
- return {...summarizeEvents(rows),days,truncated,byDay:Array.from({length:days},(_,i)=>{const day=new Date(Date.now()-(days-i-1)*86400000).toISOString().slice(0,10);return {day,...summarizeEvents(rows.filter(r=>new Date(r.at).toISOString().slice(0,10)===day))};}),byIssue:[...new Set(rows.map(r=>r.issue))].map(issue=>({issue,...summarizeEvents(rows.filter(r=>r.issue===issue))}))};
+ return summarizeReport(rows,{days,truncated,issueKeys});
 }
+export function summarizeReport(events,{days=30,truncated=false,issueKeys,now=Date.now()}={}){
+ const rows=issueKeys?events.filter(r=>issueKeys.includes(r.issue)&&(r.event==='newsletterView'||r.event.startsWith('newsletter_'))):events;
+ return {...summarizeEvents(rows),days,truncated,byDay:Array.from({length:days},(_,i)=>{
+  const day=new Date(now-(days-i-1)*86400000).toISOString().slice(0,10);
+  return {day,...summarizeEvents(rows.filter(r=>new Date(r.at).toISOString().slice(0,10)===day))};
+ }),byIssue:[...new Set(rows.map(r=>r.issue))].map(issue=>({issue,...summarizeEvents(rows.filter(r=>r.issue===issue))}))};
+}
+
 async function authorized(req,body){
  const auth=req.headers?.authorization;if(!auth?.startsWith('Bearer ')||!UUID.test(body.issueId||''))return false;
  const url=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,key=process.env.SUPABASE_ANON_KEY||process.env.VITE_SUPABASE_ANON_KEY;
@@ -70,7 +78,11 @@ export default async function handler(req,res){
   if(['workspace','workflow','dashboard','plan','sent','trackingLinks','lifecycle','issueState'].includes(body.action)){return res.status(200).json(await consoleAction(req,body,report));}
   if(body.action==='report'){
    if(!await authorized(req,body))return res.status(403).json({error:'Sign in as a newsletter editor to see analytics.'});
-   return res.status(200).json(await report());
+   const issue=await newsletterRpc(req,'load',{id:body.issueId});
+   if(issue?.id!==body.issueId)return res.status(404).json({error:'Newsletter not found.'});
+   const days=[7,30,90].includes(Number(body.days))?Number(body.days):30;
+   const activity=await report({days,issueKeys:[issue.id,issue.slug].filter(Boolean)});
+   return res.status(200).json({...activity,issue:{id:issue.id,title:issue.title}});
   }
   let value;try{value=cleanEvent(body);}catch{return res.status(400).json({error:'Invalid event'});}
   if(value.event==='created'||value.event.startsWith('newsletter_'))return res.status(400).json({error:'Server event only'});

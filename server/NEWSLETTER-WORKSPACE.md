@@ -49,3 +49,18 @@ untouched. Section structure and defaults must match exactly. The upgrade keeps
 existing signature, greeting, dateline, recipients, and other metadata, and uses
 the issue revision to prevent overwriting a concurrent edit. Customized drafts
 are left alone. New starters are already versioned and never rehydrated.
+
+## Per-newsletter analytics
+
+The editor Analytics dialog requests an authenticated report for its issue ID.
+The server verifies editor access, loads the saved issue, and matches both its
+ID and current slug before summarizing newsletter events. Client-supplied slugs
+are ignored. Other newsletters, unattributed `current` events, and raffle-card
+activity are excluded. Workspace Performance remains the cross-issue view.
+
+The dialog shows web visits, tracked link clicks, daily trends, and ranked link
+categories for 7, 30, or 90 days. Daily buckets use UTC. Generic signed-link
+clicks historically lacked destination labels and remain grouped as Other
+newsletter links; no historical detail is invented. Email opens, unique readers,
+purchases, and completed sign-ups are not measured. The existing 5,000-event
+scan limit remains visible when reached. No newsletter content is changed.
