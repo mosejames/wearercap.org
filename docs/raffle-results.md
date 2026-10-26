@@ -38,3 +38,36 @@ Individual ticket counts are shown only in name-search results, per Mose’s lat
 Later October 26: house and class bars replaced by pie charts with name-only legends, no totals or percentages. House colors retained; class slices use RCAP navy/gold tones. Thermometer keeps proportional colored fill without numeric labels, milestones, tooltips or numeric accessibility text. Underlying aggregates remain unchanged. Individual ticket counts remain available through name lookup.
 
 Latest October 26 direction supersedes pies: Moving Forward Together is the sole graph, a shared-goal stacked bar with native house/class radio toggle and matching name-only legend. Class slices use quiet blue tones. Both modes retain the same total progress, including unassigned contributions. No values or percentages shown.
+
+## Dated weekly editions (October 26)
+
+Weekly recognition is now the default, not cumulative standings. The first edition
+is `src/events/raffle-weeks/2026-10-25.json`, opening week through October 24 at
+11:59 p.m. Eastern. The opening date is not established by the supplied source;
+use the explicit opening-week label until confirmed. Ashley's October 25 email
+and Mose's reply establish the first-week totals and Sunday publication cadence.
+
+Each approved edition is a frozen snapshot with period dates, its own weekly
+rankings, winner/video and aggregates. `?week=2026-10-25` revisits that edition;
+plain `/results/` selects the newest published snapshot. Prior-week navigation
+appears when a second edition exists. No invented future results. Overall data
+is accessible only via the secondary `?view=overall` link. Search and rank labels
+follow the selected period; the goal bar shows that period's contribution.
+
+Future publication from cumulative dashboards requires a private baseline from
+exactly the previous period's cutoff and the new source at the new cutoff:
+
+```
+node scripts/raffle-results.mjs /private/path/new-dashboard.html --week=2026-11-01 --start=2026-10-25 --end=2026-10-31 --next=2026-11-08 --baseline=/private/path/october-24-dashboard.html
+```
+
+Confirm the dates match both files before running. The script subtracts private
+full-name/class/house rows before abbreviation, recalculates ranks from weekly
+contributions, and rejects decreased/missing prior totals or existing editions.
+Reconcile source corrections with the chair instead of silently clamping values.
+New editions start with no winner: manually add only an approved winner/announcer.
+Do not carry forward Ryleigh or a previous prize as a new weekly winner. The first
+snapshot was seeded from the approved opening-week totals, with no prior sales.
+A run without `--week` refreshes only overall data, never the weekly archive.
+No automatic Sunday publishing is enabled. Test, build, privacy-scan and deploy
+the reviewed edition as usual. Sources and baselines stay outside the repo.

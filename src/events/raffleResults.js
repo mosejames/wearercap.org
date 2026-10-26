@@ -173,3 +173,22 @@ export function progressSegments(results, view = 'house') {
   const groups = view === 'class' ? [...results.classes].sort((a, b) => a.name.localeCompare(b.name)) : results.houses;
   return segmentWidths({ ...results, houses: groups });
 }
+
+// Compare private source rows before abbreviating names: public initials are not unique IDs.
+export function weeklyDashboard(current, baseline) {
+  const key = row => JSON.stringify([String(row.student || '').trim().toLowerCase(), normalizeClass(row.cls), normalizeHouse(row.house)]);
+  const group = rows => {
+    const entries = new Map();
+    for (const row of rows) {
+      const id = key(row);
+      entries.set(id, { ...row, n: (entries.get(id)?.n || 0) + row.n });
+    }
+    return entries;
+  };
+  const before = group(baseline.rows);
+  const now = group(current.rows);
+  for (const [id, row] of before) {
+    if ((now.get(id)?.n || 0) < row.n) throw new Error('A prior total decreased or a student identity changed. Reconcile the private sources before publishing weekly results.');
+  }
+  return { asOf: current.asOf, rows: [...now].map(([id, row]) => ({ ...row, n: row.n - (before.get(id)?.n || 0) })).filter(row => row.n > 0) };
+}

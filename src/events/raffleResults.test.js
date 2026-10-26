@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import {
   parseDashboard, buildPublicResults, publicName, cleanAsOf, normalizeHouse,
-  segmentWidths, progressSegments, milestones, rankStudents, selectStudents, findStudentsByName,
+  weeklyDashboard, segmentWidths, progressSegments, milestones, rankStudents, selectStudents, findStudentsByName,
 } from './raffleResults.js';
 import published from './raffle-results.json';
 
@@ -162,5 +162,39 @@ describe('shared progress views', () => {
       expect(segments.filter(s => s.name === 'Unassigned')).toHaveLength(1);
     }
     expect(progressSegments(published, 'class').filter(s => s.name !== 'Unassigned').map(s => s.name)).toEqual(['2027','2028','2029','2030','2031']);
+  });
+});
+
+
+describe('dated weekly editions', () => {
+  it('ranks only new contributions and matches private full names before abbreviation', () => {
+    const before = { rows: [{student:'Avery Taylor',cls:'2030',house:'Amistad',n:100},{student:'Avery Thomas',cls:'2030',house:'Amistad',n:5}] };
+    const current = { asOf:'new cutoff', rows:[{...before.rows[0],n:103},{...before.rows[1],n:25},{student:'Blair Smith',cls:'2031',house:'Reveur',n:12}] };
+    const weekly = buildPublicResults(weeklyDashboard(current,before),{goal:20000,releaseStudents:true});
+    expect(weekly.total).toBe(35);
+    expect(weekly.students.map(s=>s.amount)).toEqual([20,12,3]);
+    expect(weekly.students[0].name).toBe('Avery T.');
+    expect(weekly.winners).toEqual([]);
+    expect(before.rows[0].n).toBe(100);
+  });
+  it('blocks corrections or missing prior rows instead of silently changing weekly rankings', () => {
+    const prior = {rows:[{student:'Avery Taylor',cls:'2030',house:'Amistad',n:100}]};
+    expect(()=>weeklyDashboard({rows:[]},prior)).toThrow(/Reconcile/);
+    expect(()=>weeklyDashboard({rows:[{...prior.rows[0],n:90}]},prior)).toThrow(/Reconcile/);
+    expect(weeklyDashboard(prior,prior).rows).toEqual([]);
+  });
+  it('keeps archived student names abbreviated and totals reconciled', () => {
+    const directory = `${process.cwd()}/src/events/raffle-weeks`;
+    for (const file of readdirSync(directory).filter(f=>f.endsWith('.json'))) {
+      const {period,results} = JSON.parse(readFileSync(`${directory}/${file}`,'utf8'));
+      expect(file).toBe(`${period.id}.json`);
+      expect(period.end < period.published).toBe(true);
+      for (const student of results.students || []) {
+        expect(student.name).toMatch(/^[\p{L}’-]+(?: [\p{L}]\.)?$/u);
+        expect(Object.keys(student).sort()).toEqual(['amount','classOf','house','name','rank']);
+      }
+      for (const row of rows.filter(r=>r.student.includes(' ') && r.student !== 'No student named')) expect(JSON.stringify(results)).not.toContain(row.student);
+      expect(results.houses.reduce((n,h)=>n+h.amount,results.unassigned)).toBe(results.total);
+    }
   });
 });

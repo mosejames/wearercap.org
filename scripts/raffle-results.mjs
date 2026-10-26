@@ -12,10 +12,10 @@
 //
 // The goal and any approved weekly winners already in the data file are kept.
 // Keep the committee's original file OUT of this repo.
-import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, realpathSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseDashboard, buildPublicResults, money } from '../src/events/raffleResults.js';
+import { parseDashboard, buildPublicResults, weeklyDashboard, money } from '../src/events/raffleResults.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const out = resolve(root, 'src/events/raffle-results.json');
@@ -41,6 +41,28 @@ const results = buildPublicResults(parsed, {
   winners: previous.winners || [],
 });
 
+// Publishing a dated edition is deliberate; an ordinary refresh changes overall data only.
+const option = name => args.find(arg => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=');
+const week = option('week');
+if (week) {
+  const start = option('start'), end = option('end'), nextPublication = option('next');
+  const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '') && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+  if (![week, start, end, nextPublication].every(validDate) || start > end || end >= week || week >= nextPublication) throw new Error('Supply valid ordered --start, --end, --week (publication date), and --next dates.');
+  const archive = resolve(root, `src/events/raffle-weeks/${week}.json`);
+  if (existsSync(archive)) throw new Error('This weekly edition already exists. Review any correction explicitly; do not overwrite history.');
+  const baseline = option('baseline');
+  if (!baseline) throw new Error('A new weekly edition requires --baseline=/path/to/prior-cutoff-dashboard.html. Cumulative totals cannot stand in for weekly results.');
+  if (realpathSync(baseline).startsWith(realpathSync(root) + '/')) throw new Error('Keep the baseline dashboard outside the repository.');
+  const prior = parseDashboard(readFileSync(baseline, 'utf8'));
+  const priorDate = new Date(`${start}T12:00:00Z`); priorDate.setUTCDate(priorDate.getUTCDate() - 1);
+  const cutoff = date => `${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })} at 11:59 p.m.`;
+  if (parsed.asOf !== cutoff(`${end}T12:00:00Z`) || prior.asOf !== cutoff(priorDate)) throw new Error('Source timestamps must match the new and previous Saturday cutoffs at 11:59 p.m. Verify the reporting period.');
+  const periodData = weeklyDashboard(parsed, prior);
+  const weekly = buildPublicResults(periodData, { goal: results.goal, releaseStudents: Array.isArray(results.students), releaseTopFive, winners: [] });
+  mkdirSync(dirname(archive), { recursive: true });
+  writeFileSync(archive, JSON.stringify({ period: { id: week, start, end, published: week, nextPublication }, results: weekly }, null, 2) + '\n');
+  console.log(`Created weekly edition ${week}. Add only the approved winner and announcer to that edition before release.`);
+}
 writeFileSync(out, JSON.stringify(results, null, 2) + '\n');
 console.log(`Updated ${out}`);
 console.log(`As of: ${results.asOf || '(no date found)'}`);
