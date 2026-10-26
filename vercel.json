@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {
+      "source": "/api/nyc-bulk",
+      "destination": "/api/m3-link?vault=nyc&bulk=1"
+    },
     { "source": "/family-trip-stories", "destination": "/family-trip-stories/index.html" },
     {
       "source": "/api/campaign-activity",

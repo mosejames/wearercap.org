@@ -1,0 +1,10 @@
+export function createBulkHandler({authenticate,photos,count,allowedEmails}){return async(req,res)=>{
+ res.setHeader('Cache-Control','no-store');
+ if(req.method!=='GET')return res.status(405).json({error:'Method not allowed'});
+ const authorization=req.headers?.authorization;if(!authorization?.startsWith('Bearer '))return res.status(401).json({error:'Please sign in first.'});
+ try{const user=await authenticate(authorization);if(!user)return res.status(401).json({error:'Please sign in again.'});if(!(user.email_confirmed_at||user.phone_confirmed_at)||!allowedEmails.includes(user.email?.toLowerCase()))return res.status(403).json({error:'Bulk downloads are available to the vault administrator.'});
+ const [rows,total]=await Promise.all([photos(authorization),count()]);if(rows.length!==total)return res.status(503).json({error:'The full album could not be loaded. Please try again later.'});
+ return res.status(200).json({photos:rows.map(p=>({id:p.id,album:p.album,createdAt:p.createdAt})),total});
+ }catch{return res.status(503).json({error:'Could not prepare the album. Please try again.'});}
+};}
+export default async function handler(req,res){const base=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,key=process.env.SUPABASE_ANON_KEY||process.env.VITE_SUPABASE_ANON_KEY;const rpc=async(name,args,authorization=`Bearer ${key}`)=>{const r=await fetch(`${base}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:key,Authorization:authorization,'Content-Type':'application/json'},body:JSON.stringify(args),signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Unavailable');return r.json();};return createBulkHandler({allowedEmails:(process.env.NYC_ADMIN_EMAILS||'mose@mosejames.com').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean),authenticate:async authorization=>{const r=await fetch(`${base}/auth/v1/user`,{headers:{apikey:key,Authorization:authorization},signal:AbortSignal.timeout(5000)});return r.ok?r.json():null;},photos:authorization=>rpc('trip_gallery',{p_vault:'nyc-2026'},authorization),count:async()=>Number(await rpc('trip_photo_count',{}))})(req,res);}
