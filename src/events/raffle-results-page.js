@@ -82,6 +82,8 @@ function renderLocked(d) {
 
 const title = overall ? 'Overall raffle progress' : periodLabel(edition.period);
 $('edition-title').textContent = title;
+const snapshotCutoff = overall ? `${data.asOf} Eastern` : `${dateLabel(edition.period.end)} at 11:59 p.m. Eastern`;
+for (const key of ['snapshot-top', 'snapshot-lookup']) $(key).textContent = `Current as of ${snapshotCutoff}. These are posted updates, not live totals. New ticket sales will appear in a future update.`;
 $('edition-kicker').textContent = overall ? 'THE FULL RAFFLE SO FAR' : 'WEEKLY RAFFLE RESULTS';
 $('edition-dates').textContent = overall ? `All credited tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
 $('edition-note').textContent = overall ? 'Every week adds to our shared effort. This view brings together all credited tickets so far.' : 'A fresh week. A fresh top five. Each Sunday, we celebrate that week’s contributions. Familiar faces or new names, everyone has another chance to shine.';
