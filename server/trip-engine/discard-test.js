@@ -24,9 +24,12 @@ async function inspectExports(slug,tripId){const keys=await listStateKeys(),reco
 async function remove(url){const r=await aws().fetch(url,{method:'DELETE',signal:AbortSignal.timeout(15000)});if(!r.ok&&r.status!==404)throw problem('A test file could not be removed. Retry cleanup.',503);}
 export async function discardTest(req,body){
  const {registry}=await readRegistry(),draft=registry?.trips.find(t=>t.id===body.id);
- if(!isVerificationDraft(draft)||body.confirm!==draft.slug)throw problem('Only the confirmed disposable verification trip can be removed.',403);
+ const preserve=body.preserveDraft===true;
+ const live=preserve?(await engineRpc('list',{},req.headers.authorization)).find(t=>t.draftId===body.id):null;
+ const slug=preserve?live?.slug:draft?.slug;
+ if(!draft||draft.id==='dc-draft'||(preserve?(!UUID.test(draft.id)||live?.published||!/^verification-flow-[a-z0-9-]+$/.test(slug||'')):!isVerificationDraft(draft))||body.confirm!==slug)throw problem('Only the confirmed disposable verification trip can be removed.',403);
  if(body.revision!==registry.revision)throw problem('Refresh the draft list before cleanup.',409);
- const manifest=await discardRpc(req,body,false),exports=await inspectExports(draft.slug,manifest.tripId);
+ const manifest=await discardRpc(req,body,false),exports=await inspectExports(slug,manifest.tripId);
  const media=manifest.photos.flatMap(p=>[p.key,p.webKey,p.thumbKey]);if(media.some(key=>!manifest.tripId||!key.startsWith(`trip-engine/v1/${manifest.tripId}/`)))throw problem('A photo does not match this verification trip.',409);
  // Unpublishing is required before this point. Keep database rows until every
  // object deletion succeeds, so a failed cleanup remains inspectable and retryable.
@@ -34,6 +37,7 @@ export async function discardTest(req,body){
  for(const key of exports.archives)await remove(storageUrl(key));
  for(const record of exports.records)await remove(storageUrl(record.key));
  await discardRpc(req,body,true);
+ if(preserve){const current=await readRegistry();return {...current.registry,liveTrips:await engineRpc('list',{},req.headers.authorization),cleanupNotice:'Old verification vault and files removed. Your saved draft was preserved.'};}
  // Re-read after remote work so concurrent edits to DC or another trip survive.
  for(let attempt=0;attempt<3;attempt++){
   const current=await readRegistry();if(!current.registry)throw problem('Could not reload the draft list.',503);
