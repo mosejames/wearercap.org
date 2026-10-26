@@ -62,6 +62,7 @@ export default defineConfig({
         rsvp: resolve(__dirname, "rsvp/index.html"),
         parentplaylist: resolve(__dirname, "karaoke/playlist/index.html"),
         newsletterintake: resolve(__dirname, "newsletter/submit/index.html"),
+        familyTripStories: resolve(__dirname, "family-trip-stories/index.html"),
         newsletterbuilder: resolve(__dirname, "newsletter/builder/index.html"),
       },
     },

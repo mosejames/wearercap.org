@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/family-trip-stories", "destination": "/family-trip-stories/index.html" },
     {
       "source": "/api/campaign-activity",
       "destination": "/api/m3-sign?vault=campaign-activity"
