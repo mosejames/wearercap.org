@@ -43,3 +43,5 @@ fieldset.group-select{border:0;padding:0;margin:0;min-width:0;display:block}.gro
 
 footer .footer-login{font-size:11px;letter-spacing:0;min-height:44px;padding:8px 0;text-transform:none}
 .modern-trip footer{flex-wrap:wrap;align-items:center}.modern-trip footer .footer-login{flex-basis:100%;justify-content:center}
+
+.export-invite{padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid #d9dce2}.export-invite h3,.staff-download h3{font-size:20px}.export-invite p,.staff-download p{font-size:14px}.staff-download form,.export-invite form{margin-top:18px}.export-invite input[readonly]{font-size:13px}

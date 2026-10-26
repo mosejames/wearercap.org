@@ -1,0 +1,5 @@
+import {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {it,expect,vi} from 'vitest';
+import StaffDownload from './StaffDownload.jsx';
+it('requests one complete-album email without requiring login or a group',async()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;const fetcher=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({email:'staff@example.com'})}).mockResolvedValueOnce({ok:true,json:async()=>({ok:true})});vi.stubGlobal('fetch',fetcher);const host=document.createElement('div');document.body.append(host);const root=createRoot(host);await act(async()=>root.render(<StaffDownload invite="test-invite"/>));expect(host.querySelector('input').value).toBe('staff@example.com');expect(host.querySelector('select')).toBeNull();await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({invite:'test-invite',email:'staff@example.com'});expect(host.textContent).toContain('You can close this page');await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();});
