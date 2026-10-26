@@ -3,8 +3,10 @@
 //
 //   node scripts/raffle-results.mjs path/to/RCA-Fall-Raffle-2026.html
 //
-// Only aggregates are written (total, houses, classes). Student names never
-// enter the repo unless the top five has been approved for release:
+// Aggregates and approved abbreviated rankings only. Full names never enter
+// the repo. Initial full-ranking approval uses --release-students; subsequent
+// updates preserve that state. Use --withhold-students to remove rankings.
+// Legacy top-five release:
 //
 //   node scripts/raffle-results.mjs path/to/file.html --release-top-five
 //
@@ -35,6 +37,7 @@ const parsed = parseDashboard(readFileSync(source, 'utf8'));
 const results = buildPublicResults(parsed, {
   goal: previous.goal || 20000,
   releaseTopFive,
+  releaseStudents: args.includes('--release-students') || (Array.isArray(previous.students) && !args.includes('--withhold-students')),
   winners: previous.winners || [],
 });
 
@@ -44,4 +47,5 @@ console.log(`As of: ${results.asOf || '(no date found)'}`);
 console.log(`Total: ${money(results.total)} of ${money(results.goal)} goal`);
 console.log(`Houses: ${results.houses.map((h) => `${h.name} ${money(h.amount)}`).join(', ')}`);
 console.log(`Top five: ${results.topFive ? 'RELEASED' : 'locked'}`);
+console.log(`Student rankings: ${results.students ? results.students.length : 'withheld'}`);
 console.log(`Winners shown: ${results.winners.length}`);

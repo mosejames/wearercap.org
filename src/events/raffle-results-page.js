@@ -1,5 +1,5 @@
 import data from './raffle-results.json';
-import { milestones, segmentWidths, money } from './raffleResults.js';
+import { milestones, segmentWidths, money, selectStudents } from './raffleResults.js';
 
 const HOUSE_CLASS = { Amistad: 'amistad', Isibindi: 'isibindi', Altruismo: 'altruismo', 'Rêveur': 'reveur', Unassigned: 'unassigned' };
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
@@ -59,7 +59,9 @@ function renderRows(target, items, label, swatch) {
     li.append(el('span', 'rr-rank', String(idx + 1)));
     const body = el('div', 'rr-row-body');
     const head = el('div', 'rr-row-head');
-    head.append(el('span', null, label(item)), el('b', null, money(item.amount)));
+    const value = el('div', 'rr-bar-value');
+    value.append(el('b', null, money(item.amount)), el('span', 'rr-pct', `${Math.round(data.total ? item.amount / data.total * 100 : 0)}%`));
+    head.append(el('span', null, label(item)), value);
     const track = el('div', 'rr-track');
     const fill = el('span', `rr-track-fill ${swatch(item)}`);
     fill.style.setProperty('--w', `${(item.amount / max) * 100}%`);
@@ -75,19 +77,21 @@ function renderLocked(d) {
     const list = $('winner-list');
     for (const w of d.winners) {
       const li = el('li');
-      li.append(el('strong', null, w.name), el('span', null, [w.drawing, w.prize].filter(Boolean).join(' · ')));
+      if (w.video) {
+        const video = el('video', 'rr-winner-video');
+        video.controls = true; video.playsInline = true; video.preload = 'metadata';
+        if (w.poster) video.poster = w.poster;
+        video.setAttribute('aria-label', `Raffle winner announcement for ${w.drawing}`);
+        const source = el('source'); source.src = w.video; source.type = 'video/mp4';
+        video.append(source, el('p', null, `The winner is ${w.name}. ${w.prize}.`));
+        li.append(video);
+      }
+      const caption = el('div', 'rr-winner-caption');
+      caption.append(el('small', null, w.drawing), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
+      li.append(caption);
       list.appendChild(li);
     }
     $('winners').hidden = false;
-  }
-  if (Array.isArray(d.topFive) && d.topFive.length) {
-    renderRows(
-      $('top-list'),
-      d.topFive,
-      (s) => [s.name, s.classOf && `Class of ${s.classOf}`].filter(Boolean).join(' · '),
-      (s) => `rr-${HOUSE_CLASS[s.house] || 'unassigned'}`,
-    );
-    $('top').hidden = false;
   }
 }
 
@@ -95,4 +99,52 @@ renderProgress(data);
 renderRows($('houses'), data.houses, (h) => h.name, (h) => `rr-${HOUSE_CLASS[h.name]}`);
 renderRows($('classes'), data.classes, (c) => `Class of ${c.name}`, () => 'rr-class');
 renderLocked(data);
+const students = data.students || [];
+$('summary-total').textContent = money(data.total);
+$('summary-students').textContent = String(students.filter(s => s.amount > 0).length);
+$('summary-house').textContent = data.houses[0]?.name || 'Pending';
+$('summary-house-sub').textContent = `${money(data.houses[0]?.amount || 0)} raised`;
+$('summary-class').textContent = `Class of ${data.classes[0]?.name || 'pending'}`;
+$('summary-class-sub').textContent = `${money(data.classes[0]?.amount || 0)} raised`;
+$('take').textContent = students.length ? `${students[0].name} leads the students. ${data.houses[0].name} leads the houses, and the Class of ${data.classes[0].name} leads the classes.` : '';
+$('unassigned').textContent = data.unassigned ? `${money(data.unassigned)} has no house assigned and is included in the overall total. Entries without a named student are excluded from student rankings.` : '';
+let sortKey = 'rank', ascending = true;
+function renderStudents() {
+  const list = selectStudents(students, $('search').value, sortKey, ascending);
+  const body = $('students');
+  body.replaceChildren();
+  for (const student of list) {
+    const row = el('tr', student.rank <= 5 ? 'rr-top-student' : '');
+    row.append(el('td', 'rr-student-rank', String(student.rank)));
+    const name = el('th', 'rr-student-name');
+    name.scope = 'row';
+    name.append(el('span', null, student.name), el('small', 'rr-mobile-meta', `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
+    row.append(name, el('td', 'rr-desktop', student.classOf || 'Not given'), el('td', 'rr-desktop', student.house || 'Not given'));
+    const amount = el('td', 'rr-numeric');
+    const contribution = el('div', 'rr-contribution');
+    const track = el('span', 'rr-student-track');
+    const fill = el('span');
+    fill.style.width = `${(student.amount / Math.max(students[0]?.amount || 0, 1)) * 100}%`;
+    track.append(fill);
+    contribution.append(track, el('b', null, money(student.amount)));
+    amount.append(contribution); row.append(amount); body.append(row);
+  }
+  if (!list.length) {
+    const row = el('tr'); const cell = el('td', 'rr-empty', 'No students match. Try a first name, class year or house.');
+    cell.colSpan = 5; row.append(cell); body.append(row);
+  }
+  $('count').textContent = `${list.length} of ${students.length} students`;
+  document.querySelectorAll('.rr-table thead th').forEach(th => {
+    if (th.dataset.key === sortKey) th.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+    else th.removeAttribute('aria-sort');
+  });
+}
+$('search').addEventListener('input', renderStudents);
+document.querySelectorAll('.rr-table thead button').forEach(button => button.addEventListener('click', () => {
+  const key = button.parentElement.dataset.key;
+  if (key === sortKey) ascending = !ascending;
+  else { sortKey = key; ascending = key !== 'amount'; }
+  renderStudents();
+}));
+renderStudents();
 requestAnimationFrame(() => document.body.classList.add('rr-ready'));

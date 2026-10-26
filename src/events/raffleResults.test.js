@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   parseDashboard, buildPublicResults, publicName, cleanAsOf, normalizeHouse,
-  segmentWidths, milestones,
+  segmentWidths, milestones, rankStudents, selectStudents,
 } from './raffleResults.js';
 import published from './raffle-results.json';
 
@@ -84,20 +84,51 @@ describe('progress bar math', () => {
 });
 
 describe('what is actually published', () => {
-  it('ships no student-level data until approved', () => {
+  it('ships only approved abbreviated student data and no winners', () => {
     expect(published.topFive).toBeNull();
-    expect(published.winners).toEqual([]);
-    expect(JSON.stringify(published)).not.toMatch(/student/i);
-    expect(Object.keys(published).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners'].sort());
+    expect(published.winners).toEqual([expect.objectContaining({name: 'Sherinda Tolbert', prize: '$75 Amazon gift card', drawing: 'Sunday, October 25'})]);
+    expect(Object.keys(published).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners', 'students'].sort());
     for (const group of [published.houses, published.classes]) {
       for (const row of group) expect(Object.keys(row).sort()).toEqual(['amount', 'name']);
     }
-    for (const row of rows) expect(JSON.stringify(published)).not.toContain(row.student.split(' ')[0]);
+    for (const student of published.students) {
+      expect(Object.keys(student).sort()).toEqual(['name', 'house', 'classOf', 'amount', 'rank'].sort());
+      expect(student.name).toMatch(/^[\p{L}’-]+(?: [\p{L}]\.)?$/u);
+    }
+    for (const row of rows.filter(r => r.student.includes(' ') && r.student !== 'No student named')) expect(JSON.stringify(published)).not.toContain(row.student);
   });
   it('keeps the page out of search and off the menus', () => {
     const page = readFileSync(`${process.cwd()}/events/2026/fall-raffle/results/index.html`, 'utf8');
     expect(page).toContain('noindex');
     expect(page).not.toMatch(/—/);
     expect(page).not.toMatch(/[^<]!/);
+  });
+});
+
+describe('approved full rankings', () => {
+  const ranked = rankStudents([
+    { name: 'Avery T.', classOf: '2030', house: 'Amistad', amount: 20 },
+    { name: 'Blair S.', classOf: '2031', house: 'Rêveur', amount: 50 },
+    { name: 'Casey J.', classOf: '2030', house: 'Isibindi', amount: 20 },
+    { name: 'Devon P.', classOf: '2029', house: 'Altruismo', amount: 5 },
+  ]);
+  it('gives tied totals equal ranks and skips the next position', () => {
+    expect(ranked.map(s => s.rank)).toEqual([1, 2, 2, 4]);
+  });
+  it('keeps overall ranks when searching or changing column order', () => {
+    expect(selectStudents(ranked, 'Casey')[0].rank).toBe(2);
+    expect(selectStudents(ranked, '2030')).toHaveLength(2);
+    expect(selectStudents(ranked, 'rêveur')[0].name).toBe('Blair S.');
+    expect(selectStudents(ranked, '', 'amount', true).map(s => s.rank)).toEqual([4, 2, 2, 1]);
+    expect(selectStudents(ranked, 'no match')).toEqual([]);
+  });
+  it('requires explicit approval to include abbreviated rankings', () => {
+    const locked = buildPublicResults(parseDashboard(html), { goal: 20000 });
+    expect(locked.students).toBeUndefined();
+    const approved = buildPublicResults(parseDashboard(html), { goal: 20000, releaseStudents: true });
+    expect(approved.students).toHaveLength(7);
+    expect(approved.students[0].name).toBe('Ryleigh B.');
+    expect(JSON.stringify(approved.students)).not.toContain('Baker');
+    expect(approved.winners).toEqual([]);
   });
 });

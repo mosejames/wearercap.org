@@ -1,17 +1,19 @@
-# Fall Raffle progress
+# Fall Raffle dashboard
 
-Private launch URL: https://wearercap.org/events/2026/fall-raffle/results/
+URL: https://wearercap.org/events/2026/fall-raffle/results/
 
-This page stays noindex and has no incoming site links. Only aggregate totals are published. Ashley Carter's dashboard HTML stays outside the checkout. Update with:
+The page stays noindex and unlinked. On October 26, Mose approved the full student ranking with first names and last initials, and requested Ashley’s original dashboard structure in RCAP colors. This supersedes the initial aggregate-only boundary for abbreviated student rankings. Mose also approved publishing the October 25 winner, Sherinda Tolbert, her $75 Amazon gift card prize and the announcement video supplied in this chat. Future winners remain gated and manually entered; the $20,000 goal remains provisional.
+
+The source is Ashley’s dashboard HTML attached to the October 25 email. Keep it outside the checkout. The public JSON contains only aggregates and approved abbreviated student records. Full names and source HTML must never enter the repository or build.
 
 ```
 node scripts/raffle-results.mjs /absolute/path/outside/repo/RCA-Fall-Raffle-2026.html
 ```
 
-The script preserves `goal` and manually entered approved `winners` in `src/events/raffle-results.json`. The goal is still a $20,000 placeholder pending Mose's decision. Do not infer approval from an existing command option.
+An existing approved student ranking stays enabled on subsequent updates. Initial enablement requires `--release-students`; `--withhold-students` removes it. The separate legacy `--release-top-five` option is unnecessary for this layout. Winners are preserved from the public JSON, and must only be entered after approval. No automatic source refresh is configured.
 
-`topFive` remains null. Only use `--release-top-five` after Mose approves publication. Released names use first name and last initial, with ties at fifth included. Weekly winners stay empty until approval and are entered by hand. The winner-sharing process remains undecided.
+Students with equal contributions share a competition rank. Filtering and sorting preserve overall ranks. Names without a supplied surname remain first-name-only. Class means graduating class, not grade. Search accepts the published abbreviated name, graduating year or house. Unknown-house contributions remain in the overall total; entries without a named student are excluded from the leaderboard.
 
-The progress bar scales to the greater of goal and total. House colors appear only in data bars. Rêveur retains its accent. The source date is shown rather than claiming automatic/live updates. Rebuild the branded 1200 by 630 share card with `node scripts/create-raffle-results-og.mjs`.
+The dashboard follows Ashley’s hierarchy: timestamp and summary, four headline figures, house and class comparisons with percentages, then a searchable/sortable full leaderboard. A compact goal bar retains the earlier requested milestones. House colors appear only inside data bars. The branded 1200 by 630 OG/Twitter card is rebuilt with `node scripts/create-raffle-results-og.mjs`.
 
-Privacy verification must include the aggregate JSON, built text assets and known source names. The committee dashboard was not supplied with the patch; do not claim a fresh reconciliation against that private source without receiving it. The initial aggregate figures are inherited from Claude's supplied patch.
+Before release: run the full test suite and build, reconcile public totals/rankings against the private source, scan all build files for full student names, check published student fields and abbreviation patterns, and verify the live phone layout and share metadata. Full-name privacy checks remain required; approved first names are expected in the build.

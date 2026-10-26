@@ -1,9 +1,8 @@
 // Fall Raffle results: turns the raffle committee's dashboard file into the
-// small, aggregate-only data the public results page shows.
+// public totals and approved abbreviated rankings.
 //
-// Privacy rule: the full student list never leaves this module. Only totals,
-// house totals and class totals are published. The top five (first name and
-// last initial) appear only when explicitly released.
+// Privacy rule: full student names never enter public output. Aggregates are
+// the default. Abbreviated student rankings require explicit release.
 
 export const HOUSES = ['Amistad', 'Isibindi', 'Altruismo', 'Rêveur'];
 
@@ -74,8 +73,8 @@ function ranked(list) {
   return list.sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
 }
 
-// Aggregate-only public data. `releaseTopFive` must be set deliberately.
-export function buildPublicResults({ rows, asOf }, { goal, releaseTopFive = false, winners = [] } = {}) {
+// Student-level output is opt-in. Both release options must be deliberate.
+export function buildPublicResults({ rows, asOf }, { goal, releaseTopFive = false, releaseStudents = false, winners = [] } = {}) {
   const total = rows.reduce((sum, r) => sum + r.n, 0);
   const houseTotals = Object.fromEntries(HOUSES.map((h) => [h, 0]));
   const classTotals = {};
@@ -99,6 +98,12 @@ export function buildPublicResults({ rows, asOf }, { goal, releaseTopFive = fals
     topFive: null,
     winners: Array.isArray(winners) ? winners : [],
   };
+
+  if (releaseStudents) {
+    result.students = rankStudents(rows
+      .filter((r) => String(r.student || '').trim().toLowerCase() !== UNNAMED && publicName(r.student))
+      .map((r) => ({ name: publicName(r.student), house: normalizeHouse(r.house), classOf: normalizeClass(r.cls), amount: r.n })));
+  }
 
   if (releaseTopFive) {
     const named = rows
@@ -136,3 +141,22 @@ export function segmentWidths(results) {
 }
 
 export const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+// Competition ranks are established before any search or column sorting.
+export function rankStudents(students) {
+  const sorted = [...students].sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
+  let rank = 0;
+  return sorted.map((student, index) => {
+    if (!index || student.amount !== sorted[index - 1].amount) rank = index + 1;
+    return { ...student, rank };
+  });
+}
+
+export function selectStudents(students, query = '', key = 'rank', ascending = true) {
+  const q = query.trim().toLocaleLowerCase();
+  return students.filter(s => !q || [s.name, s.classOf, s.house].join(' ').toLocaleLowerCase().includes(q))
+    .sort((a, b) => {
+      const comparison = ['rank', 'amount'].includes(key) ? a[key] - b[key] : String(a[key] || '').localeCompare(String(b[key] || ''));
+      return (ascending ? comparison : -comparison) || a.rank - b.rank;
+    });
+}
