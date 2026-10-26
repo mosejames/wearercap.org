@@ -222,11 +222,11 @@
     }
   ],
   "functions": {
+    "api/nyc-export-worker.js": {"maxDuration":300,"experimentalTriggers":[{"type":"queue/v2beta","topic":"nyc-photo-exports","maxConcurrency":1}]},
     "api/london-stories-worker.js": {
       "maxDuration": 300,
       "includeFiles": "node_modules/ffmpeg-static/ffmpeg",
       "experimentalTriggers": [
-        {"type":"queue/v2beta","topic":"nyc-photo-exports","maxConcurrency":1},
         {
           "type": "queue/v2beta",
           "topic": "london-instagram-import",
