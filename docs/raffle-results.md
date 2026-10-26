@@ -34,3 +34,5 @@ The mission copy connects parents, school support, Teacher Appreciation Week,
 and student opportunities without claiming specific allocations of proceeds.
 
 Individual ticket counts are shown only in name-search results, per Mose’s later October 26 direction. The initial top five cards and weekly spotlight retain recognition and standing without counts. Aggregate fundraising totals remain visible.
+
+Later October 26: house and class bars replaced by pie charts with name-only legends, no totals or percentages. House colors retained; class slices use RCAP navy/gold tones. Thermometer keeps proportional colored fill without numeric labels, milestones, tooltips or numeric accessibility text. Underlying aggregates remain unchanged. Individual ticket counts remain available through name lookup.

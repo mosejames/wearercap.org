@@ -1,5 +1,5 @@
 import data from './raffle-results.json';
-import { milestones, segmentWidths, money, findStudentsByName } from './raffleResults.js';
+import { segmentWidths, findStudentsByName } from './raffleResults.js';
 
 const HOUSE_CLASS = { Amistad: 'amistad', Isibindi: 'isibindi', Altruismo: 'altruismo', 'Rêveur': 'reveur', Unassigned: 'unassigned' };
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
@@ -9,67 +9,43 @@ const el = (tag, cls, text) => {
   if (text != null) node.textContent = text;
   return node;
 };
-const short = (n) => (n >= 1000 ? `$${n % 1000 ? (n / 1000).toFixed(1) : n / 1000}K` : money(n));
-
+const HOUSE_COLORS = { Amistad: '#c8362f', Isibindi: '#1f9a68', Altruismo: '#141414', 'Rêveur': '#2d63c8' };
+const CLASS_COLORS = ['#1b2c56', '#f7a81c', '#7281a3', '#b17b24', '#c8d0e0'];
 function renderProgress(d) {
-  $('total').textContent = money(d.total);
-  $('of').textContent = ` of our ${money(d.goal)} goal`;
-
-  const bar = $('bar');
-  bar.setAttribute('aria-valuemax', String(d.goal));
-  bar.setAttribute('aria-valuenow', String(Math.min(d.total, d.goal)));
-  bar.setAttribute('aria-valuetext', `${money(d.total)} raised of a ${money(d.goal)} goal`);
-
   const fill = $('segments');
   for (const s of segmentWidths(d)) {
     const seg = el('span', `rr-seg rr-${HOUSE_CLASS[s.name] || 'unassigned'}`);
     seg.style.setProperty('--w', `${s.width}%`);
-    seg.title = `${s.name}: ${money(s.amount)}`;
     fill.appendChild(seg);
   }
-
-  const marks = milestones(d.goal);
-  const scale = Math.max(d.goal, d.total);
-  const ticks = $('ticks');
-  const list = $('milestones');
-  marks.forEach((m, i) => {
-    const tick = el('span', 'rr-tick');
-    tick.style.left = `${(m / scale) * 100}%`;
-    ticks.appendChild(tick);
-    const reached = d.total >= m;
-    const item = el('li', reached ? 'reached' : '');
-    item.append(el('strong', null, i === marks.length - 1 ? 'Goal' : short(m)));
-    item.append(el('span', null, reached ? 'Reached' : short(m)));
-    item.style.left = `${(m / scale) * 100}%`;
-    list.appendChild(item);
-  });
-
-  const next = marks.find((m) => d.total < m);
-  $('next').textContent = next
-    ? `${money(next - d.total)} more reaches the ${money(next)} mark.`
-    : 'We passed our goal. Every ticket from here is extra thanks.';
-
+  const progress = d.total >= d.goal ? 'Our shared goal has been reached.' : 'Together, we’re making progress toward our shared goal.';
+  $('bar').setAttribute('aria-label', progress);
+  $('next').textContent = progress;
   $('asof').textContent = d.asOf ? `Updated ${d.asOf} Eastern.` : '';
 }
-
-function renderRows(target, items, label, swatch) {
-  const max = Math.max(...items.map((i) => i.amount), 1);
-  items.forEach((item, idx) => {
-    const li = el('li');
-    li.append(el('span', 'rr-rank', String(idx + 1)));
-    const body = el('div', 'rr-row-body');
-    const head = el('div', 'rr-row-head');
-    const value = el('div', 'rr-bar-value');
-    value.append(el('b', null, money(item.amount)), el('span', 'rr-pct', `${Math.round(data.total ? item.amount / data.total * 100 : 0)}%`));
-    head.append(el('span', null, label(item)), value);
-    const track = el('div', 'rr-track');
-    const fill = el('span', `rr-track-fill ${swatch(item)}`);
-    fill.style.setProperty('--w', `${(item.amount / max) * 100}%`);
-    track.appendChild(fill);
-    body.append(head, track);
-    li.appendChild(body);
-    target.appendChild(li);
+function renderPie(target, items, label, color) {
+  const total = items.reduce((sum, item) => sum + item.amount, 0);
+  const chart = el('div', 'rr-pie');
+  chart.setAttribute('role', 'img');
+  chart.setAttribute('aria-label', total ? `Relative contributions from ${items.map(label).join(', ')}. Each slice represents a share of our collective effort.` : 'Contributions will appear here after the next update.');
+  let start = 0;
+  const stops = items.map((item, index) => {
+    const end = start + (total ? item.amount / total * 100 : 0);
+    const stop = `${color(item, index)} ${start}% ${end}%`;
+    start = end;
+    return stop;
   });
+  chart.style.background = total ? `conic-gradient(${stops.join(',')})` : '#e8dfcf';
+  const legend = el('ul', 'rr-pie-legend');
+  for (const [index, item] of items.entries()) {
+    const row = el('li');
+    const swatch = el('span', 'rr-pie-swatch');
+    swatch.style.background = color(item, index);
+    swatch.setAttribute('aria-hidden', 'true');
+    row.append(swatch, el('span', null, label(item)));
+    legend.append(row);
+  }
+  target.append(chart, legend);
 }
 
 function renderLocked(d) {
@@ -107,8 +83,8 @@ function renderLocked(d) {
 }
 
 renderProgress(data);
-renderRows($('houses'), data.houses, (h) => h.name, (h) => `rr-${HOUSE_CLASS[h.name]}`);
-renderRows($('classes'), data.classes, (c) => `Class of ${c.name}`, () => 'rr-class');
+renderPie($('houses'), data.houses, h => h.name, h => HOUSE_COLORS[h.name] || '#b9ad99');
+renderPie($('classes'), [...data.classes].sort((a, b) => a.name.localeCompare(b.name)), c => `Class of ${c.name}`, (_, i) => CLASS_COLORS[i % CLASS_COLORS.length]);
 renderLocked(data);
 const students = data.students || [];
 function studentCard(student, showTickets = false) {

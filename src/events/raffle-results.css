@@ -151,3 +151,14 @@
 .rr-lookup .rr-student-cards:empty{display:none}
 .rr-announcer{margin:0 0 28px}.rr-announcement .rr-announcer h3{font-size:22px}
 @media(max-width:650px){.rr-purpose p{font-size:16px}.rr-student-card{gap:10px}.rr-student-card h3{font-size:18px}.rr-student-card p{font-size:12px}.rr-standing strong{font-size:16px}.rr-student-section,.rr-lookup{padding:24px 20px}.rr-row-body{grid-template-columns:minmax(80px,1fr) minmax(35px,1fr) 60px;gap:10px}.rr-announcer{margin:0 0 24px}}
+
+/* Qualitative progress, with names rather than amounts on collective charts. */
+.rr-progress .rr-label{margin-bottom:22px}
+.rr-progress-labels{display:flex;justify-content:space-between;gap:16px;margin-top:12px;font-size:12px;color:#faf4ea}
+.rr-progress .rr-next{margin-top:22px;font-size:15px;line-height:1.6}
+.rr-pie-layout{display:grid;justify-items:center;gap:28px;margin-top:24px}
+.rr-pie{width:min(100%,240px);aspect-ratio:1;border-radius:50%;border:3px solid #fffaf2;box-shadow:0 0 0 1px #d6cbb8}
+.rr-pie-legend{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;width:100%}
+.rr-pie-legend li{display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.4}
+.rr-pie-swatch{width:16px;height:16px;border-radius:4px;flex-shrink:0;border:1px solid #1b2c5620}
+@media(max-width:650px){.rr-pie{width:220px}.rr-pie-legend{gap:16px 12px}.rr-pie-legend li{font-size:13px}}
