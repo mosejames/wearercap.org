@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/api/trip-engine","destination":"/api/m3-sign?vault=trip-engine"},
+    {"source":"/trips/:trip/og.jpg","destination":"/api/m3-link?vault=trip-engine&trip=:trip&og=1"},
+    {"source":"/trips/:trip/e/:album/p/:photo","destination":"/api/m3-link?vault=trip-engine&trip=:trip&album=:album&photo=:photo"},
+    {"source":"/trips/:trip/send-off","destination":"/api/m3-link?vault=trip-engine&trip=:trip&intake=send-off"},
+    {"source":"/trips/:trip","destination":"/api/m3-link?vault=trip-engine&trip=:trip"},
+    {"source":"/trips/:trip/","destination":"/api/m3-link?vault=trip-engine&trip=:trip"},
     {"source":"/api/trip-studio","destination":"/api/m3-sign?vault=trip-studio"},
     {"source":"/api/nyc-export/:action","destination":"/api/m3-link?vault=nyc&export=1&action=:action"},
     {
@@ -224,6 +230,7 @@
     }
   ],
   "functions": {
+    "api/trip-export-worker.js":{"maxDuration":300,"experimentalTriggers":[{"type":"queue/v2beta","topic":"trip-vault-exports","maxConcurrency":1}]},
     "api/nyc-export-worker.js": {"maxDuration":300,"experimentalTriggers":[{"type":"queue/v2beta","topic":"nyc-photo-exports","maxConcurrency":1}]},
     "api/london-stories-worker.js": {
       "maxDuration": 300,

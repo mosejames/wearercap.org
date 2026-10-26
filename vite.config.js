@@ -25,6 +25,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         tripstudio: resolve(__dirname, "trip-studio/index.html"),
+        tripengine: resolve(__dirname, "trip-vault/index.html"),
         raffleInformation: resolve(__dirname, "raffle/2026/information/index.html"),
         events2026: resolve(__dirname, "events/2026/index.html"),
         trunk2026: resolve(__dirname, "events/2026/trunk-or-treat/index.html"),

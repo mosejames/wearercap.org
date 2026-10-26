@@ -1,0 +1,14 @@
+import {useEffect,useState} from 'react';
+import {ChevronDown} from 'lucide-react';
+import {authClient} from './client.js';
+export async function engineAdmin(slug,action,payload={}){
+ const {data,error}=await authClient().auth.getSession();if(error)throw error;if(!data.session)throw Error('Sign in to manage this trip.');
+ const r=await fetch(`/api/trip-engine?trip=${encodeURIComponent(slug)}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({action,...payload})});const value=await r.json();if(!r.ok)throw Error(value.error||'Could not update this trip.');return value;
+}
+export default function EngineMedia({live,onError}){
+ const [photos,setPhotos]=useState([]),[count,setCount]=useState(null),[busy,setBusy]=useState(false),[offset,setOffset]=useState(0);
+ async function load(start=0){setBusy(true);try{const result=await engineAdmin(live.slug,'moderation',{offset:start});setPhotos(result.photos);setCount(result.count);setOffset(start);}catch(e){onError(e.message);}finally{setBusy(false);}}
+ useEffect(()=>{let active=true;engineAdmin(live.slug,'moderation').then(result=>{if(active){setPhotos(result.photos);setCount(result.count);}}).catch(e=>{if(active)onError(e.message);});return()=>{active=false;};},[live.slug,onError]);
+ async function update(action,body){setBusy(true);try{await engineAdmin(live.slug,action,body);await load(offset);}catch(e){onError(e.message);}finally{setBusy(false);}}
+ return <section className="studio-panel"><span className="studio-kicker">THIS TRIP ONLY</span><h2>Gallery moderation {count!==null?`· ${count}`:''}</h2><p className="studio-hint">Hide and restore photos, or correct a batch’s group. Hidden photos stop appearing in fresh share previews.</p>{count===0&&<p>No photos have been shared yet.</p>}<div className="studio-moderation">{photos.map(p=><article key={p.id}><img src={p.thumb} alt={`Shared by ${p.contributor}`} loading="lazy"/><div><b>{p.contributor}</b><small>{p.album==='send-off'?'Send-off':'Trip album'} · {p.state}</small><label>Photo group<span className="studio-select"><select value={p.group} disabled={busy} onChange={e=>update('set-group',{id:p.id,group:e.target.value})}>{['Group A','Group AA','Mixed'].map(g=><option key={g}>{g}</option>)}</select><span aria-hidden="true"><ChevronDown size={20}/></span></span></label><button disabled={busy} onClick={()=>update('admin-photo',{id:p.id,hidden:p.state!=='hidden'})}>{p.state==='hidden'?'Restore photo':'Hide photo'}</button></div></article>)}</div><div className="studio-row"><button disabled={busy||offset===0} onClick={()=>load(Math.max(0,offset-100))}>Previous</button><button disabled={busy||count===null||offset+photos.length>=count} onClick={()=>load(offset+100)}>Next</button><button disabled={busy} onClick={()=>load(offset)}>Refresh photos</button></div></section>;
+}

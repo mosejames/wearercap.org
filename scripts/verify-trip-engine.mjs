@@ -1,0 +1,23 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import sharp from 'sharp';
+import {newDraft} from '../src/trip-studio/model.js';
+const origin=process.env.STUDIO_PREVIEW_URL||'http://127.0.0.1:5184';
+if(!['127.0.0.1','localhost'].includes(new URL(origin).hostname))throw Error('Verification fixtures are local only.');
+const png=await sharp({create:{width:400,height:300,channels:3,background:'#b7ccdf'}}).png().toBuffer(),image='data:image/png;base64,'+png.toString('base64');
+const trip={...newDraft('11111111-1111-1111-1111-111111111111','Engine verification'),engineId:'22222222-2222-2222-2222-222222222222',slug:'engine-verification',cohort:'2035',start:'2030-01-01',end:'2030-01-02',timezone:'America/New_York',phase:'Active trip',logo:image,hero:image,features:{sendoff:true,remember:true,milestones:true,download:true,conversations:true,videos:false}};
+const photo=(id,group)=>({id,tripId:trip.engineId,album:'the-whole-adventure',state:'visible',storage:'r2',contributor:'Verification contributor',group,web:image,thumb:image,createdAt:'2030-01-01T12:00:00Z'});
+const photos=[photo('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','Group A'),photo('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','Group AA'),photo('cccccccc-cccc-cccc-cccc-cccccccccccc','Mixed')];
+const browser=await chromium.launch({headless:true,...(process.env.STUDIO_BROWSER_PATH?{executablePath:process.env.STUDIO_BROWSER_PATH}:{})});
+try{
+ const context=await browser.newContext({viewport:{width:1280,height:1000}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.route('**/api/trip-engine*',async route=>{const req=route.request(),u=new URL(req.url());if(req.method()==='GET'){const id=u.searchParams.get('photo');await route.fulfill({json:{trip,photos:id?photos.filter(p=>p.id===id):photos,count:id?1:photos.length,hasMore:false,isAdmin:false}});}else{const body=req.postDataJSON();await route.fulfill({json:body.action==='conversation'?{reactions:[],comments:[]}:{ok:true}});}});
+ await page.goto(origin+'/trip-vault/?trip='+trip.slug,{waitUntil:'networkidle'});await page.getByRole('button',{name:'Add trip photos',exact:true}).waitFor();assert.equal(new URL(page.url()).pathname,'/trips/'+trip.slug+'/');
+ await page.getByRole('button',{name:'Group A',exact:true}).click();assert.equal(await page.locator('.engine-gallery>button').count(),2);await page.getByRole('button',{name:'All groups',exact:true}).click();
+ await page.locator('.engine-gallery>button').first().click();await page.locator('dialog .engine-viewer img').waitFor();assert.equal(await page.getByRole('link',{name:'Download photo',exact:true}).count(),1);assert.equal(await page.getByRole('button',{name:'That’s my child',exact:true}).count(),1);await page.getByRole('button',{name:'Close',exact:true}).click();
+ await page.getByRole('button',{name:'Add trip photos',exact:true}).click();await page.getByRole('radio',{name:'Group AA',exact:true}).check();await page.getByLabel('Chaperone name',{exact:true}).fill('Verification chaperone');assert.equal(await page.locator('dialog input[type=file]').count(),1);assert.equal(await page.getByLabel(/Scholar/).count(),0);await page.getByRole('button',{name:'Close',exact:true}).click();
+ await page.screenshot({path:'/private/tmp/trip-engine-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);await page.getByRole('button',{name:'Add trip photos',exact:true}).click();assert.equal(await page.getByRole('radio',{name:'Group AA',exact:true}).isChecked(),true);assert.equal(await page.getByLabel('Chaperone name',{exact:true}).inputValue(),'Verification chaperone');await page.getByRole('button',{name:'Close',exact:true}).click();await page.screenshot({path:'/private/tmp/trip-engine-mobile.png',fullPage:true});
+ await page.goto(origin+'/trip-studio/?local=1',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Continue setup',exact:true}).click();await page.getByRole('button',{name:'Launch & lifecycle',exact:true}).click();assert.equal(await page.getByRole('button',{name:'Launch trip',exact:true}).isDisabled(),true);assert.equal(await page.getByText('Trip dates',{exact:true}).count(),1);await page.screenshot({path:'/private/tmp/trip-studio-launch-mobile.png',fullPage:true});
+ assert.deepEqual(errors,[]);console.log('PASS: configured family vault, stable URL, groups, exact-photo viewer, download action, conversations, remembered batch details, responsive layout and DC launch gate. All fixtures were local; no live trip was published.');
+}finally{await browser.close();}

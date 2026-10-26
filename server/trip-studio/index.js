@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import {initialRegistry} from '../../src/trip-studio/model.js';
 import {cleanDraft, saveDraft, problem} from './model.js';
 import {readRegistry, writeRegistry} from './storage.js';
+import {liveList,publishAction} from '../trip-engine/publish.js';
 export async function authorize(req) {
   const authorization = req.headers?.authorization;
   if (!authorization?.startsWith('Bearer ') || authorization.length > 8192) throw problem('Sign in to Trip Studio.', 401);
@@ -36,18 +37,23 @@ export default async function handler(req, res) {
     const me = await authorize(req);
     if (req.method === 'GET') {
       const {registry} = await readRegistry();
-      return res.status(200).json({registry:registry || initialRegistry(), me});
+      return res.status(200).json({registry:{...(registry || initialRegistry()),liveTrips:await liveList(req)}, me});
     }
     let body = req.body;
     if (typeof body === 'string') { if (Buffer.byteLength(body) > 2500000) throw problem('Choose smaller branding images.', 413); try { body = JSON.parse(body); } catch { throw problem('Could not read the draft.'); } }
     if (!body || Buffer.byteLength(JSON.stringify(body)) > 2500000) throw problem('Choose smaller branding images.', 413);
-    // This API has no publication, gallery, moderation, email or export actions.
-    if (body.action !== 'save') throw problem('Only saving private drafts is available.', 403);
+    if (['publish','phase','unpublish'].includes(body.action)) {
+      const {registry}=await readRegistry();
+      if(!registry)throw problem('Save this draft before launching it.',404);
+      await publishAction(req,body,registry);
+      return res.status(200).json({registry:{...registry,liveTrips:await liveList(req)},me});
+    }
+    if (body.action !== 'save') throw problem('Unknown dashboard action.',403);
     const draft = cleanDraft(body.draft);
     [draft.logo, draft.hero] = await Promise.all([normalizeImage(draft.logo, true), normalizeImage(draft.hero, false)]);
     const {registry, etag} = await readRegistry();
     const next = saveDraft(registry || initialRegistry(), draft, body.revision);
     await writeRegistry(next, etag);
-    return res.status(200).json({registry:next, me});
+    return res.status(200).json({registry:{...next,liveTrips:await liveList(req)}, me});
   } catch(e) { return res.status(e.status || 503).json({error:e.status ? e.message : 'Trip Studio is temporarily unavailable. Your unsaved changes remain on screen.'}); }
 }

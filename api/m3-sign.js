@@ -84,6 +84,7 @@ async function albumAccepts(eventId) {
 }
 
 export default async function handler(req, res) {
+  if(req.query?.vault==='trip-engine'){const {default:engineHandler}=await import('../server/trip-engine/index.js');return engineHandler(req,res);}
   if (req.query?.vault === 'trip-studio') {
     const {default: studioHandler} = await import('../server/trip-studio/index.js');
     return studioHandler(req, res);

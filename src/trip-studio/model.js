@@ -31,14 +31,14 @@ export function readiness(t) {
   if (!t.logo) missing.push('Logo');
   return missing;
 }
-export function messageFor(trip, phase, audience) {
+export function messageFor(trip, phase, audience, liveUrl) {
   const cohort = trip.cohort ? `Class of ${trip.cohort}` : '[class year]';
   const destination = trip.destination || '[destination]';
-  const link = '[trip link available after launch]';
-  if (audience === 'Chaperones') return `Thank you for bringing ${cohort}’s ${destination} adventure home to families. Open ${link}, choose ${trip.groups.join(', ')} for this batch, confirm your name and add a few photos.${trip.features.remember ? ' Your name and group are remembered on this device. Change groups whenever needed.' : ''} No scholar names needed.${trip.features.videos ? ' Use Share videos for clips.' : ''}`;
+  const link = liveUrl || '[trip link available after launch]';
+  if (audience === 'Chaperones') return `Thank you for bringing ${cohort}’s ${destination} adventure home to families. Open ${link}, choose ${trip.groups.join(', ')} for this batch, confirm your name and add a few photos.${trip.features.remember ? ' Your name and group are remembered on this device. Change groups whenever needed.' : ''} No scholar names needed.${trip.features.videos && trip.videoUploadUrl ? ' Use Share videos for clips.' : ''}`;
   return {
     Draft: `${cohort} is heading to ${destination}. Our trip album is being prepared. We’ll share the family link when it is ready.`,
-    'Send-off': `The ${destination} adventure starts at home. Add packing moments and send-off smiles for ${cohort}: ${link}.${trip.features.videos ? ' Use Share videos for clips.' : ''} Keep this link to follow the trip.`,
+    'Send-off': `The ${destination} adventure starts at home. Add packing moments and send-off smiles for ${cohort}: ${link}.${trip.features.videos && trip.videoUploadUrl ? ' Use Share videos for clips.' : ''} Keep this link to follow the trip.`,
     'Active trip': `Follow ${cohort} in ${destination}: ${link}. Enjoy the latest photos${trip.features.conversations ? ', leave a quick thank-you' : ''}${trip.features.download ? ' and download your favorites' : ''}. This same link holds the whole story.`,
     'Wrap-up': `Home with stories. Revisit ${cohort}’s ${destination} moments at ${link}. Add any last photos and thank the chaperones who shared the adventure.`,
     Archive: `${cohort}’s ${destination} memories are here: ${link}. Browse the trip album${trip.features.download ? ' and download favorite photos' : ''}.`,

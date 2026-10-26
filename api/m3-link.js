@@ -50,6 +50,7 @@ async function describe(slug) {
 }
 
 export default async function handler(req, res) {
+  if(req.query?.vault==='trip-engine'){const {default:engineCard}=await import('../server/trip-engine/card.js');return engineCard(req,res);}
   if (req.query?.vault === 'nyc') return req.query.export ? nycExport(req,res) : req.query.bulk ? nycBulk(req,res) : req.query.download ? nycDownload(req,res) : nycHandler(req,res);
   if (req.query?.vault === 'london') return londonHandler(req, res);
   const slug = String((req.query && req.query.slug) || '').trim();
