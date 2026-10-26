@@ -94,7 +94,6 @@ function renderLocked(d) {
           el('small', null, 'OUR TOP TICKET SELLER THIS WEEK'),
           el('h3', null, `Take a bow, ${w.announcer.name}`),
           el('p', 'rr-announcer-class', `Class of ${w.announcer.classOf}`),
-          el('p', 'rr-announcer-count', `${w.announcer.tickets.toLocaleString('en-US')} tickets sold`),
           el('p', null, 'A big RCAP thank-you for leading the way. Watch her announce this week’s winner.'),
         );
         caption.prepend(spotlight);
@@ -112,12 +111,13 @@ renderRows($('houses'), data.houses, (h) => h.name, (h) => `rr-${HOUSE_CLASS[h.n
 renderRows($('classes'), data.classes, (c) => `Class of ${c.name}`, () => 'rr-class');
 renderLocked(data);
 const students = data.students || [];
-function studentCard(student) {
+function studentCard(student, showTickets = false) {
   const item = el('li', 'rr-student-card');
   const info = el('div');
   info.append(el('h3', null, student.name), el('p', null, `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
   const standing = el('div', 'rr-standing');
-  standing.append(el('strong', null, `${student.amount.toLocaleString('en-US')} tickets`), el('span', null, `No. ${student.rank} overall`));
+  if (showTickets) standing.append(el('strong', null, `${student.amount.toLocaleString('en-US')} tickets`));
+  standing.append(el(showTickets ? 'span' : 'strong', null, `No. ${student.rank} overall`));
   item.append(info, standing);
   return item;
 }
@@ -125,7 +125,7 @@ for (const student of students.filter(student => student.rank <= 5)) $('top-stud
 function renderStudents() {
   const query = $('search').value.trim();
   const list = findStudentsByName(students, query);
-  $('students').replaceChildren(...list.map(studentCard));
+  $('students').replaceChildren(...list.map(student => studentCard(student, true)));
   $('count').textContent = query.length < 2 ? 'Your child’s progress will appear here.' : list.length ? `${list.length} ${list.length === 1 ? 'match' : 'matches'} found. Standing is based on all credited tickets, not just these results.` : 'No match yet. Check the first-name spelling. Newly credited tickets may appear in the next update.';
 }
 $('search').addEventListener('input', renderStudents);

@@ -32,3 +32,5 @@ The lookup is public and needs no password; this is a presentation choice, not
 access control. Approved abbreviated records remain in the public data bundle.
 The mission copy connects parents, school support, Teacher Appreciation Week,
 and student opportunities without claiming specific allocations of proceeds.
+
+Individual ticket counts are shown only in name-search results, per Mose’s later October 26 direction. The initial top five cards and weekly spotlight retain recognition and standing without counts. Aggregate fundraising totals remain visible.
