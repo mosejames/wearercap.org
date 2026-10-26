@@ -67,7 +67,7 @@ export default async function handler(req,res){
   if(['submit','inbox','review','uploadSession','uploadAttachment','attachment'].includes(body.action))return res.status(200).json(await intakeAction(req,body));
   if(['ideaSuggestions','ideaChat'].includes(body.action))return res.status(200).json(await aiAction(req,body));
   if(['ideas','ideaAdd','ideaUpdate','ideaComment'].includes(body.action))return res.status(200).json(await editorialAction(req,body));
-  if(['workspace','workflow','dashboard','plan','sent','trackingLinks'].includes(body.action)){return res.status(200).json(await consoleAction(req,body,report));}
+  if(['workspace','workflow','dashboard','plan','sent','trackingLinks','lifecycle','issueState'].includes(body.action)){return res.status(200).json(await consoleAction(req,body,report));}
   if(body.action==='report'){
    if(!await authorized(req,body))return res.status(403).json({error:'Sign in as a newsletter editor to see analytics.'});
    return res.status(200).json(await report());

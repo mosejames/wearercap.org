@@ -1,4 +1,5 @@
-import {starterContent,upgradeBlankStarter,STARTERS,nextWednesday} from './workspaceModel';
+import {starterContent,upgradeBlankStarter,STARTERS,nextWednesday,issueStage} from './workspaceModel';
+import IssueLifecycle from './IssueLifecycle';
 import Workspace from './Workspace.jsx';
 import CampaignAnalytics from './CampaignAnalytics.jsx';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -455,6 +456,8 @@ function Preview({ html, active, onPick }) {
 
 function Editor({ id, me, onBack, onError, demo = null }) {
   const [issue, setIssue] = useState(null);
+  const [issuePlan, setIssuePlan] = useState(null);
+  useEffect(()=>{if(!demo)consoleCall('issueState',{issueId:id}).then(r=>setIssuePlan(r.plan)).catch(e=>onError(e.message));},[id,demo,onError]);
   const [content, setContent] = useState(null);
   const [meta, setMeta] = useState({ title: '', issue_date: today() });
   const [save, setSave] = useState('saved');
@@ -631,10 +634,11 @@ function Editor({ id, me, onBack, onError, demo = null }) {
       <div className="nb-split">
         <div className="nb-form">
           <header className="nb-form-head">
-            <p className="nb-kicker">{FORMATS[issue.format]?.label} · <span className={`nb-pill ${issue.status}`}>{issue.status === 'published' ? 'On the website' : 'Draft'}</span></p>
+            <p className="nb-kicker">{FORMATS[issue.format]?.label} · <span className={`nb-pill ${issue.status}`}>{demo?'Template preview':issuePlan?issueStage(issue,issuePlan):'Loading status'}</span> · {issue.status==='published'?'On the website':'Not on the website'}</p>
             <Field label="Name for your list (families never see this)" value={meta.title} onChange={(v) => editMeta({ title: v })} />
           </header>
 
+          {!demo&&issuePlan&&<IssueLifecycle issue={issue} plan={issuePlan} onChange={setIssuePlan} disabled={save!=='saved'}/>}
           <Fold id="fold-sending" className="nb-top" badge="1" title="Sending" summary={content.subject || 'Add a subject line'} open={isOpen('sending')} onToggle={() => toggle('sending')}>
             <Field label="Subject line" value={content.subject} onChange={(v) => edit({ subject: v })} placeholder="This is how we do it, RCAP" />
             <Field label="Preview text" value={content.preheader} onChange={(v) => edit({ preheader: v })} hint="The gray line people see after the subject in their inbox." placeholder="Karaoke, EXP, and the Bingo Night photos." />

@@ -46,5 +46,8 @@ export function upgradeBlankStarter(content,day){
  const example=starterContent(starter.id,day,{name:content.signer});
  return {...content,starterVersion:2,starterKind:starter.id,subject:example.subject,preheader:example.preheader,headline:example.headline,body:example.body,blocks:example.blocks};
 }
-export function issueStage(issue,plan={}){return plan.sentAt?'Sent':plan.stage||'Draft';}
+export function issueStage(issue,plan={}){return plan.archivedAt?'Archived':plan.isTemplate?'Template':plan.sentAt?'Sent':plan.stage||'Draft';}
 export function calendarEntries(issues,plans,day){return plans.filter(p=>(p.sentAt||p.plannedAt)&&easternDay(p.sentAt||p.plannedAt)===day).map(p=>({plan:p,issue:issues.find(i=>i.id===p.id)})).filter(e=>e.issue);}
+
+export function blankContent(day,me={}){return {...template('full',day),signer:me.name||'Your RCAP team',role:'RCAP',greeting:'RCAP family,',kicker:'',subject:'',headline:'',body:'',preheader:'',blocks:[]};}
+export function issueCollection(plan={}){return plan.archivedAt?'archive':plan.isTemplate?'templates':'active';}
