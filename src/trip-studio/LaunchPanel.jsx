@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {Check,ExternalLink,LockKeyhole,Rocket} from 'lucide-react';
 import {PHASES,readiness} from './model.js';
 export default function LaunchPanel({draft,live,revision,dirty,local,request,onResult,onError,onBusy}){
- const [reviewed,setReviewed]=useState(false),[phase,setPhase]=useState(live?.phase||'Send-off'),[busy,setBusy]=useState(false),[confirmPrivate,setConfirmPrivate]=useState(false);
+ const [reviewed,setReviewed]=useState(false),[phase,setPhase]=useState(live?.phase||'Send-off'),[busy,setBusy]=useState(false),[confirmPrivate,setConfirmPrivate]=useState(false),[confirmDelete,setConfirmDelete]=useState('');
  useEffect(()=>{if(live?.phase)setPhase(live.phase);},[live?.phase]);
  const missing=readiness(draft),url=live?new URL(`/trips/${live.slug}/`,location.origin).href:'';
  async function action(name,extra={}){
@@ -19,5 +19,6 @@ export default function LaunchPanel({draft,live,revision,dirty,local,request,onR
  <button className="studio-primary" disabled={busy||local||dirty||!reviewed||missing.length>0} onClick={()=>action('publish')}><Rocket size={17}/>{busy?'Updating…':live?.published?'Publish saved changes':live?'Make trip public again':'Launch trip'}</button>
  {local&&<p className="studio-hint">Launching requires the online administrator workspace. Local drafts cannot publish.</p>}
  {live?.published&&<><div className="studio-rule"/><h3>Move the trip forward</h3><div className="studio-phases">{PHASES.filter(p=>p!=='Draft').map(p=><button key={p} disabled={busy||p==='Send-off'&&!draft.features.sendoff} aria-pressed={phase===p} onClick={()=>setPhase(p)}>{p}</button>)}</div><button disabled={busy||phase===live.phase} onClick={()=>action('phase',{phase})}>Apply {phase.toLowerCase()} phase</button><p className="studio-hint">The family link stays the same. Old send-off links use regular intake after send-off. Archive closes new uploads.</p><button className="studio-quiet" onClick={()=>setConfirmPrivate(!confirmPrivate)}>Make the trip private</button>{confirmPrivate&&<div className="studio-alert"><p>This closes public viewing, uploads and fresh share previews. Photos stay saved for a later relaunch.</p><button disabled={busy} onClick={()=>action('unpublish')}>Confirm private</button><button disabled={busy} onClick={()=>setConfirmPrivate(false)}>Keep it live</button></div>}</>}
+ {!live?.published&&draft.id!=='dc-draft'&&draft.destination.startsWith('Temporary verification trip ')&&draft.slug.startsWith('verification-flow-')&&<><div className="studio-rule"/><h3>Remove this disposable test</h3><p className="studio-hint">This removes only this temporary verification trip, its synthetic media and its download records. Keep the trip private before cleanup.</p><label>Type this test trip’s slug to confirm<input value={confirmDelete} placeholder={draft.slug} onChange={e=>setConfirmDelete(e.target.value)}/></label><button disabled={busy||local||dirty||confirmDelete!==draft.slug} onClick={()=>action('discard-test',{confirm:confirmDelete})}>Delete temporary test trip</button></>}
  </section>;
 }

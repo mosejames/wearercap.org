@@ -1,0 +1,21 @@
+// @vitest-environment node
+import {beforeEach,afterEach,expect,it,vi} from 'vitest';
+const {fetchObject}=vi.hoisted(()=>({fetchObject:vi.fn()}));
+vi.mock('../trip-studio/storage.js',()=>({readRegistry:vi.fn(),writeRegistry:vi.fn(),open:b=>JSON.parse(b.toString())}));
+vi.mock('./rpc.js',()=>({engineRpc:vi.fn(async()=>[]),problem:(m,status=400)=>Object.assign(Error(m),{status})}));
+vi.mock('./storage.js',()=>({UUID:/^[a-f0-9-]{36}$/,r2:()=>({account:'a',bucket:'b'}),aws:()=>({fetch:fetchObject}),objectUrl:k=>new URL('https://a.r2.cloudflarestorage.com/b/'+k)}));
+import {discardTest,isVerificationDraft} from './discard-test.js';
+import {readRegistry,writeRegistry} from '../trip-studio/storage.js';
+import {initialRegistry,newDraft} from '../../src/trip-studio/model.js';
+const id='11111111-1111-1111-1111-111111111111',tripId='22222222-2222-2222-2222-222222222222';
+const draft={...newDraft(id,'Temporary verification trip test'),slug:'verification-flow-test'};
+const req={headers:{authorization:'Bearer operator'}};
+const body={id,confirm:draft.slug,version:3,revision:2};
+beforeEach(()=>{readRegistry.mockReset().mockResolvedValue({registry:{revision:2,trips:[initialRegistry().trips[0],draft]},etag:'"v2"'});writeRegistry.mockReset().mockResolvedValue();fetchObject.mockReset().mockImplementation(async(url,init={})=>init.method==='DELETE'?new Response(null,{status:204}):new Response('<ListBucketResult/>',{status:200}));vi.stubEnv('VITE_SUPABASE_URL','https://auth.example.org');vi.stubEnv('VITE_SUPABASE_ANON_KEY','public');vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify({tripId,photos:[]}))));});
+afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();vi.clearAllMocks();});
+it('never classifies DC or a normal family trip as disposable',()=>{expect(isVerificationDraft({...draft,id:'dc-draft'})).toBe(false);expect(isVerificationDraft({...draft,destination:'Washington, DC'})).toBe(false);expect(isVerificationDraft({...draft,slug:'real-family-trip'})).toBe(false);});
+it('requires the exact disposable draft and slug before touching storage',async()=>{await expect(discardTest(req,{...body,confirm:'another-trip'})).rejects.toMatchObject({status:403});expect(fetchObject).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();});
+it('removes only the temporary draft and preserves DC’s content byte for byte',async()=>{const before=initialRegistry().trips[0];const result=await discardTest(req,body);expect(result.trips).toEqual([before]);expect(result.revision).toBe(3);expect(writeRegistry).toHaveBeenCalledWith(expect.objectContaining({trips:[before]}),'"v2"');expect(JSON.parse(fetch.mock.calls[0][1].body).p_apply).toBe(false);expect(JSON.parse(fetch.mock.calls[1][1].body).p_apply).toBe(true);});
+it('refuses a cross-trip media path before any deletion',async()=>{fetch.mockResolvedValueOnce(new Response(JSON.stringify({tripId,photos:[{key:'nyc-2026/file',webKey:'nyc-2026/web.jpg',thumbKey:'nyc-2026/thumb.jpg'}]})));await expect(discardTest(req,body)).rejects.toMatchObject({status:409});expect(fetchObject.mock.calls.filter(c=>c[1]?.method==='DELETE')).toHaveLength(0);expect(writeRegistry).not.toHaveBeenCalled();});
+it('keeps database metadata and the draft when an object cannot be removed',async()=>{fetch.mockResolvedValueOnce(new Response(JSON.stringify({tripId,photos:[{key:`trip-engine/v1/${tripId}/file/orig.jpg`,webKey:`trip-engine/v1/${tripId}/file/web.jpg`,thumbKey:`trip-engine/v1/${tripId}/file/thumb.jpg`}]})));fetchObject.mockImplementation(async(url,init={})=>init.method==='DELETE'?new Response('',{status:503}):new Response('<ListBucketResult/>'));await expect(discardTest(req,body)).rejects.toMatchObject({status:503});expect(fetch).toHaveBeenCalledTimes(1);expect(writeRegistry).not.toHaveBeenCalled();});
+it('rejects a stale draft-list revision before removing anything',async()=>{await expect(discardTest(req,{...body,revision:1})).rejects.toMatchObject({status:409});expect(fetchObject).not.toHaveBeenCalled();});
