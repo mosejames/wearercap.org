@@ -8,25 +8,28 @@ const photoError = document.querySelector('#photo-error');
 const status = document.querySelector('#form-status');
 const error = document.querySelector('#form-error');
 let photo, previewUrl;
-function clearPhoto() {
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
-  previewUrl = null; photo = null; input.value = ''; photoPreview.hidden = true; photoPreview.removeAttribute('src');
-  photoName.textContent = ''; document.querySelector('#remove-photo').hidden = true;
-}
-input.addEventListener('change', () => {
-  clearPhotoPreview();
-  const selected = input.files[0]; photoError.textContent = '';
-  if (!selected) return;
-  if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(selected.type) && !/\.(jpe?g|png|webp|hei[cf])$/i.test(selected.name)) { photoError.textContent = 'Choose a JPG, PNG, WebP or HEIC photo.'; input.value = ''; return; }
-  if (selected.size > 30 * 1024 * 1024) { photoError.textContent = 'Please choose a photo smaller than 30 MB.'; input.value = ''; return; }
-  photo = selected; photoName.textContent = selected.name; document.querySelector('#remove-photo').hidden = false;
-  if (!/hei[cf]/i.test(selected.type + selected.name)) { previewUrl = URL.createObjectURL(selected); photoPreview.src = previewUrl; photoPreview.hidden = false; }
-});
+const photoSelected = document.querySelector('#photo-selected');
+const photoAction = document.querySelector('#photo-action-text');
 function clearPhotoPreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
-  previewUrl = null; photo = null; photoPreview.hidden = true; photoPreview.removeAttribute('src'); photoName.textContent = ''; document.querySelector('#remove-photo').hidden = true;
+  previewUrl = null; photo = null; photoPreview.hidden = true; photoPreview.removeAttribute('src');
+  photoName.textContent = ''; photoSelected.hidden = true; photoAction.textContent = 'Choose a photo';
 }
-document.querySelector('#remove-photo').addEventListener('click', clearPhoto);
+function clearPhoto() {
+  clearPhotoPreview(); input.value = ''; photoError.textContent = '';
+}
+input.addEventListener('change', () => {
+  const selected = input.files[0];
+  if (!selected) return;
+  photoError.textContent = '';
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(selected.type) && !/\.(jpe?g|png|webp|hei[cf])$/i.test(selected.name)) { photoError.textContent = 'Choose a JPG, PNG, WebP or HEIC photo.'; input.value = ''; return; }
+  if (selected.size > 30 * 1024 * 1024) { photoError.textContent = 'Please choose a photo smaller than 30 MB.'; input.value = ''; return; }
+  clearPhotoPreview();
+  photo = selected; photoName.textContent = selected.name; photoSelected.hidden = false; photoAction.textContent = 'Change photo';
+  if (!/hei[cf]/i.test(selected.type + selected.name)) { previewUrl = URL.createObjectURL(selected); photoPreview.src = previewUrl; photoPreview.hidden = false; }
+});
+photoPreview.addEventListener('error', () => { photoPreview.hidden = true; });
+document.querySelector('#remove-photo').addEventListener('click', () => { clearPhoto(); input.focus(); });
 async function call(action, payload) {
   const response = await fetch('/api/campaign-activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...payload }) });
   const result = await response.json().catch(() => ({}));

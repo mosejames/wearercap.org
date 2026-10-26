@@ -350,3 +350,11 @@ consistent with participation elsewhere in this vault. Labels are reversible;
 photo ownership, removal controls, media and captions are unchanged. Collection
 selection is absent from the upload form. Uploads started inside a collection
 are labeled automatically, while ordinary uploads may remain uncategorized.
+
+## Photo upload design
+
+Never expose an unstyled native “Choose File” control on a public page. Use an
+intentional branded photo picker with a generous touch target, clear keyboard
+focus, and selected-photo feedback with change/remove controls. Preserve the
+native file input and phone photo-library behavior behind the designed control.
+This is a standing user preference from October 26, 2026.
