@@ -1,0 +1,9 @@
+# London staff downloads
+
+Open `/2028-london/`, sign into Admin, then choose **Download & email photos** in the footer. Enter the intended recipient and choose **Prepare and email photos**, or create a recipient-bound invitation only. The existing London passphrase authorizes administration; staff recipients do not need a login.
+
+The shared `trip-vault-exports` queue prepares JPEG web renditions across every visible London album and group. Videos and their JPEG posters are excluded. The initial live inventory was 751 photos on October 27, 2026. The adapter paginates the existing m3_list_photos RPC with exact count verification and checks visible event membership. Approved replacement photos may reference a different storage UUID from their retained row UUID. Files remain scoped to london-2028 paths.
+
+No database changes, credentials or new worker are required. The existing R2 encrypted state, private ZIP storage and trip-export-email service are reused. London stays separate from NYC and engine trips through its own slug, indexes, file paths, UI and receipt URLs. Private invitations expire after seven days and are bound to the intended email. ZIP download URLs are signed for 60 seconds and recheck gallery visibility before release. Existing sent archives cannot expose subsequently hidden photos through a fresh request.
+
+Recent requests show progress, a download-page link after preparation, resend/retry and expiration controls. No email is sent just by opening this panel. Live verification opened the admin panel and fetched its empty delivery list; no real recipient email was sent during implementation. Queue processing, ZIP construction and London email routing are covered by mocked service integration tests. A live staff delivery can be verified when the organizer explicitly requests one.

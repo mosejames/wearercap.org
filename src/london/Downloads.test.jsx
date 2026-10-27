@@ -1,0 +1,10 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import Downloads from './Downloads.jsx';
+let root,host,fetch;
+beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;host=document.createElement('div');document.body.append(host);root=createRoot(host);fetch=vi.fn(async()=>Response.json({jobs:[]}));vi.stubGlobal('fetch',fetch);});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();});
+it('requires an explicit administrator submission before preparing and emailing photos',async()=>{await act(async()=>root.render(<Downloads pass="test-pass"/>));expect(JSON.parse(fetch.mock.calls[0][1].body).action).toBe('export-jobs');expect(host.textContent).toContain('Hidden photos and video thumbnails are excluded');expect(host.querySelector('button[type="submit"]')?.disabled??host.querySelector('form button').disabled).toBe(true);expect(fetch).toHaveBeenCalledTimes(1);expect(fetch.mock.calls[0][1].headers['X-London-Admin']).toBe('test-pass');});
+it('opens a recipient receipt without requiring a login or admin secret',async()=>{fetch.mockResolvedValue(Response.json({ready:true,count:900,expires:Date.now()+86400000}));await act(async()=>root.render(<Downloads receipt={'a'.repeat(64)}/>));const link=host.querySelector('a');expect(link.textContent).toBe('Download all photos (ZIP)');expect(link.href).toContain('/api/london-export?action=export-file&receipt=');expect(fetch.mock.calls[0][0].href).toContain('export-receipt');expect(host.textContent).toContain('900 photos');});
+it('shows expired or invalid download errors without exposing a download button',async()=>{fetch.mockResolvedValue(Response.json({error:'This download expired.'},{status:410}));await act(async()=>root.render(<Downloads receipt={'b'.repeat(64)}/>));expect(host.querySelector('[role="alert"]').textContent).toContain('expired');expect(host.querySelector('a')).toBeNull();});

@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/api/london-export","destination":"/api/m3-sign?vault=london-export"},
     {"source":"/api/trip-engine","destination":"/api/m3-sign?vault=trip-engine"},
     {"source":"/trips/:trip/og.jpg","destination":"/api/m3-link?vault=trip-engine&trip=:trip&og=1"},
     {"source":"/trips/:trip/e/:album/p/:photo","destination":"/api/m3-link?vault=trip-engine&trip=:trip&album=:album&photo=:photo"},

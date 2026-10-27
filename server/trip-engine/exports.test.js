@@ -1,10 +1,11 @@
 // @vitest-environment node
 import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import crypto from 'node:crypto';
-const {send,files,awsFetch,engine}=vi.hoisted(()=>({send:vi.fn(async()=>({})),files:new Map(),awsFetch:vi.fn(),engine:vi.fn()}));
+const {send,files,awsFetch,engine,london}=vi.hoisted(()=>({london:vi.fn(),send:vi.fn(async()=>({})),files:new Map(),awsFetch:vi.fn(),engine:vi.fn()}));
 vi.mock('@vercel/queue',()=>({QueueClient:class{send=send;}}));
 vi.mock('./rpc.js',()=>({engineRpc:engine,problem:(m,status=400)=>Object.assign(Error(m),{status}),bearer:req=>{if(!req.headers?.authorization)throw Object.assign(Error('Sign in'),{status:401});return req.headers.authorization;}}));
 vi.mock('./storage.js',()=>({UUID:/^[a-f0-9-]{36}$/,r2:()=>({account:'test',bucket:'test'}),aws:()=>({fetch:awsFetch,sign:async r=>({url:r.url})}),objectUrl:key=>new URL('https://media.example.org/'+key)}));
+vi.mock('./londonExports.js',()=>({LONDON:'london-2028',londonPage:'https://wearercap.org/2028-london/',londonGallery:()=>london(),londonExportRpc:async(action,args,pass)=>{if(action==='get'){const g=await london();return {...g,count:g.photos.length};}if(pass!=='london-admin')throw Object.assign(Error('London admin required'),{status:403});return {exportDays:7,recipientBinding:true,videoDownloadUrl:''};},londonMediaUrl:p=>new URL('https://media.example.org/'+p.webKey)}));
 import {read,write,processExport,exportHandler} from './exports.js';
 import {seal} from '../trip-studio/storage.js';
 const slug='verification-trip',tripId='11111111-1111-1111-1111-111111111111';
@@ -41,3 +42,11 @@ it('never labels an unfinished archive ready when multipart storage fails',async
 it('rechecks visibility before a previously prepared archive is downloaded',async()=>{const id=await job(undefined,{status:'sent',archiveKey:`_exports/trip-engine/${tripId}/${'e'.repeat(64)}/trip-photos.zip`,photos:[photo]});const receipt='d'.repeat(64);await write(`receipts/${hash(receipt)}`,{id,slug,expires:Date.now()+86400000});engine.mockResolvedValue({trip,photos:[],count:0,hasMore:false});const r=res();await exportHandler({method:'GET',query:{trip:slug,action:'export-file',receipt}},r);expect(r.code).toBeGreaterThanOrEqual(400);expect(r.url).toBeUndefined();});
 it('cleans expired archives without sending an email',async()=>{const id=await job(undefined,{expires:Date.now()-1,archiveKey:`_exports/trip-engine/${tripId}/${'e'.repeat(64)}/trip-photos.zip`});await processExport({type:'cleanup',id});expect((await read(`jobs/${id}`)).value.status).toBe('expired');expect(fetch).not.toHaveBeenCalled();});
 it('stops automatic retries after repeated failures and leaves a clear admin error',async()=>{const id=await job();await processExport({type:'prepare',id},{deliveryCount:6});const current=(await read(`jobs/${id}`)).value;expect(current.status).toBe('failed');expect(current.error).toContain('repeated attempts');expect(fetch).not.toHaveBeenCalled();});
+
+it('prepares London via the shared queue and emails its own gallery receipt without touching NYC',async()=>{
+ const p={...photo,tripId:'london-2028',webKey:`london-2028/abcdef12/off-we-go/${photo.id}/web.jpg`};london.mockResolvedValue({trip:{engineId:'london-2028',destination:'London + Paris',cohort:'2028'},photos:[p]});
+ const noAdmin=res();await exportHandler({method:'POST',query:{trip:'london-2028'},headers:{authorization:'Bearer other-trip-admin'},body:{action:'export-invite',email:'recipient@example.org',prepare:true}},noAdmin);expect(noAdmin.code).toBe(403);
+ const r=res();await exportHandler({method:'POST',query:{trip:'london-2028'},headers:{'x-london-admin':'london-admin'},body:{action:'export-invite',email:'recipient@example.org',prepare:true}},r);expect(r.code).toBe(200);expect(r.body.url).toContain('/2028-london/?download=');
+ await processExport({type:'prepare',id:r.body.id});const sent=JSON.parse(fetch.mock.calls[0][1].body);expect(sent).toMatchObject({destination:'London + Paris',cohort:'2028',count:1,hasVideos:false});expect(sent.url).toContain('/2028-london/?archive=');expect(engine).not.toHaveBeenCalled();
+ const status=res();await exportHandler({method:'POST',query:{trip:'london-2028'},headers:{'x-london-admin':'london-admin'},body:{action:'export-jobs'}},status);expect(status.body.jobs[0].downloadUrl).toContain('/2028-london/?archive=');
+});
