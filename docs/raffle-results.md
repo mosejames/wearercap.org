@@ -114,3 +114,13 @@ recognition preferences. Actual published data drives the amounts, percentage an
 remaining balance; the supplied mockup figures were illustrative only. Weekly
 stars remain the default, with an explicit overall switch. No full student names
 are published and the raw source dashboard stays outside the repository.
+
+
+### Individual count visibility, October 28 correction
+
+Mose clarified that individual ticket counts must not appear beside one another
+in the public top-five list. Show rank/raffle-star labels and medal badges only,
+with no individual comparison bars. Reveal ticket counts only in name-search
+results. This supersedes the preceding celebration-dashboard approval for visible
+individual counts. Applies to weekly and overall recognition. Aggregate progress
+and house/class totals remain unchanged.

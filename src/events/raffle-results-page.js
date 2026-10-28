@@ -121,20 +121,16 @@ function studentCard(student, showTickets = false, isOverall = overall) {
   info.append(el('h3', null, student.name), el('p', null, `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
   const standing = el('div', 'rr-standing');
   if (showTickets) standing.append(el('strong', null, `${student.amount.toLocaleString('en-US')} tickets`));
-  standing.append(el(showTickets ? 'span' : 'strong', null, `No. ${student.rank} ${isOverall ? 'overall' : 'in Week ' + weekNumber}`));
+  standing.append(el(showTickets ? 'span' : 'strong', null, showTickets ? `No. ${student.rank} ${isOverall ? 'overall' : 'in Week ' + weekNumber}` : `No. ${student.rank} raffle star`));
+  if (!showTickets) standing.append(el('span', null, isOverall ? 'Overall' : `Week ${weekNumber}`));
   item.append(info, standing);
   return item;
 }
 for (const student of students.filter(student => student.rank <= 5)) {
-  const card = studentCard(student, true);
+  const card = studentCard(student);
   const medal = el('span', `rr-medal rr-medal-${student.rank}`, String(student.rank));
   medal.setAttribute('aria-label', `Rank ${student.rank}`);
   card.prepend(medal);
-  const track = el('span', 'rr-star-track');
-  const fill = el('span');
-  fill.style.width = `${student.amount / Math.max(1, ...students.map(s => s.amount)) * 100}%`;
-  track.setAttribute('aria-hidden', 'true'); track.append(fill);
-  card.querySelector('div').append(track);
   $('top-students').append(card);
 }
 function renderStudents() {
