@@ -88,6 +88,15 @@ $('edition-kicker').textContent = overall ? 'THE FULL RAFFLE SO FAR' : 'WEEKLY R
 $('edition-dates').textContent = overall ? `All credited tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
 $('edition-note').textContent = overall ? 'Every week adds to our shared effort. This view brings together all credited tickets so far.' : 'A fresh week. A fresh top five. Each Sunday, we celebrate that week’s contributions. Familiar faces or new names, everyone has another chance to shine.';
 $('edition-next').textContent = overall ? '' : `Next update: ${dateLabel(edition.period.nextPublication)}. The top five will reflect the next reporting period only.`;
+if (!overall && edition === editions[0] && overallData.asOf !== edition.results.asOf) {
+  $('midweek').hidden = false;
+  $('midweek-note').textContent = `Overall progress is current through ${overallData.asOf} Eastern. The weekly results below remain the completed reporting period. Our next weekly celebration arrives ${dateLabel(edition.period.nextPublication)}.`;
+}
+if (overall && data.unassigned > 0) {
+  $('unassigned-note').hidden = false;
+  $('unassigned-note').textContent = `$${data.unassigned.toLocaleString('en-US')} is included in our overall progress and is awaiting student, house and class credit. The raffle team is following up. Individual standings may change as that credit is confirmed.`;
+}
+
 if (requestedWeek && !editions.some(item => item.period.id === requestedWeek) && !overall) $('edition-note').textContent = 'That weekly update is not available yet. You’re viewing the latest published results.';
 const addLink = (target, text, href) => { const a = el('a', null, text); a.href = href; target.append(a); };
 if (overall || edition !== editions[0]) addLink($('edition-links'), 'Back to the latest weekly results', '?');

@@ -80,3 +80,16 @@ Prompt: preserve navy/cream/gold style, leaves, $1 ticket and composition; repla
 First drawing with Second drawing, October 25 with November 1, and the deadline
 with Tickets $1 • Enter by Saturday, Oct 31 at 11:59 p.m.; retain This Sunday and
 Supporting Teacher Appreciation Week. No exclamation marks.
+
+
+## October 28 midweek update
+
+Mose approved Ashley’s cumulative dashboard dated October 28 at 10 a.m.
+Overall totals are $5,388, including $52 without student attribution, with 53
+named student records published using approved abbreviations. The default
+weekly page retains its October 25 snapshot and Ryleigh recognition; a dated
+midweek callout links to the refreshed overall view. No new weekly edition or
+weekly winner was created. The overall view explains pending attribution.
+Future weekly ranking calculations must reconcile Ashley’s credit corrections
+against original purchase dates rather than treating reassigned old sales as
+new weekly sales. Source HTML and Excel remain outside the repository.

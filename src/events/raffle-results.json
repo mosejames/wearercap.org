@@ -1,46 +1,46 @@
 {
-  "asOf": "Saturday, October 24 at 11:59 p.m.",
+  "asOf": "Wednesday, October 28 at 10:00 a.m.",
   "goal": 20000,
-  "total": 3226,
-  "unassigned": 2,
+  "total": 5388,
+  "unassigned": 52,
   "houses": [
     {
       "name": "Isibindi",
-      "amount": 1452
+      "amount": 1947
     },
     {
       "name": "Rêveur",
-      "amount": 795
+      "amount": 1618
     },
     {
       "name": "Amistad",
-      "amount": 627
+      "amount": 988
     },
     {
       "name": "Altruismo",
-      "amount": 350
+      "amount": 783
     }
   ],
   "classes": [
     {
       "name": "2031",
-      "amount": 1577
+      "amount": 2238
     },
     {
       "name": "2030",
-      "amount": 890
+      "amount": 1674
     },
     {
       "name": "2028",
-      "amount": 482
-    },
-    {
-      "name": "2027",
-      "amount": 175
+      "amount": 593
     },
     {
       "name": "2029",
-      "amount": 100
+      "amount": 576
+    },
+    {
+      "name": "2027",
+      "amount": 255
     }
   ],
   "topFive": null,
@@ -63,232 +63,372 @@
       "name": "Ryleigh B.",
       "house": "Isibindi",
       "classOf": "2031",
-      "amount": 1217,
+      "amount": 1310,
       "rank": 1
     },
     {
-      "name": "Kamden W.",
-      "house": "Amistad",
-      "classOf": "2028",
-      "amount": 216,
+      "name": "Ayla S.",
+      "house": "Rêveur",
+      "classOf": "2030",
+      "amount": 368,
       "rank": 2
     },
     {
       "name": "Ian W.",
       "house": "Rêveur",
       "classOf": "2030",
-      "amount": 190,
+      "amount": 265,
       "rank": 3
+    },
+    {
+      "name": "Kamden W.",
+      "house": "Amistad",
+      "classOf": "2028",
+      "amount": 241,
+      "rank": 4
     },
     {
       "name": "Hamilton D.",
       "house": "Isibindi",
       "classOf": "2027",
-      "amount": 125,
-      "rank": 4
+      "amount": 195,
+      "rank": 5
+    },
+    {
+      "name": "Drexel C.",
+      "house": "Isibindi",
+      "classOf": "2029",
+      "amount": 165,
+      "rank": 6
+    },
+    {
+      "name": "Palmer H.",
+      "house": "Amistad",
+      "classOf": "2030",
+      "amount": 165,
+      "rank": 6
+    },
+    {
+      "name": "Ariah L.",
+      "house": "Altruismo",
+      "classOf": "2031",
+      "amount": 140,
+      "rank": 8
+    },
+    {
+      "name": "Tahiry B.",
+      "house": "Rêveur",
+      "classOf": "2030",
+      "amount": 140,
+      "rank": 8
+    },
+    {
+      "name": "Erin G.",
+      "house": "Rêveur",
+      "classOf": "2031",
+      "amount": 132,
+      "rank": 10
+    },
+    {
+      "name": "Joseph J.",
+      "house": "Rêveur",
+      "classOf": "2030",
+      "amount": 127,
+      "rank": 11
     },
     {
       "name": "Mose J.",
       "house": "Amistad",
       "classOf": "2028",
       "amount": 111,
-      "rank": 5
+      "rank": 12
+    },
+    {
+      "name": "Farah A.",
+      "house": "Rêveur",
+      "classOf": "2030",
+      "amount": 110,
+      "rank": 13
     },
     {
       "name": "Ahza W.",
       "house": "Rêveur",
       "classOf": "2030",
       "amount": 103,
-      "rank": 6
+      "rank": 14
     },
     {
-      "name": "Joseph J.",
-      "house": "Rêveur",
+      "name": "Aria P.",
+      "house": "Altruismo",
       "classOf": "2030",
-      "amount": 102,
-      "rank": 7
+      "amount": 100,
+      "rank": 15
+    },
+    {
+      "name": "Audrie G.",
+      "house": "Isibindi",
+      "classOf": "2029",
+      "amount": 100,
+      "rank": 15
     },
     {
       "name": "Dean-Arrington J.",
       "house": "Isibindi",
       "classOf": "2029",
       "amount": 100,
-      "rank": 8
+      "rank": 15
     },
     {
       "name": "Kennedy B.",
       "house": "Altruismo",
       "classOf": "2030",
       "amount": 100,
-      "rank": 8
+      "rank": 15
     },
     {
-      "name": "Palmer H.",
+      "name": "Ocean Y.",
       "house": "Amistad",
-      "classOf": "2030",
-      "amount": 95,
-      "rank": 10
-    },
-    {
-      "name": "Erin G.",
-      "house": "Rêveur",
-      "classOf": "2031",
-      "amount": 92,
-      "rank": 11
-    },
-    {
-      "name": "Aria P.",
-      "house": "Altruismo",
-      "classOf": "2030",
-      "amount": 90,
-      "rank": 12
+      "classOf": "2029",
+      "amount": 100,
+      "rank": 15
     },
     {
       "name": "Mia S.",
       "house": "Amistad",
       "classOf": "2031",
       "amount": 90,
-      "rank": 12
+      "rank": 20
     },
     {
-      "name": "Tahiry B.",
-      "house": "Rêveur",
-      "classOf": "2030",
-      "amount": 80,
-      "rank": 14
+      "name": "Benjamin S.",
+      "house": "Altruismo",
+      "classOf": "2031",
+      "amount": 86,
+      "rank": 21
+    },
+    {
+      "name": "Chelsea C.",
+      "house": "Altruismo",
+      "classOf": "2031",
+      "amount": 85,
+      "rank": 22
+    },
+    {
+      "name": "Elijah T.",
+      "house": "Amistad",
+      "classOf": "2028",
+      "amount": 75,
+      "rank": 23
+    },
+    {
+      "name": "Casie W.",
+      "house": "Isibindi",
+      "classOf": "2031",
+      "amount": 67,
+      "rank": 24
     },
     {
       "name": "Omari P.",
       "house": "Amistad",
       "classOf": "2031",
-      "amount": 60,
-      "rank": 15
+      "amount": 65,
+      "rank": 25
+    },
+    {
+      "name": "Karsyn F.",
+      "house": "Amistad",
+      "classOf": "2029",
+      "amount": 56,
+      "rank": 26
+    },
+    {
+      "name": "Drew T.",
+      "house": "Rêveur",
+      "classOf": "2031",
+      "amount": 53,
+      "rank": 27
     },
     {
       "name": "Princeton F.",
       "house": "Rêveur",
       "classOf": "2027",
       "amount": 50,
-      "rank": 16
+      "rank": 28
     },
     {
       "name": "Steven A.",
       "house": "Rêveur",
       "classOf": "2028",
       "amount": 50,
-      "rank": 16
+      "rank": 28
     },
     {
       "name": "Trenton F.",
       "house": "Altruismo",
       "classOf": "2030",
       "amount": 50,
-      "rank": 16
+      "rank": 28
+    },
+    {
+      "name": "Kiyan H.",
+      "house": "Rêveur",
+      "classOf": "2031",
+      "amount": 45,
+      "rank": 31
     },
     {
       "name": "Sydney M.",
       "house": "Rêveur",
       "classOf": "2031",
       "amount": 45,
-      "rank": 19
+      "rank": 31
     },
     {
       "name": "Cai G.",
       "house": "Altruismo",
       "classOf": "2028",
+      "amount": 41,
+      "rank": 33
+    },
+    {
+      "name": "Elijah L.",
+      "house": "Altruismo",
+      "classOf": "2030",
+      "amount": 41,
+      "rank": 33
+    },
+    {
+      "name": "NeVaughn R.",
+      "house": "Altruismo",
+      "classOf": "2031",
       "amount": 40,
-      "rank": 20
+      "rank": 35
+    },
+    {
+      "name": "Haleigh H.",
+      "house": "Rêveur",
+      "classOf": "2030",
+      "amount": 35,
+      "rank": 36
     },
     {
       "name": "Jaxon M.",
       "house": "Altruismo",
       "classOf": "2031",
       "amount": 35,
-      "rank": 21
+      "rank": 36
     },
     {
       "name": "Lenox L.",
       "house": "Altruismo",
       "classOf": "2030",
       "amount": 35,
-      "rank": 21
+      "rank": 36
     },
     {
-      "name": "Gywinn L.",
+      "name": "Lewis",
       "house": "Amistad",
       "classOf": "2030",
       "amount": 30,
-      "rank": 23
+      "rank": 39
     },
     {
-      "name": "Karson",
+      "name": "Karson C.",
       "house": "Rêveur",
       "classOf": "2031",
       "amount": 25,
-      "rank": 24
+      "rank": 40
     },
     {
       "name": "Karter R.",
       "house": "Rêveur",
       "classOf": "2028",
       "amount": 25,
-      "rank": 24
+      "rank": 40
+    },
+    {
+      "name": "Malia S.",
+      "house": "Rêveur",
+      "classOf": "2029",
+      "amount": 25,
+      "rank": 40
+    },
+    {
+      "name": "Emir R.",
+      "house": "Altruismo",
+      "classOf": "2029",
+      "amount": 20,
+      "rank": 43
     },
     {
       "name": "Aretha A.",
       "house": "Amistad",
       "classOf": "2028",
       "amount": 10,
-      "rank": 26
+      "rank": 44
     },
     {
       "name": "Braylen E.",
       "house": "Isibindi",
       "classOf": "2028",
       "amount": 10,
-      "rank": 26
+      "rank": 44
     },
     {
-      "name": "Haleigh H.",
-      "house": "Rêveur",
-      "classOf": "2030",
+      "name": "Kingston W.",
+      "house": "Altruismo",
+      "classOf": "2029",
       "amount": 10,
-      "rank": 26
+      "rank": 44
     },
     {
       "name": "Mariah B.",
       "house": "Amistad",
       "classOf": "2028",
       "amount": 10,
-      "rank": 26
+      "rank": 44
     },
     {
       "name": "Olivia C.",
       "house": "Rêveur",
       "classOf": "2031",
       "amount": 10,
-      "rank": 26
+      "rank": 44
+    },
+    {
+      "name": "Olivia G.",
+      "house": "Amistad",
+      "classOf": "2028",
+      "amount": 10,
+      "rank": 44
+    },
+    {
+      "name": "Olivia M.",
+      "house": "Amistad",
+      "classOf": "2027",
+      "amount": 10,
+      "rank": 44
+    },
+    {
+      "name": "Vivee J.",
+      "house": "Amistad",
+      "classOf": "2031",
+      "amount": 10,
+      "rank": 44
     },
     {
       "name": "Xavier C.",
       "house": "Rêveur",
       "classOf": "2028",
       "amount": 10,
-      "rank": 26
+      "rank": 44
     },
     {
       "name": "Prince P.",
       "house": "Amistad",
       "classOf": "2030",
       "amount": 5,
-      "rank": 32
-    },
-    {
-      "name": "Drew T.",
-      "house": "Rêveur",
-      "classOf": "2031",
-      "amount": 3,
-      "rank": 33
+      "rank": 53
     }
   ]
 }
