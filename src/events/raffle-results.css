@@ -196,3 +196,35 @@ main{padding-top:18px}
 .rr-edition [data-rr=edition-next]{font-weight:700}
 .rr-lookup{margin:24px 0}
 @media(max-width:650px){main{padding-top:16px}.rr-progress{padding:22px 20px}.rr-progress h1{font-size:30px}.rr-goal-purpose{font-size:14px}.rr-progress-toggle label{min-height:48px}.rr-edition{padding:20px}.rr-lookup h2{font-size:25px}}
+
+/* Celebration dashboard: real totals, visible ticket counts, weekly recognition. */
+.rr-hero{max-width:none;margin:22px 0 20px;position:relative}
+.rr-hero h1{font-size:clamp(34px,5.6vw,64px);max-width:800px;margin:10px 0 12px}
+.rr-hero p{max-width:720px;font-size:18px;margin:0}
+.rr-hero-actions{display:flex;align-items:center;gap:24px;margin-top:12px;font-size:14px;font-weight:700}
+.rr-total-panel{max-width:none;display:grid;grid-template-columns:1fr 155px;gap:12px 30px;margin:20px 0;background:#1b2c56;color:#faf4ea;border-radius:18px;padding:30px}
+.rr-total-line{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.rr-total-line>strong{font-size:clamp(50px,7vw,80px);letter-spacing:-.055em;line-height:1.1;font-variant-numeric:tabular-nums}
+.rr-total-line>span{font-size:19px;line-height:1.4}.rr-total-line b{color:#ffca45;font-size:25px}
+.rr-goal-track{height:20px;background:#ffffff22;border-radius:20px;margin-top:22px;overflow:hidden}.rr-goal-track>span{display:block;height:100%;background:linear-gradient(90deg,#f7a81c,#ffcf42);border-radius:20px}
+.rr-goal-left{font-size:16px;font-weight:700;margin:12px 0 0}
+.rr-goal-ring{aspect-ratio:1;border-radius:50%;background:conic-gradient(#ffca45 var(--progress),#ffffff18 0);position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;isolation:isolate;align-self:center}
+.rr-goal-ring::before{content:'';position:absolute;inset:14px;background:#1b2c56;border-radius:50%;z-index:-1}.rr-goal-ring strong{font-size:38px;line-height:1.1}.rr-goal-ring span{font-size:12px}
+.rr-total-panel .rr-asof{grid-column:1/-1;margin:0;color:#e4e8ef;text-align:right;font-size:12px}
+.rr-lookup{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:22px 24px}
+.rr-lookup>small,.rr-lookup>h2,.rr-lookup>p:first-of-type{grid-column:1}.rr-lookup h2{font-size:25px;margin:4px 0}.rr-lookup>p:first-of-type{font-size:14px;margin:6px 0}
+.rr-lookup .rr-tools{grid-column:2;grid-row:1/5;align-self:center}.rr-lookup .rr-tools input{margin-top:6px;background:white}
+.rr-lookup .rr-snapshot-note{grid-column:1/-1;grid-row:5;padding:0;border:0;background:none;font-size:12px;margin:14px 0 0}
+.rr-lookup #rr-search-help{grid-column:1/-1;margin:8px 0;font-size:12px}.rr-lookup [role=status],.rr-lookup .rr-student-cards{grid-column:1/-1}
+.rr-view-switch{display:flex;gap:4px;background:#e8e6e0;border:1px solid #d6cbb8;padding:4px;border-radius:999px;width:max-content;max-width:100%;margin:26px 0 12px}
+.rr-view-switch a{padding:11px 24px;border-radius:999px;font-weight:700;min-height:44px}.rr-view-switch a[aria-current]{background:#1b2c56;color:white}
+.rr-edition{border:0;background:none;margin:12px 0 20px;padding:0}.rr-edition h2{font-size:32px}.rr-edition [data-rr=edition-note]{font-size:15px;margin:4px 0}.rr-edition [data-rr=edition-dates]{margin:6px 0}.rr-edition [data-rr=edition-next]{color:#795414;font-size:15px}
+.rr-dashboard-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}.rr-dashboard-grid>.rr-card{margin:0;padding:22px;min-width:0}.rr-dashboard-grid h2{font-size:25px}.rr-dashboard-grid .rr-card-note{font-size:12px;margin:10px 0}
+.rr-student-section .rr-student-cards{margin:18px 0 8px}.rr-student-section .rr-student-card{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;padding:15px 0}.rr-student-section .rr-student-card:first-child{background:#fff1c6;border-radius:10px;padding:15px 8px;border:0}
+.rr-student-section .rr-student-card h3{font-size:17px}.rr-student-section .rr-student-card p{font-size:11px}.rr-student-section .rr-standing strong{font-size:16px}.rr-student-section .rr-standing span{font-size:10px}
+.rr-medal{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#1b2c56;color:white;font-weight:800;font-size:18px;border:3px solid #ffffff66;box-shadow:0 1px 4px #1b2c5620}.rr-medal-1{background:linear-gradient(140deg,#ffdf63,#b97b09)}.rr-medal-2{background:linear-gradient(140deg,#c9cfd7,#687585)}.rr-medal-3{background:linear-gradient(140deg,#e6ae75,#9f5325)}
+.rr-star-track{display:block;background:#e8e6e0;border-radius:8px;height:7px;overflow:hidden;margin-top:10px}.rr-star-track>span{display:block;height:100%;border-radius:8px;background:#f7a81c}
+.rr-group-card .rr-progress-toggle{background:#e8e6e0;margin:18px 0 12px}.rr-group-card .rr-progress-toggle::before{background:#1b2c56}.rr-group-card .rr-progress-toggle label{color:#1b2c56;min-height:44px}.rr-group-card .rr-progress-toggle label:has(input:checked){color:white}
+.rr-group-rows{list-style:none;padding:0;margin:20px 0}.rr-group-rows li{display:grid;grid-template-columns:80px minmax(40px,1fr) 60px;gap:12px;align-items:center;padding:20px 0;border-bottom:1px solid #ded4c3}.rr-group-name{font-size:13px;font-weight:700}.rr-compare-track{height:15px;background:#e8e6e0;border-radius:10px;overflow:hidden}.rr-compare-track>span{height:100%;display:block;border-radius:10px}.rr-group-count{text-align:right;font-size:16px}.rr-group-count small{font-size:10px;color:#5b534b;letter-spacing:0;font-weight:400}
+.rr-cta{background:#ffe9a4;border:0}.rr-cta h2{margin-top:0}.rr-cta p{font-size:15px}
+@media(max-width:700px){.rr-hero h1{font-size:36px}.rr-hero p{font-size:15px}.rr-hero-actions{gap:18px}.rr-total-panel{grid-template-columns:1fr 90px;padding:22px 20px;gap:16px 10px}.rr-total-line{display:block}.rr-total-line>strong{font-size:49px}.rr-total-line>span{display:block;font-size:13px;margin-top:8px}.rr-total-line b{font-size:17px}.rr-goal-ring::before{inset:9px}.rr-goal-ring strong{font-size:27px}.rr-goal-ring span{font-size:10px}.rr-goal-track{height:14px;margin-top:16px}.rr-goal-left{font-size:13px}.rr-total-panel .rr-asof{text-align:left;font-size:11px}.rr-dashboard-grid{grid-template-columns:1fr;gap:18px}.rr-dashboard-grid>.rr-card{padding:20px}.rr-lookup{display:block;padding:20px}.rr-lookup .rr-tools{margin:16px 0 10px}.rr-lookup h2{font-size:24px}.rr-edition h2{font-size:28px}.rr-group-rows li{padding:16px 0}.rr-view-switch a{padding:10px 20px}}

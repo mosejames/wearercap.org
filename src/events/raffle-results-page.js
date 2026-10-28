@@ -12,7 +12,7 @@ const lookupOverall = !archive;
 const weekNumber = editions.length - editions.indexOf(edition);
 const dateLabel = value => new Date(`${value}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const periodLabel = period => period.start ? `${dateLabel(period.start)} to ${dateLabel(period.end)}` : `Opening week, through ${dateLabel(period.end)}`;
-import { progressSegments, findStudentsByName } from './raffleResults.js';
+import { findStudentsByName } from './raffleResults.js';
 
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
 const el = (tag, cls, text) => {
@@ -23,33 +23,39 @@ const el = (tag, cls, text) => {
 };
 const HOUSE_COLORS = { Amistad: '#c8362f', Isibindi: '#1f9a68', Altruismo: '#141414', 'Rêveur': '#2d63c8' };
 const CLASS_COLORS = ['#58729a', '#7790b0', '#98adc5', '#b9c9dc', '#e0e7ef'];
+const money = value => '$' + value.toLocaleString('en-US');
 function renderProgress(d, view = 'house') {
-  const fill = $('segments');
-  const legend = $('progress-legend');
-  fill.replaceChildren(); legend.replaceChildren();
   $('progress-toggle').dataset.view = view;
-  const segments = progressSegments(d, view);
-  segments.forEach((s, index) => {
-    const color = s.name === 'Unassigned' ? '#b9ad99' : view === 'house' ? HOUSE_COLORS[s.name] : CLASS_COLORS[index % CLASS_COLORS.length];
-    const label = s.name === 'Unassigned' ? 'Community support' : view === 'class' ? `Class of ${s.name}` : s.name;
-    const seg = el('span', 'rr-seg');
-    seg.style.setProperty('--w', `${s.width}%`);
-    seg.style.background = color;
-    fill.appendChild(seg);
-    const item = el('li');
-    const swatch = el('span', 'rr-progress-swatch');
-    swatch.style.background = color; swatch.setAttribute('aria-hidden', 'true');
-    item.append(swatch, el('span', null, label)); legend.append(item);
-  });
-  const progress = d.total >= d.goal ? 'Our shared goal has been reached.' : 'Together, we’re making progress toward our shared goal.';
-  $('bar').setAttribute('aria-label', `${progress} Colored sections show contributions by ${view}.`);
-  $('next').textContent = progress;
-  $('progress-explanation').textContent = `Each colored section shows how a ${view} has contributed to our shared progress. The space ahead is what we’re working toward together.`;
-  $('asof').textContent = archive ? `Week ${weekNumber} contributions through ${dateLabel(edition.period.end)}. Posted results, not live tracking.` : `Updated ${d.asOf} Eastern. Posted results, not live tracking.`;
+  const rows = view === 'house' ? d.houses : d.classes;
+  const max = Math.max(1, ...rows.map(row => row.amount));
+  $('group-rows').replaceChildren(...rows.map((row, index) => {
+    const li = el('li');
+    const label = view === 'class' ? `Class of ${row.name}` : row.name;
+    const track = el('span', 'rr-compare-track');
+    const fill = el('span');
+    fill.style.width = `${row.amount / max * 100}%`;
+    fill.style.background = view === 'house' ? HOUSE_COLORS[row.name] : CLASS_COLORS[index % CLASS_COLORS.length];
+    track.setAttribute('aria-hidden', 'true'); track.append(fill);
+    const count = el('strong', 'rr-group-count', row.amount.toLocaleString('en-US'));
+    count.append(el('small', null, 'tickets'));
+    li.append(el('span', 'rr-group-name', label), track, count);
+    return li;
+  }));
+  $('group-period').textContent = overall ? `All credited tickets through ${d.asOf} Eastern.` : `Week ${weekNumber} contributions through ${dateLabel(edition.period.end)}.`;
 }
 document.querySelectorAll('input[name="progress-view"]').forEach(input => input.addEventListener('change', () => {
-  if (input.checked) renderProgress(progressData, input.value);
+  if (input.checked) renderProgress(data, input.value);
 }));
+const percent = Math.round(progressData.total / progressData.goal * 100);
+$('raised').textContent = money(progressData.total);
+$('percent').textContent = `${percent}%`;
+$('remaining').textContent = progressData.total < progressData.goal ? `${money(progressData.goal - progressData.total)} to go. Let’s keep moving together.` : 'Our goal is reached. Let’s keep the good going.';
+$('goal-fill').style.width = `${Math.min(100, percent)}%`;
+$('goal-ring').style.setProperty('--progress', `${Math.min(100, percent)}%`);
+$('goal-meter').setAttribute('aria-valuenow', String(progressData.total));
+$('goal-meter').setAttribute('aria-valuetext', `${money(progressData.total)} raised of our ${money(progressData.goal)} goal`);
+$('asof').textContent = archive ? `Week ${weekNumber}, through ${dateLabel(edition.period.end)}. Posted results, not live tracking.` : `Updated ${progressData.asOf} Eastern. Posted results, not live tracking.`;
+$(overall ? 'overall-tab' : 'weekly-tab').setAttribute('aria-current', 'page');
 
 function renderLocked(d) {
   if (Array.isArray(d.winners) && d.winners.length) {
@@ -106,7 +112,7 @@ if (lookupOverall) {
   if (overall) $('top-note').textContent = 'All credited tickets so far. Weekly recognition is based on each week separately.';
   $('lookup-note').textContent = 'Type their first name to see their tickets and overall standing.';
 }
-renderProgress(progressData);
+renderProgress(data);
 if (!overall) renderLocked(data);
 const students = data.students || [];
 function studentCard(student, showTickets = false, isOverall = overall) {
@@ -119,7 +125,18 @@ function studentCard(student, showTickets = false, isOverall = overall) {
   item.append(info, standing);
   return item;
 }
-for (const student of students.filter(student => student.rank <= 5)) $('top-students').append(studentCard(student));
+for (const student of students.filter(student => student.rank <= 5)) {
+  const card = studentCard(student, true);
+  const medal = el('span', `rr-medal rr-medal-${student.rank}`, String(student.rank));
+  medal.setAttribute('aria-label', `Rank ${student.rank}`);
+  card.prepend(medal);
+  const track = el('span', 'rr-star-track');
+  const fill = el('span');
+  fill.style.width = `${student.amount / Math.max(1, ...students.map(s => s.amount)) * 100}%`;
+  track.setAttribute('aria-hidden', 'true'); track.append(fill);
+  card.querySelector('div').append(track);
+  $('top-students').append(card);
+}
 function renderStudents() {
   const query = $('search').value.trim();
   const list = findStudentsByName(lookupData.students || [], query);

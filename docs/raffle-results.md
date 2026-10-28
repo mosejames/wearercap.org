@@ -2,7 +2,7 @@
 
 URL: https://wearercap.org/events/2026/fall-raffle/results/
 
-The page stays noindex and unlinked. On October 26, Mose approved the full student ranking with first names and last initials, and requested Ashley’s original dashboard structure in RCAP colors. This supersedes the initial aggregate-only boundary for abbreviated student rankings. Mose also approved publishing the October 25 winner, Sherinda Tolbert, her $75 Amazon gift card prize and the announcement video supplied in this chat. Future winners remain gated and manually entered; the $20,000 goal remains provisional.
+The page stays noindex and unlinked. On October 26, Mose approved the full student ranking with first names and last initials, and requested Ashley’s original dashboard structure in RCAP colors. This supersedes the initial aggregate-only boundary for abbreviated student rankings. Mose also approved publishing the October 25 winner, Sherinda Tolbert, her $75 Amazon gift card prize and the announcement video supplied in this chat. Future winners remain gated and manually entered; Mose confirmed the $20,000 goal on October 28.
 
 The source is Ashley’s dashboard HTML attached to the October 25 email. Keep it outside the checkout. The public JSON contains only aggregates and approved abbreviated student records. Full names and source HTML must never enter the repository or build.
 
@@ -103,3 +103,14 @@ the latest completed week, with the next week's celebration date. Explicit
 `?view=overall` route retains cumulative top-five recognition, labeled overall.
 The unassigned amount remains in the data and total but has no public accounting
 explanation; the neutral chart segment is labeled Community support.
+
+
+### Celebration dashboard, October 28
+
+Mose explicitly approved visible top-five ticket counts and comparison bars,
+medal-style rank badges, house/class totals and a prominent fundraising total.
+The $20,000 goal is now confirmed. This supersedes earlier count-free chart and
+recognition preferences. Actual published data drives the amounts, percentage and
+remaining balance; the supplied mockup figures were illustrative only. Weekly
+stars remain the default, with an explicit overall switch. No full student names
+are published and the raw source dashboard stays outside the repository.
