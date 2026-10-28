@@ -93,3 +93,13 @@ weekly winner was created. The overall view explains pending attribution.
 Future weekly ranking calculations must reconcile Ashley’s credit corrections
 against original purchase dates rather than treating reassigned old sales as
 new weekly sales. Source HTML and Excel remain outside the repository.
+
+### Public results layout, October 28
+
+The default results page leads with the latest cumulative progress bar and parent
+lookup, explicitly labeled overall and dated. The recognition below stays tied to
+the latest completed week, with the next week's celebration date. Explicit
+`?week=` archive links retain that week's progress and lookup data. The secondary
+`?view=overall` route retains cumulative top-five recognition, labeled overall.
+The unassigned amount remains in the data and total but has no public accounting
+explanation; the neutral chart segment is labeled Community support.

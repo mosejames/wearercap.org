@@ -178,9 +178,21 @@
 
 .rr-snapshot-note { padding: 14px 18px; border-left: 3px solid #b7770a; border-radius: 0 10px 10px 0; background: #f4e9d5; color: #1b2c56; font-size: 14px; line-height: 1.6; }
 
-.rr-midweek { margin: 24px 0 40px; padding: 24px; background: #f4e9d5; border: 1px solid #d8c49f; border-radius: 16px; color: #1b2c56; }
-.rr-midweek small { color: #8b5d14; font-size: 11px; font-weight: 800; letter-spacing: .1em; }
-.rr-midweek h2 { margin: 10px 0; font-size: clamp(23px, 4vw, 30px); }
-.rr-midweek p { line-height: 1.6; max-width: 70ch; }
-.rr-midweek-link { display: inline-flex; align-items: center; gap: 14px; min-height: 48px; font-weight: 700; color: #1b2c56; text-underline-offset: 4px; }
-.rr-midweek-link:focus-visible { outline: 3px solid #b7770a; outline-offset: 4px; }
+/* Bring shared progress and the parent lookup directly into view. */
+main{padding-top:18px}
+.rr-progress{margin:16px 0 24px;padding:24px 26px}
+.rr-progress>small{color:#f7a81c;font-size:11px}
+.rr-progress h1{font-size:clamp(29px,4.5vw,44px);margin:10px 0 12px;line-height:1.08}
+.rr-goal-purpose{font-size:15px;line-height:1.5;margin:0 0 18px;max-width:650px}
+.rr-progress-toggle{margin-bottom:14px}
+.rr-progress-explanation{font-size:13px;margin:12px 0}
+.rr-progress-legend{margin-top:16px;gap:10px 20px}
+.rr-progress .rr-next{display:none}
+.rr-progress .rr-asof{margin-top:18px;line-height:1.5}
+.rr-edition{margin:24px 0;padding:20px 24px}
+.rr-edition h2{font-size:28px;margin:8px 0}
+.rr-edition [data-rr=edition-dates]{font-size:13px}
+.rr-edition [data-rr=snapshot-top]{display:none}
+.rr-edition [data-rr=edition-next]{font-weight:700}
+.rr-lookup{margin:24px 0}
+@media(max-width:650px){main{padding-top:16px}.rr-progress{padding:22px 20px}.rr-progress h1{font-size:30px}.rr-goal-purpose{font-size:14px}.rr-progress-toggle label{min-height:48px}.rr-edition{padding:20px}.rr-lookup h2{font-size:25px}}
