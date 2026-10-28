@@ -124,3 +124,16 @@ with no individual comparison bars. Reveal ticket counts only in name-search
 results. This supersedes the preceding celebration-dashboard approval for visible
 individual counts. Applies to weekly and overall recognition. Aggregate progress
 and house/class totals remain unchanged.
+
+### Committee lookup, October 28
+
+Public results no longer offer student search. A parent help card opens an email
+to Ashley Carter at ashley.payton.carter@gmail.com, with a prompt for the child's
+name and class. No message is sent by the website.
+
+The existing search is preserved at
+`/events/2026/fall-raffle/committee-lookup/`, with overall and completed-week
+selection. It is unlinked from public navigation and marked noindex/nofollow,
+with branded OG/Twitter metadata. It is NOT authenticated: anyone with the link
+can use it. The search and abbreviated data remain reusable for committee support.
+Share the link with Ashley manually; this change does not email her.

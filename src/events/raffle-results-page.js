@@ -7,12 +7,10 @@ const edition = editions.find(item => item.period.id === requestedWeek) || editi
 const data = overall ? overallData : edition.results;
 const archive = Boolean(requestedWeek) && !overall;
 const progressData = archive ? data : overallData;
-const lookupData = archive ? data : overallData;
-const lookupOverall = !archive;
 const weekNumber = editions.length - editions.indexOf(edition);
 const dateLabel = value => new Date(`${value}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const periodLabel = period => period.start ? `${dateLabel(period.start)} to ${dateLabel(period.end)}` : `Opening week, through ${dateLabel(period.end)}`;
-import { findStudentsByName } from './raffleResults.js';
+import { studentCard } from './raffleStudentCard.js';
 
 const $ = (key) => document.querySelector(`[data-rr="${key}"]`);
 const el = (tag, cls, text) => {
@@ -95,7 +93,6 @@ const title = overall ? 'Overall progress. Weekly celebrations.' : `Week ${weekN
 $('edition-title').textContent = title;
 const snapshotCutoff = overall ? `${data.asOf} Eastern` : `${dateLabel(edition.period.end)} at 11:59 p.m. Eastern`;
 $('snapshot-top').textContent = `Results through ${snapshotCutoff}.`;
-$('snapshot-lookup').textContent = `Updated ${lookupOverall ? lookupData.asOf + ' Eastern' : snapshotCutoff}. Posted results, not live tracking.`;
 $('edition-kicker').textContent = overall ? 'THE FULL RAFFLE SO FAR' : 'WEEKLY RAFFLE RESULTS';
 $('edition-dates').textContent = overall ? `All credited tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
 $('edition-note').textContent = 'Each week brings a fresh top five. We celebrate that week’s contributions, so every family has another chance to shine.';
@@ -107,38 +104,16 @@ const older = editions[editions.indexOf(edition) + 1];
 if (!overall && older) addLink($('edition-links'), 'View the previous week', `?week=${older.period.id}`);
 for (const item of editions) { const li = el('li'); addLink(li, periodLabel(item.period), `?week=${item.period.id}`); $('history').append(li); }
 document.querySelector('#rr-top-title').textContent = overall ? 'Overall raffle stars' : `Week ${weekNumber} top five raffle stars`;
-if (lookupOverall) {
-  document.querySelector('#rr-lookup-title').textContent = 'Find your child’s overall progress';
-  if (overall) $('top-note').textContent = 'All credited tickets so far. Weekly recognition is based on each week separately.';
-  $('lookup-note').textContent = 'Type their first name to see their tickets and overall standing.';
-}
+if (overall) $('top-note').textContent = 'All credited tickets so far. Weekly recognition is based on each week separately.';
 renderProgress(data);
 if (!overall) renderLocked(data);
 const students = data.students || [];
-function studentCard(student, showTickets = false, isOverall = overall) {
-  const item = el('li', 'rr-student-card');
-  const info = el('div');
-  info.append(el('h3', null, student.name), el('p', null, `Class of ${student.classOf || 'not given'} · ${student.house || 'House not given'}`));
-  const standing = el('div', 'rr-standing');
-  if (showTickets) standing.append(el('strong', null, `${student.amount.toLocaleString('en-US')} tickets`));
-  standing.append(el(showTickets ? 'span' : 'strong', null, showTickets ? `No. ${student.rank} ${isOverall ? 'overall' : 'in Week ' + weekNumber}` : `No. ${student.rank} raffle star`));
-  if (!showTickets) standing.append(el('span', null, isOverall ? 'Overall' : `Week ${weekNumber}`));
-  item.append(info, standing);
-  return item;
-}
+
 for (const student of students.filter(student => student.rank <= 5)) {
-  const card = studentCard(student);
+  const card = studentCard(student, false, overall, weekNumber);
   const medal = el('span', `rr-medal rr-medal-${student.rank}`, String(student.rank));
   medal.setAttribute('aria-label', `Rank ${student.rank}`);
   card.prepend(medal);
   $('top-students').append(card);
 }
-function renderStudents() {
-  const query = $('search').value.trim();
-  const list = findStudentsByName(lookupData.students || [], query);
-  $('students').replaceChildren(...list.map(student => studentCard(student, true, lookupOverall)));
-  $('count').textContent = query.length < 2 ? 'Your child’s progress will appear here.' : list.length ? `${list.length} ${list.length === 1 ? 'match' : 'matches'} found. Standing is based on ${lookupOverall ? 'all credited tickets' : 'tickets credited in this reporting period'}, not just these search results.` : 'No match yet. Check the first-name spelling. Newly credited tickets may appear in the next update.';
-}
-$('search').addEventListener('input', renderStudents);
-renderStudents();
 requestAnimationFrame(() => document.body.classList.add('rr-ready'));

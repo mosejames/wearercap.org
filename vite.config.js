@@ -30,6 +30,7 @@ export default defineConfig({
         events2026: resolve(__dirname, "events/2026/index.html"),
         trunk2026: resolve(__dirname, "events/2026/trunk-or-treat/index.html"),
         raffle2026: resolve(__dirname, "events/2026/fall-raffle/index.html"),
+        raffleCommittee2026: resolve(__dirname, "events/2026/fall-raffle/committee-lookup/index.html"),
         raffleResults2026: resolve(__dirname, "events/2026/fall-raffle/results/index.html"),
         travel2026: resolve(__dirname, "events/2026/student-adventures/index.html"),
         karaokecloseout: resolve(__dirname, "karaoke/closeout/index.html"),
