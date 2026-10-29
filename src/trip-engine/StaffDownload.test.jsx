@@ -1,0 +1,15 @@
+import {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+vi.mock('./data.js',()=>({request:vi.fn()}));
+import StaffDownload from './StaffDownload.jsx';
+import {request} from './data.js';
+let host,root;
+const render=async props=>{await act(async()=>root.render(<StaffDownload slug="washington-dc-2030" {...props}/>));};
+const response=v=>({ok:true,json:async()=>v});
+beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;vi.stubGlobal('fetch',vi.fn());request.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();});
+it('does not send an invalid public request without an invitation',async()=>{await render({});expect(fetch).not.toHaveBeenCalled();expect(host.textContent).toContain('private download invitation');expect(host.querySelector('form')).toBeNull();});
+it('keeps the bound recipient and requests only its invitation',async()=>{fetch.mockResolvedValue(response({email:'parent@example.org'}));request.mockResolvedValue({ok:true});await render({invite:'private-token'});expect(host.querySelector('input').readOnly).toBe(true);await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));expect(request).toHaveBeenCalledWith('washington-dc-2030','export-request',{invite:'private-token',email:'parent@example.org'});expect(host.textContent).toContain('Your download request is in');});
+it('refreshes preparation status and exposes separate photo and video buttons',async()=>{fetch.mockResolvedValueOnce(response({ready:false,expires:1900000000000})).mockResolvedValueOnce(response({ready:true,count:42,expires:1900000000000,videoUrl:'https://wearercap.org/video-receipt'}));await render({receipt:'receipt-token'});await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Check download status').click());expect(host.textContent).toContain('42 visible photos');const links=[...host.querySelectorAll('a')];expect(new URL(links[0].href).searchParams.get('receipt')).toBe('receipt-token');expect(links[1].textContent).toBe('Download videos');});
+it('retains the email form when a request fails',async()=>{fetch.mockResolvedValue(response({email:'parent@example.org'}));request.mockRejectedValue(Error('Please ask for a fresh invitation.'));await render({invite:'old-token'});await act(async()=>host.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));expect(host.querySelector('[role=alert]').textContent).toContain('fresh invitation');expect(host.querySelector('form')).not.toBeNull();expect(host.querySelector('button').disabled).toBe(false);});
