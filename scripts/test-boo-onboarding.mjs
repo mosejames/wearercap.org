@@ -220,7 +220,7 @@ async function fixture(width = 390, currentPhase = "submissions") {
   await page.goto(base + "/little-boo/");
   await page
     .getByRole("button", {
-      name: currentPhase === "submissions" ? "Add your kid" : "Guess a kid",
+      name: currentPhase === "submissions" ? "Add your little boo" : "Guess a kid",
       exact: true,
     })
     .first()
@@ -250,7 +250,7 @@ async function otp(page) {
     "/brand/we-are-rcap-reversed.svg",
   );
   await page
-    .getByRole("button", { name: "Add your kid", exact: true })
+    .getByRole("button", { name: "Add your little boo", exact: true })
     .first()
     .click();
   assert.equal(
@@ -395,14 +395,14 @@ async function otp(page) {
     fullPage: true,
   });
   await page
-    .getByRole("button", { name: "Add your kid", exact: true })
+    .getByRole("button", { name: "Add your little boo", exact: true })
     .first()
     .click();
   await pick(page, landscape);
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
-    .getByRole("button", { name: "Add your kid", exact: true })
+    .getByRole("button", { name: "Add your little boo", exact: true })
     .waitFor();
   assert.equal(
     await page.evaluate(() => sessionStorage.getItem("rcap-boo-journey-v1")),
@@ -419,7 +419,7 @@ async function otp(page) {
 {
   const { page, state, errors } = await fixture();
   await page
-    .getByRole("button", { name: "Add your kid", exact: true })
+    .getByRole("button", { name: "Add your little boo", exact: true })
     .first()
     .click();
   await pick(page, landscape);
