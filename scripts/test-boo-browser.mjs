@@ -1,3 +1,4 @@
+import { phaseFixture } from "./boo-browser-fixtures.mjs";
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -30,6 +31,9 @@ for (const width of [390, 1280]) {
   });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  await page.route("**/api/little-boo?action=phase", (route) =>
+    route.fulfill({ status: 200, json: phaseFixture("guessing") }),
+  );
   await page.goto(base + "/little-boo/");
   await page
     .getByRole("button", { name: "Guess a kid", exact: true })
@@ -84,7 +88,9 @@ await page.addInitScript(
   { userId },
 );
 const me = { display: "Fictional Contestant", house: "Amistad", grade: "5th" };
-await page.route("**/api/little-boo", async (route) => {
+await page.route("**/api/little-boo**", async (route) => {
+  if (route.request().method() === "GET")
+    return route.fulfill({ status: 200, json: phaseFixture("guessing") });
   const b = route.request().postDataJSON();
   if (b.action === "media")
     return route.fulfill({
@@ -98,7 +104,12 @@ await page.route("**/api/little-boo", async (route) => {
       userId,
       me,
       isAdmin: true,
-      settings: { closesAt: null, tieRule: "unsettled" },
+      settings: {
+        closesAt: phaseFixture("guessing").guessesCloseAt,
+        tieRule: "drawing",
+      },
+      phase: phaseFixture("guessing"),
+      openingNotice: { optedIn: false, deliveryState: "not_scheduled" },
       distinctChildren: 10,
       photos: [
         {
@@ -187,25 +198,6 @@ await page
   .fill("Fictional test concern");
 await page.getByRole("button", { name: "Send report" }).click();
 assert.equal(reported, true);
-await page
-  .getByRole("button", { name: "Add your kid", exact: true })
-  .first()
-  .click();
-await page.locator("input[type=file]").setInputFiles({
-  name: "fictional-photo.jpg",
-  mimeType: "image/jpeg",
-  buffer: sample,
-});
-await page.getByLabel("Your child’s full name").fill("Fictional New Boo");
-await page.getByRole("button", { name: /Add a nickname/ }).click();
-await page.getByLabel("Nicknames or familiar first-name forms").fill("Boo");
-await page.locator("input[name=consent]").check();
-await page.screenshot({ path: output + "/upload-mobile.png", fullPage: true });
-await page.getByRole("button", { name: "Add to the board" }).click();
-await page
-  .getByText("Your kid is in! Now guess a kid to earn points.")
-  .waitFor();
-assert.equal(uploads, 1);
 await page.getByRole("button", { name: "Leaderboards", exact: true }).click();
 await page.getByText("Fictional Contestant", { exact: true }).waitFor();
 await page.screenshot({
@@ -221,5 +213,5 @@ await page.getByText("Keep the show kind.").waitFor();
 await page.screenshot({ path: output + "/admin-mobile.png", fullPage: true });
 await browser.close();
 console.log(
-  "PASS: 390px and 1280px layouts, sign-in form, hint before commit, 1-point result, refresh persistence, reporting, branded upload, leaderboard and admin. Browser backend uses fictional fixtures.",
+  "PASS: 390px and 1280px layouts, sign-in form, hint before commit, 1-point result, refresh persistence, reporting, leaderboard and admin. Browser backend uses fictional fixtures.",
 );

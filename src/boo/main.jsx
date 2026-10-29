@@ -21,17 +21,25 @@ import { supabase } from "../vault/auth.js";
 import { request } from "./api.js";
 import Brand from "../components/Brand.jsx";
 import {
-  QuickStart,
   UploadFlow,
   SignIn,
   QuickScoring,
   usePhotoDraft,
 } from "./Onboarding.jsx";
 import { readJourney, saveJourney, defaultPlayerName } from "./journey.js";
+import {
+  useGamePhase,
+  PhaseStart,
+  OpeningNotice,
+  OpeningAfterSubmit,
+} from "./Phases.jsx";
+import { easternTime } from "./phases.js";
 import "./style.css";
 const HOUSES = ["Amistad", "Altruismo", "Isibindi", "Reveur"];
 const GRADES = ["4th", "5th", "6th", "7th", "8th", "Other / alumni"];
 function App() {
+  const gamePhase = useGamePhase();
+  const [noticeFocus, setNoticeFocus] = useState(false);
   const [initialJourney] = useState(readJourney);
   const {
     draft,
@@ -63,7 +71,7 @@ function App() {
     [screen, setScreen] = useState(
       initialJourney?.kind === "upload"
         ? "upload"
-        : initialJourney?.kind === "guess"
+        : ["guess", "notice", "standings"].includes(initialJourney?.kind)
           ? "signin"
           : null,
     ),
@@ -127,6 +135,11 @@ function App() {
       else if (journey?.photoId) {
         setSelected(journey.photoId);
         setScreen("guess");
+      } else if (journey?.kind === "standings") goStandings();
+      else if (journey?.kind === "notice") {
+        setScreen(null);
+        setJourney(null);
+        setNoticeFocus(true);
       } else goBoard();
     }
   }, [session, screen, reauthNeeded]);
@@ -149,7 +162,7 @@ function App() {
     return () => {
       loadVersion.current++;
     };
-  }, [session, mode]);
+  }, [session, mode, gamePhase.phase]);
   const run = async (fn) => {
     if (operation.current) return;
     operation.current = true;
@@ -184,6 +197,14 @@ function App() {
     }, 0);
   }
   function startUpload() {
+    if (gamePhase.phase !== "submissions") {
+      setNotice(
+        "Photo submissions are closed. Guessing opens " +
+          easternTime(gamePhase.schedule?.guessesOpenAt) +
+          ".",
+      );
+      return;
+    }
     const nextMode = draft.file ? draft.mode : mode;
     setMode(nextMode);
     if (!draft.file) setDraft((d) => ({ ...d, mode: nextMode }));
@@ -192,6 +213,14 @@ function App() {
     setScreen("upload");
   }
   function startGuess() {
+    if (gamePhase.phase !== "guessing") {
+      setNotice(
+        "Guessing opens " +
+          easternTime(gamePhase.schedule?.guessesOpenAt) +
+          ".",
+      );
+      return;
+    }
     setError("");
     setJourney({ kind: "guess", mode });
     if (!session) {
@@ -200,11 +229,36 @@ function App() {
     }
     goBoard();
   }
+  function goStandings() {
+    setTab("board");
+    setScreen(null);
+    setJourney(null);
+    boardRequested.current = true;
+    setTimeout(
+      () =>
+        boardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      0,
+    );
+  }
+  function startStandings() {
+    if (!session) {
+      setJourney({ kind: "standings", mode });
+      setScreen("signin");
+    } else goStandings();
+  }
+  function requestNoticeSignIn() {
+    setJourney({ kind: "notice", mode });
+    setScreen("signin");
+  }
   function closeDialog() {
     if (busy) return;
     setError("");
     setScreen(null);
-    if (journey?.kind === "guess") setJourney(null);
+    if (["guess", "notice", "standings"].includes(journey?.kind))
+      setJourney(null);
   }
   async function ensureProfile(b) {
     if (data?.me) return data.me;
@@ -226,6 +280,11 @@ function App() {
     else if (journey?.photoId) {
       setSelected(journey.photoId);
       setScreen("guess");
+    } else if (journey?.kind === "standings") goStandings();
+    else if (journey?.kind === "notice") {
+      setScreen(null);
+      setJourney(null);
+      setNoticeFocus(true);
     } else goBoard();
   }
   function cheer() {
@@ -304,16 +363,18 @@ function App() {
           </h1>
           <p>A We Are RCAP Guess Who Game</p>
         </div>
-        <QuickStart
+        <PhaseStart
+          status={gamePhase}
+          mode={mode}
           onAdd={startUpload}
           onGuess={startGuess}
-          compact={!!session}
-          mode={mode}
+          onStandings={startStandings}
+          onRules={() => setScreen("rules")}
         />
-        {justAdded && (
+        {justAdded > 0 && (
           <div className="added-badge">
-            <Check size={16} /> Little boo added! Now guess a kid to earn
-            points.
+            <Check size={16} /> +{justAdded} contribution points. One bonus per
+            student.
           </div>
         )}
         <div className="prize-strip">
@@ -331,8 +392,9 @@ function App() {
           <small>raffle tickets</small>
         </div>
         <p className="fine">
-          Children’s individual leaderboard. Closing time and tie rules to be
-          announced. Tickets awarded by the organizer after final review.
+          Individual prizes. Organizer drawing for tied prize places. Results
+          Sunday, November 1. Tickets are issued by the organizer after review,
+          never automatically.
         </p>
       </section>
       <main>
@@ -381,11 +443,29 @@ function App() {
               </button>
             </div>
           )}
+        <OpeningNotice
+          status={gamePhase}
+          session={session}
+          notice={data?.openingNotice}
+          busy={busy}
+          focus={noticeFocus}
+          onSignIn={requestNoticeSignIn}
+          onSave={(choice) =>
+            run(async () => {
+              await request("opening-notice", { optedIn: choice });
+              await refresh();
+              setNotice(
+                choice
+                  ? "Opening-text request saved. Texts are not scheduled yet."
+                  : "Opening-text request withdrawn.",
+              );
+            })
+          }
+        />
         {!session ? (
           <p className="entry-privacy">
-            <Lock size={13} /> Choose a photo to add your kid, or sign in to start
-            guessing. Your phone stays private. Sign-in verifies a phone, not
-            school membership; this link can be forwarded.
+            <Lock size={13} /> Your phone stays private. Sign-in verifies a
+            phone, not school membership. This link can be forwarded.
           </p>
         ) : !data ? (
           <div className="panel">
@@ -431,40 +511,76 @@ function App() {
               </div>
               <div>
                 <span>
-                  {mode === "children" ? "LITTLE BOOS" : "GHOSTS"} IDENTIFIED
+                  {["submissions", "waiting", "soon"].includes(gamePhase.phase)
+                    ? mode === "children"
+                      ? "STUDENTS ADDED"
+                      : "THROWBACKS ADDED"
+                    : mode === "children"
+                      ? "LITTLE BOOS IDENTIFIED"
+                      : "GHOSTS IDENTIFIED"}
                 </span>
                 <b>
-                  {correct}
-                  <small>/ {eligible}</small>
+                  {["submissions", "waiting", "soon"].includes(
+                    gamePhase.phase,
+                  ) ? (
+                    data.photos.filter((p) => p.own).length
+                  ) : (
+                    <>
+                      {correct}
+                      <small>/ {eligible}</small>
+                    </>
+                  )}
                 </b>
               </div>
-              <button className="gold" onClick={startUpload}>
-                <Camera size={19} />{" "}
-                {mode === "children"
-                  ? "Add your kid"
-                  : "Add your childhood photo"}
-              </button>
+              {mode === "children" && (
+                <p className="score-breakdown">
+                  {data.board.individual.find((p) => p.id === data.userId)
+                    ?.guessPoints || 0}{" "}
+                  guess points ·{" "}
+                  {data.board.individual.find((p) => p.id === data.userId)
+                    ?.uploadPoints || 0}{" "}
+                  contribution points
+                </p>
+              )}
             </div>
-            <nav className="tabs" aria-label="Game views" ref={boardRef}>
-              <button
-                className={tab === "play" ? "active" : ""}
-                onClick={() => setTab("play")}
-              >
-                <Ghost /> Play the board
-              </button>
-              <button
-                className={tab === "board" ? "active" : ""}
-                onClick={() => setTab("board")}
-              >
-                <Trophy /> Leaderboards
-              </button>
-              <button
-                className={tab === "rules" ? "active" : ""}
-                onClick={() => setTab("rules")}
-              >
-                <HelpCircle /> How to play
-              </button>
-            </nav>
+            {["guessing", "closed", "results"].includes(gamePhase.phase) && (
+              <nav className="tabs" aria-label="Game views">
+                <button
+                  className={tab === "play" ? "active" : ""}
+                  onClick={() => setTab("play")}
+                >
+                  <Ghost /> Play the board
+                </button>
+                <button
+                  className={tab === "board" ? "active" : ""}
+                  onClick={() => setTab("board")}
+                >
+                  <Trophy /> Leaderboards
+                </button>
+                <button
+                  className={tab === "rules" ? "active" : ""}
+                  onClick={() => setTab("rules")}
+                >
+                  <HelpCircle /> How to play
+                </button>
+              </nav>
+            )}
+            <div ref={boardRef} />
+            {["submissions", "waiting", "soon"].includes(gamePhase.phase) &&
+              session &&
+              data.photos.some((p) => p.own) && (
+                <OpeningAfterSubmit status={gamePhase}>
+                  <p className="fine">
+                    Each student’s first accepted photo earns 3 contribution
+                    points. Siblings can each have one photo.
+                  </p>
+                  {gamePhase.phase === "submissions" && (
+                    <button className="text-button" onClick={startUpload}>
+                      Add another student
+                    </button>
+                  )}
+                </OpeningAfterSubmit>
+              )}
             {tab === "play" && (
               <>
                 <div className="section-title">
@@ -476,8 +592,16 @@ function App() {
                     </span>
                     <h2>
                       {mode === "children"
-                        ? "Guess a kid."
-                        : "Guess a grown-up."}
+                        ? ["submissions", "waiting", "soon"].includes(
+                            gamePhase.phase,
+                          )
+                          ? "Your submitted students"
+                          : "Guess a kid."
+                        : ["submissions", "waiting", "soon"].includes(
+                              gamePhase.phase,
+                            )
+                          ? "Your submitted throwbacks"
+                          : "Guess a grown-up."}
                     </h2>
                   </div>
                   <span className="count">
@@ -485,10 +609,16 @@ function App() {
                   </span>
                 </div>
                 <p className="board-guide">
-                  Tap a photo. Type a name or choose help. Then lock in your one
-                  guess.
+                  {gamePhase.phase === "guessing"
+                    ? "Tap a photo. Type a name or choose help. Then lock in your one guess."
+                    : ["submissions", "waiting", "soon"].includes(
+                          gamePhase.phase,
+                        )
+                      ? "Your accepted photos are safe here. Other families’ photos unlock when guessing opens."
+                      : "Guessing is closed. Standings remain provisional until organizer review and any drawing."}
                 </p>
-                {data.photos.length > 0 &&
+                {gamePhase.phase === "guessing" &&
+                  data.photos.length > 0 &&
                   !data.photos.some((p) => !p.own && !p.submitted) && (
                     <div className="next-kid">
                       <p>
@@ -520,9 +650,13 @@ function App() {
                         ? "Other families’ photos will appear here to guess."
                         : "Your throwback joins the board as soon as you submit."}
                     </p>
-                    <button className="gold" onClick={startUpload}>
-                      Add your kid <Upload size={18} />
-                    </button>
+                    <p>
+                      {gamePhase.phase === "submissions"
+                        ? "Use “Add your kid” above to submit one photo for each student. Siblings are welcome."
+                        : gamePhase.phase === "waiting"
+                          ? "Guessing opens Friday, October 30 at noon Eastern."
+                          : "No mysteries to show yet."}
+                    </p>
                     <p className="fine">
                       Try one of their first three Halloweens, or the earliest
                       photo you have.
@@ -573,12 +707,14 @@ function App() {
                     ))}
                   </div>
                 )}
-                <p className="help-line">
-                  <HelpCircle size={17} />
-                  {data.distinctChildren < 10
-                    ? `A little help unlocks at 10 distinct children. ${data.distinctChildren} have joined so far.`
-                    : "A little help is open. Choose it before committing your one guess."}
-                </p>
+                {gamePhase.phase === "guessing" && (
+                  <p className="help-line">
+                    <HelpCircle size={17} />
+                    {data.distinctChildren < 10
+                      ? `A little help unlocks at 10 distinct children. ${data.distinctChildren} have joined so far.`
+                      : "A little help is open. Choose it before committing your one guess."}
+                  </p>
+                )}
               </>
             )}
             {tab === "board" && <Boards data={data} mode={mode} />}
@@ -612,8 +748,8 @@ function App() {
           </div>
           <span>A little mystery. A lot of community.</span>
           <p>
-            Voluntary submissions. No public answer reveals. Photos post
-            immediately and can be reported or removed.
+            One photo per student. Siblings welcome. No public answer reveals.
+            Photos can be reported or removed.
           </p>
         </footer>
       </main>
@@ -667,6 +803,7 @@ function App() {
                 }}
               />
             )}
+            {screen === "rules" && <Rules />}
             {screen === "upload" && (
               <UploadFlow
                 draft={draft}
@@ -683,9 +820,14 @@ function App() {
                 session={session}
                 ready={ready}
                 loaded={!!data}
+                canUpload={
+                  gamePhase.phase ? gamePhase.phase === "submissions" : null
+                }
+                openingLabel={easternTime(gamePhase.schedule?.guessesOpenAt)}
+                onLeave={closeDialog}
                 onRetry={refresh}
                 lostPhoto={lostPhoto}
-                me={data?.me || { display: defaultPlayerName(data?.userId) }}
+                me={data?.me}
                 run={run}
                 busy={busy}
                 onSignIn={() => {
@@ -693,18 +835,26 @@ function App() {
                   setScreen("signin");
                 }}
                 onSave={async (b) => {
+                  if (gamePhase.phase !== "submissions")
+                    throw Error(
+                      "Photo submissions have closed. Guessing opens " +
+                        easternTime(gamePhase.schedule?.guessesOpenAt) +
+                        ".",
+                    );
                   await ensureProfile({
                     ...b,
                     ownNames: mode === "children" ? [b.name] : [],
                   });
-                  await request("upload", { ...b, mode });
+                  const accepted = await request("upload", { ...b, mode });
                   clearDraft();
                   setLostPhoto(false);
-                  setJustAdded(mode === "children");
+                  setJustAdded(
+                    mode === "children" && accepted.uploadBonus === 3 ? 3 : 0,
+                  );
                   setNotice(
                     mode === "children"
-                      ? "Your kid is in! Now guess a kid to earn points."
-                      : "Your throwback is in! Now play the adult bonus round.",
+                      ? `Your student is in!${accepted.uploadBonus === 3 ? " +3 contribution points." : ""} Guessing opens ${easternTime(gamePhase.schedule?.guessesOpenAt)}.`
+                      : `Your throwback is in. Adult guessing opens ${easternTime(gamePhase.schedule?.guessesOpenAt)}.`,
                   );
                   goBoard();
                   await refresh();
@@ -723,6 +873,9 @@ function App() {
               <Guess
                 photo={photo}
                 needsProfile={!data.me}
+                canGuess={gamePhase.phase === "guessing"}
+                phase={gamePhase.phase}
+                openingLabel={easternTime(gamePhase.schedule?.guessesOpenAt)}
                 onProfile={async (b) => {
                   await ensureProfile(b);
                   await refresh();
@@ -896,6 +1049,9 @@ function Affiliations({ me }) {
   );
 }
 function Guess({
+  canGuess,
+  phase,
+  openingLabel,
   needsProfile,
   onProfile,
   mode,
@@ -931,13 +1087,21 @@ function Guess({
       </div>
       {photo.own ? (
         <p className="message">
-          Your own mystery. No points for guessing your own child or submission.
+          Your own mystery. No guessing points for your own child or submission.
+          The first accepted student photo earns a separate 3-point contribution
+          bonus.
         </p>
       ) : photo.submitted ? (
         <p className="message">
           {photo.correct
             ? `✓ Identified! You earned ${photo.points} points.`
             : "One guess was your shot. The answer stays a mystery for everyone else."}
+        </p>
+      ) : !canGuess ? (
+        <p className="message">
+          {phase === "submissions" || phase === "waiting" || phase === "soon"
+            ? "Guessing opens " + openingLabel + "."
+            : "Guessing has closed. Results are Sunday after organizer review."}
         </p>
       ) : needsProfile ? (
         <QuickScoring busy={busy} run={run} onSave={onProfile} mode={mode} />
@@ -1028,7 +1192,7 @@ function Guess({
             onClick={() => {
               if (
                 window.confirm(
-                  "Remove this photo from the game? Existing points on it will no longer count. This person cannot be resubmitted during this round.",
+                  "Remove this photo from the game? Its guessing points and 3-point student contribution bonus will no longer count. Removing or re-uploading cannot earn another bonus. This student cannot be resubmitted during this round.",
                 )
               )
                 run(onRemove);
@@ -1078,6 +1242,22 @@ function Boards({ data, mode }) {
           prizes or house and grade totals.
         </p>
       )}
+      {data.awards && (
+        <div className="reviewed-results">
+          <h3>Organizer-reviewed prize report</h3>
+          {data.awards
+            .filter((r) => r.tickets > 0)
+            .sort(
+              (a, b) => (a.awardedPlace || a.rank) - (b.awardedPlace || b.rank),
+            )
+            .map((r) => (
+              <p key={r.playerId}>
+                <b>{r.display}</b> · {r.tickets} raffle tickets for organizer
+                fulfillment
+              </p>
+            ))}
+        </div>
+      )}
       <div className="board-tabs">
         {["individual", "house", "grade"].map((t) => (
           <button
@@ -1093,7 +1273,10 @@ function Boards({ data, mode }) {
         <div className="empty">
           <Trophy size={40} />
           <h3>The lights are on. The scores are next.</h3>
-          <p>Correct guesses will bring this board to life.</p>
+          <p>
+            Accepted student photos and correct guesses bring this board to
+            life.
+          </p>
         </div>
       ) : (
         rows.map((r, i) => (
@@ -1104,6 +1287,12 @@ function Boards({ data, mode }) {
               {r.display && (
                 <small>
                   {r.house} · {r.grade} · {r.identified} identified
+                  {mode === "children" && (
+                    <span className="point-sources">
+                      {r.guessPoints || 0} guess + {r.uploadPoints || 0}{" "}
+                      contribution
+                    </span>
+                  )}
                 </small>
               )}
             </div>
@@ -1115,9 +1304,10 @@ function Boards({ data, mode }) {
         ))
       )}
       <p className="fine">
-        Live standings are provisional. Closing time and tie rules are not
-        finalized. Children’s prizes: 25 / 15 / 10 raffle tickets. No tickets
-        are issued by this app.
+        Student totals combine guess points and a separate 3-point bonus per
+        student’s first accepted photo. Guessing closes Saturday, October 31 at
+        11:59 p.m. Eastern. Organizer drawing settles tied prize places. Results
+        Sunday, November 1. No tickets are issued by this app.
       </p>
     </section>
   );
@@ -1129,8 +1319,10 @@ function Rules() {
       <h2>One photo. One shot. All the fun.</h2>
       <ol>
         <li>
-          Parents share one early Halloween photo of their own child. Adults can
-          share their own childhood photo in the separate bonus round.
+          Parents share one early Halloween photo per student. Siblings can each
+          have a photo and each first accepted student photo earns 3
+          contribution points. Adults can share their own childhood photo in the
+          separate bonus round.
         </li>
         <li>
           Type a full name or a supplied nickname. You may edit freely before
@@ -1147,21 +1339,33 @@ function Rules() {
           does not claim the first unaided prize.
         </li>
         <li>
-          No scoring on your own child or submission. Tell us your children’s
-          names in your profile so we can exclude them.
+          No guessing points on your own child or submission. The 3-point
+          student contribution bonus is separate. Tell us your children’s names
+          in your profile so we can exclude them.
         </li>
         <li>
           Pick one house and grade to support. They lock after your first point.
-          Points are per identified child, with one photo per child and
-          duplicate names/photos rejected.
+          Guess points are per identified student. The separate contribution
+          bonus is once per student, never for replacements or retries. One
+          photo per student; siblings welcome. Duplicate names/photos are
+          rejected.
         </li>
       </ol>
+      <p>
+        Photo submissions: Thursday, October 29. Guessing: Friday, October 30 at
+        noon Eastern through Saturday, October 31 at 11:59 p.m. Eastern.
+        Results: Sunday, November 1 after organizer review and drawings for tied
+        prize places. Removing a photo removes its live guess points and
+        contribution bonus, but its permanent receipt prevents earning the bonus
+        again.
+      </p>
       <h3>Privacy and fair play</h3>
       <p>
         Sign-in verifies a phone number, not school membership. The link can be
-        forwarded. Photos post immediately without premoderation. Submit only
-        what you are comfortable sharing with other signed-in players, who can
-        take screenshots.
+        forwarded. Authenticated, consented submissions are accepted immediately
+        without premoderation. Other families’ photos are viewable when guessing
+        opens. Submit only what you are comfortable sharing with other signed-in
+        players, who can take screenshots.
       </p>
       <p>
         Names and answer lists are kept out of the public page. Help reveals
@@ -1227,7 +1431,13 @@ function Admin({ run, busy, refresh }) {
           </div>
         ))
       )}
-      <h3>Round settings</h3>
+      <h3>Confirmed round schedule</h3>
+      <p>
+        Photo submissions end Thursday, October 29. Guessing opens Friday,
+        October 30 at noon Eastern and closes Saturday, October 31 at 11:59 p.m.
+        Eastern. Results Sunday, November 1. Opening-text requests:{" "}
+        {d.openingNoticeRequests || 0}. None are scheduled by this app.
+      </p>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -1258,6 +1468,9 @@ function Admin({ run, busy, refresh }) {
         <label>
           Tie rule
           <select name="tieRule" defaultValue={d.settings.tie_rule}>
+            <option value="drawing">
+              Organizer drawing for tied prize places
+            </option>
             <option value="unsettled">Not settled</option>
             <option value="shared-rank">
               Shared rank, same prize for ties
@@ -1273,8 +1486,9 @@ function Admin({ run, busy, refresh }) {
       </form>
       <h3>Final prize report</h3>
       <p>
-        After the deadline and tie rule are settled, freeze the standings for
-        review. This does not issue tickets or change raffle records.
+        After closing, freeze the standings for organizer review. Tied podium
+        places require an organizer drawing. Nothing is drawn automatically, and
+        this does not issue tickets or change raffle records.
       </p>
       <button
         disabled={busy || !!d.settings.finalized_at}
@@ -1294,6 +1508,21 @@ function Admin({ run, busy, refresh }) {
       </button>
       {d.awards && (
         <>
+          {d.awards.some((row) => row.drawingRequired) && (
+            <DrawingForm
+              awards={d.awards}
+              busy={busy}
+              run={run}
+              onSave={async (placements) => {
+                await request("drawing-results", {
+                  placements,
+                  confirmed: true,
+                });
+                await load();
+                await refresh();
+              }}
+            />
+          )}
           <pre>{JSON.stringify(d.awards, null, 2)}</pre>
           <button
             onClick={() => {
@@ -1313,6 +1542,66 @@ function Admin({ run, busy, refresh }) {
         </>
       )}
     </>
+  );
+}
+function DrawingForm({ awards, busy, run, onSave }) {
+  const places = [
+    ...new Set(
+      awards
+        .filter((r) => r.drawingRequired)
+        .flatMap((r) => r.eligiblePlacements.map((p) => p.place)),
+    ),
+  ].sort((a, b) => a - b);
+  return (
+    <form
+      className="drawing-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        run(() =>
+          onSave(
+            places.map((place) => ({
+              place,
+              playerId: f.get("place-" + place),
+            })),
+          ),
+        );
+      }}
+    >
+      <h3>Record the organizer’s drawing</h3>
+      <p>
+        Conduct the drawing outside the app. Then record one eligible winner for
+        each affected place. This never runs a random draw or issues tickets.
+      </p>
+      {places.map((place) => (
+        <label key={place}>
+          Place {place} · {place === 1 ? 25 : place === 2 ? 15 : 10} tickets
+          <select name={"place-" + place} required defaultValue="">
+            <option disabled value="">
+              Choose the drawn player
+            </option>
+            {awards
+              .filter(
+                (r) =>
+                  r.drawingRequired &&
+                  r.eligiblePlacements.some((p) => p.place === place),
+              )
+              .map((r) => (
+                <option key={r.playerId} value={r.playerId}>
+                  {r.display} · {r.points} points
+                </option>
+              ))}
+          </select>
+        </label>
+      ))}
+      <label className="consent">
+        <input type="checkbox" required />
+        <span>
+          I conducted the organizer drawing and am recording its actual outcome.
+        </span>
+      </label>
+      <button disabled={busy}>Record drawing results for review</button>
+    </form>
   );
 }
 createRoot(document.getElementById("root")).render(<App />);

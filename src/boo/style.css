@@ -1697,3 +1697,206 @@ pre {
   background: #09182e;
   box-shadow: 0 4px 12px #0005;
 }
+.phase-start {
+  margin-top: 25px;
+  margin-bottom: 20px;
+}
+.phase-pill {
+  display: inline-block;
+  color: #ddc17d;
+  background: #08152b;
+  border: 1px solid #d7b35455;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+}
+.phase-start .game-promise {
+  font-size: 34px;
+  line-height: 1.08;
+  margin-bottom: 12px;
+}
+.phase-copy {
+  font-size: 13px;
+  color: #b8c8dc;
+  margin: 10px 0 18px;
+}
+.phase-primary {
+  width: 100%;
+  max-width: 360px;
+  min-height: 55px;
+  font-size: 16px;
+}
+.opening-callout {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #d9e3f1;
+  margin: 17px auto 8px;
+  max-width: 430px;
+}
+.opening-callout b {
+  color: #f5d27a;
+  display: block;
+  font-size: 16px;
+}
+.phase-countdown {
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: 46px;
+  letter-spacing: 3px;
+  color: #ffdc7c;
+  line-height: 1.2;
+  margin: 12px 0 20px;
+}
+.phase-rules {
+  display: block;
+  margin: 10px auto 0;
+  font-size: 10px;
+  color: #adbed4;
+  text-decoration: underline;
+}
+.opening-notice {
+  max-width: 650px;
+  margin: 0 auto 22px;
+  padding: 14px 17px;
+  border: 1px solid #3c5374;
+  border-radius: 13px;
+  background: #0b1b32;
+}
+.opening-notice summary {
+  font-size: 12px;
+  color: #d8c38e;
+  cursor: pointer;
+  font-weight: 600;
+}
+.opening-notice p {
+  font-size: 12px;
+}
+.opening-notice button {
+  font-size: 11px;
+  margin-top: 12px;
+}
+.opening-notice .fine {
+  font-size: 10px;
+}
+.request-saved {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #c3ebd1;
+}
+.opening-after-submit {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #192d36;
+  border: 1px solid #b79855;
+  border-radius: 17px;
+  padding: 22px;
+  margin: 22px 0;
+}
+.opening-after-submit > svg {
+  color: #ead187;
+  flex-shrink: 0;
+}
+.opening-after-submit b {
+  font-size: 17px;
+  color: #ffe1a1;
+}
+.opening-after-submit p {
+  font-size: 13px;
+  margin: 7px 0;
+}
+.opening-after-submit strong {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 30px;
+  letter-spacing: 1px;
+  color: #f4d27d;
+}
+.opening-after-submit .fine {
+  font-size: 10px;
+}
+.scoreboard .score-breakdown {
+  margin-left: auto;
+  color: #b6c7d9;
+  font-size: 11px;
+  line-height: 1.7;
+  max-width: 220px;
+}
+.point-sources {
+  display: block;
+  margin-top: 4px;
+  color: #d4bf83;
+}
+.reviewed-results {
+  padding: 15px;
+  border: 1px solid #c5a455;
+  border-radius: 12px;
+  background: #303225;
+  margin: 20px 0;
+}
+.reviewed-results p {
+  font-size: 12px;
+}
+.drawing-form {
+  padding: 18px;
+  border: 1px solid #c4a55e;
+  border-radius: 12px;
+  background: #172c40;
+  margin: 20px 0;
+}
+.drawing-form p {
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .phase-start .game-promise {
+    font-size: 29px;
+  }
+  .phase-primary {
+    font-size: 14px;
+    min-height: 52px;
+  }
+  .phase-pill {
+    font-size: 8px;
+    letter-spacing: 1.4px;
+  }
+  .phase-copy {
+    font-size: 12px;
+  }
+  .opening-callout {
+    font-size: 11px;
+  }
+  .opening-callout b {
+    font-size: 14px;
+  }
+  .phase-countdown {
+    font-size: 37px;
+    letter-spacing: 1px;
+  }
+  .phase-start > .fine {
+    font-size: 9px;
+  }
+  .opening-notice {
+    padding: 13px;
+  }
+  .opening-notice p {
+    font-size: 11px;
+  }
+  .opening-after-submit {
+    padding: 18px;
+    gap: 10px;
+  }
+  .opening-after-submit b {
+    font-size: 15px;
+  }
+  .opening-after-submit p {
+    font-size: 12px;
+  }
+  .scoreboard .score-breakdown {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    font-size: 10px;
+    text-align: center;
+  }
+}

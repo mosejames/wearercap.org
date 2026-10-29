@@ -11,8 +11,9 @@ export function booDev() {
         )
           process.env[k] = v;
       server.middlewares.use(async (req, res, next) => {
-        if (new URL(req.url, "http://localhost").pathname != "/api/little-boo")
-          return next();
+        const url = new URL(req.url, "http://localhost");
+        if (url.pathname != "/api/little-boo") return next();
+        req.query = Object.fromEntries(url.searchParams);
         try {
           let size = 0;
           const chunks = [];

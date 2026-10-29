@@ -66,47 +66,6 @@ export function usePhotoDraft() {
   }, [draft.file]);
   return { draft, setDraft, choose, remove, clear };
 }
-export function QuickStart({
-  onAdd,
-  onGuess,
-  compact = false,
-  mode = "children",
-}) {
-  return (
-    <section
-      className={"quick-start " + (compact ? "compact" : "")}
-      aria-label="Start playing"
-    >
-      <p className="game-promise">
-        {mode === "children"
-          ? "Add your kid. Guess a kid."
-          : "Share a throwback. Guess a grown-up."}
-        <br />
-        <strong>
-          {mode === "children"
-            ? "Earn points. Win prizes."
-            : "Play the adult bonus round."}
-        </strong>
-      </p>
-      <div className="start-actions">
-        <button className="gold" onClick={onAdd}>
-          <Camera size={20} />{" "}
-          {mode === "children" ? "Add your kid" : "Add a throwback"}
-        </button>
-        <button className="guess-cta" onClick={onGuess}>
-          <Ghost size={20} />{" "}
-          {mode === "children" ? "Guess a kid" : "Guess a grown-up"}
-        </button>
-      </div>
-      <p className="quick-how">
-        One photo per {mode === "children" ? "child" : "adult"}. One guess per
-        photo.
-        <br />
-        <b>5</b> first unaided · <b>3</b> later unaided · <b>1</b> with help
-      </p>
-    </section>
-  );
-}
 export function PhotoPreview({ draft, small = false }) {
   return draft.image ? (
     <img
@@ -135,12 +94,38 @@ export function UploadFlow({
   onSignIn,
   onSave,
   onRetry,
+  canUpload,
+  openingLabel,
+  onLeave,
   busy,
   run,
 }) {
   const [showAliases, setShowAliases] = useState(!!draft.aliases);
   const update = (key, value) => setDraft((d) => ({ ...d, [key]: value }));
   const isChild = mode === "children";
+  if (canUpload === null)
+    return (
+      <div>
+        <p role="status">
+          Loading the submission schedule. Your photo stays in this tab.
+        </p>
+        <button onClick={onLeave}>Back to the game</button>
+      </div>
+    );
+  if (!canUpload)
+    return (
+      <div>
+        <h2>Photo submissions have closed.</h2>
+        <p>
+          Your selected photo has not been posted. Guessing opens {openingLabel}
+          .
+        </p>
+        {draft.image && <PhotoPreview draft={draft} />}
+        <button className="gold" onClick={onLeave}>
+          See opening time
+        </button>
+      </div>
+    );
   return (
     <form
       onSubmit={(e) => {
@@ -172,8 +157,8 @@ export function UploadFlow({
       <h2>{isChild ? "Add your kid." : "Add your childhood photo."}</h2>
       {!draft.file && (
         <p>
-          Pick one little Halloween throwback. Portrait or landscape, no crop
-          needed.
+          One photo per student, siblings welcome. Portrait or landscape, no
+          crop needed.
         </p>
       )}
       {lostPhoto && !draft.file && (
@@ -349,10 +334,18 @@ export function UploadFlow({
               </select>
             </label>
           </div>
+          {me && (
+            <p className="fine">
+              Your contribution points support {me.house}, {me.grade}, your
+              existing scoring team. This student’s house and grade may be
+              different.
+            </p>
+          )}
           {!me && (
             <p className="fine">
               Your points will support this house and grade. No parent name
-              needed. You can change your scoring team before your first point.
+              needed. Your first accepted student photo earns 3 points and locks
+              this scoring team. Siblings’ bonuses support this same team.
             </p>
           )}
           <label className="consent">
@@ -367,9 +360,9 @@ export function UploadFlow({
               {isChild
                 ? "I am this child’s parent or guardian and have permission to share this photo."
                 : "This is my own childhood photo and I have permission to share it."}{" "}
-              It posts immediately for signed-in players, who can copy it. I
-              have permission for anyone else pictured. I can remove it or
-              report a concern.
+              It is accepted immediately. Other signed-in players can see and
+              copy it when guessing opens. I have permission for anyone else
+              pictured. I can remove it or report a concern.
             </span>
           </label>
           <button className="gold" disabled={busy || draft.processing}>
@@ -378,7 +371,10 @@ export function UploadFlow({
           </button>
           <p className="fine">
             Names stay private. Photo metadata is removed. No photo is sent to
-            AI. Adding a photo earns a thank-you badge, not leaderboard points.
+            AI.{" "}
+            {isChild
+              ? "Earn 3 contribution points for each student’s first accepted photo. No extra points for replacement or retry."
+              : "Adult uploads do not earn the student contribution bonus."}
           </p>
         </>
       )}
@@ -428,17 +424,29 @@ export function SignIn({
         disabled={busy}
       >
         <ChevronLeft size={16} />
-        {intent === "upload" ? "Back to your photo" : "Back to the game"}
+        {intent === "upload"
+          ? "Back to your photo"
+          : intent === "notice"
+            ? "Back to opening time"
+            : "Back to the game"}
       </button>
       <span className="eyebrow">
         {intent === "upload"
           ? "YOUR PHOTO IS STILL HERE"
-          : "GUESS A KID · EARN POINTS"}
+          : intent === "notice"
+            ? "ONE OPTIONAL OPENING TEXT"
+            : intent === "standings"
+              ? "THE GAME STANDINGS"
+              : "GUESS A KID · EARN POINTS"}
       </span>
       <h2>
         {intent === "upload"
           ? "Sign in. Then add your kid."
-          : "Sign in to see the kids."}
+          : intent === "notice"
+            ? "Sign in to save your text request."
+            : intent === "standings"
+              ? "Sign in to see the standings."
+              : "Sign in to see the kids."}
       </h2>
       {intent === "upload" && draft.image && (
         <div className="signin-photo">

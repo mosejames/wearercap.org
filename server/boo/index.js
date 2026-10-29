@@ -86,6 +86,26 @@ export default async function handler(req, res) {
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Content-Type-Options", "nosniff");
   try {
+    if (req.method === "GET" && req.query?.action === "phase") {
+      const base = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+        key =
+          process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+      if (!base || !key)
+        throw fail("The game schedule is temporarily unavailable.", 503);
+      const response = await fetch(base + "/rest/v1/rpc/boo_phase", {
+        method: "POST",
+        headers: {
+          apikey: key,
+          Authorization: "Bearer " + key,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok)
+        throw fail("The game schedule is temporarily unavailable.", 503);
+      return res.status(200).json(await response.json());
+    }
     if (req.method === "GET" && req.query?.action === "status") {
       const base = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
         key =
@@ -189,6 +209,8 @@ export default async function handler(req, res) {
     if (
       ![
         "get",
+        "opening-notice",
+        "drawing-results",
         "profile",
         "guess",
         "hint",

@@ -1,3 +1,4 @@
+import { phaseFixture } from "./boo-browser-fixtures.mjs";
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -47,12 +48,14 @@ const jwt = () =>
     ).toString("base64url"),
     "fictional-signature",
   ].join(".");
-async function fixture(width = 390) {
+async function fixture(width = 390, currentPhase = "submissions") {
   const page = await browser.newPage({
     viewport: { width, height: 844 },
     reducedMotion: "reduce",
   });
   const state = {
+    phase: currentPhase,
+    optedIn: false,
     otp: 0,
     verify: 0,
     profiles: [],
@@ -100,7 +103,9 @@ async function fixture(width = 390) {
       return route.fulfill({ status: 200, json: user });
     return route.fulfill({ status: 200, json: {} });
   });
-  await page.route("**/api/little-boo", async (route) => {
+  await page.route("**/api/little-boo**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ status: 200, json: phaseFixture(state.phase) });
     const b = route.request().postDataJSON();
     state.actions.push(b.action);
     if (b.action === "media")
@@ -122,17 +127,29 @@ async function fixture(width = 390) {
         userId: uid,
         me: state.me,
         isAdmin: false,
-        settings: { closesAt: null, tieRule: "unsettled" },
+        settings: {
+          closesAt: phaseFixture(state.phase).guessesCloseAt,
+          tieRule: "drawing",
+        },
+        phase: phaseFixture(state.phase),
+        openingNotice: {
+          optedIn: state.optedIn,
+          deliveryState: "not_scheduled",
+        },
         distinctChildren: 10,
         photos: [
-          {
-            id: photoId,
-            own: false,
-            points: state.points,
-            correct: state.points > 0,
-            submitted: state.submitted,
-            hinted: false,
-          },
+          ...(state.phase === "guessing"
+            ? [
+                {
+                  id: photoId,
+                  own: false,
+                  points: state.points,
+                  correct: state.points > 0,
+                  submitted: state.submitted,
+                  hinted: false,
+                },
+              ]
+            : []),
           ...(state.uploaded
             ? [
                 {
@@ -147,7 +164,25 @@ async function fixture(width = 390) {
               ]
             : []),
         ],
-        board: { individual: [], house: [], grade: [] },
+        board: {
+          individual: state.uploaded
+            ? [
+                {
+                  id: uid,
+                  display: state.me?.display || "Boo Player 000002",
+                  house: state.me?.house || "Amistad",
+                  grade: state.me?.grade || "5th",
+                  points: state.uploaded * 3 + state.points,
+                  guessPoints: state.points,
+                  uploadPoints: state.uploaded * 3,
+                  identified: state.points ? 1 : 0,
+                  contributions: state.uploaded,
+                },
+              ]
+            : [],
+          house: [],
+          grade: [],
+        },
         notifications: [],
       };
     if (b.action === "profile") {
@@ -168,6 +203,11 @@ async function fixture(width = 390) {
       assert.equal(state.me?.display, "Boo Player 000002");
       assert.ok(b.image);
       state.uploaded++;
+      result = { ok: true, uploadBonus: 3 };
+    }
+    if (b.action === "opening-notice") {
+      state.optedIn = b.optedIn;
+      result = { optedIn: b.optedIn, deliveryState: "not_scheduled" };
     }
     if (b.action === "guess") {
       assert.equal(state.submitted, false);
@@ -179,7 +219,10 @@ async function fixture(width = 390) {
   });
   await page.goto(base + "/little-boo/");
   await page
-    .getByRole("button", { name: "Add your kid", exact: true })
+    .getByRole("button", {
+      name: currentPhase === "submissions" ? "Add your kid" : "Guess a kid",
+      exact: true,
+    })
     .first()
     .waitFor();
   return { page, state, errors };
@@ -334,9 +377,7 @@ async function otp(page) {
       b.click();
       b.click();
     });
-  await page
-    .getByText("Your kid is in! Now guess a kid to earn points.")
-    .waitFor();
+  await page.getByText(/Your student is in!/).waitFor();
   assert.equal(state.uploaded, 1);
   assert.equal(state.profiles.length, 1);
   assert.equal(await page.getByRole("dialog").count(), 0);
@@ -361,7 +402,7 @@ async function otp(page) {
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
-    .getByRole("button", { name: "Guess a kid", exact: true })
+    .getByRole("button", { name: "Add your kid", exact: true })
     .waitFor();
   assert.equal(
     await page.evaluate(() => sessionStorage.getItem("rcap-boo-journey-v1")),
@@ -422,7 +463,7 @@ async function otp(page) {
 }
 // Guess-first intent survives OTP and profile capture happens at the selected kid.
 for (const width of [390, 1280]) {
-  const { page, state, errors } = await fixture(width);
+  const { page, state, errors } = await fixture(width, "guessing");
   await page.screenshot({
     path: output + `/welcome-${width}.png`,
     fullPage: true,

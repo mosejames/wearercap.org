@@ -8,7 +8,7 @@ export function readJourney(storage) {
     if (
       !raw ||
       !Number.isFinite(raw.at) ||
-      !["upload", "guess"].includes(raw.kind) ||
+      !["upload", "guess", "notice", "standings"].includes(raw.kind) ||
       !["children", "adults"].includes(raw.mode) ||
       Date.now() - raw.at > 12 * 3600000
     )

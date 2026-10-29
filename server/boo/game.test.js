@@ -2,14 +2,17 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import sharp from "sharp";
 import { seal, open } from "./crypto.js";
-import { cleanImage } from "./index.js";
+import gameHandler, { cleanImage } from "./index.js";
 import {
   normalize,
   plausible,
   adjudicate,
   spellingRequest,
 } from "./spelling.js";
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 describe("photo privacy", () => {
   it("encrypts images and answer capsules with authenticated encryption", () => {
     vi.stubEnv("R2_SECRET_ACCESS_KEY", "synthetic-test-secret");
@@ -140,4 +143,87 @@ describe("conservative text spelling check", () => {
       })),
     ).rejects.toThrow("not used");
   });
+});
+
+describe("public phase and bounded game actions", () => {
+  function response() {
+    const r = {
+      statusCode: 0,
+      body: null,
+      setHeader: vi.fn(),
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(body) {
+        this.body = body;
+        return this;
+      },
+    };
+    return r;
+  }
+  it("serves only the server schedule before authentication, without invoking SMS or OpenAI", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://fictional.example");
+    vi.stubEnv("SUPABASE_ANON_KEY", "synthetic-public-key");
+    const phase = {
+      phase: "submissions",
+      guessesOpenAt: "2026-10-30T12:00:00-04:00",
+    };
+    const fetcher = vi.fn(async () => ({ ok: true, json: async () => phase }));
+    vi.stubGlobal("fetch", fetcher);
+    const r = response();
+    await gameHandler(
+      { method: "GET", query: { action: "phase" }, headers: {} },
+      r,
+    );
+    expect(r.statusCode).toBe(200);
+    expect(r.body).toEqual(phase);
+    expect(fetcher.mock.calls[0][0]).toBe(
+      "https://fictional.example/rest/v1/rpc/boo_phase",
+    );
+    expect(fetcher.mock.calls[0][1].body).toBe("{}");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("fails closed when the authoritative schedule is unavailable", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://fictional.example");
+    vi.stubEnv("SUPABASE_ANON_KEY", "synthetic-public-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false })),
+    );
+    const r = response();
+    await gameHandler(
+      { method: "GET", query: { action: "phase" }, headers: {} },
+      r,
+    );
+    expect(r.statusCode).toBe(503);
+    expect(r.body.error).toContain("schedule");
+  });
+  it.each(["opening-notice", "drawing-results"])(
+    "forwards authorized %s only through the private game RPC",
+    async (action) => {
+      vi.stubEnv("SUPABASE_URL", "https://fictional.example");
+      vi.stubEnv("SUPABASE_ANON_KEY", "synthetic-public-key");
+      const fetcher = vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ ok: true, deliveryState: "not_scheduled" }),
+      }));
+      vi.stubGlobal("fetch", fetcher);
+      const r = response();
+      await gameHandler(
+        {
+          method: "POST",
+          headers: {
+            authorization: "Bearer fictional-browser-token-for-testing",
+          },
+          body: { action, optedIn: true, confirmed: true, placements: [] },
+        },
+        r,
+      );
+      expect(r.statusCode).toBe(200);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(fetcher.mock.calls[0][0]).toContain("/rest/v1/rpc/boo_game");
+      expect(JSON.parse(fetcher.mock.calls[0][1].body).p_action).toBe(action);
+    },
+  );
 });
