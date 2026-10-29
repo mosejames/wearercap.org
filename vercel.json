@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/api/little-boo","destination":"/api/m3-sign?vault=little-boo"},
     {"source":"/api/london-export","destination":"/api/m3-sign?vault=london-export"},
     {"source":"/api/trip-engine","destination":"/api/m3-sign?vault=trip-engine"},
     {"source":"/trips/:trip/og.jpg","destination":"/api/m3-link?vault=trip-engine&trip=:trip&og=1"},
@@ -211,6 +212,7 @@
     }
   ],
   "headers": [
+    {"source":"/little-boo/:path*","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"Cache-Control","value":"private, no-store"},{"key":"Referrer-Policy","value":"no-referrer"}]},
     {"source":"/trip-studio/:path*","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"Cache-Control","value":"private, no-store"},{"key":"Referrer-Policy","value":"no-referrer"}]},
     {
       "source": "/share/:token",

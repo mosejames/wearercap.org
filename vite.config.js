@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import {booDev} from './server/boo/dev.js';
 import react from "@vitejs/plugin-react";
 import {tripStudioDev} from "./server/trip-studio/dev.js";
 import { resolve } from "node:path";
@@ -6,6 +7,7 @@ import { resolve } from "node:path";
 export default defineConfig({
   plugins: [
     react(),
+    booDev(),
     tripStudioDev(),
     {
       name: "feedback-dev-routes",
@@ -24,6 +26,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        littleboo: resolve(__dirname, "little-boo/index.html"),
         tripstudio: resolve(__dirname, "trip-studio/index.html"),
         tripengine: resolve(__dirname, "trip-vault/index.html"),
         raffleInformation: resolve(__dirname, "raffle/2026/information/index.html"),

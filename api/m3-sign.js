@@ -84,6 +84,7 @@ async function albumAccepts(eventId) {
 }
 
 export default async function handler(req, res) {
+  if(req.query?.vault==='little-boo'){const {default:boo}=await import('../server/boo/index.js');return boo(req,res);}
   if(req.query?.vault==='london-export'){const {exportHandler}=await import('../server/trip-engine/exports.js');res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Content-Type-Options','nosniff');req.query={...req.query,trip:'london-2028'};return exportHandler(req,res);}
   if(req.query?.vault==='trip-engine'){const {default:engineHandler}=await import('../server/trip-engine/index.js');return engineHandler(req,res);}
   if (req.query?.vault === 'trip-studio') {

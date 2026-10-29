@@ -1,0 +1,65 @@
+# RCAP: Who’s That Little Boo?
+
+## Scope and run paths
+
+A We Are RCAP Guess Who Game at `/little-boo/`. Adult bonus mode: Ghosts of Halloweens Past. Original game-show styling in midnight blue and gold, quiet translucent ghosts, optional celebration sound and reduced-motion support.
+
+Run `npm install`, provide the existing publishable Supabase environment pair, then `npm run dev`. Open `http://127.0.0.1:5173/little-boo/`. Vite includes a local API adapter at `/api/little-boo`. Server uploads need the existing shared R2 environment. Production reuses the existing `api/m3-sign` dispatcher, with no additional serverless-function slot.
+
+The production schema is `supabase/migrations/20261029041333_little_boo_game.sql`. Apply only this migration, not unrelated pending migrations. There are no seed children, photos, phone messages, raffle writes or invitation changes in the release.
+
+## Authorized product handoff
+
+Parents voluntarily submit one early Halloween photo of their own child, private full name, optional accepted nickname/spelling aliases, house and grade. Adults may submit their own childhood photo in the separate bonus mode. Photos post immediately. Consent is required, with report, uploader removal and existing-owner moderation controls. Portrait and landscape are retained without cropping; the first three Halloweens are a suggestion with earliest-available fallback.
+
+Every player gets one committed guess per photo. The confirmation step precedes commitment. Choose free text or help first. Wrong locks that mystery for that player. Exact normalized full names and supplied aliases are checked in PostgreSQL. A little help unlocks after ten distinct active submitted children, with at least four actual participants in the selected mode. Four actual submitted names are chosen once and persisted per player/photo. Help permanently reduces the possible award to one point. First unaided correct is five points, later unaided correct three. Hinted correct does not consume the first unaided award. Correct answers produce personal checkmarks and are never revealed globally.
+
+No scoring on a submission you own or a child declared in your private profile. Declare all your own children, including those submitted by another parent. The game cannot independently prove parenthood, school membership or all household relationships. It uses phone accounts, submitter declarations and organizer controls, not a school roster.
+
+Individual, house and grade boards are mode-specific. Children’s individual prizes are 25, 15 and 10 raffle tickets for first, second and third. The app generates an organizer report only. It does not issue tickets, charge money or alter Zeffy/raffle records.
+
+## Fair defaults and unsettled choices
+
+- One photo per normalized full name per mode for the round. Duplicate cleaned-image hashes are rejected. Removal does not allow re-entry during the same round. Use full names to avoid collisions; an organizer can address exceptional same-name cases in a future controlled correction flow.
+- A family with multiple children chooses one scoring house and grade. These lock after the first positive score. Own-child exclusions can only grow. Each photo corresponds to one child, so identified-photo progress is identified-child progress.
+- Removed photos immediately leave the gallery and stop contributing to live points. Final award reports are immutable snapshots and are not silently rewritten after removal.
+- Adult individual/house/grade boards remain separate from children and their prizes.
+- Closing deadline is initially unset, display timezone America/New_York. No suggested date was assumed approved. Tie rule is initially unsettled. Organizer must select shared rank (sports ranking, tied players receive the same rank’s prize) or earliest reaching final score before finalizing. Exact time ties remain shared even under earliest-score. Live row order is provisional and does not determine prize eligibility.
+- No global name reveal, even after closing. Finalization requires the deadline to have passed and a settled tie rule.
+- Notifications are in-app only. Sign-in texts require the player to tap the explicit request button. No background SMS, invitations or mass texts are sent.
+
+## Protection boundaries
+
+Phone sign-in reuses the existing Supabase vault session and OTP functions. It verifies a phone number, not RCAP membership. The URL is noindex but can be forwarded. Signed-in people can copy photos or take screenshots.
+
+All game tables live in non-exposed `boo_private`, with RLS enabled and no client table grants. A small public invoker RPC delegates to a private definer that checks `auth.uid()` against a non-anonymous phone-confirmed account. Only the existing vault `owner` staff role receives organizer tools. No account access is changed.
+
+Names, aliases, relationship declarations, phone numbers and answer maps are absent from public page assets and gallery responses. A hint intentionally exposes four candidate names only after eligibility and permanent hint use. Direct RPC calls cannot enumerate answer tables. Unexpected-spelling capsules are encrypted; server completion requires a per-photo proof that is never returned to clients.
+
+Images are decoded, orientation-corrected, fitted inside 1800×1800 and freshly JPEG-encoded by Sharp with no metadata. Browser preparation fits inside 1600×1600. Original limit 25 MB, prepared payload limit 3 MB, decoded pixel limit 40 million. JPEG/PNG/WebP supported; HEIC is converted on the phone where supported. The server also attempts HEIF decoding if its build supports the codec. Real HEIC-device testing remains separate from format/error handling tests.
+
+The shared R2 bucket has existing public distribution. To avoid treating random public URLs as privacy, this game stores authenticated AES-GCM encrypted bytes under its own `little-boo/v1` prefix. Authorized API photo reads decrypt on the server only after checking active visibility. No plaintext upload or original is stored in R2. A domain-separated encryption key is derived from the existing shared R2 secret. Rotating that secret requires re-encrypting this game’s objects first or retaining a migration key; do not rotate it casually. Removal hides/deauthorizes objects, rather than deleting the encrypted blob immediately.
+
+Player advisory locks, photo row locks, a unique player/photo record and a global closing/finalization lock protect scoring. Twelve committed validation requests per minute and 120 per hour limit brute force. Provider checks are leased for 20 seconds to prevent concurrent repeated AI calls. Timed-out checks can resume the same immutable guess. Server-confirmed service failures release the reservation without consuming it.
+
+## Optional OpenAI spelling review
+
+The existing server-side `OPENAI_API_KEY` integration is reused. No key, account, paid plan or billing setting is created. Live external child-name calls are disabled unless the separately approved server flag `BOO_NAME_AI_APPROVED=true` exists. That approval has not been supplied in the delegated history. Do not enable it without confirming name-transfer permission with Mose.
+
+Exact normalized names and provided aliases work without AI. Clearly different guesses become wrong without contacting a provider. Only conservative near spellings are eligible for the structured text-only fallback. Names and aliases for that one photo plus the submitted guess go to `https://api.openai.com/v1/responses`, with `store:false`, no photos, phone, house or grade. The default model is `gpt-4.1-mini`, configurable via `BOO_AI_MODEL`. Prompt strings are untrusted data, and output is a strict boolean schema. No identity recognition is performed.
+
+With live AI disabled or unavailable, a near-spelling check returns an honest unavailable message and leaves the guess unconsumed. The player can use an explicitly supplied name or alias. This is a limitation, not a fake AI result. Synthetic mocked-provider tests exercise success, rejection, malformed output and service failure.
+
+## Verification
+
+- `npm run build` for the final bundle.
+- `npm test` for the complete repository suite.
+- `node scripts/test-boo-browser.mjs` against the running Vite server. Uses fictional browser fixtures, not a real SMS account or real uploads. Checks mobile/desktop overflow, sign-in form, persistent hint use, committed result, refresh, report, upload, leaderboard and organizer views. Screenshots go to `/tmp/boo-review`.
+- `supabase/tests/little_boo.sql` inside a rollback transaction after the schema exists. Uses synthetic auth fixtures only and checks normalized aliases, 10 distinct children, 5/3/1, once-only scores, own-child restrictions, hint persistence, wrong lockout, failed-provider recovery, forged result rejection, answer secrecy, direct-role permissions, rate limiting, removal, affiliation locks and 25/15/10 reports. Do not commit synthetic fixtures into production.
+- Local embedded PostgreSQL additionally verified the same SQL logic with isolated mock auth/staff schemas. No live users or external provider were used.
+- True simultaneous multi-session race testing and real-device HEIC testing must be distinguished from sequential SQL awards and image-processing checks.
+- A public diagnostics endpoint `GET /api/little-boo?action=status` returns configuration/reachability booleans only. It performs no SMS or OpenAI call and creates no R2 object.
+
+## Release constraints
+
+Keep this change isolated from `invitation-display-names`/`5daabab` and deferred raffle privacy/committee lookup work. Latest main was inspected before branching. Do not reset or overwrite someone else’s checkout. Publication/live deployment is authorized for this game only. Do not announce to families, send invitations, issue tickets, create credentials or change account access. Verify actual deployed HTML, OG image and API behavior before calling it live and working.
