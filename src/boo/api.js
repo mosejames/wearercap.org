@@ -7,7 +7,10 @@ export async function request(action, payload = {}) {
   });
   if (action === "media" && r.ok) return URL.createObjectURL(await r.blob());
   const data = await r.json();
-  if (!r.ok) throw Error(data.error || "Please try again.");
+  if (!r.ok)
+    throw Object.assign(Error(data.error || "Please try again."), {
+      status: r.status,
+    });
   return data;
 }
 export async function preparePhoto(file) {

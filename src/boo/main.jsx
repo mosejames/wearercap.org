@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Ghost,
@@ -17,57 +17,217 @@ import {
   X,
   Bell,
 } from "lucide-react";
-import { supabase, sendCode, verifyCode } from "../vault/auth.js";
-import { request, preparePhoto } from "./api.js";
+import { supabase } from "../vault/auth.js";
+import { request } from "./api.js";
+import Brand from "../components/Brand.jsx";
+import {
+  QuickStart,
+  UploadFlow,
+  SignIn,
+  QuickScoring,
+  usePhotoDraft,
+} from "./Onboarding.jsx";
+import { readJourney, saveJourney, defaultPlayerName } from "./journey.js";
 import "./style.css";
 const HOUSES = ["Amistad", "Altruismo", "Isibindi", "Reveur"];
 const GRADES = ["4th", "5th", "6th", "7th", "8th", "Other / alumni"];
 function App() {
+  const [initialJourney] = useState(readJourney);
+  const {
+    draft,
+    setDraft,
+    choose,
+    remove,
+    clear: clearDraft,
+  } = usePhotoDraft();
+  const [journey, setJourney] = useState(initialJourney);
+  const [lostPhoto, setLostPhoto] = useState(!!initialJourney?.hadPhoto);
+  const [auth, setAuth] = useState({
+    phone: "",
+    code: "",
+    sent: false,
+    sentAt: 0,
+  });
+  const [reauthNeeded, setReauthNeeded] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
+  const operation = useRef(false),
+    boardRef = useRef(null),
+    boardRequested = useRef(false),
+    authUser = useRef(null),
+    loadVersion = useRef(0);
   const [session, setSession] = useState(null),
     [ready, setReady] = useState(false),
-    [mode, setMode] = useState("children"),
+    [mode, setMode] = useState(initialJourney?.mode || "children"),
     [data, setData] = useState(null),
     [tab, setTab] = useState("play"),
-    [screen, setScreen] = useState(null),
+    [screen, setScreen] = useState(
+      initialJourney?.kind === "upload"
+        ? "upload"
+        : initialJourney?.kind === "guess"
+          ? "signin"
+          : null,
+    ),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [sound, setSound] = useState(false),
-    [selected, setSelected] = useState(null);
+    [selected, setSelected] = useState(initialJourney?.photoId || null);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setReady(true);
-    });
+    let live = true;
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!live) return;
+        if (error) setError(error.message);
+        authUser.current = data.session?.user.id || null;
+        setSession(data.session);
+        setReady(true);
+      })
+      .catch(() => {
+        if (live) {
+          setReady(true);
+          setError(
+            "Sign-in could not load. You can still choose your photo and try again.",
+          );
+        }
+      });
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      setData(null);
+    } = supabase.auth.onAuthStateChange((_event, next) => {
+      const nextId = next?.user.id || null;
+      if (authUser.current !== nextId) {
+        loadVersion.current++;
+        setData(null);
+      }
+      if (authUser.current && nextId && authUser.current !== nextId) {
+        clearDraft();
+        setLostPhoto(false);
+        setJourney(null);
+        setNotice("Account changed. Choose your photo again for privacy.");
+      }
+      authUser.current = nextId;
+      setSession(next);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      live = false;
+      subscription.unsubscribe();
+    };
   }, []);
+  useEffect(() => {
+    const marker =
+      journey ||
+      (draft.file || lostPhoto ? { kind: "upload", mode: draft.mode } : null);
+    saveJourney(
+      marker ? { ...marker, hadPhoto: !!draft.file || lostPhoto } : null,
+    );
+  }, [journey, draft.file, draft.mode, lostPhoto]);
+  useEffect(() => {
+    if (session && screen === "signin" && !reauthNeeded) {
+      if (journey?.kind === "upload") setScreen("upload");
+      else if (journey?.photoId) {
+        setSelected(journey.photoId);
+        setScreen("guess");
+      } else goBoard();
+    }
+  }, [session, screen, reauthNeeded]);
+  useEffect(() => {
+    if (data && boardRequested.current) {
+      boardRequested.current = false;
+      boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [data, screen]);
   const refresh = async () => {
     if (session) {
+      const version = ++loadVersion.current;
       const d = await request("get", { mode });
-      setData(d);
+      if (version === loadVersion.current) setData(d);
       return d;
     }
   };
   useEffect(() => {
     refresh().catch((e) => setError(e.message));
+    return () => {
+      loadVersion.current++;
+    };
   }, [session, mode]);
   const run = async (fn) => {
+    if (operation.current) return;
+    operation.current = true;
     setError("");
     setBusy(true);
     try {
       return await fn();
     } catch (e) {
       setError(e.message);
+      if (
+        e.status === 401 ||
+        (e.status === 403 && /sign in|phone/i.test(e.message))
+      ) {
+        setReauthNeeded(true);
+        setScreen("signin");
+      }
     } finally {
+      operation.current = false;
       setBusy(false);
     }
   };
+  function goBoard() {
+    setTab("play");
+    setScreen(null);
+    setJourney(null);
+    boardRequested.current = true;
+    setTimeout(() => {
+      if (boardRef.current) {
+        boardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        boardRequested.current = false;
+      }
+    }, 0);
+  }
+  function startUpload() {
+    const nextMode = draft.file ? draft.mode : mode;
+    setMode(nextMode);
+    if (!draft.file) setDraft((d) => ({ ...d, mode: nextMode }));
+    setJourney({ kind: "upload", mode: nextMode });
+    setError("");
+    setScreen("upload");
+  }
+  function startGuess() {
+    setError("");
+    setJourney({ kind: "guess", mode });
+    if (!session) {
+      setScreen("signin");
+      return;
+    }
+    goBoard();
+  }
+  function closeDialog() {
+    if (busy) return;
+    setError("");
+    setScreen(null);
+    if (journey?.kind === "guess") setJourney(null);
+  }
+  async function ensureProfile(b) {
+    if (data?.me) return data.me;
+    await request("profile", {
+      display: defaultPlayerName(data?.userId || session?.user.id),
+      house: b.house,
+      grade: b.grade,
+      ownNames: b.ownNames || [],
+    });
+    return { house: b.house, grade: b.grade };
+  }
+  async function authDone() {
+    const { data: next, error } = await supabase.auth.getSession();
+    if (error || !next.session)
+      throw Error("Your sign-in did not finish. Your photo is still here.");
+    setSession(next.session);
+    setReauthNeeded(false);
+    if (journey?.kind === "upload") setScreen("upload");
+    else if (journey?.photoId) {
+      setSelected(journey.photoId);
+      setScreen("guess");
+    } else goBoard();
+  }
   function cheer() {
     if (sound) {
       try {
@@ -96,8 +256,16 @@ function App() {
         <Ghost className="drifter two" />
       </div>
       <header className="top">
-        <a className="brand" href="/little-boo/">
-          WE ARE <b>RCAP</b>
+        <a
+          className="brand boo-brand"
+          href="/little-boo/"
+          onClick={(e) => {
+            e.preventDefault();
+            closeDialog();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          <Brand weAre reversed width={138} />
           <span>HALLOWEEN SPECIAL</span>
         </a>
         <div className="top-actions">
@@ -136,11 +304,18 @@ function App() {
           </h1>
           <p>A We Are RCAP Guess Who Game</p>
         </div>
-        <p className="intro">
-          Tiny costumes. Familiar faces.
-          <br />
-          <strong>Big “wait, is that YOU?” energy.</strong>
-        </p>
+        <QuickStart
+          onAdd={startUpload}
+          onGuess={startGuess}
+          compact={!!session}
+          mode={mode}
+        />
+        {justAdded && (
+          <div className="added-badge">
+            <Check size={16} /> Little boo added! Now guess a kid to earn
+            points.
+          </div>
+        )}
         <div className="prize-strip">
           <Trophy />
           <span>THE PODIUM PRIZES</span>
@@ -185,39 +360,33 @@ function App() {
             </button>
           </div>
         )}
-        {!ready ? (
-          <div className="panel">Setting the stage…</div>
-        ) : !session ? (
-          <section className="welcome panel">
-            <Ghost size={48} />
-            <h2>Come on down, RCAP!</h2>
-            <p>
-              Sign in to meet the mystery boos, share a throwback and play for
-              your house.
-            </p>
-            <button className="gold" onClick={() => setScreen("signin")}>
-              Take your place <Sparkles size={18} />
-            </button>
-            <div className="rules-grid">
+        {(draft.file || lostPhoto) &&
+          screen !== "upload" &&
+          screen !== "signin" && (
+            <div className="draft-banner" role="status">
               <div>
-                <b>5</b>
-                <span>first unaided correct</span>
+                <b>
+                  {draft.file
+                    ? "Your photo is still here."
+                    : "Your photo needs reselecting."}
+                </b>
+                <span>
+                  {draft.file
+                    ? "Not posted. Finish adding it whenever you’re ready."
+                    : "The tab restarted. For privacy, photos stay in memory only."}
+                </span>
               </div>
-              <div>
-                <b>3</b>
-                <span>later unaided correct</span>
-              </div>
-              <div>
-                <b>1</b>
-                <span>correct with help</span>
-              </div>
+              <button onClick={startUpload}>
+                {draft.file ? "Continue adding" : "Choose photo again"}
+              </button>
             </div>
-            <p className="fine">
-              <Lock size={13} /> Phone sign-in protects game participation and
-              photos. It verifies a phone, not school membership. This link may
-              be forwarded. Never upload anyone else’s child.
-            </p>
-          </section>
+          )}
+        {!session ? (
+          <p className="entry-privacy">
+            <Lock size={13} /> Choose a photo first, then sign in to post or
+            guess. Your phone stays private. Sign-in verifies a phone, not
+            school membership; this link can be forwarded.
+          </p>
         ) : !data ? (
           <div className="panel">
             <p>Lighting up your stage…</p>
@@ -229,7 +398,10 @@ function App() {
               <button
                 className={mode === "children" ? "active" : ""}
                 onClick={() => {
-                  setMode("children");
+                  if (mode !== "children") {
+                    setData(null);
+                    setMode("children");
+                  }
                   setSelected(null);
                 }}
               >
@@ -238,25 +410,16 @@ function App() {
               <button
                 className={mode === "adults" ? "active" : ""}
                 onClick={() => {
-                  setMode("adults");
+                  if (mode !== "adults") {
+                    setData(null);
+                    setMode("adults");
+                  }
                   setSelected(null);
                 }}
               >
                 Ghosts of Halloweens Past <span>ADULT BONUS</span>
               </button>
             </div>
-            {!data.me && (
-              <section className="panel">
-                <h2>Your name in lights</h2>
-                <p>
-                  Pick a public player name and the house and grade your points
-                  will support.
-                </p>
-                <button className="gold" onClick={() => setScreen("profile")}>
-                  Set up my player
-                </button>
-              </section>
-            )}
             <div className="scoreboard">
               <div>
                 <span>YOUR SCORE</span>
@@ -275,15 +438,14 @@ function App() {
                   <small>/ {eligible}</small>
                 </b>
               </div>
-              <button
-                className="gold"
-                onClick={() => setScreen(data.me ? "upload" : "profile")}
-              >
-                <Camera size={19} /> Add my{" "}
-                {mode === "children" ? "child’s" : "childhood"} photo
+              <button className="gold" onClick={startUpload}>
+                <Camera size={19} />{" "}
+                {mode === "children"
+                  ? "Add your kid"
+                  : "Add your childhood photo"}
               </button>
             </div>
-            <nav className="tabs" aria-label="Game views">
+            <nav className="tabs" aria-label="Game views" ref={boardRef}>
               <button
                 className={tab === "play" ? "active" : ""}
                 onClick={() => setTab("play")}
@@ -314,14 +476,31 @@ function App() {
                     </span>
                     <h2>
                       {mode === "children"
-                        ? "Recognize a little boo?"
-                        : "Before they were the grown-ups…"}
+                        ? "Guess a kid."
+                        : "Guess a grown-up."}
                     </h2>
                   </div>
                   <span className="count">
                     {data.photos.length} on the board
                   </span>
                 </div>
+                <p className="board-guide">
+                  Tap a photo. Type a name or choose help. Then lock in your one
+                  guess.
+                </p>
+                {data.photos.length > 0 &&
+                  !data.photos.some((p) => !p.own && !p.submitted) && (
+                    <div className="next-kid">
+                      <p>
+                        {eligible === 0
+                          ? "Your kid is on the board. Other families’ photos will appear here to guess."
+                          : "You’ve played every available mystery. Check for new kids soon."}
+                      </p>
+                      <button disabled={busy} onClick={() => run(refresh)}>
+                        Check for more kids
+                      </button>
+                    </div>
+                  )}
                 {!data.photos.length ? (
                   <section className="empty panel">
                     <div className="empty-cards">
@@ -329,17 +508,20 @@ function App() {
                       <Camera />
                       <Ghost />
                     </div>
-                    <h2>The first mystery could be yours.</h2>
+                    <h2>
+                      {justAdded
+                        ? "Your kid is in. Who’s next?"
+                        : "The first mystery could be yours."}
+                    </h2>
                     <p>
                       One early Halloween photo. No crop required.
                       <br />
-                      Your throwback joins the board as soon as you submit.
+                      {justAdded
+                        ? "Other families’ photos will appear here to guess."
+                        : "Your throwback joins the board as soon as you submit."}
                     </p>
-                    <button
-                      className="gold"
-                      onClick={() => setScreen(data.me ? "upload" : "profile")}
-                    >
-                      Start the show <Upload size={18} />
+                    <button className="gold" onClick={startUpload}>
+                      Add your kid <Upload size={18} />
                     </button>
                     <p className="fine">
                       Try one of their first three Halloweens, or the earliest
@@ -358,6 +540,7 @@ function App() {
                         }
                         onClick={() => {
                           setSelected(p.id);
+                          setJourney({ kind: "guess", mode, photoId: p.id });
                           setScreen("guess");
                         }}
                       >
@@ -409,12 +592,24 @@ function App() {
                   <Shield size={14} /> Organizer desk
                 </button>
               )}
-              <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+              <button
+                onClick={() => {
+                  clearDraft();
+                  setLostPhoto(false);
+                  setJourney(null);
+                  setAuth({ phone: "", code: "", sent: false, sentAt: 0 });
+                  supabase.auth.signOut();
+                }}
+              >
+                Sign out
+              </button>
             </div>
           </>
         )}
         <footer>
-          <b>WE ARE RCAP</b>
+          <div className="footer-brand">
+            <Brand weAre reversed width={100} />
+          </div>
           <span>A little mystery. A lot of community.</span>
           <p>
             Voluntary submissions. No public answer reveals. Photos post
@@ -426,7 +621,7 @@ function App() {
         <div
           className="overlay"
           onClick={(e) => {
-            if (e.target === e.currentTarget && !busy) setScreen(null);
+            if (e.target === e.currentTarget) closeDialog();
           }}
         >
           <section
@@ -439,17 +634,30 @@ function App() {
             <button
               className="close icon"
               aria-label="Close dialog"
-              onClick={() => setScreen(null)}
+              onClick={closeDialog}
               disabled={busy}
             >
               <X />
             </button>
             {screen === "signin" && (
-              <SignIn run={run} busy={busy} onDone={() => setScreen(null)} />
+              <SignIn
+                run={run}
+                busy={busy}
+                onDone={authDone}
+                auth={auth}
+                setAuth={setAuth}
+                draft={draft}
+                intent={journey?.kind || "guess"}
+                onBack={() => {
+                  setError("");
+                  if (journey?.kind === "upload") setScreen("upload");
+                  else closeDialog();
+                }}
+              />
             )}
             {screen === "profile" && (
               <Profile
-                me={data?.me}
+                me={data?.me || { display: defaultPlayerName(data?.userId) }}
                 run={run}
                 busy={busy}
                 onSave={async (b) => {
@@ -460,24 +668,66 @@ function App() {
               />
             )}
             {screen === "upload" && (
-              <UploadForm
-                mode={mode}
+              <UploadFlow
+                draft={draft}
+                setDraft={setDraft}
+                choose={(file) => {
+                  setLostPhoto(false);
+                  choose(file);
+                }}
+                remove={() => {
+                  remove();
+                  setLostPhoto(false);
+                }}
+                mode={draft.file ? draft.mode : mode}
+                session={session}
+                ready={ready}
+                loaded={!!data}
+                onRetry={refresh}
+                lostPhoto={lostPhoto}
+                me={data?.me || { display: defaultPlayerName(data?.userId) }}
                 run={run}
                 busy={busy}
-                me={data.me}
+                onSignIn={() => {
+                  setJourney({ kind: "upload", mode: draft.mode });
+                  setScreen("signin");
+                }}
                 onSave={async (b) => {
+                  await ensureProfile({
+                    ...b,
+                    ownNames: mode === "children" ? [b.name] : [],
+                  });
                   await request("upload", { ...b, mode });
-                  await refresh();
-                  setScreen(null);
+                  clearDraft();
+                  setLostPhoto(false);
+                  setJustAdded(mode === "children");
                   setNotice(
-                    "Your mystery is on the board. Let the guessing begin!",
+                    mode === "children"
+                      ? "Your kid is in! Now guess a kid to earn points."
+                      : "Your throwback is in! Now play the adult bonus round.",
                   );
+                  goBoard();
+                  await refresh();
                 }}
               />
+            )}
+            {screen === "guess" && !data && (
+              <div>
+                <p role="status">Loading the board. Your next step is ready…</p>
+                <button disabled={busy} onClick={() => run(refresh)}>
+                  Retry loading the board
+                </button>
+              </div>
             )}
             {screen === "guess" && photo && (
               <Guess
                 photo={photo}
+                needsProfile={!data.me}
+                onProfile={async (b) => {
+                  await ensureProfile(b);
+                  await refresh();
+                }}
+                mode={mode}
                 count={data.distinctChildren}
                 busy={busy}
                 run={run}
@@ -565,74 +815,6 @@ function Photo({ id }) {
     </div>
   );
 }
-function SignIn({ run, busy, onDone }) {
-  const [phone, setPhone] = useState(""),
-    [code, setCode] = useState(""),
-    [sent, setSent] = useState(false);
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        run(async () => {
-          if (sent) {
-            await verifyCode(phone, code);
-            onDone();
-          } else {
-            await sendCode(phone);
-            setSent(true);
-          }
-        });
-      }}
-    >
-      <Ghost size={40} />
-      <h2>Your ticket to the show</h2>
-      <p>
-        Use your existing RCAP phone sign-in. Your phone number stays off the
-        board.
-      </p>
-      <label>
-        Mobile phone
-        <input
-          type="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-          disabled={sent}
-        />
-      </label>
-      {sent && (
-        <label>
-          Six-digit code
-          <input
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-        </label>
-      )}
-      <button className="gold" disabled={busy}>
-        {sent ? "Enter the game" : "Text me a sign-in code"}
-      </button>
-      {sent && (
-        <button
-          type="button"
-          className="text-button"
-          onClick={() => setSent(false)}
-        >
-          Change phone / request another code
-        </button>
-      )}
-      <p className="fine">
-        By tapping, you request one sign-in text. This does not sign you up for
-        game texts. Standard carrier rates may apply.
-      </p>
-    </form>
-  );
-}
 function Profile({ me, run, busy, onSave }) {
   return (
     <form
@@ -713,133 +895,10 @@ function Affiliations({ me }) {
     </div>
   );
 }
-function UploadForm({ mode, run, busy, me, onSave }) {
-  const [file, setFile] = useState(null),
-    [preview, setPreview] = useState("");
-  useEffect(
-    () => () => {
-      if (preview) URL.revokeObjectURL(preview);
-    },
-    [preview],
-  );
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const form = new FormData(e.currentTarget);
-        run(async () => {
-          if (!file) throw Error("Choose your Halloween photo first.");
-          const image = await preparePhoto(file);
-          await onSave({
-            image,
-            name: form.get("name"),
-            aliases: String(form.get("aliases"))
-              .split(",")
-              .map((x) => x.trim())
-              .filter(Boolean),
-            house: form.get("house"),
-            grade: form.get("grade"),
-            caption: "",
-            consent: form.get("consent") === "on",
-          });
-        });
-      }}
-    >
-      <span className="eyebrow">ADD A LITTLE MYSTERY</span>
-      <h2>
-        {mode === "children"
-          ? "Your child. Their little-boo era."
-          : "Your own Halloween throwback."}
-      </h2>
-      <p>
-        One photo per person. Portrait or landscape is welcome. Try their first
-        three Halloweens, or the earliest photo you have.
-      </p>
-      <label className="picker">
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) {
-              setFile(f);
-              setPreview(URL.createObjectURL(f));
-            }
-          }}
-        />
-        {preview ? (
-          <>
-            <img src={preview} alt="Your selected upload" />
-            <span>
-              <Camera /> Change photo
-            </span>
-          </>
-        ) : (
-          <>
-            <Camera size={35} />
-            <strong>Pick a Halloween throwback</strong>
-            <span>Phone library or camera · up to 25 MB</span>
-          </>
-        )}
-      </label>
-      {file && (
-        <button
-          type="button"
-          className="text-button"
-          onClick={() => {
-            setFile(null);
-            setPreview("");
-          }}
-        >
-          Remove selected photo
-        </button>
-      )}
-      <label>
-        Full name, kept private
-        <input
-          name="name"
-          maxLength={80}
-          minLength={2}
-          required
-          autoComplete="off"
-          placeholder={
-            mode === "children"
-              ? "Your child’s first and last name"
-              : "Your first and last name"
-          }
-        />
-      </label>
-      <label>
-        Accepted nicknames and spelling variants
-        <input
-          name="aliases"
-          maxLength={500}
-          placeholder="Separate with commas. Include familiar first-name forms."
-        />
-      </label>
-      <Affiliations me={me} />
-      <label className="consent">
-        <input type="checkbox" name="consent" required />
-        <span>
-          {mode === "children"
-            ? "I am this child’s parent or legal guardian and have permission to share this photo."
-            : "This is my own childhood photo and I have permission to share it."}{" "}
-          I understand it posts immediately for signed-in players, can be copied
-          by viewers, and can be reported or removed. I will not include other
-          identifiable children without permission.
-        </span>
-      </label>
-      <p className="fine">
-        Names and aliases are used privately to check guesses. Photo metadata is
-        removed. No photo is sent to AI.
-      </p>
-      <button className="gold" disabled={busy || !file}>
-        Put my mystery on the board <Sparkles size={18} />
-      </button>
-    </form>
-  );
-}
 function Guess({
+  needsProfile,
+  onProfile,
+  mode,
   photo,
   count,
   busy,
@@ -880,6 +939,8 @@ function Guess({
             ? `✓ Identified! You earned ${photo.points} points.`
             : "One guess was your shot. The answer stays a mystery for everyone else."}
         </p>
+      ) : needsProfile ? (
+        <QuickScoring busy={busy} run={run} onSave={onProfile} mode={mode} />
       ) : (
         <form
           onSubmit={(e) => {

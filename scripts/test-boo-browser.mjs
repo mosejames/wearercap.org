@@ -31,7 +31,9 @@ for (const width of [390, 1280]) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/little-boo/");
-  await page.getByRole("button", { name: "Take your place" }).waitFor();
+  await page
+    .getByRole("button", { name: "Guess a kid", exact: true })
+    .waitFor();
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth,
@@ -42,7 +44,7 @@ for (const width of [390, 1280]) {
     path: output + `/welcome-${width}.png`,
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Take your place" }).click();
+  await page.getByRole("button", { name: "Guess a kid", exact: true }).click();
   await page.getByLabel("Mobile phone").fill("5550001234");
   await page.screenshot({ path: output + `/signin-${width}.png` });
   await page.getByRole("button", { name: "Close dialog" }).click();
@@ -185,20 +187,24 @@ await page
   .fill("Fictional test concern");
 await page.getByRole("button", { name: "Send report" }).click();
 assert.equal(reported, true);
-await page.getByRole("button", { name: "Add my child’s photo" }).click();
 await page
-  .locator("input[type=file]")
-  .setInputFiles({
-    name: "fictional-photo.jpg",
-    mimeType: "image/jpeg",
-    buffer: sample,
-  });
-await page.getByLabel("Full name, kept private").fill("Fictional New Boo");
-await page.getByLabel("Accepted nicknames").fill("Boo");
+  .getByRole("button", { name: "Add your kid", exact: true })
+  .first()
+  .click();
+await page.locator("input[type=file]").setInputFiles({
+  name: "fictional-photo.jpg",
+  mimeType: "image/jpeg",
+  buffer: sample,
+});
+await page.getByLabel("Your child’s full name").fill("Fictional New Boo");
+await page.getByRole("button", { name: /Add a nickname/ }).click();
+await page.getByLabel("Nicknames or familiar first-name forms").fill("Boo");
 await page.locator("input[name=consent]").check();
 await page.screenshot({ path: output + "/upload-mobile.png", fullPage: true });
-await page.getByRole("button", { name: "Put my mystery on the board" }).click();
-await page.getByText("Your mystery is on the board.").waitFor();
+await page.getByRole("button", { name: "Add to the board" }).click();
+await page
+  .getByText("Your kid is in! Now guess a kid to earn points.")
+  .waitFor();
 assert.equal(uploads, 1);
 await page.getByRole("button", { name: "Leaderboards", exact: true }).click();
 await page.getByText("Fictional Contestant", { exact: true }).waitFor();
