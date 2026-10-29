@@ -49,3 +49,21 @@ export function countdown(target, now) {
     .filter(Boolean)
     .join(" ");
 }
+
+export function openingDayLabel(target, now) {
+  const dateKey = (value) =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(value));
+  if (!Number.isFinite(Date.parse(target)) || !Number.isFinite(now)) return "";
+  const days =
+    (Date.parse(dateKey(target)) - Date.parse(dateKey(now))) / 86400000;
+  return days === 0
+    ? "Today at noon"
+    : days === 1
+      ? "Tomorrow at noon"
+      : easternTime(target);
+}

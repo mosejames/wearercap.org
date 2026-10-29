@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Camera, Ghost, Clock, Trophy, Check } from "lucide-react";
-import { phaseAt, easternTime, countdown } from "./phases.js";
+import { phaseAt, easternTime, countdown, openingDayLabel } from "./phases.js";
 export function useGamePhase() {
   const [schedule, setSchedule] = useState(null),
     [error, setError] = useState(""),
@@ -90,37 +90,28 @@ export function PhaseStart({
       {phase === "submissions" ? (
         <>
           <p className="game-promise">
-            {isStudent ? "Add your kid." : "Add your throwback."}
-            <br />
-            <strong>
-              {isStudent
-                ? "Earn 3 contribution points."
-                : "Join the adult bonus round."}
-            </strong>
+            {isStudent
+              ? "A guessing game with real raffle-ticket prizes."
+              : "Ghosts of Halloweens Past."}
           </p>
           <p className="phase-copy">
             {isStudent
-              ? "One photo per student. Siblings welcome."
-              : "One childhood photo per adult. A separate bonus game."}
+              ? "Upload your little boo today: a photo of your child when they were very young in their Halloween costume."
+              : "Add your own childhood Halloween photo for the separate adult bonus game."}
+          </p>
+          <p className="phase-copy">
+            {openingDayLabel(schedule.guessesOpenAt, now)}, guess little boos
+            throughout RCA, tally up points and win raffle tickets.
           </p>
           <button className="gold phase-primary" onClick={onAdd}>
             <Camera size={20} />
-            {isStudent ? "Add your kid" : "Add your childhood photo"}
+            {isStudent ? "Add your little boo" : "Add your childhood photo"}
           </button>
-          {!isStudent && (
-            <p className="fine">
-              Adult photos join the separate bonus round. Student upload points
-              do not apply.
-            </p>
-          )}
-          <p className="opening-callout">
-            Guessing opens <b>{easternTime(schedule.guessesOpenAt)}.</b>
-          </p>
           <p className="fine">
-            Photo submissions end {easternTime(schedule.submissionsCloseAt)}.{" "}
             {isStudent
-              ? "+3 once per student’s first accepted photo."
-              : "Student contribution points do not apply to adult uploads."}
+              ? "One photo per student. Siblings welcome."
+              : "Adult photos are a separate bonus round."}{" "}
+            Photo submissions end {easternTime(schedule.submissionsCloseAt)}.
           </p>
         </>
       ) : phase === "waiting" || phase === "soon" ? (
@@ -132,9 +123,6 @@ export function PhaseStart({
           </p>
           <p className="opening-callout">
             {easternTime(schedule.guessesOpenAt)}
-          </p>
-          <p className="phase-countdown" aria-label="Time until guessing opens">
-            {countdown(schedule.guessesOpenAt, now)}
           </p>
           <p className="phase-copy">
             Submissions have closed. Come back for one guess per kid.
@@ -183,6 +171,24 @@ export function PhaseStart({
               : "See provisional standings"}
           </button>
         </>
+      )}
+      {["soon", "submissions", "waiting"].includes(phase) && (
+        <div className="reveal-countdown">
+          <p
+            className="phase-countdown"
+            aria-label="Time until the photo reveal"
+          >
+            {countdown(schedule.guessesOpenAt, now)}
+          </p>
+          <p className="phase-copy" aria-live="polite">
+            <b>
+              {Number.isSafeInteger(schedule.submittedStudents)
+                ? schedule.submittedStudents
+                : 0}
+            </b>{" "}
+            little boos already in. Photos reveal Friday at noon.
+          </p>
+        </div>
       )}
       <button className="text-button phase-rules" onClick={onRules}>
         How points and prizes work

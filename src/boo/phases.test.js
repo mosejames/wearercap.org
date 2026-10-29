@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { phaseAt, easternTime, countdown } from "./phases.js";
+import { phaseAt, easternTime, countdown, openingDayLabel } from "./phases.js";
 const schedule = {
   submissionsOpenAt: "2026-10-29T00:00:00-04:00",
   submissionsCloseAt: "2026-10-30T11:59:00-04:00",
@@ -47,4 +47,14 @@ describe("confirmed Eastern game phases", () => {
       ),
     ).toBe("0h 0m 0s");
   });
+});
+
+it("uses Eastern today or tomorrow around midnight without stale opening copy", () => {
+  const opening = "2026-10-30T12:00:00-04:00";
+  expect(openingDayLabel(opening, Date.parse("2026-10-30T03:59:59Z"))).toBe(
+    "Tomorrow at noon",
+  );
+  expect(openingDayLabel(opening, Date.parse("2026-10-30T04:00:00Z"))).toBe(
+    "Today at noon",
+  );
 });

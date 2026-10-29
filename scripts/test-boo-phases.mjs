@@ -101,6 +101,8 @@ async function fixture(phase, width = 390, signedIn = false, admin = false) {
             ? [
                 {
                   id: own,
+                  house: "Amistad",
+                  grade: "5th",
                   own: true,
                   canRemove: true,
                   points: 0,
@@ -112,6 +114,8 @@ async function fixture(phase, width = 390, signedIn = false, admin = false) {
             ? [
                 {
                   id: other,
+                  house: "Reveur",
+                  grade: "6th",
                   own: false,
                   canRemove: false,
                   points: state.guessPoints,
@@ -230,7 +234,7 @@ for (const width of [390, 1280]) {
   const { page, state, errors } = await fixture("submissions", width);
   assert.equal(
     await page
-      .getByRole("button", { name: "Add your kid", exact: true })
+      .getByRole("button", { name: "Add your little boo", exact: true })
       .count(),
     1,
   );
@@ -240,11 +244,20 @@ for (const width of [390, 1280]) {
       .count(),
     0,
   );
+  await page.getByLabel("Time until the photo reveal").waitFor();
   await page
-    .getByText("One photo per student. Siblings welcome.", { exact: true })
+    .getByText("little boos already in. Photos reveal Friday at noon.", {
+      exact: false,
+    })
+    .waitFor();
+  assert.match(await page.locator(".reveal-countdown").innerText(), /10/);
+  await page.locator(".phase-start")
+    .getByText("One photo per student. Siblings welcome.", { exact: false })
     .waitFor();
   await page
-    .getByText("Earn 3 contribution points.", { exact: true })
+    .getByText("A guessing game with real raffle-ticket prizes.", {
+      exact: true,
+    })
     .waitFor();
   assert.equal(
     await page.evaluate(
@@ -271,12 +284,12 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
   const { page, state, errors } = await fixture(phase);
   assert.equal(
     await page
-      .getByRole("button", { name: "Add your kid", exact: true })
+      .getByRole("button", { name: "Add your little boo", exact: true })
       .count(),
     0,
   );
   if (phase === "waiting") {
-    await page.getByLabel("Time until guessing opens").waitFor();
+    await page.getByLabel("Time until the photo reveal").waitFor();
     assert.equal(
       await page
         .getByRole("button", { name: "Guess a kid", exact: true })
@@ -303,6 +316,22 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
     fullPage: true,
   });
   assert.equal(state.authRequests, 0);
+  assert.deepEqual(errors, []);
+  await page.close();
+}
+// Filters only change the view. Cross-grade and own cards remain on the shared board.
+{
+  const { page, errors } = await fixture("guessing", 390, true);
+  await page.locator(".cards .card").first().waitFor();
+  assert.equal(await page.locator(".cards .card").count(), 2);
+  await page.getByRole("button", { name: "My grade", exact: true }).click();
+  assert.equal(await page.locator(".cards .card").count(), 1);
+  await page.getByRole("button", { name: "My house", exact: true }).click();
+  assert.equal(await page.locator(".cards .card").count(), 1);
+  await page
+    .getByRole("button", { name: "All little boos", exact: true })
+    .click();
+  assert.equal(await page.locator(".cards .card").count(), 2);
   assert.deepEqual(errors, []);
   await page.close();
 }
@@ -344,7 +373,9 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
       .map((x) => x.optedIn),
     [true, false],
   );
-  await page.getByRole("button", { name: "Add your kid", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add your little boo", exact: true })
+    .click();
   await page.locator("input[type=file]").setInputFiles({
     name: "fictional-sibling.jpg",
     mimeType: "image/jpeg",
@@ -361,7 +392,9 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
     .waitFor();
   assert.equal(state.uploadPoints, 6);
   await page.getByText(/Your student is in! \+3 contribution points/).waitFor();
-  await page.getByRole("button", { name: "Add your kid", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add your little boo", exact: true })
+    .click();
   await page.locator("input[type=file]").setInputFiles({
     name: "fictional-cutoff.jpg",
     mimeType: "image/jpeg",
@@ -381,7 +414,7 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
   await page.getByRole("button", { name: "See opening time" }).click();
   assert.equal(
     await page
-      .getByRole("button", { name: "Add your kid", exact: true })
+      .getByRole("button", { name: "Add your little boo", exact: true })
       .count(),
     0,
   );

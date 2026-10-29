@@ -21,6 +21,7 @@ begin
  perform set_config('request.jwt.claim.sub',owner_id::text,true);
  args:=jsonb_build_object('id',v_photo,'name','Fictional Phase Student','house','Amistad','grade','5th','mode','children','consent',true,'hash',repeat('9',64),'key','little-boo/v1/'||v_photo||'.bin','capsule','fictional','proofHash',repeat('a',64));
  r:=public.boo_game('upload',args);if r->>'uploadBonus'<>'3' then raise exception 'FAIL: submission bonus';end if;
+ if public.boo_phase()->>'submittedStudents'<>'1' then raise exception 'FAIL: aggregate distinct active students';end if;
  r:=public.boo_game('media',jsonb_build_object('id',v_photo));if not(r ? 'key') then raise exception 'FAIL: owner pre-open media';end if;
  perform set_config('request.jwt.claim.sub',user_two::text,true);
  r:=public.boo_game('get','{}');if exists(select 1 from jsonb_array_elements(r->'photos')x where x->>'id'=v_photo::text) then raise exception 'FAIL: board visible before opening';end if;
@@ -79,7 +80,7 @@ begin
 end $$;
 set local role anon;
 do $$ declare schedule jsonb;begin
- schedule:=public.boo_phase();if schedule ? 'photos' or schedule ? 'phone' or schedule ? 'board' then raise exception 'FAIL: public phase leak';end if;
+ schedule:=public.boo_phase();if jsonb_typeof(schedule->'submittedStudents')<>'number' then raise exception 'FAIL: anonymous aggregate count';end if;if schedule ? 'photos' or schedule ? 'phone' or schedule ? 'board' then raise exception 'FAIL: public phase leak';end if;
  begin perform public.boo_game('get','{}');raise exception 'FAIL: anonymous gameplay';exception when insufficient_privilege then null;end;
  begin perform * from boo_private.opening_notice_consents;raise exception 'FAIL: public consent list';exception when insufficient_privilege then null;end;
  begin perform boo_private.phase_at(now());raise exception 'FAIL: client clock override';exception when insufficient_privilege then null;end;

@@ -40,6 +40,7 @@ const GRADES = ["4th", "5th", "6th", "7th", "8th", "Other / alumni"];
 function App() {
   const gamePhase = useGamePhase();
   const [noticeFocus, setNoticeFocus] = useState(false);
+  const [boardFilter, setBoardFilter] = useState("all");
   const [initialJourney] = useState(readJourney);
   const {
     draft,
@@ -305,6 +306,16 @@ function App() {
       } catch {}
     }
   }
+  const visiblePhotos =
+    data?.photos.filter((p) =>
+      mode !== "children" ||
+      !["guessing", "closed", "results"].includes(gamePhase.phase) ||
+      boardFilter === "all"
+        ? true
+        : boardFilter === "grade"
+          ? p.grade === data.me?.grade
+          : p.house === data.me?.house,
+    ) || [];
   const photo = selected && data?.photos.find((p) => p.id === selected);
   const correct = data?.photos.filter((p) => p.correct).length || 0,
     eligible = data?.photos.filter((p) => !p.own).length || 0;
@@ -617,6 +628,37 @@ function App() {
                       ? "Your accepted photos are safe here. Other families’ photos unlock when guessing opens."
                       : "Guessing is closed. Standings remain provisional until organizer review and any drawing."}
                 </p>
+                {mode === "children" &&
+                  ["guessing", "closed", "results"].includes(
+                    gamePhase.phase,
+                  ) && (
+                    <div
+                      className="board-filters"
+                      role="group"
+                      aria-label="Find little boos"
+                    >
+                      {[
+                        ["all", "All little boos"],
+                        ["grade", "My grade"],
+                        ["house", "My house"],
+                      ].map(([value, label]) => (
+                        <button
+                          key={value}
+                          aria-pressed={boardFilter === value}
+                          disabled={value !== "all" && !data.me}
+                          onClick={() => setBoardFilter(value)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                      <p className="fine">
+                        Everyone can guess every grade. Filters only change this
+                        view.
+                        {!data.me &&
+                          " Choose your scoring house and grade when making your first guess to use these filters."}
+                      </p>
+                    </div>
+                  )}
                 {gamePhase.phase === "guessing" &&
                   data.photos.length > 0 &&
                   !data.photos.some((p) => !p.own && !p.submitted) && (
@@ -664,7 +706,13 @@ function App() {
                   </section>
                 ) : (
                   <div className="cards">
-                    {data.photos.map((p, i) => (
+                    {!visiblePhotos.length && (
+                      <p className="panel">
+                        No little boos in this view. Choose “All little boos” to
+                        explore every grade.
+                      </p>
+                    )}
+                    {visiblePhotos.map((p) => (
                       <button
                         key={p.id}
                         className={
@@ -691,7 +739,13 @@ function App() {
                           ) : null}
                         </div>
                         <div className="card-caption">
-                          <span>MYSTERY {String(i + 1).padStart(2, "0")}</span>
+                          <span>
+                            MYSTERY{" "}
+                            {String(data.photos.indexOf(p) + 1).padStart(
+                              2,
+                              "0",
+                            )}
+                          </span>
                           <b>
                             {p.correct
                               ? `+${p.points} points`
@@ -858,6 +912,7 @@ function App() {
                   );
                   goBoard();
                   await refresh();
+                  await gamePhase.reload();
                 }}
               />
             )}

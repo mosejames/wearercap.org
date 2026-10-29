@@ -9,6 +9,7 @@ export function phaseFixture(phase = "submissions", published = false) {
   };
   return {
     phase,
+    submittedStudents: 10,
     serverNow: instants[phase],
     timezone: "America/New_York",
     submissionsOpenAt: "2026-10-29T00:00:00-04:00",
