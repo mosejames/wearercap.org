@@ -2009,3 +2009,58 @@ pre {
     border-left: 1px solid #46516a;
   }
 }
+
+.preview-gate {
+  max-width: 480px;
+  margin: 48px auto;
+  color: #eef1f6;
+  padding: 28px;
+}
+.preview-gate a,
+.preview-banner a,
+.preview-launch {
+  color: #ffdc7c;
+}
+.preview-banner {
+  position: relative;
+  z-index: 10;
+  margin: 0 auto;
+  padding: 18px 24px;
+  background: #152944;
+  border-bottom: 2px solid #ffdc7c;
+  color: #edf2fa;
+}
+.preview-banner b {
+  color: #ffdc7c;
+  letter-spacing: 1px;
+  font-size: 12px;
+}
+.preview-banner p {
+  margin: 8px 0;
+  max-width: 900px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+.preview-actions button {
+  padding: 10px 14px;
+}
+.preview-banner summary {
+  cursor: pointer;
+  color: #ffdc7c;
+  font-size: 13px;
+}
+@media (max-width: 500px) {
+  .preview-gate {
+    margin: 20px 12px;
+  }
+  .preview-banner {
+    padding: 16px;
+  }
+}

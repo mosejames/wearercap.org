@@ -1,13 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Camera, Ghost, Clock, Trophy, Check } from "lucide-react";
 import { phaseAt, easternTime, countdown, openingDayLabel } from "./phases.js";
-export function useGamePhase() {
-  const [schedule, setSchedule] = useState(null),
+export function useGamePhase(override = null) {
+  const [schedule, setSchedule] = useState(override),
     [error, setError] = useState(""),
     [tick, setTick] = useState(0),
-    clock = useRef(null),
+    clock = useRef(
+      override
+        ? { server: Date.parse(override.serverNow), at: performance.now() }
+        : null,
+    ),
     inFlight = useRef(false);
   const reload = async () => {
+    if (override) return;
     if (inFlight.current) return;
     inFlight.current = true;
     try {
@@ -32,6 +37,7 @@ export function useGamePhase() {
     }
   };
   useEffect(() => {
+    if (override) return;
     reload();
     const refresh = () => {
       if (document.visibilityState === "visible") reload();

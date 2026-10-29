@@ -227,3 +227,74 @@ describe("public phase and bounded game actions", () => {
     },
   );
 });
+
+describe("organizer rehearsal access", () => {
+  const response = () => ({
+    statusCode: 0,
+    body: null,
+    setHeader: vi.fn(),
+    status(n) {
+      this.statusCode = n;
+      return this;
+    },
+    json(v) {
+      this.body = v;
+      return this;
+    },
+  });
+  const request = {
+    method: "POST",
+    headers: {
+      authorization: "Bearer fictional-owner-session-for-preview-only",
+    },
+    body: { action: "preview-access" },
+  };
+  it("requires sign-in before checking preview access", async () => {
+    const f = vi.fn();
+    vi.stubGlobal("fetch", f);
+    const r = response();
+    await gameHandler({ ...request, headers: {} }, r);
+    expect(r.statusCode).toBe(401);
+    expect(f).not.toHaveBeenCalled();
+  });
+  it("denies members who lack the existing owner role", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://fictional.example");
+    vi.stubEnv("SUPABASE_ANON_KEY", "synthetic-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({
+          code: "42501",
+          message: "Owner access required.",
+        }),
+      })),
+    );
+    const r = response();
+    await gameHandler(request, r);
+    expect(r.statusCode).toBe(403);
+    expect(r.body).not.toHaveProperty("allowed");
+  });
+  it("returns only permission after the existing owner gate, never the admin data", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://fictional.example");
+    vi.stubEnv("SUPABASE_ANON_KEY", "synthetic-key");
+    const f = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        reports: [{ reason: "private organizer report" }],
+        board: {},
+        settings: {},
+      }),
+    }));
+    vi.stubGlobal("fetch", f);
+    const r = response();
+    await gameHandler(request, r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body).toEqual({ allowed: true });
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(f.mock.calls[0][1].body)).toEqual({
+      p_action: "admin",
+      p_payload: {},
+    });
+  });
+});

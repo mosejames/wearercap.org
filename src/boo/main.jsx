@@ -18,7 +18,7 @@ import {
   Bell,
 } from "lucide-react";
 import { supabase } from "../vault/auth.js";
-import { request } from "./api.js";
+import { request as liveRequest } from "./api.js";
 import Brand from "../components/Brand.jsx";
 import {
   UploadFlow,
@@ -37,11 +37,13 @@ import { easternTime } from "./phases.js";
 import "./style.css";
 const HOUSES = ["Amistad", "Altruismo", "Isibindi", "Reveur"];
 const GRADES = ["4th", "5th", "6th", "7th", "8th", "Other / alumni"];
-function App() {
-  const gamePhase = useGamePhase();
+const GameRequest = React.createContext(liveRequest);
+function App({ preview = null }) {
+  const request = React.useContext(GameRequest);
+  const gamePhase = useGamePhase(preview?.schedule);
   const [noticeFocus, setNoticeFocus] = useState(false);
   const [boardFilter, setBoardFilter] = useState("all");
-  const [initialJourney] = useState(readJourney);
+  const [initialJourney] = useState(() => (preview ? null : readJourney()));
   const {
     draft,
     setDraft,
@@ -123,6 +125,7 @@ function App() {
     };
   }, []);
   useEffect(() => {
+    if (preview) return;
     const marker =
       journey ||
       (draft.file || lostPhoto ? { kind: "upload", mode: draft.mode } : null);
@@ -778,9 +781,14 @@ function App() {
                 Player profile
               </button>
               {data.isAdmin && (
-                <button onClick={() => setScreen("admin")}>
-                  <Shield size={14} /> Organizer desk
-                </button>
+                <>
+                  <a className="preview-launch" href="?preview=guessing">
+                    Rehearse tomorrow’s guessing screen
+                  </a>
+                  <button onClick={() => setScreen("admin")}>
+                    <Shield size={14} /> Organizer desk
+                  </button>
+                </>
               )}
               <button
                 onClick={() => {
@@ -788,10 +796,11 @@ function App() {
                   setLostPhoto(false);
                   setJourney(null);
                   setAuth({ phone: "", code: "", sent: false, sentAt: 0 });
-                  supabase.auth.signOut();
+                  if (preview) window.location.assign("/little-boo/");
+                  else supabase.auth.signOut();
                 }}
               >
-                Sign out
+                {preview ? "Exit rehearsal" : "Sign out"}
               </button>
             </div>
           </>
@@ -999,6 +1008,7 @@ function App() {
   );
 }
 function Photo({ id }) {
+  const request = React.useContext(GameRequest);
   const [url, setUrl] = useState("");
   useEffect(() => {
     let active = true,
@@ -1443,6 +1453,7 @@ function Rules() {
   );
 }
 function Admin({ run, busy, refresh }) {
+  const request = React.useContext(GameRequest);
   const [d, setD] = useState(null);
   const load = () => request("admin").then(setD);
   useEffect(() => {
@@ -1664,4 +1675,162 @@ function DrawingForm({ awards, busy, run, onSave }) {
     </form>
   );
 }
-createRoot(document.getElementById("root")).render(<App />);
+function PreviewGate() {
+  const [preview, setPreview] = useState(null),
+    [status, setStatus] = useState("checking"),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [auth, setAuth] = useState({ phone: "", code: "", sent: false, sentAt: 0 });
+  const generation = useRef(0);
+  async function check() {
+    const current = ++generation.current;
+    setPreview(null);
+    setError("");
+    setStatus("checking");
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (current !== generation.current) return;
+      if (!data.session) {
+        setStatus("signin");
+        return;
+      }
+      const allowed = await liveRequest("preview-access");
+      if (!allowed.allowed)
+        throw Error("Organizer owner access is required for this rehearsal.");
+      const { createPreview } = await import("./preview.js");
+      if (current !== generation.current) return;
+      let storage;
+      try {
+        storage = window.sessionStorage;
+      } catch {}
+      setPreview(createPreview(data.session.user.id, storage));
+      setStatus("ready");
+    } catch (e) {
+      if (current !== generation.current) return;
+      setError(e.message);
+      setStatus("denied");
+    }
+  }
+  useEffect(() => {
+    check();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      queueMicrotask(check);
+    });
+    return () => {
+      generation.current++;
+      subscription.unsubscribe();
+    };
+  }, []);
+  async function run(task) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!preview)
+    return (
+      <div className="preview-gate panel">
+        <Brand weAre reversed width={138} />
+        <h1>Organizer guessing rehearsal</h1>
+        <p>
+          Try tomorrow’s guessing screen with fictional cards. The real game
+          stays locked until Friday at noon Eastern.
+        </p>
+        {status === "checking" && (
+          <p role="status">Checking your organizer access…</p>
+        )}
+        {error && <p role="alert">{error}</p>}
+        {status === "signin" && (
+          <SignIn
+            run={run}
+            busy={busy}
+            onDone={check}
+            auth={auth}
+            setAuth={setAuth}
+            draft={{}}
+            intent="preview"
+            onBack={() => window.location.assign("/little-boo/")}
+          />
+        )}
+        {status === "denied" && (
+          <button className="gold" onClick={check}>
+            Recheck organizer access
+          </button>
+        )}
+        <p>
+          <a href="/little-boo/">Return to the live game</a>
+        </p>
+      </div>
+    );
+  return (
+    <>
+      <aside className="preview-banner" aria-label="Organizer rehearsal">
+        <div>
+          <b>ORGANIZER REHEARSAL · FICTIONAL CARDS</b>
+          <p>
+            You’re seeing tomorrow’s guessing screen. Practice guesses and
+            scores stay in this tab; the real game is unchanged.
+          </p>
+        </div>
+        <div className="preview-actions">
+          <button
+            onClick={() =>
+              document
+                .querySelector(".section-title")
+                ?.scrollIntoView({ behavior: "instant", block: "start" })
+            }
+          >
+            Open practice board
+          </button>
+          <button
+            onClick={() => {
+              preview.reset();
+              window.location.reload();
+            }}
+          >
+            Reset practice
+          </button>
+          <a href="/little-boo/">Exit rehearsal</a>
+        </div>
+        <details>
+          <summary>Practice answers and scoring paths</summary>
+          <p>
+            Mystery 1: Fable Finch (first unaided = 5). Mystery 2: Milo Moon
+            (later unaided = 3). Choose help on any other card for a 1-point
+            guess. Try a wrong answer to see the one-guess lock.
+          </p>
+          <p>
+            Other fictional names: Piper Pumpkin, Rowan Rocket, Clover Cloud,
+            Juno Jellybean, Wren Willow, Nova Night, Sunny Star, Indigo Ice,
+            Robin Rain. The last card is your fictional submission; it cannot
+            earn guessing points.
+          </p>
+          <p>
+            Reset practice to try again. Refresh preserves only these fictional
+            practice results for this tab. Adult mode is empty in this
+            rehearsal.
+          </p>
+        </details>
+      </aside>
+      <GameRequest.Provider value={preview.request}>
+        <App preview={preview} />
+      </GameRequest.Provider>
+    </>
+  );
+}
+createRoot(document.getElementById("root")).render(
+  new URLSearchParams(window.location.search).get("preview") === "guessing" ? (
+    <PreviewGate />
+  ) : (
+    <App />
+  ),
+);

@@ -153,6 +153,12 @@ export default async function handler(req, res) {
     if (!b || JSON.stringify(b).length > 4300000)
       throw fail("This request is too large.", 413);
     const a = b.action;
+    if (a === "preview-access") {
+      // Reuse the existing verified-phone + organizer-owner check. Never return
+      // the admin payload or route rehearsal guesses to production scoring.
+      await rpc("admin", {}, authorization);
+      return res.status(200).json({ allowed: true });
+    }
     if (a === "upload") {
       await rpc("get", { mode: b.mode }, authorization); // Authenticate before decoding or storage work.
       const source = Buffer.from(String(b.image || ""), "base64"),
