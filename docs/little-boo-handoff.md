@@ -123,3 +123,7 @@ The one retry with new publication evidence was rejected by automatic approval r
 The latest landing simplification is also prepared locally: the actual logo and marquee remain; the hero says “A guessing game with real raffle-ticket prizes.” One upload action says “Add your little boo.” The opening sentence changes from Tomorrow at noon to Today at noon at Eastern midnight. The count and countdown sit below the primary action; rules stay tucked away. Nothing in this section is live.
 
 Final local verification: build passed; 1,158 Vitest tests across 161 files passed; all three PostgreSQL suites passed; final phase browser suite passed, including both filters and restored all-grade view. The revised 390px submission screenshot was visually inspected at `/tmp/boo-phase-review/submission-390.png`. Latest logs: `/tmp/boo-simple-build.log`, `/tmp/boo-simple-unit.log`, `/tmp/boo-simple-browser.log`, `/tmp/boo-reveal-database.log`. Production remains the previously deployed `44d0fe2`.
+
+## Raffle copy clarification
+
+User-directed copy now says “Play for bonus tickets in the RCAP raffle.” The podium explains that top players earn 25, 15 or 10 raffle tickets, meaning more chances in the separate RCAP raffle. Rules explain that raffle winners are selected separately. No values, odds or other raffle prize claims are introduced. This copy revision does not change the denied migration/publication status.

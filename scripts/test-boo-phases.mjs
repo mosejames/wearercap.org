@@ -244,6 +244,9 @@ for (const width of [390, 1280]) {
       .count(),
     0,
   );
+  await page
+    .getByText(/Top players earn 25, 15 or 10 raffle tickets/)
+    .waitFor();
   await page.getByLabel("Time until the photo reveal").waitFor();
   await page
     .getByText("little boos already in. Photos reveal Friday at noon.", {
@@ -251,11 +254,12 @@ for (const width of [390, 1280]) {
     })
     .waitFor();
   assert.match(await page.locator(".reveal-countdown").innerText(), /10/);
-  await page.locator(".phase-start")
+  await page
+    .locator(".phase-start")
     .getByText("One photo per student. Siblings welcome.", { exact: false })
     .waitFor();
   await page
-    .getByText("A guessing game with real raffle-ticket prizes.", {
+    .getByText("Play for bonus tickets in the RCAP raffle.", {
       exact: true,
     })
     .waitFor();

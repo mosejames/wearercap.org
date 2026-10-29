@@ -91,7 +91,7 @@ export function PhaseStart({
         <>
           <p className="game-promise">
             {isStudent
-              ? "A guessing game with real raffle-ticket prizes."
+              ? "Play for bonus tickets in the RCAP raffle."
               : "Ghosts of Halloweens Past."}
           </p>
           <p className="phase-copy">
@@ -133,7 +133,7 @@ export function PhaseStart({
           <p className="game-promise">
             Guess a kid.
             <br />
-            <strong>Earn points. Win prizes.</strong>
+            <strong>Earn points. Win bonus raffle tickets.</strong>
           </p>
           <button className="gold phase-primary" onClick={onGuess}>
             <Ghost size={20} />

@@ -390,7 +390,7 @@ function App() {
         )}
         <div className="prize-strip">
           <Trophy />
-          <span>THE PODIUM PRIZES</span>
+          <span>BONUS RAFFLE TICKETS</span>
           <b>
             1st <em>25</em>
           </b>
@@ -403,9 +403,9 @@ function App() {
           <small>raffle tickets</small>
         </div>
         <p className="fine">
-          Individual prizes. Organizer drawing for tied prize places. Results
-          Sunday, November 1. Tickets are issued by the organizer after review,
-          never automatically.
+          Top players earn 25, 15 or 10 raffle tickets: more chances in the RCAP
+          raffle. Organizer drawing for tied ticket places. Results Sunday,
+          November 1. Tickets are issued by the organizer after review.
         </p>
       </section>
       <main>
@@ -1372,6 +1372,10 @@ function Rules() {
     <section className="panel prose">
       <span className="eyebrow">THE RULES OF THE SHOW</span>
       <h2>One photo. One shot. All the fun.</h2>
+      <p>
+        Top players earn 25, 15 or 10 raffle tickets: more chances in the
+        separate RCAP raffle. Raffle winners are selected separately.
+      </p>
       <ol>
         <li>
           Parents share one early Halloween photo per student. Siblings can each
@@ -1391,7 +1395,7 @@ function Rules() {
         <li>
           The first unaided correct guess earns 5 points. Later unaided correct
           guesses earn 3. Each player scores once per photo. A hinted correct
-          does not claim the first unaided prize.
+          does not claim the first unaided bonus.
         </li>
         <li>
           No guessing points on your own child or submission. The 3-point
