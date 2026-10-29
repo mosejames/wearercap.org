@@ -111,17 +111,16 @@ export default async function handler(req, res) {
         );
         storageReachable = response.ok || response.status === 404;
       } catch {}
-      return res
-        .status(200)
-        .json({
-          game: "little-boo-v1",
-          phoneEnabled,
-          authReachable,
-          storageReachable,
-          aiSpellingEnabled:
-            process.env.BOO_NAME_AI_APPROVED === "true" &&
-            !!process.env.OPENAI_API_KEY,
-        });
+      return res.status(200).json({
+        game: "little-boo-v1",
+        phoneEnabled,
+        authReachable,
+        storageReachable,
+        aiConfigured: !!process.env.OPENAI_API_KEY,
+        aiSpellingEnabled:
+          process.env.BOO_NAME_AI_APPROVED === "true" &&
+          !!process.env.OPENAI_API_KEY,
+      });
     }
     const authorization = req.headers?.authorization;
     if (!/^Bearer [^\s]{20,8192}$/.test(authorization || ""))
@@ -222,12 +221,10 @@ export default async function handler(req, res) {
     }
     return res.status(200).json(result);
   } catch (e) {
-    return res
-      .status(e.status || 503)
-      .json({
-        error: e.status
-          ? e.message
-          : "The game is temporarily unavailable. Your guess was not used. Please try again.",
-      });
+    return res.status(e.status || 503).json({
+      error: e.status
+        ? e.message
+        : "The game is temporarily unavailable. Your guess was not used. Please try again.",
+    });
   }
 }

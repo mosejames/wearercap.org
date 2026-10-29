@@ -6,7 +6,7 @@ A We Are RCAP Guess Who Game at `/little-boo/`. Adult bonus mode: Ghosts of Hall
 
 Run `npm install`, provide the existing publishable Supabase environment pair, then `npm run dev`. Open `http://127.0.0.1:5173/little-boo/`. Vite includes a local API adapter at `/api/little-boo`. Server uploads need the existing shared R2 environment. Production reuses the existing `api/m3-sign` dispatcher, with no additional serverless-function slot.
 
-The production schema is `supabase/migrations/20261029041333_little_boo_game.sql`. Apply only this migration, not unrelated pending migrations. There are no seed children, photos, phone messages, raffle writes or invitation changes in the release.
+The production schema is `supabase/migrations/20261029045008_little_boo_game.sql`. Apply only this migration, not unrelated pending migrations. There are no seed children, photos, phone messages, raffle writes or invitation changes in the release.
 
 ## Authorized product handoff
 
@@ -63,3 +63,9 @@ With live AI disabled or unavailable, a near-spelling check returns an honest un
 ## Release constraints
 
 Keep this change isolated from `invitation-display-names`/`5daabab` and deferred raffle privacy/committee lookup work. Latest main was inspected before branching. Do not reset or overwrite someone else’s checkout. Publication/live deployment is authorized for this game only. Do not announce to families, send invitations, issue tickets, create credentials or change account access. Verify actual deployed HTML, OG image and API behavior before calling it live and working.
+
+## Verified release checkpoint, October 29
+
+The first game revision `1c3e9fee9a56edc2e6706c007ab140536a592f61` was deployed to production through the authorized main-branch workflow. `https://wearercap.org/little-boo/` and its 1200×630 OG JPEG returned HTTP 200 through the connected Vercel fetch tool. The live status endpoint confirmed phone auth enabled/reachable and shared R2 reachable. Preview R2 was unavailable, consistent with production-only configuration. The database migration succeeded under version `20261029045008`; zero game players and photos remained, and direct authenticated answer-table access and anonymous game RPC access were false.
+
+Final build and all 1,135 tests across 159 files passed. Browser fixtures at 390px and 1280px passed with no horizontal overflow. The actual hosted database rollback suite passed; the expanded local PostgreSQL suite also covered adult score separation, rate limits and 25/15/10 awards. Real SMS delivery, signed-in live upload, physical-device HEIC and simultaneous independent database-session races were not exercised. Do not describe those as verified. No separate AI name-transfer approval was received, so live spelling-provider calls remain disabled.
