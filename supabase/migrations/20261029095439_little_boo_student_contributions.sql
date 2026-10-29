@@ -8,7 +8,7 @@ do $$ begin
 end $$;
 
 alter table boo_private.settings add column submissions_open_at timestamptz not null default '2026-10-29T00:00:00-04:00';
-alter table boo_private.settings add column submissions_close_at timestamptz not null default '2026-10-30T00:00:00-04:00';
+alter table boo_private.settings add column submissions_close_at timestamptz not null default '2026-10-30T11:59:00-04:00';
 alter table boo_private.settings add column guesses_open_at timestamptz not null default '2026-10-30T12:00:00-04:00';
 alter table boo_private.settings add column results_on date not null default '2026-11-01';
 alter table boo_private.settings drop constraint if exists settings_tie_rule_check;

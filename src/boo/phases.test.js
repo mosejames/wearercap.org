@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { phaseAt, easternTime, countdown } from "./phases.js";
 const schedule = {
   submissionsOpenAt: "2026-10-29T00:00:00-04:00",
-  submissionsCloseAt: "2026-10-30T00:00:00-04:00",
+  submissionsCloseAt: "2026-10-30T11:59:00-04:00",
   guessesOpenAt: "2026-10-30T12:00:00-04:00",
   guessesCloseAt: "2026-10-31T23:59:00-04:00",
   resultsAt: "2026-11-01T00:00:00-04:00",
@@ -12,7 +12,9 @@ describe("confirmed Eastern game phases", () => {
     ["2026-10-28T23:59:59.999-04:00", "soon"],
     ["2026-10-29T00:00:00-04:00", "submissions"],
     ["2026-10-29T23:59:59.999-04:00", "submissions"],
-    ["2026-10-30T00:00:00-04:00", "waiting"],
+    ["2026-10-30T00:00:00-04:00", "submissions"],
+    ["2026-10-30T11:58:59.999-04:00", "submissions"],
+    ["2026-10-30T11:59:00-04:00", "waiting"],
     ["2026-10-30T11:59:59.999-04:00", "waiting"],
     ["2026-10-30T12:00:00-04:00", "guessing"],
     ["2026-10-31T23:58:59.999-04:00", "guessing"],

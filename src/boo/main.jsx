@@ -1352,12 +1352,12 @@ function Rules() {
         </li>
       </ol>
       <p>
-        Photo submissions: Thursday, October 29. Guessing: Friday, October 30 at
-        noon Eastern through Saturday, October 31 at 11:59 p.m. Eastern.
-        Results: Sunday, November 1 after organizer review and drawings for tied
-        prize places. Removing a photo removes its live guess points and
-        contribution bonus, but its permanent receipt prevents earning the bonus
-        again.
+        Photo submissions close Friday, October 30 at 11:59 a.m. Eastern.
+        Guessing: Friday, October 30 at noon Eastern through Saturday, October
+        31 at 11:59 p.m. Eastern. Results: Sunday, November 1 after organizer
+        review and drawings for tied prize places. Removing a photo removes its
+        live guess points and contribution bonus, but its permanent receipt
+        prevents earning the bonus again.
       </p>
       <h3>Privacy and fair play</h3>
       <p>
@@ -1433,10 +1433,11 @@ function Admin({ run, busy, refresh }) {
       )}
       <h3>Confirmed round schedule</h3>
       <p>
-        Photo submissions end Thursday, October 29. Guessing opens Friday,
-        October 30 at noon Eastern and closes Saturday, October 31 at 11:59 p.m.
-        Eastern. Results Sunday, November 1. Opening-text requests:{" "}
-        {d.openingNoticeRequests || 0}. None are scheduled by this app.
+        Photo submissions end Friday, October 30 at 11:59 a.m. Eastern. Guessing
+        opens Friday, October 30 at noon Eastern and closes Saturday, October 31
+        at 11:59 p.m. Eastern. Results Sunday, November 1. Opening-text
+        requests: {d.openingNoticeRequests || 0}. None are scheduled by this
+        app.
       </p>
       <form
         onSubmit={(e) => {

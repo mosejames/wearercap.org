@@ -78,7 +78,7 @@ export function PhaseStart({
     <section className="quick-start phase-start" aria-label="This round">
       <div className="phase-pill">
         {phase === "submissions"
-          ? "THURSDAY · ADD YOUR STUDENT"
+          ? "SUBMISSIONS OPEN · ADD YOUR STUDENT"
           : phase === "waiting" || phase === "soon"
             ? "NEXT UP · GUESSING"
             : phase === "guessing"
@@ -117,13 +117,7 @@ export function PhaseStart({
             Guessing opens <b>{easternTime(schedule.guessesOpenAt)}.</b>
           </p>
           <p className="fine">
-            Photo submissions end{" "}
-            {easternTime(
-              new Date(
-                Date.parse(schedule.submissionsCloseAt) - 60000,
-              ).toISOString(),
-            )}
-            .{" "}
+            Photo submissions end {easternTime(schedule.submissionsCloseAt)}.{" "}
             {isStudent
               ? "+3 once per student’s first accepted photo."
               : "Student contribution points do not apply to adult uploads."}
