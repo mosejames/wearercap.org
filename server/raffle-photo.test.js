@@ -21,6 +21,7 @@ describe('photo invitations',()=>{
  it('requires an allowed class and house',()=>{
  const valid={scholar:'Alex',family:'Johnson',classYear:'2027',house:'Amistad',image:'data:image/jpeg;base64,/9j/'};
  expect(acceptsPhotoRequest(valid)).toBe(true);
+ for(const family of ['',undefined,'Morgan Lee & Casey Park']) expect(acceptsPhotoRequest({...valid,family})).toBe(true);
  expect(acceptsPhotoRequest({...valid,classYear:'2032'})).toBe(false);
  expect(acceptsPhotoRequest({...valid,house:'Other'})).toBe(false);
  });
@@ -35,19 +36,19 @@ describe('photo invitations',()=>{
  expect(records.size).toBe(3);
  // Simulate an invitation saved before the copy correction.
  const prefix=`/rcap/raffle/2026/invitations/${created.id}/`;
- const oldRecord=JSON.parse(records.get(prefix+'record.json').toString());oldRecord.cardVersion=1;
+ const oldRecord=JSON.parse(records.get(prefix+'record.json').toString());oldRecord.cardVersion=8;
  records.set(prefix+'record.json',Buffer.from(JSON.stringify(oldRecord)));
- records.set(prefix+'card.jpg',records.get(prefix+'card-v8.jpg'));records.delete(prefix+'card-v8.jpg');
+ records.set(prefix+'card.jpg',records.get(prefix+'card-v9.jpg'));records.delete(prefix+'card-v9.jpg');
  const photo=await getRafflePhoto(created.id);
- expect(records.has(prefix+'card-v8.jpg')).toBe(true);
+ expect(records.has(prefix+'card-v9.jpg')).toBe(true);
  expect(JSON.parse(records.get(prefix+'record.json').toString()).status).toBe('visible');
- expect(photo.imageUrl).toBe(`https://images.example.org/raffle/2026/invitations/${created.id}/card-v8.jpg`);
+ expect(photo.imageUrl).toBe(`https://images.example.org/raffle/2026/invitations/${created.id}/card-v9.jpg`);
  expect(photo.storage).toBe('r2');
  expect(photo.classYear).toBe('2027');expect(photo.house).toBe('Amistad');
  const html=response();await raffleShareHandler({query:{id:created.id}},html);
  expect(html.body).toContain(`property="og:image" content="${photo.imageUrl}"`);
  expect(html.body).toContain(`name="twitter:image" content="${photo.imageUrl}"`);
- const card=records.get(`/rcap/raffle/2026/invitations/${created.id}/card-v8.jpg`);
+ const card=records.get(`/rcap/raffle/2026/invitations/${created.id}/card-v9.jpg`);
  const meta=await sharp(card).metadata();expect([meta.width,meta.height]).toEqual([1200,630]);expect(meta.exif).toBeUndefined();
  const denied=response();await handler({method:'DELETE',headers:{},body:{id:created.id,token:'a'.repeat(64)}},denied);expect(denied.code).toBe(403);
  const hidden=response();await handler({method:'DELETE',headers:{},body:{id:created.id,token:created.token}},hidden);expect(hidden.code).toBe(200);

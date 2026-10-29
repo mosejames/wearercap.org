@@ -25,3 +25,15 @@ describe('raffle invitations', () => {
  expect(image.readUInt32BE(16)).toBe(1200);expect(image.readUInt32BE(20)).toBe(630);
  });
 });
+
+it('supports invitation senders with different surnames or no display name', async()=>{
+ const {frameLayout}=await import('../public/raffle-share/layout.js');
+ for(const family of ['', 'Morgan Lee', 'Morgan Lee & Casey Park', 'The Lee-Park family']) {
+  const html=raffleShareHtml({scholar:'Alex Rivera',family,classYear:'2027',house:'Amistad'});
+  expect(html).toContain('Name(s) to display on the invitation (optional)');
+  expect(html).not.toMatch(/name="family"[^>]*required/);
+  expect(html).not.toContain(`the ${family} family`);
+  expect(html).toContain('id="credit-name">Alex Rivera');
+  for(const frame of ['navy','gold']) expect(frameLayout(frame,'Alex Rivera',family).byline).toBe(family?`From Alex Rivera & ${family}`:'From Alex Rivera');
+ }
+});

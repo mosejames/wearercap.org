@@ -1,10 +1,10 @@
 // Shared coordinates and copy keep the browser preview and saved card aligned.
 export function frameLayout(frame, scholar, family) {
  const gold=frame==='gold';
- const name=scholar||'your scholar';
- const byline=scholar&&family?`From ${name} & the ${family} family`:scholar?`From ${name}`:'From your scholar & family';
- const bylineSize=gold?(byline.length>80?18:byline.length>45?26:34):(byline.length>80?14:byline.length>55?18:28);
- const bylineWrap=gold?(byline.length>80?52:40):(byline.length>55?48:36);
+ // Use optional display names exactly as entered, without assuming shared surnames.
+ const byline=scholar&&family?`From ${scholar} & ${family}`:family?`From ${family}`:scholar?`From ${scholar}`:'You’re invited';
+ const bylineSize=gold?(byline.length>80?18:byline.length>32?26:34):(byline.length>80?14:byline.length>55?18:28);
+ const bylineWrap=gold?(byline.length>80?44:32):(byline.length>55?48:36);
  return {
   gold, photo:gold?{x:800,y:50,w:350,h:530}:{x:30,y:40,w:515,h:550},
   background:gold?'golden-ticket-v1.jpg':'autumn-postcard-v1.jpg',
