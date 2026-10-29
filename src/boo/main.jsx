@@ -383,8 +383,8 @@ function App() {
           )}
         {!session ? (
           <p className="entry-privacy">
-            <Lock size={13} /> Choose a photo first, then sign in to post or
-            guess. Your phone stays private. Sign-in verifies a phone, not
+            <Lock size={13} /> Choose a photo to add your kid, or sign in to start
+            guessing. Your phone stays private. Sign-in verifies a phone, not
             school membership; this link can be forwarded.
           </p>
         ) : !data ? (
