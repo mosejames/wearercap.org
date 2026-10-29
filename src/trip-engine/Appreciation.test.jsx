@@ -1,0 +1,14 @@
+import {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+vi.mock('./data.js',()=>({browserToken:()=> 'a'.repeat(64),gallery:vi.fn(),request:vi.fn()}));
+import Appreciation,{loadAppreciation} from './Appreciation.jsx';
+import {gallery,request} from './data.js';
+let host,root;
+const p=(id,isMine)=>({id,isMine,thumb:`/${id}.jpg`});
+beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;gallery.mockReset();request.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
+it('only loads appreciation for authenticated-owner photos across pages',async()=>{gallery.mockResolvedValueOnce({photos:[p('mine',true),p('other',false)],hasMore:true}).mockResolvedValueOnce({photos:[p('mine2',true)],hasMore:false});request.mockResolvedValue({reactions:[],comments:[]});const result=await loadAppreciation('dc');expect(result.ownedCount).toBe(2);expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls.map(c=>c[2].id)).toEqual(['mine','mine2']);expect(gallery.mock.calls[1][1].offset).toBe(2);});
+it('reports missing feedback rather than presenting partial counts as complete',async()=>{gallery.mockResolvedValue({photos:[p('mine',true),p('mine2',true)],hasMore:false});request.mockResolvedValueOnce({reactions:[],comments:[]}).mockRejectedValueOnce(Error('hidden'));const result=await loadAppreciation('dc');expect(result.ownedCount).toBe(2);expect(result.entries).toHaveLength(1);expect(result.unavailable).toBe(1);});
+it('requires account sign-in and does not load data for an anonymous viewer',async()=>{await act(async()=>root.render(<Appreciation slug="dc" trip={{cohort:'2030',phase:'Active trip'}} session={null} onSignIn={()=>{}} onOpenPhoto={()=>{}}/>));expect(host.textContent).toContain('same phone number or email');expect(gallery).not.toHaveBeenCalled();});
+it('shows a recap only during wrap-up and archive',async()=>{gallery.mockResolvedValue({photos:[],hasMore:false});const trip={cohort:'2030',phase:'Active trip'};await act(async()=>root.render(<Appreciation slug="dc" trip={trip} session={{user:{id:'u'}}} onOpenPhoto={()=>{}}/>));expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Your trip recap')).toBe(false);await act(async()=>root.render(<Appreciation slug="dc" trip={{...trip,phase:'Wrap-up'}} session={{user:{id:'u'}}} onOpenPhoto={()=>{}}/>));expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Your trip recap')).toBe(true);});
