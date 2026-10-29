@@ -173,21 +173,71 @@ export function PhaseStart({
         </>
       )}
       {["soon", "submissions", "waiting"].includes(phase) && (
-        <div className="reveal-countdown">
-          <p
-            className="phase-countdown"
-            aria-label="Time until the photo reveal"
+        <div className="reveal-stats">
+          <section
+            className="reveal-countdown"
+            aria-label="Photo reveal countdown"
           >
-            {countdown(schedule.guessesOpenAt, now)}
-          </p>
-          <p className="phase-copy" aria-live="polite">
-            <b>
-              {Number.isSafeInteger(schedule.submittedStudents)
-                ? schedule.submittedStudents
-                : 0}
-            </b>{" "}
-            little boos already in. Photos reveal Friday at noon.
-          </p>
+            <h2 className="reveal-stat-label">THE BIG REVEAL STARTS IN</h2>
+            <div
+              className="reveal-clock"
+              role="timer"
+              aria-label={`Time until the photo reveal: ${countdown(schedule.guessesOpenAt, now)}`}
+            >
+              {[
+                [
+                  "DAYS",
+                  Math.floor(
+                    Math.max(0, Date.parse(schedule.guessesOpenAt) - now) /
+                      86400000,
+                  ),
+                ],
+                [
+                  "HOURS",
+                  Math.floor(
+                    Math.max(0, Date.parse(schedule.guessesOpenAt) - now) /
+                      3600000,
+                  ) % 24,
+                ],
+                [
+                  "MINUTES",
+                  Math.floor(
+                    Math.max(0, Date.parse(schedule.guessesOpenAt) - now) /
+                      60000,
+                  ) % 60,
+                ],
+              ].map(([label, value]) => (
+                <div className="reveal-unit" key={label}>
+                  <span className="reveal-number">
+                    {String(value).padStart(2, "0")}
+                  </span>
+                  <span className="reveal-unit-label">{label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="reveal-note">Friday at noon Eastern</p>
+          </section>
+          <section
+            className="reveal-participation"
+            aria-label="Submitted little boos"
+          >
+            <h2 className="reveal-stat-label">ALREADY IN THE GAME</h2>
+            <div className="reveal-unit">
+              <strong className="reveal-number reveal-total" aria-live="polite">
+                {Number.isSafeInteger(schedule.submittedStudents)
+                  ? schedule.submittedStudents
+                  : 0}
+              </strong>
+              <span className="reveal-unit-label">
+                LITTLE {schedule.submittedStudents === 1 ? "BOO" : "BOOS"}
+              </span>
+            </div>
+            <p className="reveal-note">
+              {phase === "submissions"
+                ? "Is your little boo in?"
+                : "Photos reveal when guessing opens."}
+            </p>
+          </section>
         </div>
       )}
       <button className="text-button phase-rules" onClick={onRules}>

@@ -249,11 +249,16 @@ for (const width of [390, 1280]) {
     .waitFor();
   await page.getByLabel("Time until the photo reveal").waitFor();
   await page
-    .getByText("little boos already in. Photos reveal Friday at noon.", {
-      exact: false,
-    })
+    .getByRole("heading", { name: "THE BIG REVEAL STARTS IN" })
     .waitFor();
-  assert.match(await page.locator(".reveal-countdown").innerText(), /10/);
+  assert.equal(await page.locator(".reveal-clock .reveal-number").count(), 3);
+  assert.equal(await page.locator(".reveal-total").innerText(), "10");
+  assert.ok(
+    await page
+      .locator(".reveal-number")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize) >= 50),
+  );
   await page
     .locator(".phase-start")
     .getByText("One photo per student. Siblings welcome.", { exact: false })
