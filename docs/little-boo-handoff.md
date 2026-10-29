@@ -127,3 +127,7 @@ Final local verification: build passed; 1,158 Vitest tests across 161 files pass
 ## Raffle copy clarification
 
 User-directed copy now says “Play for bonus tickets in the RCAP raffle.” The podium explains that top players earn 25, 15 or 10 raffle tickets, meaning more chances in the separate RCAP raffle. Rules explain that raffle winners are selected separately. No values, odds or other raffle prize claims are introduced. This copy revision does not change the denied migration/publication status.
+
+## Production migration completed, October 29 13:29 UTC
+
+The user requested another normal connector attempt from macOS. This invocation succeeded. Production migration history confirms version `20261029132925`, name `little_boo_student_contributions`; the checked-in filename is aligned with that actual version. Readback verifies one preserved existing photo, one active backfill receipt totaling exactly 3 points, zero scored guesses and zero opening-text preferences. The public phase response contains only schedule data and `submittedStudents: 1`. Eastern instants match Friday 11:59 a.m. submission cutoff, Friday noon opening and Saturday 11:59 p.m. close. Earlier blockers above are historical. No migration rerun is needed. Game-only publication and live checks follow.
