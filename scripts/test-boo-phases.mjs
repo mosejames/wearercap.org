@@ -297,6 +297,9 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
       .count(),
     0,
   );
+  await page
+    .getByText("Photo submissions are closed.", { exact: true })
+    .waitFor();
   if (phase === "waiting") {
     await page.getByLabel("Time until the photo reveal").waitFor();
     assert.equal(

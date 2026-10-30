@@ -93,6 +93,9 @@ export function PhaseStart({
                 ? "GUESSING CLOSED"
                 : "SUNDAY · RESULTS"}
       </div>
+      {["waiting", "guessing", "closed", "results"].includes(phase) && (
+        <p className="phase-copy">Photo submissions are closed.</p>
+      )}
       {phase === "submissions" ? (
         <>
           <p className="game-promise">
@@ -131,7 +134,9 @@ export function PhaseStart({
             {easternTime(schedule.guessesOpenAt)}
           </p>
           <p className="phase-copy">
-            Submissions have closed. Come back for one guess per kid.
+            {phase === "waiting"
+              ? "Come back at noon Eastern for one guess per kid."
+              : "Photo submissions have not opened yet."}
           </p>
         </>
       ) : phase === "guessing" ? (
