@@ -50,10 +50,21 @@ try {
   await db.exec(
     "delete from boo_private.photos where owner='e0000000-0000-4000-8000-000000000001';delete from boo_private.people where owner='e0000000-0000-4000-8000-000000000001';delete from boo_private.contributions where user_id='e0000000-0000-4000-8000-000000000001';delete from boo_private.notifications where user_id='e0000000-0000-4000-8000-000000000001';delete from boo_private.players where user_id='e0000000-0000-4000-8000-000000000001';delete from auth.users where id='e0000000-0000-4000-8000-000000000001';",
   );
+  const firstNameMigration = (
+    await fs.readdir(root + "/supabase/migrations")
+  ).find((name) => name.endsWith("_little_boo_first_name_guesses.sql"));
+  if (firstNameMigration)
+    await db.exec(
+      await fs.readFile(
+        root + "/supabase/migrations/" + firstNameMigration,
+        "utf8",
+      ),
+    );
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",
     "little_boo_phases.sql",
+    "little_boo_first_names.sql",
   ]) {
     try {
       const sql = await fs.readFile(root + "/supabase/tests/" + name, "utf8");
@@ -62,6 +73,30 @@ try {
     } catch (e) {
       throw e;
     }
+  }
+  if (firstNameMigration) {
+    const source = await fs.readFile(
+      root + "/supabase/migrations/" + firstNameMigration,
+      "utf8",
+    );
+    const repair = source
+      .split("-- BEGIN FIRST-NAME REPAIR")[1]
+      ?.split("-- END FIRST-NAME REPAIR")[0];
+    const fixture = await fs.readFile(
+      root + "/supabase/tests/little_boo_first_name_repair.sql",
+      "utf8",
+    );
+    const chunks = fixture.split("-- APPLY_ACTUAL_REPAIR");
+    if (!repair || chunks.length !== 3)
+      throw Error("Repair test boundaries missing");
+    await db.exec(chunks[0]);
+    await db.exec(repair);
+    await db.exec(chunks[1]);
+    await db.exec(repair);
+    await db.exec(chunks[2]);
+    console.log(
+      "PASS: little_boo_first_name_repair.sql (actual repair twice, rollback only)",
+    );
   }
   await db.close();
 } catch (e) {

@@ -1191,7 +1191,7 @@ function Guess({
               required
               maxLength={100}
               minLength={2}
-              placeholder="Full name or an accepted nickname"
+              placeholder="First name, full name or supplied nickname"
               autoComplete="off"
               disabled={busy}
             />
@@ -1392,8 +1392,9 @@ function Rules() {
           separate bonus round.
         </li>
         <li>
-          Type a full name or a supplied nickname. You may edit freely before
-          you lock it in. A wrong committed guess ends that photo for you.
+          Type the correct first name, full name or a supplied nickname. You may
+          edit freely before you lock it in. A wrong committed guess ends that
+          photo for you.
         </li>
         <li>
           Choose “A little help” before submitting if you want four real
