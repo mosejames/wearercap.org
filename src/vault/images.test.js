@@ -48,3 +48,14 @@ it('keeps original storage behavior for other apps that share the image pipeline
   expect(out).toMatchObject({width:4032,height:3024,ext:'png',contentType:'image/png'});
   expect(encodes).toHaveLength(2);
 });
+
+it.each([true, false])('preserves every GIF byte in gallery renditions with optimize=%s', async (optimize) => {
+  const file = new File(['GIF89a all animation frames'], 'booth.gif', {type:'image/gif'});
+  const out = await prepareImage(file, {optimize, preserveAnimation:true});
+  expect(out.orig).toBe(file);
+  expect(out.web).toBe(file);
+  expect(out.thumb).toBe(file);
+  expect(out).toMatchObject({ext:'gif', contentType:'image/gif', width:4032, height:3024});
+  expect(encodes).toHaveLength(0);
+  expect(bitmap.close).toHaveBeenCalled();
+});

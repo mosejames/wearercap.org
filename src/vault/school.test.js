@@ -21,3 +21,8 @@ describe('school-wide vault', () => {
     expect(rcaHouse('nope')).toBeNull();
   });
 });
+
+it('uses GIF rendition keys only for animation-aware upload clients', () => {
+  expect(keysFor('booth', 'x', 'gif', 'u', 'rcap', true)).toMatchObject({orig:'rcap/2026-27/u/booth/x/orig.gif',web:'rcap/2026-27/u/booth/x/web.gif',thumb:'rcap/2026-27/u/booth/x/thumb.gif'});
+  expect(keysFor('booth', 'x', 'gif', 'u', 'rcap').web).toMatch(/web\.jpg$/);
+});

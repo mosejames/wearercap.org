@@ -59,13 +59,13 @@ function publicBase(m) {
 }
 
 // Object keys. One folder per photo so the three renditions travel together.
-export function keysFor(eventSlug, id, ext, userId, house = 'amistad') {
+export function keysFor(eventSlug, id, ext, userId, house = 'amistad', animated = false) {
   const slug = String(eventSlug || 'misc').toLowerCase().replace(/[^a-z0-9-]+/g, '-').slice(0, 60);
   const base = `${HOUSES.has(house) ? house : 'amistad'}/${YEAR}/${userId}/${slug}/${id}`;
   return {
     orig: `${base}/orig.${ext}`,
-    web: `${base}/web.jpg`,
-    thumb: `${base}/thumb.jpg`,
+    web: `${base}/web.${animated ? 'gif' : 'jpg'}`,
+    thumb: `${base}/thumb.${animated ? 'gif' : 'jpg'}`,
   };
 }
 
@@ -135,13 +135,15 @@ export default async function handler(req, res) {
     if (!UUID.test(id) || !EXT_OK.test(ext)) {
       return res.status(400).json({ error: `Bad file entry: ${id || '?'}.${ext}` });
     }
-    const keys = keysFor(body.eventSlug, id, ext, userId, house);
+    const animated = f.animated === true && ext === 'gif' && ct === 'image/gif';
+    const renditionType = animated ? 'image/gif' : 'image/jpeg';
+    const keys = keysFor(body.eventSlug, id, ext, userId, house, animated);
     const item = { id, keys };
     if (client) {
       item.urls = {
         orig: await presignPut(client, keys.orig, ct),
-        web: await presignPut(client, keys.web, 'image/jpeg'),
-        thumb: await presignPut(client, keys.thumb, 'image/jpeg'),
+        web: await presignPut(client, keys.web, renditionType),
+        thumb: await presignPut(client, keys.thumb, renditionType),
       };
     }
     items.push(item);

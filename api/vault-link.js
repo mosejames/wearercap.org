@@ -90,8 +90,9 @@ async function describePhoto(id, eventId, house) {
   if (!base || !/^https:\/\//.test(base)) return null;
   const image = `${base.replace(/\/+$/, '')}/${p.web_key.split('/').map(encodeURIComponent).join('/')}`;
   // The existing web rendition is at most 1800px on its longest edge.
-  const scale = Math.min(1, 1800 / Math.max(p.width || 0, p.height || 0));
-  return { id: p.id, image, width: p.width > 0 ? Math.max(1, Math.round(p.width * scale)) : null,
+  const gif = /\.gif$/i.test(p.web_key);
+  const scale = gif ? 1 : Math.min(1, 1800 / Math.max(p.width || 0, p.height || 0));
+  return { id: p.id, image, type: gif ? 'image/gif' : 'image/jpeg', width: p.width > 0 ? Math.max(1, Math.round(p.width * scale)) : null,
     height: p.height > 0 ? Math.max(1, Math.round(p.height * scale)) : null };
 }
 
@@ -198,7 +199,7 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${esc(canonical)}" />
     <meta property="og:image" content="${esc(img)}" />
-    <meta property="og:image:type" content="${photo ? 'image/jpeg' : 'image/png'}" />
+    <meta property="og:image:type" content="${photo ? photo.type : 'image/png'}" />
     ${!photo || photo.width ? `<meta property="og:image:width" content="${photo ? photo.width : 1200}" />` : ''}
     ${!photo || photo.height ? `<meta property="og:image:height" content="${photo ? photo.height : 630}" />` : ''}
     <meta property="og:image:alt" content="${esc(alt)}" />

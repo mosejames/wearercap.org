@@ -89,10 +89,10 @@ async function heicToJpeg(file) {
 
 /**
  * @param {File} file
- * @param {{optimize?:boolean}} options
+ * @param {{optimize?:boolean, preserveAnimation?:boolean}} options
  * @returns {Promise<{id:string, ext:string, contentType:string, orig:Blob, web:Blob, thumb:Blob, width:number, height:number, takenAt:Date|null, name:string}>}
  */
-export async function prepareImage(file, { optimize = false } = {}) {
+export async function prepareImage(file, { optimize = false, preserveAnimation = false } = {}) {
   const takenAt = await readTakenAt(file);
   let orig = file;
   let bitmap;
@@ -108,6 +108,14 @@ export async function prepareImage(file, { optimize = false } = {}) {
   // thumb renditions are JPEG either way.
   try {
     let { w, h } = sizeOf(bitmap);
+    // Canvas encoding drops all but one GIF frame. Keep the complete source
+    // for animated renditions, including when RCAP optimizes photo masters.
+    if (preserveAnimation && (file.type === 'image/gif' || /\.gif$/i.test(file.name || ''))) {
+      const gif = file.type === 'image/gif' ? file : new Blob([file], { type: 'image/gif' });
+      return { id: crypto.randomUUID(), name: file.name || 'photo', ext: 'gif',
+        contentType: 'image/gif', orig: gif, web: gif, thumb: gif,
+        width: w, height: h, takenAt };
+    }
     // RCAP stores a print/share-sized master instead of the camera original.
     // Keep an already-small JPEG if recompressing it would make it larger.
     if (optimize) {

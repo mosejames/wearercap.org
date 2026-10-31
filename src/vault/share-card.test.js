@@ -101,3 +101,12 @@ it('does not expose a Capsule photo through an Ami Vault share', async () => {
   expect(res.body).toContain('/api/vault-og?');
   expect(res.body).not.toContain('/rcap/photo/web.jpg');
 });
+
+it('shares the exact animated web rendition with its actual type and dimensions', async () => {
+  const res = await renderPhoto({...storedPhoto, web_key:'rcap/photo/web.gif', width:2400, height:1600});
+  expect(res.body).toContain('property="og:image" content="https://media.wearercap.org/rcap/photo/web.gif"');
+  expect(res.body).toContain('property="og:image:type" content="image/gif"');
+  expect(res.body).toContain('property="og:image:width" content="2400"');
+  expect(res.body).toContain('name="twitter:card" content="summary_large_image"');
+  expect(res.headers['Cache-Control']).toBe('no-store');
+});

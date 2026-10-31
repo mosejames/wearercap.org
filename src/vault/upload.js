@@ -31,7 +31,7 @@ async function sign(eventSlug, items) {
   const r = await fetch('/api/vault-sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...await authHeaders() },
-    body: JSON.stringify({ house: HOUSE.id, eventSlug, files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType })) }),
+    body: JSON.stringify({ house: HOUSE.id, eventSlug, files: items.map((p) => ({ id: p.id, ext: p.ext, contentType: p.contentType, animated: p.web.type === 'image/gif' })) }),
   });
   if (!r.ok) {
     let msg = `Could not get upload permission (${r.status})`;
@@ -45,8 +45,8 @@ async function putAll(prepared, signed, mode, onBytes, signal) {
   const { keys, urls } = signed;
   const parts = [
     ['orig', prepared.orig, prepared.contentType],
-    ['web', prepared.web, 'image/jpeg'],
-    ['thumb', prepared.thumb, 'image/jpeg'],
+    ['web', prepared.web, prepared.web.type || 'image/jpeg'],
+    ['thumb', prepared.thumb, prepared.thumb.type || 'image/jpeg'],
   ];
   for (const [which, blob, ct] of parts) {
     if (mode === 'r2') await putWithProgress(urls[which], blob, ct, onBytes, signal);
@@ -101,7 +101,7 @@ export async function uploadBatch(files, { event, profile, onProgress, signal })
       continue;
     }
     try {
-      ready.push({ ...await (isVideo(f) ? prepareVideo(f) : prepareImage(f, { optimize: IS_SCHOOL })), contentHash: hash });
+      ready.push({ ...await (isVideo(f) ? prepareVideo(f) : prepareImage(f, { optimize: IS_SCHOOL, preserveAnimation: true })), contentHash: hash });
     } catch (e) {
       state.failed.push({ name: f.name, error: e.message || 'Could not read' });
     }
