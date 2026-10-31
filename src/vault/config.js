@@ -99,10 +99,34 @@ const SCHOOL_ALBUMS = ['bingo-night', 'karaoke-night'];
 
 export const PROMOS = IS_SCHOOL ? [
   {
+    id: 'georgia-goal',
+    adminLabel: 'Georgia GOAL information',
+    adminDescription: 'Explain Georgia GOAL and how families can support financial aid at RCA.',
+    events: ['rcap-trunk-or-treat-2026'],
+    until: '2026-12-18',
+    cta: 'Learn about Georgia GOAL',
+    href: '/georgia-goal/',
+    variants: [
+      { eyebrow: 'Supporting RCA students', title: 'A little GOAL. A big possibility.', body: 'Learn how Georgia GOAL supports financial aid at RCA through a state tax credit. RCA signup deadline: December 18.' },
+    ],
+  },
+  {
+    id: 'trunk-booth-gallery',
+    adminLabel: 'Trunk or Treat photo booth gallery',
+    adminDescription: 'Send families to the Trunk or Treat photo booth photos already in the Capsule.',
+    events: ['rcap-trunk-or-treat-2026'],
+    until: '2099-12-31',
+    cta: 'See the photo booth photos',
+    href: '#/e/rcap-trunk-or-treat-photo-booth',
+    variants: [
+      { eyebrow: 'More Trunk or Treat memories', title: 'Costumes. Cameras. Big smiles.', body: 'Your photo booth moments are in the Capsule too. Find your family’s poses and keep the fun going.' },
+    ],
+  },
+  {
     id: 'karaoke-feedback',
     adminLabel: 'Karaoke feedback survey',
     adminDescription: 'Invite families to take the anonymous R&B Karaoke Night survey.',
-    events: ['karaoke-night', 'rcap-karaoke-photo-booth'],
+    events: ['karaoke-night', 'rcap-karaoke-photo-booth', 'rcap-trunk-or-treat-2026'],
     until: '2027-05-28',
     cta: 'Take the survey',
     href: '/feedback/rb-karaoke',

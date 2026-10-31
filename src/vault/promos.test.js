@@ -55,6 +55,18 @@ describe('album promos', () => {
     expect(promoSlots(p, 0)).toHaveLength(1);
   });
 
+  it('routes Trunk or Treat cards to GOAL, the karaoke survey and its own visible booth album', async () => {
+    const { promosFor, promoSlots } = await school();
+    const cards = promosFor('rcap-trunk-or-treat-2026', '2026-10-31', ['upload-more-photos', 'georgia-goal', 'karaoke-feedback', 'trunk-booth-gallery']);
+    expect(Object.fromEntries(cards.map(p => [p.id, p.href]))).toEqual({
+      'georgia-goal': '/georgia-goal/',
+      'karaoke-feedback': '/feedback/rb-karaoke',
+      'trunk-booth-gallery': '#/e/rcap-trunk-or-treat-photo-booth',
+    });
+    expect(new Set(promoSlots(cards, 152).map(s => s.promo.id)).size).toBe(3);
+    expect(promosFor('bingo-night', '2026-10-31').some(p => p.id === 'georgia-goal')).toBe(false);
+  });
+
   it('link the suggestion box straight to suggestion mode', async () => {
     const { PROMOS } = await school();
     expect(PROMOS.find((p) => p.id === 'suggestion-box').href).toBe('/wish-i-knew/?mode=suggestion');

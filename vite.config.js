@@ -26,6 +26,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        georgiagoal: resolve(__dirname, "georgia-goal/index.html"),
         littleboo: resolve(__dirname, "little-boo/index.html"),
         tripstudio: resolve(__dirname, "trip-studio/index.html"),
         tripengine: resolve(__dirname, "trip-vault/index.html"),
