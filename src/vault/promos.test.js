@@ -48,6 +48,16 @@ describe('album promos', () => {
     expect(new Set(mem.map((s) => s.card.title)).size).toBe(3);
   });
 
+  it('shows every selected custom card even when there are fewer photos or slots', async () => {
+    const {promoSlots} = await school();
+    const cards = Array.from({length:12}, (_,i)=>({id:`custom-${i}`,title:`Card ${i}`}));
+    for(const count of [0,3,152]) {
+      const slots=promoSlots(cards,count);
+      expect(new Set(slots.map(s=>s.promo.id)).size).toBe(12);
+      expect(slots.every(s=>s.at>=0&&s.at<=count)).toBe(true);
+    }
+  });
+
   it('give short and empty albums one card', async () => {
     const { promosFor, promoSlots } = await school();
     const p = promosFor('bingo-night', '2026-09-16');

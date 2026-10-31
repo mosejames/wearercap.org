@@ -358,3 +358,28 @@ intentional branded photo picker with a generous touch target, clear keyboard
 focus, and selected-photo feedback with change/remove controls. Preserve the
 native file input and phone photo-library behavior behind the designed control.
 This is a standing user preference from October 26, 2026.
+
+## Editable gallery card library
+
+RCAP admin has a Cards section at `/rcap-capsule/#/admin?section=cards`.
+New cards are records in `vault_private.gallery_cards`, managed through the
+`public.vault_gallery_cards` invoker wrapper and its private, gated handler.
+Do not add a source-code enum or database allowlist entry for each new card.
+The existing `gallery_cards` array on events controls legacy standard cards;
+custom card records select their own RCAP event IDs. The card library handles
+exact authored copy, draft/published/archived state, Eastern start/end dates,
+optional images and display order. Only currently published cards on visible
+RCAP albums are returned to visitors. Management uses the existing owner or
+RCAP passcode check. Direct table access stays revoked with RLS enabled.
+
+`src/vault/galleryCards.js` merges custom cards with standard promos. Migrated
+Georgia GOAL and Trunk booth promos are suppressed even during API outages,
+so archived or expired cards do not reappear from the legacy definitions.
+Custom card copy bypasses generated gallery wording. Public galleries refresh
+cards every minute and when the browser becomes visible. Short galleries make
+room for all selected custom cards. Archived cards remain editable in admin.
+
+`supabase/tests/gallery_card_library.sql` checks permissions, safe URLs,
+visibility, scheduling, optimistic revision checks and the save/archive flow
+inside a rollback transaction. Frontend tests are in `galleryCards.test.js`
+and `promos.test.js`. Migration: `20261031123812_gallery_card_library.sql`.

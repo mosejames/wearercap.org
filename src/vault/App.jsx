@@ -2,7 +2,7 @@ import { Trophy, ListChecks, Link2, SlidersHorizontal } from 'lucide-react';
 import { CapsuleShareAdmin } from './CapsuleShareAdmin.jsx';
 import Brand from '../components/Brand.jsx';
 import { sortGallery } from './gallerySort.js';
-import { Fragment, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
   MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
@@ -36,6 +36,9 @@ import {
   DEFAULT_UPLOAD_PROMPTS, galleryShareMessage, promosWithVoice, uploadPromptsFor, uploadPromptSlots,
 } from './galleryVoice.js';
 
+import {galleryCardsCall, mergeGalleryCards} from './galleryCards.js';
+const GalleryCardsManager = lazy(() => import('./GalleryCardsManager.jsx').then(m => ({default:m.GalleryCardsManager})));
+
 /* ------------------------------------------------------------- routing */
 
 function useHash() {
@@ -58,7 +61,7 @@ function parseRoute(hash) {
   if (parts[0] === 'person' && parts[1]) return { name: 'person', owner: parts[1] };
   if (parts[0] === 'top') return { name: 'top' };
   if (parts[0] === 'me') return { name: 'me' };
-  if (parts[0] === 'admin') return { name: 'admin', gallery: new URLSearchParams(query).get('gallery') || '' };
+  if (parts[0] === 'admin') return { name: 'admin', gallery: new URLSearchParams(query).get('gallery') || '', section: new URLSearchParams(query).get('section') || '' };
   return { name: 'home' };
 }
 
@@ -1102,7 +1105,21 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [galleryVoice, setGalleryVoice] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const galleryCardIds = galleryCardIdsFor(event, today);
-  const galleryPromos = promosFor(event?.slug, today, galleryCardIds);
+  const [cardLibrary, setCardLibrary] = useState(null);
+  useEffect(() => {
+    if (!IS_SCHOOL || !event?.id) return;
+    let active = true;
+    setCardLibrary(null);
+    const loadCards = () => galleryCardsCall('for_event', {event:event.id})
+      .then(data => { if(active) setCardLibrary({...data,eventId:event.id}); })
+      .catch(() => { /* Existing cards remain available during a temporary outage. */ });
+    loadCards();
+    const timer = setInterval(loadCards, 60000);
+    const onVisible = () => {if(document.visibilityState==='visible')loadCards();};
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {active=false;clearInterval(timer);document.removeEventListener('visibilitychange', onVisible);};
+  }, [event?.id, today]);
+  const galleryPromos = mergeGalleryCards(promosFor(event?.slug, today, galleryCardIds), cardLibrary?.eventId===event?.id ? cardLibrary : null);
   const showUploadPrompts = galleryCardIds.includes(UPLOAD_PROMPT_CARD_ID);
   const [selecting,setSelecting]=useState(false),[selected,setSelected]=useState(new Set()),[moving,setMoving]=useState(null),[target,setTarget]=useState(''),[moveBusy,setMoveBusy]=useState(false),[moveError,setMoveError]=useState('');
   const pick=i=>setSelected(prev=>{const n=new Set(prev);const id=sorted[i].id;n.has(id)?n.delete(id):n.add(id);return n;});
@@ -1470,13 +1487,13 @@ function MePage({ owner, rewardVersion, profile, events, onSuggest, onAdd, onPro
 
 const EMPTY_EVENT = { title: '', slug: '', blurb: '', kind: 'house', startsOn: '', endsOn: '', open: true, featured: false, hidden: false, galleryCards: [UPLOAD_PROMPT_CARD_ID] };
 
-function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite, openGallerySlug = '' }) {
+function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests, refresh, showToast, storage, onInvite, openGallerySlug = '', initialSection = '' }) {
   useDocTitle('Admin');
   const [galleryQuery,setGalleryQuery]=useState(''),[galleryFilter,setGalleryFilter]=useState('recent'),[galleryPage,setGalleryPage]=useState(0);
   const filteredGalleries=events.filter(e=>e.title.toLowerCase().includes(galleryQuery.trim().toLowerCase())&&(galleryFilter==='all'||(galleryFilter==='ongoing'?e.ongoing:!e.ongoing&&(galleryFilter==='recent'?e.startsOn<=todayISO():e.startsOn>todayISO())))).sort((a,b)=>b.startsOn.localeCompare(a.startsOn)||a.title.localeCompare(b.title));
   const galleryPages=Math.max(1,Math.ceil(filteredGalleries.length/10)),currentGalleryPage=Math.min(galleryPage,galleryPages-1);
 
-  const [tab,setTab]=useState('reports'),[pending,setPending]=useState({reports:0,suggestions:0});
+  const [tab,setTab]=useState(initialSection==='cards'?'cards':'reports'),[pending,setPending]=useState({reports:0,suggestions:0});
   const updateCounts=useCallback(async()=>{if(!admin)return;const results=await Promise.allSettled([reviewReports(pass),staffRole==='moderator'||IS_SCHOOL?Promise.resolve([]):rewardCall('vault_event_suggestions',{p_pass:pass})]);setPending({reports:results[0].status==='fulfilled'?results[0].value.length:0,suggestions:results[1].status==='fulfilled'?results[1].value.length:0});},[admin,pass,staffRole]);
   useEffect(()=>{updateCounts();},[updateCounts,tab]);
   const changed=()=>{refresh();updateCounts();};
@@ -1562,12 +1579,13 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
         <p>Storage: <b>{storage?.mode === 'r2' ? 'Cloudflare R2' : 'Supabase Storage (on-ramp)'}</b>. Events, asks, and the nudge text live here. {staffRole ? <span>You are signed in as {staffRole}. Sign out from My {WORDS.place} to lock account access.</span> : <button className="link" onClick={() => onPass('')}>Lock</button>}</p>
       </div>
 
-      <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],...(IS_SCHOOL?[]:[['suggestions','Suggestions']]),...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
+      <nav className="admin-tabs" aria-label="Admin sections">{[['reports','Reports'],['galleries','Galleries'],...(IS_SCHOOL?[['cards','Cards']]:[]),...(IS_SCHOOL?[]:[['suggestions','Suggestions']]),...(staffRole==='owner'?[['team','Team'],['members','Members']]:[])].map(([key,label])=><button key={key} aria-current={tab===key?'page':undefined} className={tab===key?'active':''} onClick={()=>setTab(key)}>{label}{pending[key]>0&&<span>{pending[key]}</span>}</button>)}</nav>
       {IS_SCHOOL&&<p><a className="btn small ghost" href="/feedback/admin">Feedback Studio: surveys &amp; results ↗</a></p>}
       {tab==='team'&&staffRole==='owner'&&<StaffPanel key="team" />}
       {tab==='members'&&staffRole==='owner'&&<StaffPanel key="members" directory />}
       {tab==='suggestions'&&<SuggestionReview events={events} pass={pass} onChanged={changed} />}
       {tab==='reports'&&<ModerationPanel pass={pass} onChanged={changed} />}
+      {tab==='cards'&&IS_SCHOOL&&<Suspense fallback={<p role="status">Opening your cards…</p>}><GalleryCardsManager events={events} pass={pass} Preview={PromoCard} onChanged={()=>showToast('Card saved. Gallery cards refresh automatically.')} /></Suspense>}
       {tab==='galleries'&&<>
       {!IS_SCHOOL && <GalleryVisibility pass={pass} onChanged={changed} />}
       <details className="adm-sec photo-requests"><summary>Photo requests · {requests.filter(r=>r.open).length} active</summary>
@@ -1649,8 +1667,8 @@ function AdminPage({ admin, staffRole, onSignIn, pass, onPass, events, requests,
               ))}
             </div>
             {IS_SCHOOL && <fieldset className="gallery-card-picker">
-              <legend>Cards shown inside this gallery</legend>
-              <p className="fine">Choose any combination. Custom wording will be created for this gallery when you save.</p>
+              <legend>Standard cards shown inside this gallery</legend>
+              <p className="fine">Choose any combination. To create and assign your own cards, <a href="#/admin?section=cards" target="_blank" rel="noopener noreferrer">open the card library ↗</a>.</p>
               <div className="gallery-card-options">{GALLERY_CARD_OPTIONS.map((card) => {
                 const checked = editing.form.galleryCards?.includes(card.id) || false;
                 return <label key={card.id} className={checked ? 'selected' : ''}>
@@ -1853,7 +1871,7 @@ export default function App() {
       {route.name === 'person' && <ContributorPage canMove={admin} pass={pass} refreshEvents={refresh} key={route.owner} contributor={route.owner} events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'top' && <TopPage events={events} owner={owner} profile={profile} onNeedName={needName} showToast={showToast} />}
       {route.name === 'me' && <MePage onSuggest={() => setSuggesting(true)} onAdd={onAdd} rewardVersion={rewardVersion} onSignIn={() => setPhoneAsk({})} onSignOut={async () => { await signOut(); setOwner(null); setProfile(null); }} owner={owner} profile={profile} events={events} onProfile={() => setProfileOpen(true)} showToast={showToast} />}
-      {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} openGallerySlug={route.gallery} />}
+      {route.name === 'admin' && <AdminPage admin={admin} staffRole={staffRole} onSignIn={() => setPhoneAsk({})} pass={pass} onPass={setPass} events={events} requests={requests} refresh={refresh} showToast={showToast} storage={storage} onInvite={setInvite} openGallerySlug={route.gallery} initialSection={route.section} />}
 
       {suggesting && <Sheet title="Suggest an event" onClose={() => setSuggesting(false)}><SuggestionForm profile={profile} onSignIn={() => needName('Sign in to suggest an event.')} onDone={() => setSuggesting(false)} /></Sheet>}
       <footer className="foot">

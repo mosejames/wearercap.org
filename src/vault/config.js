@@ -233,7 +233,7 @@ export const GALLERY_CARD_OPTIONS = IS_SCHOOL ? [
     label: 'Add more photos',
     description: 'Place the custom photo-request cards throughout this gallery. They automatically ease back as more families contribute.',
   },
-  ...PROMOS.filter((promo) => !['karaoke-booth-gallery', 'karaoke-event-gallery'].includes(promo.id)).map((promo) => ({
+  ...PROMOS.filter((promo) => !['karaoke-booth-gallery', 'karaoke-event-gallery', 'georgia-goal', 'trunk-booth-gallery'].includes(promo.id)).map((promo) => ({
     id: promo.id,
     label: promo.adminLabel || promo.cta,
     description: promo.adminDescription || promo.variants?.[0]?.body || '',
@@ -254,6 +254,11 @@ export const promoSlots = (promos, count) => {
   const spots = [];
   for (let at = PROMO_FIRST; at <= count; at += PROMO_EVERY) spots.push(at);
   if (!spots.length) spots.push(count);
+  // A growing custom-card library must not strand selected cards in a short album.
+  if (promos.some(p => p.id.startsWith('custom-')) && spots.length < promos.length) {
+    spots.length = 0;
+    for (let n = 0; n < promos.length; n++) spots.push(Math.floor(count * (n + 1) / promos.length));
+  }
   const seen = new Map();
   return spots.map((at, n) => {
     const promo = promos[n % promos.length];
