@@ -407,8 +407,7 @@ function App({ preview = null }) {
         </div>
         <p className="fine">
           Top players earn 25, 15 or 10 raffle tickets: more chances in the RCAP
-          raffle. Organizer drawing for tied ticket places. Results Sunday,
-          November 1. Tickets are issued by the organizer after review.
+          raffle. Organizer drawing for tied ticket places. Results follow after guessing closes and organizer review. Tickets are issued by the organizer after review.
         </p>
       </section>
       <main>
@@ -1166,7 +1165,7 @@ function Guess({
         <p className="message">
           {phase === "submissions" || phase === "waiting" || phase === "soon"
             ? "Guessing opens " + openingLabel + "."
-            : "Guessing has closed. Results are Sunday after organizer review."}
+            : "Guessing has closed. Results follow after organizer review."}
         </p>
       ) : needsProfile ? (
         <QuickScoring busy={busy} run={run} onSave={onProfile} mode={mode} />
@@ -1370,9 +1369,8 @@ function Boards({ data, mode }) {
       )}
       <p className="fine">
         Student totals combine guess points and a separate 3-point bonus per
-        student’s first accepted photo. Guessing closes Saturday, October 31 at
-        11:59 p.m. Eastern. Organizer drawing settles tied prize places. Results
-        Sunday, November 1. No tickets are issued by this app.
+        student’s first accepted photo. Guessing is extended through Sunday, November 1 at
+        11:59 p.m. Eastern. Organizer drawing settles tied prize places. Results follow after guessing closes and organizer review. No tickets are issued by this app.
       </p>
     </section>
   );
@@ -1422,8 +1420,8 @@ function Rules() {
       </ol>
       <p>
         Photo submissions close Friday, October 30 at 11:59 a.m. Eastern.
-        Guessing: Friday, October 30 at noon Eastern through Saturday, October
-        31 at 11:59 p.m. Eastern. Results: Sunday, November 1 after organizer
+        Guessing: Friday, October 30 at noon Eastern through Sunday, November
+        1 at 11:59 p.m. Eastern. Results follow after guessing closes, organizer
         review and drawings for tied prize places. Removing a photo removes its
         live guess points and contribution bonus, but its permanent receipt
         prevents earning the bonus again.
@@ -1504,8 +1502,8 @@ function Admin({ run, busy, refresh }) {
       <h3>Confirmed round schedule</h3>
       <p>
         Photo submissions end Friday, October 30 at 11:59 a.m. Eastern. Guessing
-        opens Friday, October 30 at noon Eastern and closes Saturday, October 31
-        at 11:59 p.m. Eastern. Results Sunday, November 1. Opening-text
+        opens Friday, October 30 at noon Eastern and closes Sunday, November 1
+        at 11:59 p.m. Eastern. Results follow after guessing closes and organizer review. Opening-text
         requests: {d.openingNoticeRequests || 0}. None are scheduled by this
         app.
       </p>

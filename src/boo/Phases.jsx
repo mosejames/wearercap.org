@@ -167,7 +167,7 @@ export function PhaseStart({
             <strong>
               {schedule.resultsPublished
                 ? "Results are ready."
-                : "Results Sunday, November 1."}
+                : "Results follow after organizer review."}
             </strong>
           </p>
           <p className="phase-copy">
