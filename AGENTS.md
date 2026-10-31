@@ -389,3 +389,10 @@ Positions are randomized once per mounted gallery grid, with gaps between cards;
 rerenders keep the same seed. Equal-priority cards rotate, while different
 priorities retain their order. Promo and upload cards use the same four RCAP
 treatments and small destination-aware icons. Photo indexes remain unchanged.
+
+Trunk or Treat's main and booth albums now use the `simple` album-pair mode.
+They switch through the header's two gallery links, link once to the Trunk or
+Treat survey, show each assigned informational card only once, and replace
+in-grid upload reminders with a fixed Add photos & videos button on desktop
+and mobile. Only GOAL is currently assigned in-grid to those albums. Do not
+restore the old karaoke survey or reciprocal gallery ads in those grids.

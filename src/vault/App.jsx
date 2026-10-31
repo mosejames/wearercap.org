@@ -723,9 +723,9 @@ function PromoCard({ promo }) {
 
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
-function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0, uploadPrompts = DEFAULT_UPLOAD_PROMPTS }) {
+function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0, uploadPrompts = DEFAULT_UPLOAD_PROMPTS, repeatPromos = true }) {
   const [layoutSeed] = useState(() => crypto.randomUUID());
-  const layout = galleryCardLayout(promos, photos.length, contributorCount, layoutSeed, !!onAddPhotos);
+  const layout = galleryCardLayout(promos, photos.length, contributorCount, layoutSeed, !!onAddPhotos, repeatPromos);
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
     return promos.length ? <>{empty}<div className="grid promo-only">{layout.filter(s=>s.type==='promo').map((s) => <PromoCard key={s.key} promo={{...s.card,appearance:s.appearance}} />)}</div></> : empty;
@@ -1111,6 +1111,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const [leaderTab, setLeaderTab] = useState('houses');
   const [galleryVoice, setGalleryVoice] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const simpleGallery = ALBUM_PAIRS.some(p=>p.simple&&(p.main===event?.slug||p.booth===event?.slug));
   const galleryCardIds = galleryCardIdsFor(event, today);
   const [cardLibrary, setCardLibrary] = useState(null);
   useEffect(() => {
@@ -1207,7 +1208,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
   const visible = sorted.filter((p) => !p.hidden);
 
   return (
-    <div className="event">
+    <div className={`event${simpleGallery?' simple-gallery':''}`}>
       {dropOver && (
         <div className="page-drop">
           <div>
@@ -1221,8 +1222,13 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           {!homeMode && <a href="#/" className="crumb">← Capsule home</a>}
           <div className="gallery-heading">
             <div><p className="gallery-date">{event.ongoing ? 'All year' : fmtRange(event.startsOn, event.endsOn)}{photos && <> · {plural(visible.length, 'photo')}</>}</p><h1>{event.title}</h1></div>
-            <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>
+            {!simpleGallery && <label className="gallery-albums"><span className="sr-only">Choose album</span><select aria-label="Choose album" value={event.slug} onChange={e => go(`/e/${e.target.value}`)}>{events.filter(e => !e.hidden).sort((a,b) => b.startsOn.localeCompare(a.startsOn)).map(e => <option key={e.id} value={e.slug}>{e.title}</option>)}</select></label>}
           </div>
+          {simpleGallery && companion && <nav className="album-switch" aria-label="Trunk or Treat galleries">
+            <a href={`#/e/${pair.main}`} aria-current={event.slug===pair.main?'page':undefined}><Camera size={20} aria-hidden="true"/><span>Trunk or Treat photos<small>Roaming photographer + family uploads</small></span></a>
+            <a href={`#/e/${pair.booth}`} aria-current={event.slug===pair.booth?'page':undefined}><ImagePlus size={20} aria-hidden="true"/><span>Photo booth<small>Poses, smiles &amp; costumes</small></span></a>
+          </nav>}
+          {simpleGallery && <a className="trunk-survey-link" href="/feedback/trunk-or-treat-2026"><MessageSquare size={18} aria-hidden="true"/>How was Trunk or Treat? Take the quick survey →</a>}
           <div className="gallery-order">
             <label>Arrange by <select aria-label="Arrange photos by" value={sort} onChange={e => setSort(e.target.value)}>
               <option value="time">Date taken: oldest first</option>
@@ -1232,11 +1238,11 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             </select></label>
             <p>Across everyone's uploads. If the original date is unavailable, the saved file or upload date is used.</p>
           </div>
-          {companion && <p className="ev-blurb"><a href={`#/e/${companion.slug}`}>{event.slug === pair.main ? 'Looking for your booth photos?' : 'See the rest of the night and add your own photos:'} {companion.title} →</a></p>}
+          {companion && !simpleGallery && <p className="ev-blurb"><a href={`#/e/${companion.slug}`}>{event.slug === pair.main ? 'Looking for your booth photos?' : 'See the rest of the night and add your own photos:'} {companion.title} →</a></p>}
           <div className="gallery-actions">
-            {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
-            <button className="gallery-action" onClick={() => setLeaderboard(true)}><Trophy aria-hidden="true" /><span>Leaderboard</span></button>
-            <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
+            {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos &amp; videos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
+            {!simpleGallery && <button className="gallery-action" onClick={() => setLeaderboard(true)}><Trophy aria-hidden="true" /><span>Leaderboard</span></button>}
+            {!simpleGallery && <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>}
             {canMove && visible.length > 0 && <button className="gallery-action" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting ? 'Cancel selection' : 'Select uploads'}</span></button>}
             {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {admin && <a className="gallery-action" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}><SlidersHorizontal aria-hidden="true" /><span>Gallery setup</span></a>}
@@ -1286,15 +1292,16 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
             promos={selecting ? [] : promosWithVoice(galleryPromos, galleryVoice)}
-            onAddPhotos={IS_SCHOOL && showUploadPrompts && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
+            repeatPromos={!simpleGallery}
+            onAddPhotos={IS_SCHOOL && !simpleGallery && showUploadPrompts && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
             contributorCount={new Set(visible.map((p) => p.owner)).size}
             uploadPrompts={uploadPromptsFor(galleryVoice)}
             emptyText={status === 'upcoming' ? `Photos open ${fmtDate(event.startsOn)}.` : IS_SCHOOL ? 'Your photos belong here. Add the first ones.' : 'No photos yet. Somebody has to be first.'}
           />
         )}
       </div>
-      {acceptsUploads(event, today) && photos && photos.length > 0 && (
-        <div className="fab-wrap"><button className="fab" onClick={() => onAdd(event)}>{I.plus} Add photos / videos</button></div>
+      {acceptsUploads(event, today) && photos && photos.length > 0 && !selecting && open===null && (
+        <div className="fab-wrap"><button className="fab" onClick={() => onAdd(event)}>{I.plus} Add photos &amp; videos</button></div>
       )}
       {open !== null && sorted[open] && (
         <Lightbox

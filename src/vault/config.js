@@ -21,6 +21,7 @@ export const HOUSE = HOUSES_BY_VAULT[VAULT_ID] || HOUSES_BY_VAULT.amistad;
 // Companion albums keep booth captures separate from family event uploads.
 export const ALBUM_PAIRS = VAULT_ID === 'rcap' ? [
   { main: 'karaoke-night', booth: 'rcap-karaoke-photo-booth' },
+  { main: 'rcap-trunk-or-treat-2026', booth: 'rcap-trunk-or-treat-photo-booth', simple: true },
 ] : [];
 
 

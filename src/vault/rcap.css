@@ -305,3 +305,18 @@ html[data-vault="rcap"] .card-mark{display:grid;place-items:center;width:44px;he
 html[data-vault="rcap"] .card-look-gold .card-mark{border-radius:12px;transform:rotate(-5deg)}
 html[data-vault="rcap"] .card-look-cream .card-mark{border:0;background:#1b2c5610}
 html[data-vault="rcap"] .card-mark svg{width:24px;height:24px}
+
+html[data-vault="rcap"] .album-switch{display:flex;gap:8px;padding:6px;border:1px solid #d8d0c1;background:#efe8da;border-radius:16px;margin:22px 0 14px;max-width:730px}
+html[data-vault="rcap"] .album-switch a{display:flex;align-items:center;gap:12px;flex:1;padding:14px 18px;border-radius:11px;color:#1b2c56;text-decoration:none;font-weight:850;min-height:64px}
+html[data-vault="rcap"] .album-switch a[aria-current="page"]{background:#1b2c56;color:#fff9ed;box-shadow:0 3px 8px #1b2c5620}
+html[data-vault="rcap"] .album-switch svg{flex:none}
+html[data-vault="rcap"] .album-switch small{display:block;font-size:11px;font-weight:500;line-height:1.4;opacity:.85;margin-top:4px}
+html[data-vault="rcap"] .album-switch a:focus-visible,html[data-vault="rcap"] .trunk-survey-link:focus-visible{outline:3px solid #b77c00;outline-offset:3px}
+html[data-vault="rcap"] .trunk-survey-link{display:inline-flex;align-items:center;gap:9px;color:#1b2c56;font-size:14px;font-weight:750;line-height:1.5;margin:0 0 18px;text-underline-offset:4px}
+html[data-vault="rcap"] .simple-gallery{padding-bottom:95px}
+html[data-vault="rcap"] .simple-gallery .fab-wrap{display:flex;background:linear-gradient(transparent,#faf4eae8);padding-top:24px}
+html[data-vault="rcap"] .simple-gallery .fab{background:#f2b51d;color:#1b2c56;min-height:52px;border:2px solid #1b2c56;cursor:pointer}
+html[data-vault="rcap"] .simple-gallery .fab:focus-visible{outline:3px solid #1b2c56;outline-offset:4px}
+@media(max-width:540px){html[data-vault="rcap"] .album-switch a{padding:12px 10px;gap:7px;font-size:13px}html[data-vault="rcap"] .album-switch small{font-size:10px}}
+html[data-vault="rcap"] .trunk-survey-link{border:1px solid #d8d0c1;background:#fffdf8;border-radius:10px;padding:11px 14px;min-height:44px;text-decoration:none}
+html[data-vault="rcap"] .simple-gallery .gallery-order select{appearance:none;padding-right:58px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='32' viewBox='0 0 40 32'%3E%3Ccircle cx='18' cy='16' r='14' fill='%231b2c56'/%3E%3Cpath d='m12 13 6 6 6-6' stroke='%23fff9ed' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;background-size:40px 32px}

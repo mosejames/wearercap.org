@@ -5,9 +5,11 @@ export function cardHash(value) {
   for(const ch of String(value)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
   return h>>>0;
 }
-export function galleryCardLayout(promos,count,contributors,seed,showUploads=true) {
+export function galleryCardLayout(promos,count,contributors,seed,showUploads=true,repeatPromos=true) {
   const shuffled=[...promos].sort((a,b)=>(a.priority||0)-(b.priority||0)||cardHash(`${seed}:${a.id}`)-cardHash(`${seed}:${b.id}`)||a.id.localeCompare(b.id));
-  const entries=promoSlots(shuffled,count).map(s=>({...s,type:'promo',target:s.at,key:`promo-${s.key}`}));
+  const seenCards=new Set();
+  const promoEntries=promoSlots(shuffled,count).filter(s=>{if(repeatPromos)return true;if(seenCards.has(s.promo.id))return false;seenCards.add(s.promo.id);return true;});
+  const entries=promoEntries.map(s=>({...s,type:'promo',target:s.at,key:`promo-${s.key}`}));
   if(showUploads)uploadPromptSlots(count,contributors).forEach((at,i)=>entries.push({type:'upload',target:at,index:i,key:`upload-${i}`}));
   entries.forEach(e=>{e.target=Math.max(Math.min(2,count),Math.min(count,e.target+(cardHash(`${seed}:${e.key}:position`)%11)-5));});
   entries.sort((a,b)=>a.target-b.target||a.key.localeCompare(b.key));

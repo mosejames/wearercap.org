@@ -23,6 +23,11 @@ describe('gallery card variety',()=>{
   expect(galleryCardLayout(cards,152,4,'seed').filter(s=>s.type==='upload')).toHaveLength(13);
   expect(new Set(galleryCardLayout(cards,152,4,'seed').map(s=>s.appearance)).size).toBeGreaterThan(1);
  });
+ it('can limit informational cards to one appearance with no repeated upload cards',()=>{
+  const slots=galleryCardLayout([{id:'custom-goal'}],152,1,'quiet',false,false);
+  expect(slots).toHaveLength(1);
+  expect(slots[0].type).toBe('promo');
+ });
  it('uses small icons relevant to the destination',()=>{
   expect(cardKind({href:'/feedback/rb-karaoke'})).toBe('voice');
   expect(cardKind({href:'/georgia-goal/'})).toBe('school');
