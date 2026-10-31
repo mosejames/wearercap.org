@@ -170,7 +170,6 @@ const navLinks = [
 // range ("24 & 25"), which the card detects and sizes down for.
 // School dates remain below this week’s event features.
 const upcomingEvents = [
-  { month: 'Oct', year: '2026', weekday: 'Fri', day: '30', label: 'Trunk or Treat', detail: '2:30 to 3:30 p.m., RCA Courtyard', href: 'https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk', cta: 'Help with the event' },
   { month: 'Nov', year: '2026', weekday: 'Sun', day: '1', label: 'Second raffle drawing', detail: 'Enter by Oct 31 at 11:59 p.m. Eastern.', href: RAFFLE_URL, cta: 'Buy tickets' },
   { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '5 & 6', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
   { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '19 & 20', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
@@ -798,22 +797,9 @@ function App() {
       <section id="events" className="content-section events-section">
         <div className="section-heading">
           <p className="section-label">This week with RCAP</p>
-          <h2>Trunk or Treat takes the spotlight.</h2>
-          <p>Help make Friday a little sweeter for our scholars.</p>
+          <h2>See what’s next with RCAP.</h2>
+          <p>Our second raffle drawing is this Sunday. Keep up with the dates ahead.</p>
         </div>
-        <article className="home-collective home-trunk">
-          <div className="home-collective-copy">
-            <p className="section-label">Friday, October 30 · RCA Courtyard</p>
-            <h3>Ready, set, treat.</h3>
-            <p>Costumes, candy and a courtyard full of fun for all RCA 4th through 8th graders. Join us from <strong>2:30 to 3:30 p.m.</strong></p>
-            <p>Before pickup, grab a bag of individually wrapped, nut-free candy. Volunteers will collect donations <strong>October 26 and 27 at 3:30, 4:30 and 5:30 p.m.</strong> Giving is optional and appreciated.</p>
-            <a className="button primary" href="https://www.signupgenius.com/go/10C0E4EADAD28A0FEC43-66825818-trunk">Help with Trunk or Treat <ArrowUpRight size={18} aria-hidden="true" /></a>
-            <p><a href="/events/2026/trunk-or-treat/">See all Trunk or Treat details ↗</a></p>
-          </div>
-          <a className="home-collective-visual" href="/events/2026/trunk-or-treat/" aria-label="Trunk or Treat details for October 30">
-            <img src="/images/events/trunk-or-treat.png" alt="A decorated Halloween trunk beside RCA’s blue gates, dragon arch and clock tower." loading="lazy" />
-          </a>
-        </article>
         <HomeRaffle />
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
         <div className="event-grid home-upcoming-dates" aria-label="More upcoming RCAP dates">
@@ -837,17 +823,17 @@ function App() {
         </div>
 
         <div className="callouts">
-          <a className="callout callout-social has-photo" href="/feedback/rb-karaoke">
-            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="800" />
-            <span className="callout-kicker">RCAP Karaoke Survey</span>
-            <strong>About Last Night</strong>
+          <a className="callout callout-social has-photo" href="/feedback/trunk-or-treat-2026">
+            <img className="callout-photo" src="/images/events/trunk-or-treat.png" alt="" loading="lazy" width="1200" height="800" />
+            <span className="callout-kicker">Trunk or Treat Survey</span>
+            <strong>How was Trunk or Treat?</strong>
             <span className="callout-body">What did you love? What would you change? Share your honest take in our quick, anonymous survey.</span>
             <span className="callout-go">Take the survey <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
-          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/karaoke-night">
-            <img className="callout-photo" src="/images/feedback/rb-karaoke-night.jpg" alt="" loading="lazy" width="1200" height="800" />
+          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/rcap-trunk-or-treat-2026">
+            <img className="callout-photo" src="/images/events/trunk-or-treat.png" alt="" loading="lazy" width="1200" height="800" />
             <span className="callout-kicker">The RCAP Capsule</span>
-            <strong>Add your Karaoke Night photos</strong>
+            <strong>Add your Trunk or Treat photos</strong>
             <span className="callout-body">We’ve got some of the pictures. You’ve got the rest. Enjoy the memories and add your moments to the mix.</span>
             <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
           </a>
