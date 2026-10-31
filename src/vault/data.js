@@ -1,3 +1,4 @@
+import {attachReactionCounts} from './reactionCounts.js';
 // ---------------------------------------------------------------------------
 // Data layer for the Amistad Vault. Every read and write to Supabase goes
 // through here so the views never touch table names.
@@ -351,6 +352,7 @@ async function attachLikes(photos) {
   const { data } = await supabase.from('vault_photo_likes').select('photo_id, likes').in('photo_id', ids);
   const n = new Map((data || []).map((l) => [l.photo_id, l.likes]));
   for (const p of photos) p.likes = n.get(p.id) || 0;
+  if (HOUSE.id === 'rcap') await attachReactionCounts(photos,supabase);
 }
 
 export async function insertPhotos(rows) {

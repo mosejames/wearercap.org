@@ -38,6 +38,8 @@ import {
 
 import {galleryCardsCall, mergeGalleryCards} from './galleryCards.js';
 import {galleryCardLayout, cardKind, cardHash} from './cardLayout.js';
+import PhotoReactions from './PhotoReactions.jsx';
+import {ALL_PHOTO_REACTIONS} from './reactionOptions.js';
 const GalleryCardsManager = lazy(() => import('./GalleryCardsManager.jsx').then(m => ({default:m.GalleryCardsManager})));
 
 /* ------------------------------------------------------------- routing */
@@ -651,12 +653,12 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
           </div>
         </div>
         <div className="lb-actions" aria-label="Photo actions">
-            <button className={`lb-action${liked ? ' on' : ''}`} disabled={liking} onClick={async () => {
+            {IS_SCHOOL ? <PhotoReactions key={`${p.id}:${owner||'guest'}`} photo={p} owner={owner} profile={profile} liked={liked} onLove={onLike} onNeedName={onNeedName} eventSlug={event?.slug}/> : <button className={`lb-action${liked ? ' on' : ''}`} disabled={liking} onClick={async () => {
               if (!owner || !profile) { onNeedName('Sign in to leave a little love.'); return; }
               setLiking(true); try { await onLike(p); } finally { setLiking(false); }
             }} aria-pressed={liked} aria-label={liked ? 'Unlike photo' : 'Like photo'}>
               {I.heart(liked)}<span>{liked ? 'Liked' : 'Like'}{p.likes > 0 ? ` · ${p.likes}` : ''}</span>
-            </button>
+            </button>}
           <div className="lb-manage-actions">
             {onMove&&<button className="lb-action" onClick={()=>onMove(p)}>Move</button>}
             {!mine && <button className="lb-action" onClick={() => askReport(p)} aria-label="Report a concern">{FLAG}<span>Report</span></button>}
@@ -724,6 +726,13 @@ function PromoCard({ promo }) {
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0, uploadPrompts = DEFAULT_UPLOAD_PROMPTS, repeatPromos = true }) {
+  const [reactionUpdates,setReactionUpdates]=useState({});
+  useEffect(()=>{
+    const update=e=>setReactionUpdates(current=>({...current,[e.detail.photoId]:e.detail.reactions}));
+    window.addEventListener('vault-photo-reactions',update);
+    return()=>window.removeEventListener('vault-photo-reactions',update);
+  },[]);
+  const photoExtras=p=>reactionUpdates[p.id]||p.reactions||[];
   const [layoutSeed] = useState(() => crypto.randomUUID());
   const layout = galleryCardLayout(promos, photos.length, contributorCount, layoutSeed, !!onAddPhotos, repeatPromos);
   if (!photos.length) {
@@ -742,9 +751,10 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
           {isVideo(p) && <span className="video-badge" aria-hidden="true">▶ Video</span>}
           {isGif(p) && <span className="video-badge" aria-hidden="true">GIF</span>}
           {rank && i < 3 && <span className="rank">{i + 1}</span>}
-          {(p.likes > 0 || (counts && counts.get(p.id))) && (
+          {(p.likes > 0 || photoExtras(p).some(r=>r.count>0) || (counts && counts.get(p.id))) && (
             <span className="tile-meta">
               {p.likes > 0 && <em className={likedSet?.has(p.id) ? 'on' : ''}>{I.heart(true)}{p.likes}</em>}
+              {photoExtras(p).some(r=>r.count>0)&&<em className="tile-reactions" aria-label={photoExtras(p).map(r=>`${r.reaction}: ${r.count}`).join(', ')}>{photoExtras(p).filter(r=>r.count>0).slice(0,2).map(r=>ALL_PHOTO_REACTIONS.find(([id])=>id===r.reaction)?.[1]).join(' ')} {photoExtras(p).reduce((n,r)=>n+Number(r.count||0),0)}</em>}
               {counts?.get(p.id) > 0 && <em>{I.comment}{counts.get(p.id)}</em>}
             </span>
           )}

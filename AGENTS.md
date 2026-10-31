@@ -396,3 +396,19 @@ Treat survey, show each assigned informational card only once, and replace
 in-grid upload reminders with a fixed Add photos & videos button on desktop
 and mobile. Only GOAL is currently assigned in-grid to those albums. Do not
 restore the old karaoke survey or reciprocal gallery ads in those grids.
+
+## RCAP photo reactions
+
+The RCAP viewer uses `PhotoReactions.jsx`, with context-specific labels in
+`reactionOptions.js`. Trunk or Treat's main and booth albums use Love, Spooky,
+Great costume, So much fun and Thank you. Other RCAP galleries use Love,
+Celebrate, Thank you, Amazing and Bravo. Amistad's original heart UI is retained.
+Existing hearts remain in `vault_likes`; extra reactions are private records in
+`vault_private.photo_reactions` with public aggregate counts only. The narrow
+RPC requires a verified, unbanned contributor to write and checks photo and
+album visibility on every request. Set operations are idempotent and undoable.
+Extra reactions do not change heart leaderboards, points, or private contributor
+thank-yous. Summary counts are batched by `reactionCounts.js`; unavailable
+counts must never stop photos loading. Supabase builders must be awaited rather
+than assuming they expose native Promise methods. Run both reaction SQL files
+in `supabase/tests/` for rollback-only authorization and lifecycle checks.
