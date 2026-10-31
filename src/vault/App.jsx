@@ -1,10 +1,10 @@
-import { Trophy, ListChecks, Link2, SlidersHorizontal } from 'lucide-react';
+import { Trophy, ListChecks, Link2, SlidersHorizontal, Camera, MessageSquare, GraduationCap, CalendarDays, Heart, ImagePlus, Sparkles } from 'lucide-react';
 import { CapsuleShareAdmin } from './CapsuleShareAdmin.jsx';
 import Brand from '../components/Brand.jsx';
 import { sortGallery } from './gallerySort.js';
 import { Fragment, lazy, Suspense, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, promoSlots, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
+  HOUSE, YEAR, SITE, ASK, KINDS, promosFor, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
   MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
@@ -33,10 +33,11 @@ import { droppable, useDropGuard, useDropTarget, useWindowDropTarget } from './d
 import { supabase, sendCode, verifyCode, authHeaders } from './auth.js';
 import { uploadBatch } from './upload.js';
 import {
-  DEFAULT_UPLOAD_PROMPTS, galleryShareMessage, promosWithVoice, uploadPromptsFor, uploadPromptSlots,
+  DEFAULT_UPLOAD_PROMPTS, galleryShareMessage, promosWithVoice, uploadPromptsFor,
 } from './galleryVoice.js';
 
 import {galleryCardsCall, mergeGalleryCards} from './galleryCards.js';
+import {galleryCardLayout, cardKind, cardHash} from './cardLayout.js';
 const GalleryCardsManager = lazy(() => import('./GalleryCardsManager.jsx').then(m => ({default:m.GalleryCardsManager})));
 
 /* ------------------------------------------------------------- routing */
@@ -698,13 +699,18 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
 
 /* ---------------------------------------------------------------- grid */
 
+function CardMark({kind}) {
+  const Icon = {voice:MessageSquare,school:GraduationCap,camera:Camera,heart:Heart,event:CalendarDays,upload:ImagePlus,sparkles:Sparkles}[kind] || Sparkles;
+  return <span className="card-mark" aria-hidden="true"><Icon size={24} strokeWidth={1.8}/></span>;
+}
 function PromoCard({ promo }) {
   const ext = promo.external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
   return (
     <div className="tile-wrap promo-wrap">
-      <a className={`promo-tile${promo.image ? ' has-image' : ''}`} href={promo.href} {...ext}>
+      <a className={`promo-tile card-look-${promo.appearance || ['navy','cream','gold','outline'][cardHash(promo.id||promo.title)%4]}${promo.image ? ' has-image' : ''}`} href={promo.href} {...ext}>
         {promo.image && <img src={promo.image} alt="" loading="lazy" decoding="async" />}
         <span className="promo-body">
+          <CardMark kind={cardKind(promo)} />
           <span className="promo-eyebrow">{promo.eyebrow}</span>
           {promo.logo ? <img className="promo-logo" src={promo.logo} alt={promo.title} width="427" height="193" loading="lazy" decoding="async" /> : <b>{promo.title}</b>}
           {promo.body && <span className="promo-copy">{promo.body}</span>}
@@ -718,17 +724,18 @@ function PromoCard({ promo }) {
 // promos are cards between photos. They never take a photo index, so onOpen(i)
 // still points at the right photo.
 function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, selected, promos = [], onAddPhotos, contributorCount = 0, uploadPrompts = DEFAULT_UPLOAD_PROMPTS }) {
+  const [layoutSeed] = useState(() => crypto.randomUUID());
+  const layout = galleryCardLayout(promos, photos.length, contributorCount, layoutSeed, !!onAddPhotos);
   if (!photos.length) {
     const empty = <p className="empty">{emptyText || 'Nothing here yet.'}</p>;
-    return promos.length ? <>{empty}<div className="grid promo-only">{promoSlots(promos, 0).map((s) => <PromoCard key={s.key} promo={s.card} />)}</div></> : empty;
+    return promos.length ? <>{empty}<div className="grid promo-only">{layout.filter(s=>s.type==='promo').map((s) => <PromoCard key={s.key} promo={{...s.card,appearance:s.appearance}} />)}</div></> : empty;
   }
-  const slots = promoSlots(promos, photos.length);
+  const slots = layout.filter(s=>s.type==='promo');
   const at = (i) => slots.filter((s) => s.at === i);
-  const uploadSlots = onAddPhotos ? new Map(uploadPromptSlots(photos.length, contributorCount)
-    .map((position, index) => [position, uploadPrompts[index % uploadPrompts.length]])) : new Map();
+  const uploadSlots = layout.filter(s=>s.type==='upload');
   return (
     <div className="grid">
-      {at(0).map((s) => <PromoCard key={s.key} promo={s.card} />)}
+      {at(0).map((s) => <PromoCard key={s.key} promo={{...s.card,appearance:s.appearance}} />)}
       {photos.map((p, i) => (<Fragment key={p.id}>
         <div className="tile-wrap"><button className={`tile${p.hidden ? ' hidden' : ''}${selected?.has(p.id)?' move-selected':''}`} aria-pressed={selected ? selected.has(p.id) : undefined} onClick={() => onOpen(i)} aria-label={`${isVideo(p) ? 'Video' : isGif(p) ? 'GIF' : 'Photo'} by ${p.uploaderName || 'a family'}`}>
           <span className="selection-check" hidden={!selected}>{selected?.has(p.id)?'✓':'○'}</span><img src={mediaUrl(p, 'thumb')} width={p.width || undefined} height={p.height || undefined} alt="" loading="lazy" decoding="async" />
@@ -742,20 +749,20 @@ function PhotoGrid({ photos, onOpen, likedSet, counts, emptyText, rank = false, 
             </span>
           )}
         </button></div>
-        {at(i + 1).map((s) => <PromoCard key={s.key} promo={s.card} />)}
-        {onAddPhotos && uploadSlots.has(i + 1) && (
-          <div className="tile-wrap promo-wrap">
-            <button type="button" className="promo-tile upload-promo" onClick={onAddPhotos}>
+        {at(i + 1).map((s) => <PromoCard key={s.key} promo={{...s.card,appearance:s.appearance}} />)}
+        {uploadSlots.filter(s=>s.at===i+1).map(slot => (
+          <div className="tile-wrap promo-wrap" key={slot.key}>
+            <button type="button" className={`promo-tile upload-promo card-look-${slot.appearance}`} onClick={onAddPhotos}>
               <span className="promo-body">
-                <span className="upload-promo-plus" aria-hidden="true">+</span>
-                <span className="promo-eyebrow">{uploadSlots.get(i + 1).eyebrow}</span>
-                <b>{uploadSlots.get(i + 1).title}</b>
-                <span className="promo-copy">{uploadSlots.get(i + 1).body}</span>
-                <span className="promo-cta">{uploadSlots.get(i + 1).cta} →</span>
+                <CardMark kind={slot.index%2===0?'upload':'camera'}/>
+                <span className="promo-eyebrow">{uploadPrompts[slot.index % uploadPrompts.length].eyebrow}</span>
+                <b>{uploadPrompts[slot.index % uploadPrompts.length].title}</b>
+                <span className="promo-copy">{uploadPrompts[slot.index % uploadPrompts.length].body}</span>
+                <span className="promo-cta">{uploadPrompts[slot.index % uploadPrompts.length].cta} →</span>
               </span>
             </button>
           </div>
-        )}
+        ))}
       </Fragment>))}
     </div>
   );

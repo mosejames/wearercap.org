@@ -285,3 +285,23 @@ html[data-vault="rcap"] .upload-promo .promo-eyebrow,html[data-vault="rcap"] .up
 html[data-vault="rcap"] .upload-promo .promo-cta{background:var(--red);color:#fff;min-height:44px;display:flex;align-items:center}
 html[data-vault="rcap"] .upload-promo:hover .promo-cta{background:var(--red-deep);color:#fff}
 html[data-vault="rcap"] .upload-promo-plus{font-size:42px;font-weight:800;line-height:1}
+
+/* Shared card treatments keep information and photo invitations visually varied. */
+html[data-vault="rcap"] .promo-tile.card-look-navy,
+html[data-vault="rcap"] .promo-tile.card-look-cream,
+html[data-vault="rcap"] .promo-tile.card-look-gold,
+html[data-vault="rcap"] .promo-tile.card-look-outline{background:var(--card-bg);color:var(--card-ink);border:1px solid var(--card-line);box-shadow:inset 0 -4px 0 var(--card-accent);border-radius:14px;text-align:left}
+html[data-vault="rcap"] .promo-tile.card-look-navy{--card-bg:#1b2c56;--card-ink:#fff9ed;--card-line:#1b2c56;--card-accent:#f2b51d;--card-button:#f2b51d;--card-button-ink:#1b2c56}
+html[data-vault="rcap"] .promo-tile.card-look-cream{--card-bg:#f3ead8;--card-ink:#1b2c56;--card-line:#dacdb5;--card-accent:#b48624;--card-button:#1b2c56;--card-button-ink:#fff9ed}
+html[data-vault="rcap"] .promo-tile.card-look-gold{--card-bg:#f2b51d;--card-ink:#152344;--card-line:#f2b51d;--card-accent:#1b2c56;--card-button:#1b2c56;--card-button-ink:#fff9ed}
+html[data-vault="rcap"] .promo-tile.card-look-outline{--card-bg:#fffdf8;--card-ink:#1b2c56;--card-line:#1b2c56;--card-accent:#1b2c56;--card-button:#1b2c56;--card-button-ink:#fff9ed}
+html[data-vault="rcap"] .promo-tile[class*="card-look-"] .promo-body{padding:20px;gap:10px}
+html[data-vault="rcap"] .promo-tile[class*="card-look-"] .promo-eyebrow,
+html[data-vault="rcap"] .promo-tile[class*="card-look-"] .promo-copy{color:var(--card-ink)}
+html[data-vault="rcap"] .promo-tile[class*="card-look-"] .promo-copy{font-family:inherit;font-style:normal;font-size:15px;line-height:1.5;opacity:.9}
+html[data-vault="rcap"] .promo-tile[class*="card-look-"] .promo-cta{background:var(--card-button);color:var(--card-button-ink);min-height:44px;display:flex;align-items:center;align-self:flex-start;margin-top:6px;padding:10px 15px}
+html[data-vault="rcap"] .promo-tile[class*="card-look-"]:hover .promo-cta{background:var(--card-button);color:var(--card-button-ink);text-decoration:underline;text-underline-offset:3px}
+html[data-vault="rcap"] .card-mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid currentColor;border-radius:50%;margin-bottom:3px;opacity:.9}
+html[data-vault="rcap"] .card-look-gold .card-mark{border-radius:12px;transform:rotate(-5deg)}
+html[data-vault="rcap"] .card-look-cream .card-mark{border:0;background:#1b2c5610}
+html[data-vault="rcap"] .card-mark svg{width:24px;height:24px}

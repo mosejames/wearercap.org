@@ -383,3 +383,9 @@ room for all selected custom cards. Archived cards remain editable in admin.
 visibility, scheduling, optimistic revision checks and the save/archive flow
 inside a rollback transaction. Frontend tests are in `galleryCards.test.js`
 and `promos.test.js`. Migration: `20261031123812_gallery_card_library.sql`.
+
+Gallery card placement and visual variety are shared in `src/vault/cardLayout.js`.
+Positions are randomized once per mounted gallery grid, with gaps between cards;
+rerenders keep the same seed. Equal-priority cards rotate, while different
+priorities retain their order. Promo and upload cards use the same four RCAP
+treatments and small destination-aware icons. Photo indexes remain unchanged.
