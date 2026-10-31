@@ -8,7 +8,16 @@ export function cardHash(value) {
 export function galleryCardLayout(promos,count,contributors,seed,showUploads=true,repeatPromos=true) {
   const shuffled=[...promos].sort((a,b)=>(a.priority||0)-(b.priority||0)||cardHash(`${seed}:${a.id}`)-cardHash(`${seed}:${b.id}`)||a.id.localeCompare(b.id));
   const seenCards=new Set();
-  const promoEntries=promoSlots(shuffled,count).filter(s=>{if(repeatPromos)return true;if(seenCards.has(s.promo.id))return false;seenCards.add(s.promo.id);return true;});
+  let promoEntries=promoSlots(shuffled,count).filter(s=>{if(repeatPromos)return true;if(seenCards.has(s.promo.id))return false;seenCards.add(s.promo.id);return true;});
+  if(repeatPromos==='limited'){
+    const copies=new Map(shuffled.map(p=>[p.id,2+cardHash(`${seed}:${p.id}:frequency`)%2]));
+    promoEntries=[];
+    for(let round=0;round<3;round++)for(const promo of shuffled)if(round<copies.get(promo.id)){
+      const variants=promo.variants?.length?promo.variants:[promo];
+      promoEntries.push({promo,card:{...promo,...variants[round%variants.length]},key:`${promo.id}-${round}`});
+    }
+    promoEntries=promoEntries.map((s,i)=>({...s,at:Math.round(count*(i+1)/(promoEntries.length+1))}));
+  }
   const entries=promoEntries.map(s=>({...s,type:'promo',target:s.at,key:`promo-${s.key}`}));
   if(showUploads)uploadPromptSlots(count,contributors).forEach((at,i)=>entries.push({type:'upload',target:at,index:i,key:`upload-${i}`}));
   entries.forEach(e=>{e.target=Math.max(Math.min(2,count),Math.min(count,e.target+(cardHash(`${seed}:${e.key}:position`)%11)-5));});
@@ -16,7 +25,7 @@ export function galleryCardLayout(promos,count,contributors,seed,showUploads=tru
   const used=[];
   for(const entry of entries){
     let chosen;
-    for(const gap of [3,1,0]){
+    for(const gap of repeatPromos==='limited'?[Math.min(6,Math.floor(count/Math.max(entries.length,1))),3,1,0]:[3,1,0]){
       for(let distance=0;distance<=count;distance++){
         for(const position of [entry.target+distance,entry.target-distance]){
           if(position<Math.min(2,count)||position>count)continue;

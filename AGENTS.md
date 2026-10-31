@@ -392,9 +392,10 @@ treatments and small destination-aware icons. Photo indexes remain unchanged.
 
 Trunk or Treat's main and booth albums now use the `simple` album-pair mode.
 They switch through the header's two gallery links, link once to the Trunk or
-Treat survey, show each assigned informational card only once, and replace
-in-grid upload reminders with a fixed Add photos & videos button on desktop
-and mobile. Only GOAL is currently assigned in-grid to those albums. Do not
+Treat survey, repeat GOAL and the Trunk or Treat survey 2 to 3 times each, and
+replace in-grid upload reminders with a fixed Add photos & videos button on
+desktop and mobile. Cards are randomized with photos between them, and span
+both columns on mobile so cards cannot appear side by side. Do not
 restore the old karaoke survey or reciprocal gallery ads in those grids.
 
 ## RCAP photo reactions

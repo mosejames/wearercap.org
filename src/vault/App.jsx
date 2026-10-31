@@ -1302,7 +1302,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           <PhotoGrid
             photos={sorted} selected={selecting?selected:undefined} onOpen={selecting?pick:setIndex} likedSet={liked} counts={counts}
             promos={selecting ? [] : promosWithVoice(galleryPromos, galleryVoice)}
-            repeatPromos={!simpleGallery}
+            repeatPromos={simpleGallery?'limited':true}
             onAddPhotos={IS_SCHOOL && !simpleGallery && showUploadPrompts && !selecting && acceptsUploads(event, today) ? () => onAdd(event) : undefined}
             contributorCount={new Set(visible.map((p) => p.owner)).size}
             uploadPrompts={uploadPromptsFor(galleryVoice)}

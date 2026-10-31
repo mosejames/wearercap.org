@@ -28,6 +28,15 @@ describe('gallery card variety',()=>{
   expect(slots).toHaveLength(1);
   expect(slots[0].type).toBe('promo');
  });
+ it('repeats each Trunk or Treat card two or three times, with photos separating them',()=>{
+  const promos=[{id:'custom-goal'},{id:'custom-trunk-survey'}];
+  for(const count of [74,150])for(let visit=0;visit<40;visit++){
+   const slots=galleryCardLayout(promos,count,1,`visit-${visit}`,false,'limited');
+   for(const p of promos)expect([2,3]).toContain(slots.filter(s=>s.promo.id===p.id).length);
+   expect(slots.every(s=>s.type==='promo'&&s.at>0&&s.at<=count)).toBe(true);
+   expect(slots.slice(1).every((s,i)=>s.at-slots[i].at>=6)).toBe(true);
+  }
+ });
  it('uses small icons relevant to the destination',()=>{
   expect(cardKind({href:'/feedback/rb-karaoke'})).toBe('voice');
   expect(cardKind({href:'/georgia-goal/'})).toBe('school');
