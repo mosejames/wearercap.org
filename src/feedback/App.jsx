@@ -300,7 +300,7 @@ export function SurveyFlow({ survey, preview = false }) {
             {survey.cover_url ? (
               <img
                 src={survey.cover_url}
-                alt="Parents sharing a moment at R&B Karaoke Night"
+                alt={`${survey.event_name}: share your family’s feedback`}
               />
             ) : (
               <div className="cover-placeholder">

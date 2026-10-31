@@ -101,6 +101,10 @@
       "destination": "/api/vault-link?share=:token"
     },
     {
+      "source": "/feedback/trunk-or-treat-2026",
+      "destination": "/feedback/trunk-or-treat-2026/index.html"
+    },
+    {
       "source": "/feedback/:path*",
       "destination": "/feedback/index.html"
     },

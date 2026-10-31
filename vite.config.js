@@ -43,6 +43,7 @@ export default defineConfig({
         housepoint: resolve(__dirname, "house-point/index.html"),
         capsuleshare: resolve(__dirname, "capsule-share/index.html"),
         feedback: resolve(__dirname, "feedback/index.html"),
+        trunkfeedback: resolve(__dirname, "feedback/trunk-or-treat-2026/index.html"),
         tonight: resolve(__dirname, "karaoke/tonight/index.html"),
         now: resolve(__dirname, "now/index.html"),
         septembernewsletter: resolve(
