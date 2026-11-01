@@ -147,3 +147,44 @@ week archives retain their original winner and video. Ayla S. is credited as
 guest announcer, without asserting a new weekly rank. November 1 cumulative
 totals and weekly rankings remain held for paid-dollar versus entry-count
 reconciliation. No historical snapshot or student totals changed.
+
+## November 1 paid-ticket reconciliation
+
+Mose directed paid-ticket rankings and the October 31 at 11:59 p.m. Eastern
+reporting cutoff. On learning that the export has no purchase timestamps, Mose
+directed using that cutoff wording. The November 1 edition therefore records the
+RCAP reporting cutoff separately from the Sunday November 1 at 10:21 a.m. source
+export. Purchase-time compliance with the cutoff cannot be independently verified
+from this file. Do not describe it as timestamp-verified or silently relabel the
+overall source timestamp.
+
+Sources: Spark email 190004, dashboard HTML 31436, cleaned entry export 31437;
+opening-week cleaned export 30641 from email 188601. Sources stay outside the
+repository. All 3,226 opening entries retain the same entry number, entry holder,
+buyer and bundle type in the current export. Use those stable entry IDs to exclude
+opening-week entries, rather than subtracting student totals after credit fixes.
+Current student names normalize to unique dashboard identities after removing
+case, whitespace and punctuation. Use the dashboard's corrected class and house
+for those identities; all student-level paid sums reconcile exactly to it.
+
+The current export has 6,736 active entries: 6,716 paid $1 entries and 20 free
+entries. Ten free entries belong to the original 3,226-entry baseline, and ten are
+new. The effective paid baseline is 3,216, and Week 2 has 3,500 new paid tickets:
+3,216 + 3,500 = 6,716. A simple 6,716 minus the original posted 3,226 would
+undercount Week 2 by ten. Preserve the October 25 snapshot as originally posted;
+its historical source did not distinguish paid and free entries. This update
+does not silently rewrite that edition or its recognition.
+
+The new weekly edition is October 25 through October 31, published November 1.
+Its top five are Ayla S., Farah A., Ryleigh B., Vivian W. and Drexel C. Current
+overall rankings still place Ryleigh B. first. Public recognition stays count-free;
+committee lookup labels the new counts as paid tickets. Approved winner and video
+are preserved in the new edition as well as the latest drawing record.
+
+Paid-ticket basis is the standing rule for subsequent refreshes. Dashboard `n`
+represents paid dollars; this export proves one paid dollar per paid ticket.
+Check that relationship again if pricing or export structure changes. Never use
+the full drawing pool (including free entries) as dollars or paid-ticket ranking
+credit. Future weekly releases should use timestamped transactions or a confirmed
+cutoff export; the RCAP-directed cutoff convention here is not independent evidence
+for later source files.

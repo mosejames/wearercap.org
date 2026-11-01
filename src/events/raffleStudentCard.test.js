@@ -15,7 +15,8 @@ describe('raffle student count visibility', () => {
     expect(card.textContent).not.toContain('987');
   });
   it('reveals ticket counts only when explicitly requested for lookup', () => {
-    expect(studentCard(student, true, true).textContent).toContain('987 tickets');
+    expect(studentCard(student, true, true).textContent).toContain('987 paid tickets');
+    expect(studentCard(student, true, false, 1, false).textContent).toContain('987 tickets');
     expect(studentCard(student, true, false, 3).textContent).toContain('No. 2 in Week 3');
   });
 });

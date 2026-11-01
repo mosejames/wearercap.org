@@ -36,11 +36,11 @@ function renderProgress(d, view = 'house') {
     fill.style.background = view === 'house' ? HOUSE_COLORS[row.name] : CLASS_COLORS[index % CLASS_COLORS.length];
     track.setAttribute('aria-hidden', 'true'); track.append(fill);
     const count = el('strong', 'rr-group-count', row.amount.toLocaleString('en-US'));
-    count.append(el('small', null, 'tickets'));
+    count.append(el('small', null, overall || edition.period.ticketBasis === 'paid' ? 'paid tickets' : 'tickets'));
     li.append(el('span', 'rr-group-name', label), track, count);
     return li;
   }));
-  $('group-period').textContent = overall ? `All credited tickets through ${d.asOf} Eastern.` : `Week ${weekNumber} contributions through ${dateLabel(edition.period.end)}.`;
+  $('group-period').textContent = overall ? `All paid tickets through ${d.asOf} Eastern.` : `Week ${weekNumber} contributions through ${dateLabel(edition.period.end)}.`;
 }
 document.querySelectorAll('input[name="progress-view"]').forEach(input => input.addEventListener('change', () => {
   if (input.checked) renderProgress(data, input.value);
@@ -95,7 +95,8 @@ $('edition-title').textContent = title;
 const snapshotCutoff = overall ? `${data.asOf} Eastern` : `${dateLabel(edition.period.end)} at 11:59 p.m. Eastern`;
 $('snapshot-top').textContent = `Results through ${snapshotCutoff}.`;
 $('edition-kicker').textContent = overall ? 'THE FULL RAFFLE SO FAR' : 'WEEKLY RAFFLE RESULTS';
-$('edition-dates').textContent = overall ? `All credited tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
+$('edition-dates').textContent = overall ? `All paid tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
+if (!overall && edition.period.sourceAsOf) $('edition-dates').textContent += ` Source export: ${edition.period.sourceAsOf} Eastern.`;
 $('edition-note').textContent = 'Each week brings a fresh top five. We celebrate that week’s contributions, so every family has another chance to shine.';
 $('edition-next').textContent = `Who will be our Week ${weekNumber + 1} raffle stars? Find out ${dateLabel(edition.period.nextPublication)}.`;
 if (requestedWeek && !editions.some(item => item.period.id === requestedWeek) && !overall) $('edition-note').textContent = 'That weekly update is not available yet. You’re viewing the latest published results.';
@@ -105,11 +106,11 @@ const older = editions[editions.indexOf(edition) + 1];
 if (!overall && older) addLink($('edition-links'), 'View the previous week', `?week=${older.period.id}`);
 for (const item of editions) { const li = el('li'); addLink(li, periodLabel(item.period), `?week=${item.period.id}`); $('history').append(li); }
 document.querySelector('#rr-top-title').textContent = overall ? 'Overall raffle stars' : `Week ${weekNumber} top five raffle stars`;
-if (overall) $('top-note').textContent = 'All credited tickets so far. Weekly recognition is based on each week separately.';
+if (overall) $('top-note').textContent = 'All paid tickets so far. Weekly recognition is based on each week separately.';
 renderProgress(data);
 if (archive) renderLocked(data);
 else renderLocked({ winners: [latestDrawing] });
-if (!archive) $('edition-next').textContent = 'The November 1 drawing is posted below. The next weekly standings will appear after review.';
+if (!archive && !edition.results.winners.some(w => w.drawing === latestDrawing.drawing)) $('edition-next').textContent = 'The November 1 drawing is posted below. The next weekly standings will appear after review.';
 const students = data.students || [];
 
 for (const student of students.filter(student => student.rank <= 5)) {
