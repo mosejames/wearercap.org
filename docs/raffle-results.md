@@ -137,3 +137,13 @@ selection. It is unlinked from public navigation and marked noindex/nofollow,
 with branded OG/Twitter metadata. It is NOT authenticated: anyone with the link
 can use it. The search and abbreviated data remain reusable for committee support.
 Share the link with Ashley manually; this change does not email her.
+
+## November 1 drawing
+
+Mose authorized the November 1 winner announcement and supplied its video.
+`raffle-drawing.json` holds the latest approved drawing independently of weekly
+ranking snapshots. The latest and overall views show this drawing; explicit
+week archives retain their original winner and video. Ayla S. is credited as
+guest announcer, without asserting a new weekly rank. November 1 cumulative
+totals and weekly rankings remain held for paid-dollar versus entry-count
+reconciliation. No historical snapshot or student totals changed.

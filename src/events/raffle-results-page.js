@@ -1,4 +1,5 @@
 import overallData from './raffle-results.json';
+import latestDrawing from './raffle-drawing.json';
 const editions = Object.values(import.meta.glob('./raffle-weeks/*.json', { eager: true, import: 'default' })).sort((a, b) => b.period.id.localeCompare(a.period.id));
 const params = new URLSearchParams(location.search);
 const overall = params.get('view') === 'overall';
@@ -70,14 +71,14 @@ function renderLocked(d) {
         li.append(video);
       }
       const caption = el('div', 'rr-winner-caption');
-      caption.append(el('small', null, `WEEK ${weekNumber} DRAWING · ${w.drawing}`), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
+      caption.append(el('small', null, `${w.week ? `WEEK ${w.week}` : `WEEK ${weekNumber}`} DRAWING · ${w.drawing}`), el('h2', null, w.name), el('p', null, `Winner of a ${w.prize}.`), el('p', 'rr-winner-thanks', 'Congratulations, and thank you to every family taking part.'));
       if (w.announcer) {
         const spotlight = el('div', 'rr-announcer');
         spotlight.append(
-          el('small', null, `WEEK ${weekNumber} RAFFLE STAR`),
+          el('small', null, w.announcer.label || `WEEK ${weekNumber} RAFFLE STAR`),
           el('h3', null, `Take a bow, ${w.announcer.name}`),
           el('p', 'rr-announcer-class', `Class of ${w.announcer.classOf}`),
-          el('p', null, 'A big RCAP thank-you for leading the way. Watch her announce this week’s winner.'),
+          el('p', null, w.announcer.message || 'A big RCAP thank-you for leading the way. Watch her announce this week’s winner.'),
         );
         caption.prepend(spotlight);
         $('celebration-title').textContent = `Take a bow, ${w.announcer.name.split(' ')[0]}.`;
@@ -106,7 +107,9 @@ for (const item of editions) { const li = el('li'); addLink(li, periodLabel(item
 document.querySelector('#rr-top-title').textContent = overall ? 'Overall raffle stars' : `Week ${weekNumber} top five raffle stars`;
 if (overall) $('top-note').textContent = 'All credited tickets so far. Weekly recognition is based on each week separately.';
 renderProgress(data);
-if (!overall) renderLocked(data);
+if (archive) renderLocked(data);
+else renderLocked({ winners: [latestDrawing] });
+if (!archive) $('edition-next').textContent = 'The November 1 drawing is posted below. The next weekly standings will appear after review.';
 const students = data.students || [];
 
 for (const student of students.filter(student => student.rank <= 5)) {
