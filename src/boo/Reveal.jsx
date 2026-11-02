@@ -173,12 +173,14 @@ export default function RevealPage() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
+    [organizer, setOrganizer] = useState(false),
     [auth, setAuth] = useState({ phone: "", code: "", sent: false, sentAt: 0 });
   const generation = useRef(0),
     working = useRef(false);
   async function load() {
     const version = ++generation.current;
     setData(null);
+    setOrganizer(false);
     setError("");
     setLoading(true);
     try {
@@ -191,6 +193,12 @@ export default function RevealPage() {
       if (version === generation.current) setData(next);
     } catch (e) {
       if (version === generation.current) setError(e.message);
+      if (!preview) {
+        try {
+          const access = await request("preview-access");
+          if (version === generation.current) setOrganizer(access.allowed === true);
+        } catch { /* An organizer-only link never grants player access. */ }
+      }
     } finally {
       if (version === generation.current) setLoading(false);
     }
@@ -250,12 +258,11 @@ export default function RevealPage() {
         </section>
       ) : error ? (
         <section className="panel reveal-unavailable">
-          <h1>The reveal isn’t available yet.</h1>
+          <h1>{error === "The reveal is only for players who submitted guesses before closing." ? "This account isn’t eligible for the photo reveal." : "We couldn’t open your reveal."}</h1>
           <p role="alert">{error}</p>
-          <p>
-            Your guesses and points are saved. The organizer will open the
-            reveal after review.
-          </p>
+          <p>Your guesses and points are saved. If you played with another number, sign in with that number.</p>
+          {organizer && <p><a href="/little-boo/reveal?preview=organizer">Open organizer preview</a><br />Your organizer access does not change player eligibility or rankings.</p>}
+          <button disabled={busy} onClick={() => run(() => supabase.auth.signOut({ scope: "local" }))}>Sign in with a different number</button>
           <button onClick={load}>Check again</button>
         </section>
       ) : data ? (
