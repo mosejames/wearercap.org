@@ -27,6 +27,7 @@ async function fixture(phase, width = 390, signedIn = false, admin = false) {
     state = {
       phase,
       published: false,
+      revealPublished: false,
       optedIn: false,
       posts: [],
       guessPoints: 0,
@@ -70,7 +71,7 @@ async function fixture(phase, width = 390, signedIn = false, admin = false) {
     if (r.request().method() === "GET")
       return r.fulfill({
         status: 200,
-        json: phaseFixture(state.phase, state.published),
+        json: {...phaseFixture(state.phase, state.published), revealPublished:state.revealPublished},
       });
     const b = r.request().postDataJSON();
     state.posts.push(b);
@@ -331,6 +332,15 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
   assert.deepEqual(errors, []);
   await page.close();
 }
+// Closed-game entry points remain visible while held, and switch after release.
+{
+  const {page,state,errors}=await fixture("results",390,false);
+  const pending=page.getByRole("link",{name:"Reveal coming soon",exact:true});
+  await pending.waitFor();assert.equal(await pending.getAttribute("href"),"/little-boo/reveal");
+  state.revealPublished=true;state.published=true;await page.reload();
+  const released=page.getByRole("link",{name:"See the reveal",exact:true});await released.waitFor();
+  assert.equal(await released.getAttribute("href"),"/little-boo/reveal");assert.equal(state.authRequests,0);assert.deepEqual(errors,[]);await page.close();
+}
 // Filters only change the view. Cross-grade and own cards remain on the shared board.
 {
   const { page, errors } = await fixture("guessing", 390, true);
@@ -350,9 +360,7 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
 // Signed-in receipt transparency, bounded consent, no auto-SMS, and boundary recovery.
 {
   const { page, state, errors } = await fixture("submissions", 390, true);
-  await page
-    .getByText("0 guess points · 3 contribution points", { exact: true })
-    .waitFor();
+  await page.waitForFunction(expected => document.querySelector(".scoreboard b")?.textContent.replace(/\s/g, "") === expected + "PTS", 3);
   assert.equal(
     await page.getByRole("button", { name: /Who could it be/ }).count(),
     0,
@@ -399,9 +407,7 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
   await page
     .getByRole("button", { name: "Add to the board", exact: true })
     .click();
-  await page
-    .getByText("0 guess points · 6 contribution points", { exact: true })
-    .waitFor();
+  await page.waitForFunction(expected => document.querySelector(".scoreboard b")?.textContent.replace(/\s/g, "") === expected + "PTS", 6);
   assert.equal(state.uploadPoints, 6);
   await page.getByText(/Your student is in! \+3 contribution points/).waitFor();
   await page
@@ -442,9 +448,7 @@ for (const phase of ["waiting", "guessing", "closed", "results"]) {
   await page.getByRole("button", { name: "Yes, lock it in" }).click();
   await page.getByText("Identified! You earned 5 points.").waitFor();
   await page.getByRole("button", { name: "Close dialog" }).click();
-  await page
-    .getByText("5 guess points · 6 contribution points", { exact: true })
-    .waitFor();
+  await page.waitForFunction(expected => document.querySelector(".scoreboard b")?.textContent.replace(/\s/g, "") === expected + "PTS", 11);
   assert.equal(state.authRequests, 0);
   assert.deepEqual(errors, []);
   await page.close();

@@ -80,9 +80,7 @@ for (const width of [390, 1280]) {
   await page.screenshot({ path: out + `/correct-${width}.png` });
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.reload();
-  await page
-    .getByText("5 guess points · 3 contribution points", { exact: true })
-    .waitFor();
+  await page.waitForFunction(expected => document.querySelector(".scoreboard b")?.textContent.replace(/\s/g, "") === expected + "PTS", 8);
   await page.locator(".cards .card").nth(1).click();
   await page.getByLabel("Your one guess").fill("Milo Moon");
   await page.getByRole("button", { name: "Review my guess" }).click();
@@ -121,9 +119,7 @@ for (const width of [390, 1280]) {
   await page
     .getByRole("button", { name: "Reset practice", exact: true })
     .click();
-  await page
-    .getByText("0 guess points · 3 contribution points", { exact: true })
-    .waitFor();
+  await page.waitForFunction(expected => document.querySelector(".scoreboard b")?.textContent.replace(/\s/g, "") === expected + "PTS", 3);
   assert.equal(
     await page.evaluate(() => sessionStorage.getItem("rcap-boo-journey-v1")),
     "real-navigation-marker",

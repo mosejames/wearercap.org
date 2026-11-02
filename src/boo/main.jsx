@@ -519,46 +519,12 @@ function App({ preview = null }) {
             </div>
             <div className="scoreboard">
               <div>
-                <span>YOUR SCORE</span>
+                <span>TOTAL SCORE</span>
                 <b>
-                  {data.board.individual.find((p) => p.id === data.userId)
-                    ?.points || 0}
+                  {data.board.individual.find((p) => p.id === data.userId)?.points || 0}
                   <small>PTS</small>
                 </b>
               </div>
-              <div>
-                <span>
-                  {["submissions", "waiting", "soon"].includes(gamePhase.phase)
-                    ? mode === "children"
-                      ? "STUDENTS ADDED"
-                      : "THROWBACKS ADDED"
-                    : mode === "children"
-                      ? "LITTLE BOOS IDENTIFIED"
-                      : "GHOSTS IDENTIFIED"}
-                </span>
-                <b>
-                  {["submissions", "waiting", "soon"].includes(
-                    gamePhase.phase,
-                  ) ? (
-                    data.photos.filter((p) => p.own).length
-                  ) : (
-                    <>
-                      {correct}
-                      <small>/ {eligible}</small>
-                    </>
-                  )}
-                </b>
-              </div>
-              {mode === "children" && (
-                <p className="score-breakdown">
-                  {data.board.individual.find((p) => p.id === data.userId)
-                    ?.guessPoints || 0}{" "}
-                  guess points ·{" "}
-                  {data.board.individual.find((p) => p.id === data.userId)
-                    ?.uploadPoints || 0}{" "}
-                  contribution points
-                </p>
-              )}
             </div>
             {["guessing", "closed", "results"].includes(gamePhase.phase) && (
               <nav className="tabs" aria-label="Game views">
@@ -1506,7 +1472,7 @@ function Admin({ run, busy, refresh }) {
           </div>
         ))
       )}
-      <RevealPublicationControls request={request} run={run} busy={busy} />
+      <RevealPublicationControls request={request} run={run} busy={busy} readinessKey={JSON.stringify([d.settings.finalized_at, d.awards])} />
       <h3>Confirmed round schedule</h3>
       <p>
         Photo submissions end Friday, October 30 at 11:59 a.m. Eastern. Guessing
@@ -1621,7 +1587,7 @@ function Admin({ run, busy, refresh }) {
     </>
   );
 }
-function RevealPublicationControls({ request, run, busy }) {
+function RevealPublicationControls({ request, run, busy, readinessKey }) {
   const [state, setState] = useState(null),
     [error, setError] = useState(""),
     [cleared, setCleared] = useState(false),
@@ -1632,7 +1598,7 @@ function RevealPublicationControls({ request, run, busy }) {
       .catch((e) => setError(e.message));
   useEffect(() => {
     load();
-  }, []);
+  }, [readinessKey]);
   return (
     <section className="panel reveal-admin-controls">
       <h3>Private then &amp; now reveal</h3>

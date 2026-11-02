@@ -175,20 +175,17 @@ export function PhaseStart({
               ? "Organizer review and any required drawing are complete."
               : "The organizer reviews standings and draws among tied players for affected prize places."}
           </p>
-          <button className="gold phase-primary" onClick={onStandings}>
+          {schedule.revealPublished ? (
+            <a className="gold phase-primary reveal-launch" href="/little-boo/reveal">See the reveal</a>
+          ) : (
+            <a className="reveal-launch" href="/little-boo/reveal">Reveal coming soon</a>
+          )}
+          <p className="fine">Passcode login required. Only players who guessed before closing can view the reveal.</p>
+          <button className={schedule.revealPublished ? "text-button" : "gold phase-primary"} onClick={onStandings}>
             <Trophy size={20} />
-            {schedule.resultsPublished
-              ? "See results"
-              : "See provisional standings"}
+            {schedule.resultsPublished ? "See results" : "See provisional standings"}
           </button>
         </>
-      )}
-      {schedule.revealPublished && (
-        <p>
-          <a className="reveal-launch" href="/little-boo/reveal">
-            See your then &amp; now reveal
-          </a>
-        </p>
       )}
       {["soon", "submissions", "waiting"].includes(phase) && (
         <div className="reveal-stats">

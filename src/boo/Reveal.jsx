@@ -78,13 +78,9 @@ export function RevealList({ data }) {
         <h1>{data.me.display}</h1>
         <div className="reveal-score-number">
           {data.me.totalPoints}
-          <span>POINTS</span>
+          <span>TOTAL SCORE</span>
         </div>
         <p className="reveal-placement">{placementLabel(data.me)}</p>
-        <p>
-          {data.me.guessPoints} guessing + {data.me.uploadPoints} photo
-          contribution points
-        </p>
         <details>
           <summary>How placement works</summary>
           <p>
