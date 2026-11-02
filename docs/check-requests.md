@@ -234,5 +234,5 @@ captured. Receipts and history remain. Lists show it as Declined; the detail
 view shows "Withdrawn by requester". Approved or paid requests cannot be
 withdrawn. There is no hard delete: requests are financial records. Admins
 archive test or stale records instead. Migration:
-`20261102030000_check_request_withdraw.sql`; test:
+`20261102025041_check_request_withdraw.sql`; test:
 `supabase/tests/check_request_withdraw.sql`.
