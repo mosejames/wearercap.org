@@ -331,3 +331,33 @@ it("requires independent assigned approval and lets the preparing treasurer reco
     ),
   ).toBe(false);
 });
+
+import { milestones as withdrawMilestones } from "./model.js";
+describe("withdrawing a request", () => {
+  const mine = "parent@example.test";
+  it("lets only the requester withdraw, and only before approval", () => {
+    for (const status of ["submitted", "board_review", "needs_changes"])
+      expect(actionAllowed({ email: mine, status }, null, mine, "withdraw")).toBe(true);
+    for (const status of ["approved", "declined", "paid"])
+      expect(actionAllowed({ email: mine, status }, null, mine, "withdraw")).toBe(false);
+    const open = { email: mine, status: "submitted" };
+    for (const role of ["board", "secretary", "manager", "treasurer"])
+      expect(actionAllowed(open, role, "someone@example.test", "withdraw")).toBe(false);
+    expect(
+      actionAllowed({ ...open, archived_at: "2026-11-02T00:00:00Z" }, null, mine, "withdraw"),
+    ).toBe(false);
+  });
+  it("shows the withdrawal as the outcome, with no payment step", () => {
+    const history = [
+      { action: "submitted", actor_email: mine, created_at: "2026-11-01T10:00:00Z" },
+      { action: "withdrawn", actor_email: mine, created_at: "2026-11-02T10:00:00Z" },
+    ];
+    const steps = withdrawMilestones(
+      { status: "declined", requester_name: "Parent P" },
+      history,
+      [],
+    );
+    expect(steps.map((s) => s.label)).toEqual(["Submitted", "Withdrawn by requester"]);
+    expect(steps[1].done).toBe(true);
+  });
+});
