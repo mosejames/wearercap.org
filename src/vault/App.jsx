@@ -5,7 +5,7 @@ import { sortGallery } from './gallerySort.js';
 import { Fragment, lazy, Suspense, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, promosFor, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
-  MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
+  MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS, VIDEO_UPLOADS,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -330,6 +330,15 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
 
 /* -------------------------------------------------------------- upload */
 
+function LargeVideoUpload({ event }) {
+  const url = VIDEO_UPLOADS[event.slug];
+  if (!url) return null;
+  return <aside className="large-video-upload" aria-label="Large video uploads">
+    <a className="btn ghost" href={url} target="_blank" rel="noreferrer">Share a large video via Dropbox ↗</a>
+    <p className="fine">Videos over 50 MB? Send them through Dropbox. Large files may take a while to upload. We’ll prepare them and add them to the gallery later.</p>
+  </aside>;
+}
+
 function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
   const [files, setFiles] = useState(initialFiles || []);
   const [state, setState] = useState(null);
@@ -414,6 +423,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
     <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
       {!state ? (
         <div className={`stack dz-wrap${drop.over ? ' over' : ''}`} {...drop.handlers}>
+          <LargeVideoUpload event={event} />
           <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. {IS_SCHOOL ? 'Photos are automatically resized for crisp viewing and sharing. Your phone’s originals stay untouched.' : 'Photos keep their originals.'} Videos use the quality you choose below.</p>
           <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
           <button className="dz" disabled={optimizing} onClick={() => inputRef.current?.click()}>
@@ -1239,6 +1249,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <a href={`#/e/${pair.booth}`} aria-current={event.slug===pair.booth?'page':undefined}><ImagePlus size={20} aria-hidden="true"/><span>Photo booth<small>Poses, smiles &amp; costumes</small></span></a>
           </nav>}
           {simpleGallery && <a className="trunk-survey-link" href="/feedback/trunk-or-treat-2026"><MessageSquare size={18} aria-hidden="true"/>How was Trunk or Treat? Take the quick survey →</a>}
+          <LargeVideoUpload event={event} />
           <div className="gallery-order">
             <label>Arrange by <select aria-label="Arrange photos by" value={sort} onChange={e => setSort(e.target.value)}>
               <option value="time">Date taken: oldest first</option>

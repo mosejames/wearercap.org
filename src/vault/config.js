@@ -25,6 +25,13 @@ export const ALBUM_PAIRS = VAULT_ID === 'rcap' ? [
 ] : [];
 
 
+// Event-specific external collections never inherit another event’s destination.
+export const VIDEO_UPLOADS = VAULT_ID === 'rcap' ? {
+  'rcap-trunk-or-treat-2026': 'https://www.dropbox.com/request/smaf7j5ulsrwua0ssdhc',
+  'rcap-trunk-or-treat-photo-booth': 'https://www.dropbox.com/request/smaf7j5ulsrwua0ssdhc',
+} : {};
+
+
 // The four RCA houses, for the school-wide leaderboard. Colors are the
 // official ones Mose confirmed in July 2026 (see src/recap/config.js).
 export const RCA_HOUSES = [
