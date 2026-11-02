@@ -228,7 +228,7 @@ export default function RevealPage() {
       <PublicWinners />
       {preview && (
         <p className="reveal-private-banner">
-          ORGANIZER PRIVATE PREVIEW · NOT PUBLISHED
+          {data ? (data.publishedAt ? "ORGANIZER PREVIEW · REVEAL IS PUBLISHED" : "ORGANIZER PRIVATE PREVIEW · NOT PUBLISHED") : "ORGANIZER PREVIEW"}
         </p>
       )}
       {loading ? (
