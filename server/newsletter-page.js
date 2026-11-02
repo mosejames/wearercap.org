@@ -34,9 +34,18 @@ export function firstImage(content) {
   return null;
 }
 
+export function shareImage(content) {
+  const image = content?.shareImage;
+  const url = safeUrl(image?.url);
+  if (url && /^https:/.test(url) && Number.isInteger(image.width) && Number.isInteger(image.height) && image.width >= 150 && image.width <= 4096 && image.height >= 150 && image.height <= 4096) {
+    return { url, alt: String(image.alt || "The RCAP Newsletter"), width: image.width, height: image.height, type: /\.png(?:\?|$)/i.test(url) ? "image/png" : undefined };
+  }
+  return firstImage(content);
+}
+
 const strip = (s) => String(s || '').replace(/\*\*|\[|\]\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
 
-function shell({ title, desc, canonical, image, imageAlt, robots = 'index, follow', body }) {
+function shell({ title, desc, canonical, image, imageAlt, imageWidth, imageHeight, imageType, robots = 'index, follow', body }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -53,7 +62,7 @@ function shell({ title, desc, canonical, image, imageAlt, robots = 'index, follo
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(image)}">
-${image === OG ? '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:image:type" content="image/png">' : ''}
+${imageWidth && imageHeight ? `<meta property="og:image:width" content="${imageWidth}">\n<meta property="og:image:height" content="${imageHeight}">${imageType ? `\n<meta property="og:image:type" content="${esc(imageType)}">` : ''}` : image === OG ? '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:image:type" content="image/png">' : ''}
 <meta property="og:image:alt" content="${esc(imageAlt)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
@@ -116,12 +125,12 @@ export default async function newsletterPage(req, res) {
     return res.status(404).send(shell({ title: 'Issue not found | RCAP', desc: 'This newsletter is not available.', canonical: `${SITE}/newsletter`, image: OG, imageAlt: 'The RCAP Newsletter', robots: 'noindex', body: '<main class="nl-list"><div class="nl-empty">This issue is not available. <a href="/newsletter">See every issue</a>.</div></main>' }));
   }
   const c = issue.content || {};
-  const img = firstImage(c);
+  const img = shareImage(c);
   const title = strip(c.subject || c.headline || issue.title) || 'RCAP newsletter';
   const desc = strip(c.preheader || c.body).slice(0, 180) || 'A note from your RCAP family.';
   return res.status(200).send(shell({
     title, desc, canonical: `${SITE}/newsletter/${issue.slug}`,
-    image: img?.url || OG, imageAlt: img?.alt || 'The RCAP Newsletter',
+    image: img?.url || OG, imageAlt: img?.alt || 'The RCAP Newsletter', imageWidth: img?.width, imageHeight: img?.height, imageType: img?.type,
     body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c,{analytics:true,trackingLinks:signedNewsletterLinks(c,issue.slug),webUrl:`${SITE}/newsletter/${issue.slug}`})}</main>`,
   }));
 }
