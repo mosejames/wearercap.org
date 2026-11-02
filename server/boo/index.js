@@ -28,6 +28,7 @@ export async function rpc(action, payload, authorization) {
     );
   return data;
 }
+export const isPrivateBooKey = (key) => /^little-boo\/(?:v1|reveal\/v1)\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.bin$/.test(key);
 function store() {
   const e = process.env;
   if (
@@ -44,7 +45,7 @@ function store() {
     region: "auto",
   });
   return async (key, init = {}) => {
-    if (!/^little-boo\/v1\/[a-f0-9-]{36}\.bin$/.test(key))
+    if (!isPrivateBooKey(key))
       throw fail("Invalid photo.");
     return aws.fetch(
       `https://${e.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${e.R2_BUCKET}/${key}`,

@@ -61,6 +61,9 @@ begin
  perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000005',true);r:=public.boo_game('reveal','{}');if r->'me'->>'totalPoints'<>'0' or r->'me'->>'placement'<>'4' then raise exception 'FAIL: zero-point eligible player';end if;
  perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000006',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: sign-in-only participant';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claim.sub','',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: anonymous reveal';exception when insufficient_privilege then null;end;
+ for r in select jsonb_build_object('action',v) from unnest(array['reveal-preview','reveal-media','reveal-preview-media'])v loop
+  begin perform public.boo_game(r->>'action',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));raise exception 'FAIL: anonymous direct reveal/media';exception when insufficient_privilege then null;end;
+ end loop;
  perform set_config('request.jwt.claim.sub',owner_id::text,true);perform public.boo_game('reveal-hide','{}');
  perform set_config('request.jwt.claim.sub',u2::text,true);begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));raise exception 'FAIL: hidden known media';exception when insufficient_privilege then null;end;
  if public.boo_phase()->>'revealPublished'<>'false' then raise exception 'FAIL: stale publication flag';end if;
