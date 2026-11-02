@@ -21,6 +21,8 @@ declare i int; u uuid; response jsonb; args jsonb; points_before int; house_befo
 begin
  select coalesce((select (x->>'points')::int from jsonb_array_elements(boo_private.board('children')->'house')x where x->>'label'='Amistad'),0) into house_before;
  select count(*) into count_before from boo_private.contributions;
+ -- Test actors join before the local synthetic round closes.
+ update boo_private.settings cfg set closes_at=clock_timestamp()+interval '1 day' where cfg.id=true;
  for i in 1..3 loop
   u:=('c0000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid;
   insert into auth.users(id,phone,phone_confirmed_at,is_anonymous) values(u,'+1555777'||lpad(i::text,4,'0'),now(),false);

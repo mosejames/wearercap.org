@@ -6,7 +6,9 @@ declare i int; actor uuid; photo uuid; asset uuid; r jsonb; baseline text;
  p1 uuid:='b2000000-0000-4000-8000-000000000001';p2 uuid:='b2000000-0000-4000-8000-000000000002';p3 uuid:='b2000000-0000-4000-8000-000000000003';p4 uuid:='b2000000-0000-4000-8000-000000000004';
  a1 uuid:='c2000000-0000-4000-8000-000000000001';a4 uuid:='c2000000-0000-4000-8000-000000000004';
 begin
- for i in 1..6 loop
+ -- Test actors join before the local synthetic round closes.
+ update boo_private.settings cfg set closes_at=clock_timestamp()+interval '1 day' where cfg.id=true;
+ for i in 1..10 loop
   actor:=('a2000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid;
   insert into auth.users(id,phone,phone_confirmed_at,is_anonymous) values(actor,'+1555222'||lpad(i::text,4,'0'),now(),false);
   perform set_config('request.jwt.claim.sub',actor::text,true);
@@ -26,6 +28,8 @@ begin
  insert into boo_private.reveal_portrait_links(photo,portrait,position) values(p1,a1,1),(p2,a1,1),(p3,'c2000000-0000-4000-8000-000000000002',1),(p3,'c2000000-0000-4000-8000-000000000003',2),(p4,a4,1);
  update boo_private.settings set submissions_open_at=clock_timestamp()-interval '3 hours',submissions_close_at=clock_timestamp()-interval '2 hours',guesses_open_at=clock_timestamp()-interval '1 hour',closes_at=clock_timestamp()+interval '1 hour';
  insert into boo_private.plays(user_id,photo,submitted,points,correct_at,guess) values(u2,p1,true,5,clock_timestamp(),'Fictional Reveal Child 1'),(u3,p2,true,5,clock_timestamp(),'Fictional Reveal Child 2'),(u2,p4,true,0,null,'Wrong Fictional'),('a2000000-0000-4000-8000-000000000005',p1,true,0,null,'Wrong Fictional');
+ insert into boo_private.plays(user_id,photo,submitted,points,correct_at,guess)select ('a2000000-0000-4000-8000-'||lpad(g.v::text,12,'0'))::uuid,p1,true,case g.v when 7 then 3 when 8 then 1 else 0 end,case when g.v<9 then clock_timestamp()-interval '30 minutes' end,'Fictional guess' from generate_series(7,10)g(v);
+ update boo_private.plays set pending_at=clock_timestamp()-interval '30 minutes' where submitted;
  insert into boo_private.plays(user_id,photo,pending,pending_at,guess) values(u3,p3,gen_random_uuid(),clock_timestamp()-interval '30 seconds','Unfinished Fictional');
  update boo_private.players set own_names=array['fictionaltwina'] where user_id=u2;
  select md5(string_agg(to_jsonb(s)::text,',' order by s.user_id,s.photo)) into baseline from boo_private.plays s;
@@ -34,7 +38,7 @@ begin
  begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));raise exception 'FAIL: early media';exception when insufficient_privilege then null;end;
  begin perform public.boo_game('reveal-preview',jsonb_build_object('userId',owner_id));raise exception 'FAIL: member spoofed owner preview';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claim.sub',owner_id::text,true);
- r:=public.boo_game('reveal-preview','{}');if r->'me'->>'totalPlayers'<>'4' or r->'me'->>'totalPoints'<>'9' or (r->'me'->>'placement') is not null then raise exception 'FAIL: staff rank exclusion must preserve own earned points';end if;if jsonb_array_length(r->'entries')<>4 then raise exception 'FAIL: owner preview';end if;
+ r:=public.boo_game('reveal-preview','{}');if r->'me'->>'totalPlayers'<>'7' or r->'me'->>'totalPoints'<>'9' or (r->'me'->>'placement') is not null then raise exception 'FAIL: staff rank exclusion must preserve own earned points';end if;if jsonb_array_length(r->'entries')<>4 then raise exception 'FAIL: owner preview';end if;
  begin perform public.boo_game('reveal-publish','{"confirm":true}');raise exception 'FAIL: missing school clearance';exception when raise_exception then if sqlerrm='FAIL: missing school clearance' then raise;end if;end;
  begin perform public.boo_game('reveal-publish','{"confirm":true,"portraitUseApproved":true}');raise exception 'FAIL: publication before close';exception when raise_exception then if sqlerrm='FAIL: publication before close' then raise;end if;end;
  update boo_private.settings set closes_at=clock_timestamp()-interval '1 minute',results_on=(clock_timestamp() at time zone 'America/New_York')::date-1;
@@ -50,16 +54,18 @@ begin
  if public.boo_phase()->>'revealPublished'<>'true' then raise exception 'FAIL: public availability flag';end if;
  perform set_config('request.jwt.claim.sub',u2::text,true);
  r:=public.boo_game('reveal',jsonb_build_object('userId','a2000000-0000-4000-8000-000000000004'));
- if r->'me'->>'display'<>'Fictional Reveal Player 2' or r->'me'->>'totalPoints'<>'5' or r->'me'->>'placement'<>'1' or r->'me'->>'tiedPlayers'<>'2' or r->'me'->>'totalPlayers'<>'4' then raise exception 'FAIL: private score/rank %',r->'me';end if;
- if r::text like '%Fictional Reveal Player 3%' or r ? 'board' then raise exception 'FAIL: another player leaked';end if;
+ if r->'me'->>'display'<>'Fictional Reveal Player 2' or r->'me'->>'totalPoints'<>'5' or r->'me'->>'placement'<>'1' or r->'me'->>'tiedPlayers'<>'2' or r->'me'->>'totalPlayers'<>'7' then raise exception 'FAIL: private score/rank %',r->'me';end if;
+ if r ? 'board' then raise exception 'FAIL: full board leaked';end if;
+ if jsonb_array_length(r->'topFive')<>7 or not exists(select 1 from jsonb_array_elements(r->'topFive')x where x->>'place'='5' and x->>'ties'='3') or exists(select 1 from jsonb_array_elements(r->'topFive')x where x ? 'userId' or x ? 'phone' or x ? 'guesses') then raise exception 'FAIL: private top-five tie coverage';end if;
  if jsonb_array_length(r->'entries')<>4 or (select count(*) from jsonb_array_elements(r->'entries')x where x->'portraits'->0->>'id'=a1::text)<>2 then raise exception 'FAIL: repeated aliases collapsed';end if;
  if not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p1::text and x->>'status'='correct' and x->>'points'='5') or not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p2::text and x->>'status'='not_guessed') or not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p3::text and x->>'status'='own_child' and jsonb_array_length(x->'displayNames')=2 and jsonb_array_length(x->'portraits')=2) or not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p4::text and x->>'status'='incorrect') then raise exception 'FAIL: per-entry own results';end if;
  r:=public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));if r->>'key'<>'little-boo/reveal/v1/'||a1||'.bin' then raise exception 'FAIL: authorized private media';end if;
  begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','now','portraitId',a4));raise exception 'FAIL: unrelated portrait key';exception when no_data_found then null;end;
  perform set_config('request.jwt.claim.sub',u3::text,true);r:=public.boo_game('reveal','{}');if not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p3::text and x->>'status'='unavailable') then raise exception 'FAIL: unfinished guess marked wrong';end if;
- perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000004',true);r:=public.boo_game('reveal','{}');if r->'me'->>'uploadPoints'<>'3' or r->'me'->>'placement'<>'3' then raise exception 'FAIL: upload-only placement';end if;
- perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000005',true);r:=public.boo_game('reveal','{}');if r->'me'->>'totalPoints'<>'0' or r->'me'->>'placement'<>'4' then raise exception 'FAIL: zero-point eligible player';end if;
+ perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000004',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: upload-only access';exception when insufficient_privilege then null;end;begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));raise exception 'FAIL: upload-only direct media';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000005',true);r:=public.boo_game('reveal','{}');if r->'me'->>'totalPoints'<>'0' or r->'me'->>'placement'<>'5' then raise exception 'FAIL: zero-point eligible player';end if;
  perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000006',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: sign-in-only participant';exception when insufficient_privilege then null;end;
+ insert into auth.users(id,phone_confirmed_at,is_anonymous)values('a2000000-0000-4000-8000-000000000011',now(),false);perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000011',true);begin perform public.boo_game('profile','{"display":"Fictional New Player","house":"Amistad","grade":"5th"}');raise exception 'FAIL: new player after close';exception when insufficient_privilege then null;end;
  perform set_config('request.jwt.claim.sub','',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: anonymous reveal';exception when insufficient_privilege then null;end;
  for r in select jsonb_build_object('action',v) from unnest(array['reveal-preview','reveal-media','reveal-preview-media'])v loop
   begin perform public.boo_game(r->>'action',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));raise exception 'FAIL: anonymous direct reveal/media';exception when insufficient_privilege then null;end;

@@ -16,8 +16,8 @@ export async function authHeaders() {
   if (error) throw error;
   return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {};
 }
-export async function sendCode(phone) {
-  const { error } = await supabase.auth.signInWithOtp({ phone: normalizePhone(phone), options: { channel: 'sms' } });
+export async function sendCode(phone, { shouldCreateUser } = {}) {
+  const { error } = await supabase.auth.signInWithOtp({ phone: normalizePhone(phone), options: { channel: 'sms', ...(typeof shouldCreateUser === 'boolean' ? { shouldCreateUser } : {}) } });
   if (error) throw error;
 }
 export async function verifyCode(phone, token) {

@@ -21,6 +21,8 @@ begin
  or boo_private.first_name_key(chr(160)||'Élise'||chr(160)||'Echo')<>'elise'
  or boo_private.first_name_key('Mary Jane Cloud')<>'mary'
  or boo_private.first_name_key('D''Andre Dawn')<>'dandre' then raise exception 'FAIL: first-name components';end if;
+ -- Test actors join before the local synthetic round closes.
+ update boo_private.settings cfg set closes_at=clock_timestamp()+interval '1 day' where cfg.id=true;
  for i in 1..24 loop
   actor:=('b1000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid;
   insert into auth.users(id,phone,phone_confirmed_at,is_anonymous) values(actor,'+1555777'||lpad(i::text,4,'0'),now(),false);

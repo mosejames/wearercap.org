@@ -10,6 +10,8 @@ declare u uuid; i int; r jsonb; args jsonb; stamp timestamptz; awards jsonb; pla
 begin
  -- Exact confirmed Eastern boundaries; Sunday midnight is still EDT before fallback.
  if boo_private.phase_at('2026-10-29T23:59:59.999-04:00')->>'phase'<>'submissions' or boo_private.phase_at('2026-10-30T00:00:00-04:00')->>'phase'<>'submissions' or boo_private.phase_at('2026-10-30T11:58:59.999-04:00')->>'phase'<>'submissions' or boo_private.phase_at('2026-10-30T11:59:00-04:00')->>'phase'<>'waiting' or boo_private.phase_at('2026-10-30T11:59:59.999-04:00')->>'phase'<>'waiting' or boo_private.phase_at('2026-10-30T12:00:00-04:00')->>'phase'<>'guessing' or boo_private.phase_at('2026-10-31T23:58:59.999-04:00')->>'phase'<>'guessing' or boo_private.phase_at('2026-10-31T23:59:00-04:00')->>'phase'<>'closed' or boo_private.phase_at('2026-11-01T00:00:00-04:00')->>'phase'<>'results' then raise exception 'FAIL: exact Eastern phase boundaries';end if;
+ -- Test actors join before the local synthetic round closes.
+ update boo_private.settings cfg set closes_at=clock_timestamp()+interval '1 day' where cfg.id=true;
  for i in 1..4 loop
   u:=('90000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid;
   insert into auth.users(id,phone,phone_confirmed_at,is_anonymous) values(u,'+1555999'||lpad(i::text,4,'0'),now(),false);

@@ -50,3 +50,11 @@ The organizer explicitly confirmed school-portrait reuse and subsequently restri
 Added explicit API tests for anonymous data/media/upload rejection before any storage access and invalid-session media rejection. SQL tests deny direct anonymous reveal/preview/media calls; browser tests confirm logged-out users see only sign-in and make no reveal requests. Existing cross-player score isolation and before-close/unpublished gates remain tested. A local integration check found the storage helper accepted only the original photo prefix; it now accepts the equally sealed reveal/v1 UUID bin prefix while rejecting plaintext/public/traversal keys.
 
 Fresh supported Library preparation on November 2 again returned a transfer with no workspace_path; the bundled materialize helper failed with `library file transfer failed: download failed`. No bytes arrived, no real-image QA was possible, and neither deployment nor finalization/publication occurred. Permission is no longer the blocker; transfer and real-image verification are.
+
+## Final access restriction
+
+The organizer narrowed access to existing verified non-staff players with a committed student-game guess during the pre-close guessing window. Upload-only and sign-in-only accounts no longer qualify. All reveal data and both image types share this server-side eligibility gate. Owner-only preview/import remains separate. The private top-five table uses the same eligible population and total persisted student points, with all players tied at fifth shown. Per-photo results remain personal.
+
+Reveal OTP requests use shouldCreateUser:false. The closed game's other sign-in flows consult the authoritative phase and also disable account creation. A server-side game profile guard rejects new player registrations after closing. Other applications keep their existing account behavior. No global Auth configuration or account access was changed.
+
+The initial schema confirmation expired; the revised request was interrupted. Readback after both confirmed no schema execution, no finalization and all 28 prior correction receipts preserved. The user subsequently said publish. No scoring repair may be replayed during the release.

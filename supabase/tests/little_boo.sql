@@ -14,6 +14,8 @@ end $$;
 do $$
 declare i int; u uuid; id uuid; r jsonb; pend text; proof text:='synthetic-proof-only'; first_id uuid:='b0000000-0000-4000-8000-000000000001';
 begin
+ -- Test actors join before the local synthetic round closes.
+ update boo_private.settings cfg set closes_at=clock_timestamp()+interval '1 day' where cfg.id=true;
  for i in 1..16 loop
   u:=('a0000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid;
   insert into auth.users(id,phone,phone_confirmed_at,is_anonymous) values(u,'+1555000'||lpad(i::text,4,'0'),now(),false);

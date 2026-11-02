@@ -410,7 +410,15 @@ export function SignIn({
             await verifyCode(auth.phone, auth.code);
             await onDone();
           } else {
-            await sendCode(auth.phone);
+            let shouldCreateUser = false;
+            if (intent !== "reveal") {
+              const phaseResponse = await fetch("/api/little-boo?action=phase");
+              if (!phaseResponse.ok) throw Error("Could not check game access. Please try again.");
+              const phase = await phaseResponse.json();
+              if (!phase.phase) throw Error("Could not check game access. Please try again.");
+              shouldCreateUser = !["closed", "results"].includes(phase.phase);
+            }
+            await sendCode(auth.phone, { shouldCreateUser });
             setAuth((a) => ({ ...a, sent: true, sentAt: Date.now() }));
             setNow(Date.now());
           }

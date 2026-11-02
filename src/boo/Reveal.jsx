@@ -3,7 +3,7 @@ import Brand from "../components/Brand.jsx";
 import { supabase } from "../vault/auth.js";
 import { request } from "./api.js";
 import { SignIn } from "./Onboarding.jsx";
-import { placementLabel, entryLabel } from "./reveal-model.js";
+import { placementLabel, entryLabel, ordinal } from "./reveal-model.js";
 import "./style.css";
 import "./reveal.css";
 export function RevealImage({ entryId, portrait, preview = false, alt }) {
@@ -89,14 +89,13 @@ export function RevealList({ data }) {
           <summary>How placement works</summary>
           <p>
             Ranked by total persisted student-game points, including upload
-            bonuses. Participants with a committed guess or an active student
-            contribution are included, even at zero guessing points. Upload-only
-            participants count; organizer/staff, sign-in-only, adult-only and practice accounts do not.
+            bonuses. Only verified players with a committed student-game guess before closing are ranked, including zero-point guessers. Upload-only, organizer/staff, sign-in-only, adult-only and practice accounts do not count.
             Equal totals share a place, and the next rank skips the tied
             positions.
           </p>
         </details>
       </section>
+      {data.topFive?.length > 0 && <section className="panel" aria-label="Top five guessers"><h2>Top five guessers</h2><p>Total points include photo contributions. Ties share a place; everyone tied at fifth is shown.</p><ol>{data.topFive.map((player,i)=><li key={i}>{ordinal(player.place)} · {player.display}{player.you ? " (you)" : ""} · {player.points} points{player.ties > 1 ? " · tied" : ""}</li>)}</ol><p>Your individual guesses remain private.</p></section>}
       <header className="reveal-list-heading">
         <span className="eyebrow">THEN &amp; NOW</span>
         <h2>Who was that little boo?</h2>
