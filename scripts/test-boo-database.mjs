@@ -92,6 +92,8 @@ try {
   }
   const restrictedMigration=(await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_restore_guesser_reveal_access.sql"));
   if(restrictedMigration){const sql=await fs.readFile(root+"/supabase/migrations/"+restrictedMigration,"utf8");await db.exec(sql);await db.exec(sql);console.log("PASS: pre-close guesser-only restoration, idempotent twice");}
+  const publicWinnersMigration=(await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_public_winners.sql"));
+  if(publicWinnersMigration)await db.exec(await fs.readFile(root+"/supabase/migrations/"+publicWinnersMigration,"utf8"));
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",
@@ -166,6 +168,13 @@ try {
   await db.exec(reviewedRepair);
   await db.exec(reviewedFixture[2]);
   console.log("PASS: exact 24 reviewed spelling attempts, 1/3 points, scope/preservation, atomic tamper rejection and idempotent rerun (rollback only)");
+  if(publicWinnersMigration){
+    const chunks=(await fs.readFile(root+"/supabase/tests/little_boo_public_winners.sql","utf8")).split("-- CHECK_AS_ANON");
+    await db.exec(chunks[0]);await db.exec("set local role anon");
+    const publicResult=(await db.query("select public.boo_winners() result")).rows[0].result;
+    if(publicResult.winners.length!==3||publicResult.winners.some(w=>Object.keys(w).sort().join(',')!=='name,place,points'))throw Error("Anonymous public-winner shape leaked private fields");
+    await db.exec("reset role");await db.exec(chunks[1]);console.log("PASS: anonymous approved top-three only, freeze/publication/approval/mismatch/hide gates, no phones/IDs/photos or personal results");
+  }
   await db.close();
 } catch (e) {
   console.error(

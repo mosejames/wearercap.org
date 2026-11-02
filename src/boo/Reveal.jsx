@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import PublicWinners from "./PublicWinners.jsx";
 import Brand from "../components/Brand.jsx";
 import { supabase } from "../vault/auth.js";
 import { request } from "./api.js";
@@ -224,6 +225,7 @@ export default function RevealPage() {
         <Brand weAre reversed width={140} />
         <a href="/little-boo/">Back to Little Boo</a>
       </header>
+      <PublicWinners />
       {preview && (
         <p className="reveal-private-banner">
           ORGANIZER PRIVATE PREVIEW · NOT PUBLISHED

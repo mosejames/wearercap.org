@@ -3,6 +3,7 @@ import { AwsClient } from "aws4fetch";
 import sharp from "sharp";
 import { seal, open, hash } from "./crypto.js";
 import { importPrivatePortrait } from "./reveal-import.js";
+import { publicWinnerFields } from "./public-winners.js";
 import { adjudicate } from "./spelling.js";
 const fail = (message, status = 400) =>
   Object.assign(Error(message), { status });
@@ -88,6 +89,13 @@ export default async function handler(req, res) {
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("X-Content-Type-Options", "nosniff");
   try {
+    if (req.method === "GET" && req.query?.action === "winners") {
+      const base=process.env.SUPABASE_URL||process.env.VITE_SUPABASE_URL,key=process.env.SUPABASE_ANON_KEY||process.env.VITE_SUPABASE_ANON_KEY;
+      if(!base||!key)throw fail("The winner preview is temporarily unavailable.",503);
+      const result=await fetch(base+"/rest/v1/rpc/boo_winners",{method:"POST",headers:{apikey:key,Authorization:"Bearer "+key,"Content-Type":"application/json"},body:"{}",signal:AbortSignal.timeout(10000)});
+      if(!result.ok)throw fail("The winner preview is temporarily unavailable.",503);
+      return res.status(200).json(publicWinnerFields(await result.json().catch(()=>null)));
+    }
     if (req.method === "GET" && req.query?.action === "phase") {
       const base = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
         key =

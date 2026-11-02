@@ -71,6 +71,8 @@ begin
  perform set_config('request.jwt.claim.sub',u3::text,true);r:=public.boo_game('reveal','{}');if not exists(select 1 from jsonb_array_elements(r->'entries')x where x->>'id'=p3::text and x->>'status'='unavailable') then raise exception 'FAIL: unfinished guess marked wrong';end if;
  perform set_config('request.jwt.claim.sub','a2000000-0000-4000-8000-000000000004',true);begin perform public.boo_game('reveal','{}');raise exception 'FAIL: upload-only access';exception when insufficient_privilege then null;end;begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));raise exception 'FAIL: upload-only direct media';exception when insufficient_privilege then null;end;
  begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));raise exception 'FAIL: upload-only direct portrait';exception when insufficient_privilege then null;end;
+ begin perform public.boo_game('get','{}');raise exception 'FAIL: upload-only legacy game payload';exception when insufficient_privilege then null;end;
+ begin perform public.boo_game('media',jsonb_build_object('id',p1));raise exception 'FAIL: upload-only legacy photo';exception when insufficient_privilege then null;end;
  for i in 12..19 loop
   perform set_config('request.jwt.claim.sub',('a2000000-0000-4000-8000-'||lpad(i::text,12,'0')),true);
   begin perform public.boo_game('reveal','{}');raise exception 'FAIL: upload-only reveal access';exception when insufficient_privilege then null;end;

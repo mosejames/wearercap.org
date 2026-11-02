@@ -247,3 +247,13 @@
 .reveal-admin-controls a {
   color: #ffdc7c;
 }
+
+.public-winners { background:linear-gradient(145deg,#173557,#09182c); border:2px solid #d6b461; border-radius:20px; padding:24px 20px; margin-bottom:24px; text-align:center; }
+.public-winners h1 {font-size:28px;margin:10px 0 20px;}
+.public-winners ol{list-style:none;padding:0;margin:0;display:grid;gap:12px;}
+.public-winners li{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:14px 12px;background:#071329;border-radius:12px;}
+.public-winners li>span,.public-winners b{color:#ffdc7c;font-weight:800;}
+.public-winners strong{font-size:17px;overflow-wrap:anywhere;}
+.public-winners small{font-size:9px;}
+.public-winners p{font-size:13px;line-height:1.5;margin-bottom:0;}
+@media(max-width:420px){.public-winners{padding:22px 12px;}.public-winners li{grid-template-columns:32px minmax(0,1fr) auto;gap:7px;}.public-winners strong{font-size:15px;}}
