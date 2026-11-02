@@ -100,6 +100,8 @@
       "source": "/share/:token",
       "destination": "/api/vault-link?share=:token"
     },
+    {"source":"/little-boo/reveal","destination":"/little-boo/reveal/index.html"},
+    {"source":"/little-boo/reveal/","destination":"/little-boo/reveal/index.html"},
     {
       "source": "/feedback/trunk-or-treat-2026",
       "destination": "/feedback/trunk-or-treat-2026/index.html"

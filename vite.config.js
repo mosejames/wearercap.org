@@ -13,6 +13,8 @@ export default defineConfig({
       name: "feedback-dev-routes",
       configureServer(server) {
         server.middlewares.use((req, _res, next) => {
+          if (/^\/little-boo\/reveal\/?(?:\?.*)?$/.test(req.url || ""))
+            req.url = "/little-boo/reveal/index.html";
           if (/^\/share\/[0-9a-f]{64}(?:\?.*)?$/.test(req.url || ""))
             req.url = "/capsule-share/index.html";
           if (/^\/feedback\/(?!.*\.)[^?]*(?:\?.*)?$/.test(req.url || ""))
@@ -28,6 +30,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         georgiagoal: resolve(__dirname, "georgia-goal/index.html"),
         littleboo: resolve(__dirname, "little-boo/index.html"),
+        littlebooreveal: resolve(__dirname, "little-boo/reveal/index.html"),
         tripstudio: resolve(__dirname, "trip-studio/index.html"),
         tripengine: resolve(__dirname, "trip-vault/index.html"),
         raffleInformation: resolve(__dirname, "raffle/2026/information/index.html"),

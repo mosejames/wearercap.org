@@ -1640,7 +1640,7 @@ function RevealPublicationControls({ request, run, busy }) {
         School portraits stay private until reuse permission is confirmed,
         guessing closes, results are reviewed and you explicitly publish.
       </p>
-      <a href="/little-boo/?view=reveal&amp;preview=organizer">
+      <a href="/little-boo/reveal?preview=organizer">
         Open private organizer preview
       </a>
       {error ? (
@@ -1928,6 +1928,7 @@ function PreviewGate() {
   );
 }
 createRoot(document.getElementById("root")).render(
+  location.pathname.replace(/\/+$/, "") === "/little-boo/reveal" ||
   new URLSearchParams(window.location.search).get("view") === "reveal" ? (
     <React.Suspense fallback={<p>Loading your reveal…</p>}>
       <RevealPage />

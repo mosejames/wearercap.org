@@ -27,7 +27,7 @@ BOO_TEST_BASE=http://127.0.0.1:5183 node scripts/test-boo-reveal-browser.mjs
 
 Browser verification uses only intercepted fictional responses and image fixtures. It verifies 55 distinct entries, shared portrait references, combined portraits, score/rank/status presentation, lazy authenticated media, mobile/desktop layout, logout clearing, unpublished/member-preview denial and import consent gating. It does not prove real portrait matching or production authentication/storage integration.
 
-Private local review route after implementation deployment would be `/little-boo/?view=reveal&preview=organizer`; it requires server-confirmed owner access. No deployed preview is claimed by this branch.
+Private local review route after implementation deployment would be `/little-boo/reveal?preview=organizer`; it requires server-confirmed owner access. No deployed preview is claimed by this branch.
 
 ## Organizer-reviewed spelling correction
 
@@ -36,3 +36,9 @@ Applied once in production at 2026-11-02 03:46:22 UTC using `supabase/repairs/li
 Audit reference: `little-boo-2026-11-02-organizer-reviewed-24-v1`. There are 24 per-attempt receipts and one batch receipt. Verified 15 affected players, +72 points (all late unaided, 3 points each), 657 to 681 correct, 152 to 128 incorrect, 1811 to 1883 guessing points, 809 attempts unchanged. Upload points remain 165. Existing positive scores and first-correct winners are fingerprint-checked in the transaction. No aliases, guesses, hint use, submissions or awards changed. Top-three order remains unchanged, scores 131/120/119, no top-three tie. These are a snapshot while guessing is still open, not final published standings.
 
 The rollback-only SQL tests run the exact repair twice, check hint scoring, retain an unreviewed attempt unchanged, and verify atomic rejection when a target's raw guess changes. No deployment or reveal publication accompanied this correction.
+
+## Canonical reveal route
+
+Prepared locally at `/little-boo/reveal` (trailing slash also supported). The noindex HTML entry is included in the Vite build, explicit Vercel rewrites target that entry, and local development routes match production routing. The earlier `?view=reveal` route remains compatible. All existing sign-in, private media, organizer-preview and explicit publication gates remain in place. Build, full unit suite and fictional mobile/desktop browser verification passed. This route has not been pushed or deployed.
+
+Read-only finalist-name check found only generated player labels for the exact top three and no supplied name/full_name/display_name/first_name/last_name fields in their account records. Do not infer identities from child entries or contact records; organizer confirmation is required for a named announcement.

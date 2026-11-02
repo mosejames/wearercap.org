@@ -185,7 +185,7 @@ export function PhaseStart({
       )}
       {schedule.revealPublished && (
         <p>
-          <a className="reveal-launch" href="/little-boo/?view=reveal">
+          <a className="reveal-launch" href="/little-boo/reveal">
             See your then &amp; now reveal
           </a>
         </p>
