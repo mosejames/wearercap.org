@@ -90,6 +90,8 @@ try {
     if(scoped.rows[0].writes!==3)throw Error("All three game settings writes must have an explicit singleton predicate");
     console.log("PASS: scoped settings/finalize/drawing SQL guard patch, idempotent twice");
   }
+  const restrictedMigration=(await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_restore_guesser_reveal_access.sql"));
+  if(restrictedMigration){const sql=await fs.readFile(root+"/supabase/migrations/"+restrictedMigration,"utf8");await db.exec(sql);await db.exec(sql);console.log("PASS: pre-close guesser-only restoration, idempotent twice");}
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",
