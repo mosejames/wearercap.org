@@ -149,6 +149,9 @@ export function actionAllowed(r, role, email, action, opts = {}) {
   if (r.is_test && action === "paid") return false;
   const own = r.email === email;
   if (action === "edit") return own && r.status === "needs_changes";
+  // The submitter can pull back a request until it is approved. The record,
+  // receipts and history stay; nothing is paid.
+  if (action === "withdraw") return own && OPEN.includes(r.status);
   if (action === "duplicate")
     return (
       OPEN.includes(r.status) &&
@@ -242,7 +245,7 @@ export function milestones(r, history, staff) {
     [...history].reverse().find((h) => actions.includes(h.action));
   const sent = last(["submitted", "resubmitted"]);
   const board = last(["board_review"]);
-  const decided = last(["approved", "declined", "duplicate"]);
+  const decided = last(["approved", "declined", "duplicate", "withdrawn"]);
   const decidedByVote = decided?.note?.startsWith("Board vote:");
   const steps = [
     {
@@ -270,6 +273,8 @@ export function milestones(r, history, staff) {
           ? "Declined"
           : decided?.action === "duplicate"
             ? "Closed as duplicate"
+            : decided?.action === "withdrawn"
+              ? "Withdrawn by requester"
             : decidedByVote
               ? "Approved by board vote"
               : assignedReviewer(r)
@@ -283,7 +288,7 @@ export function milestones(r, history, staff) {
       : "",
     at: decided?.created_at,
   });
-  if (decided?.action !== "declined" && decided?.action !== "duplicate")
+  if (!["declined", "duplicate", "withdrawn"].includes(decided?.action))
     steps.push({
       key: "paid",
       label: "Funds released",

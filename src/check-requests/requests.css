@@ -214,14 +214,32 @@ p {
   color: #182f3e;
   font-size: 16px;
 }
+/* Native selects keep their keyboard and touch pickers; only the arrow is drawn. */
 .cr select {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 48px;
-  background-image: url("./chevron-down.svg");
+  min-height: 52px;
+  padding-right: 60px;
+  background-image: url("./select-arrow.svg");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 19px 19px;
+  background-position: right 12px center;
+  background-size: 32px 32px;
+  cursor: pointer;
+}
+.cr select::-ms-expand {
+  display: none;
+}
+.cr select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+@media (forced-colors: active) {
+  .cr select {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none;
+    padding-right: 12px;
+  }
 }
 .cr input:focus,
 .cr select:focus,

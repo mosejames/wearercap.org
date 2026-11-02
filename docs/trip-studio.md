@@ -160,3 +160,38 @@ and refuse non-local fixture targets. Integration fixtures never publish a real
 trip or send a real email. After release, verify live anonymous protections and
 existing vault endpoints. Keep DC private until its organizer completes setup and
 explicitly launches it.
+
+## Class of 2030 Washington, DC guide
+
+The November 8–10, 2026 trip uses `washington-dc-2030`, Class of 2030,
+Washington, DC, and America/New_York. Its compact, expandable family guide is
+in `src/trip-engine/TripGuide.jsx`; the supplied 12 planned stops live in
+`trip-guides.js`. Matching includes slug, cohort and dates so other DC trips
+do not inherit this event's itinerary. No day-by-day stop schedule was supplied.
+The guide does not publish the letter's contact numbers, hotel or flight details.
+
+This source addition does not launch a trip or update the encrypted registry.
+Save and launch the configured trip through the administrator workspace.
+The engine's existing per-trip uploads, moderation, exact-photo sharing and
+no-store share-card checks remain the production path.
+
+The Class of 2030 DC trip uses one gallery without group filters, upload group
+selection or group labels in the viewer. `src/trip-engine/groups.js` supplies
+that trip's presentation policy. Its uploads use the existing neutral `Mixed`
+value internally, including when an older device remembered Group A or Group AA.
+Other trips retain their configured grouping. No media or identities are moved.
+
+The DC family page follows the NYC reference: cream paper, navy and gold centered
+headline, a softly washed Washington backdrop, compact milestone card above the
+hero and the trip album immediately below. The generated decorative backdrop is
+not a guest photo. Responsive WebP assets live in `public/dc/`; `dc-backdrop.js`
+embeds the smaller JPEG for the identical studio/server share-card renderer.
+`dates.js` keeps the hero and share-card dates readable. Specific photo cards
+continue to use the requested photo's existing web rendition.
+
+DC supports the same separate Dropbox video collection flow as NYC. When the
+published trip has `features.videos` enabled and a `videoUploadUrl`, the hero
+and photo dialog show Share trip videos. The link opens a separate tab with
+noopener/noreferrer. Archive hides the contribution link. Photo intake remains
+photo-only; video submission does not imply automatic gallery ingestion. Each
+trip must use its own approved Dropbox file request and destination.

@@ -13,7 +13,7 @@ function button(text){return[...host.querySelectorAll('button')].find(b=>b.textC
 async function click(text){await act(async()=>button(text).click());}
 beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;history.replaceState(null,'','/trip-vault/?trip=verification-trip');const memory=new Map();Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)}});HTMLDialogElement.prototype.showModal=vi.fn();HTMLDialogElement.prototype.close=vi.fn();authClient.mockReturnValue({auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})}});gallery.mockReset().mockResolvedValue({trip,photos:[],count:0,hasMore:false,isAdmin:false});request.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();history.replaceState(null,'','/');vi.clearAllMocks();});
-it('opens one configured trip and keeps the stable link in the address bar',async()=>{await act(async()=>root.render(<App/>));expect(host.textContent).toContain('CLASS OF 2035');expect(location.pathname).toBe('/trips/verification-trip/');expect(host.textContent).toContain('0 photos. One big adventure.');expect(host.textContent).not.toContain('NYC');});
+it('opens one configured trip and keeps the stable link in the address bar',async()=>{await act(async()=>root.render(<App/>));expect(host.textContent).toContain('CLASS OF 2035');expect(location.pathname).toBe('/trips/verification-trip/');expect(host.querySelector('.engine-milestone-count b').textContent).toBe('0');expect(host.textContent).toContain('photos. One big adventure.');expect(host.textContent).not.toContain('NYC');});
 it('does not show a draft configuration when the public lookup is unavailable',async()=>{gallery.mockRejectedValue(Object.assign(Error('Trip not available'),{status:404}));await act(async()=>root.render(<App/>));expect(host.textContent).toContain('This trip is not open');expect(host.textContent).not.toContain('2035');expect(host.querySelector('input[type=file]')).toBeNull();});
 it('keeps Mixed photos visible with either group filter',async()=>{gallery.mockResolvedValue({trip,photos:[photo('a'),photo('b','Group AA'),photo('c','Mixed')],count:3,hasMore:false});await act(async()=>root.render(<App/>));await click('Group A');expect(host.querySelector('.engine-gallery img[src="a.jpg"]')).not.toBeNull();expect(host.querySelector('.engine-gallery img[src="b.jpg"]')).toBeNull();expect(host.querySelector('.engine-gallery img[src="c.jpg"]')).not.toBeNull();});
 it('remembers a batch’s group and omits a scholar-name field in regular intake',async()=>{await act(async()=>root.render(<App/>));await click('Add trip photos');await act(async()=>host.querySelector('input[type=radio][value="Group AA"]').click());expect(localStorage.getItem('trip-engine:verification-trip:group')).toBe('Group AA');expect(host.querySelector('dialog').textContent).toContain('Chaperone name');expect([...host.querySelectorAll('dialog label')].some(l=>l.textContent.includes('Scholar'))).toBe(false);expect(host.querySelector('dialog input[type=file]').accept).not.toContain('video');});
@@ -22,3 +22,39 @@ it('opens an exact deep-linked photo even when it is beyond the first gallery pa
 
 it('gives Washington DC its custom design and a working invitation guide',async()=>{gallery.mockResolvedValue({trip:{...trip,destination:'Washington, DC',cohort:'2030'},photos:[],count:0,hasMore:false});await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-dc')).not.toBeNull();expect(host.textContent).toContain('Big history.');expect(host.querySelector('#downloads')).not.toBeNull();await click('Full-trip downloads');expect(host.querySelector('dialog').textContent).toContain('private download invitation');expect(host.querySelector('dialog input[type=email]')).toBeNull();});
 it('does not add the DC design or download section to other configured trips',async()=>{await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-dc')).toBeNull();expect(host.querySelector('#downloads')).toBeNull();expect(host.querySelector('.engine-intro')).not.toBeNull();});
+it('shows the supplied guide only for the matching DC trip, without inventing a daily schedule',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',start:'2026-11-08',end:'2026-11-10'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelectorAll('.engine-trip-guide li')).toHaveLength(12);
+ expect(host.querySelector('.engine-trip-guide').textContent).toContain('Ford’s Theater');
+ expect(host.querySelector('.engine-trip-guide').textContent).not.toContain('JW Marriott');
+});
+it('keeps another DC cohort from inheriting the 2030 itinerary',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2031',destination:'Washington, DC',cohort:'2031'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-trip-guide')).toBeNull();
+});
+it('uses one DC gallery and needs no group selection even when this device remembered Group A',async()=>{
+ localStorage.setItem('trip-engine:verification-trip:group','Group A');
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030'},photos:[photo('a'),photo('b','Group AA')],count:2,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.engine-group-filters')).toBeNull();
+ expect(host.querySelectorAll('.engine-gallery>button')).toHaveLength(2);
+ expect(host.textContent).not.toContain('All groups');
+ await click('Add trip photos');
+ expect(host.querySelector('dialog input[type=radio]')).toBeNull();
+ expect(host.querySelector('dialog').textContent).not.toContain('Change groups');
+});
+it('offers the configured DC video request in the hero and photo form without enabling video files in photo intake',async()=>{
+ const url='https://www.dropbox.com/request/dc-verification';
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',features:{...trip.features,videos:true},videoUploadUrl:url},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.dc-video-link').href).toBe(url);
+ expect(host.querySelector('.dc-video-link').rel).toContain('noopener');
+ await click('Add trip photos');
+ expect(host.querySelector('dialog a[href="'+url+'"]').textContent).toContain('Share trip videos');
+ expect(host.querySelector('dialog input[type=file]').accept).not.toContain('video');
+});
+it('does not show a video upload link when DC collection is disabled or the trip is archived',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',phase:'Archive',features:{...trip.features,videos:true},videoUploadUrl:'https://www.dropbox.com/request/dc-verification'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));expect(host.querySelector('.dc-video-link')).toBeNull();
+});
