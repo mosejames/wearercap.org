@@ -201,3 +201,38 @@ receipts, and history. The Archived filter exposes these records. Archive and
 restore use a version-checked RPC and append history. A database trigger blocks
 business updates until the archived request is restored. Tests #4 and #25 were
 archived at the owner's request on September 29, 2026.
+
+## Committee approval routes (November 2, 2026)
+
+New submissions route to the board member who oversees the committee, per the
+RCAP 2026-27 Committee & Advisory Board roster. Routes are data in
+`cr_approval_routes` (both request types), managed in Board review settings,
+not code:
+
+- Mose James: Trunk or Treat, Marketing and Communications, Men of RCAP.
+- Crystal Jones: EXP Support, Teacher Appreciation Week.
+- Farren Salter: Uniform Swap, Holiday Decor, 4 Days of Christmas.
+
+Audit Team, Fall Raffle and Concessions (overseen by the treasurer) and
+Community Service, General RCAP and Other RCAP expense have no route yet, so
+finance staff assign a reviewer per request. The treasurer cannot be a route
+reviewer: the person who approves never records the payment.
+
+A route applies when a request is submitted or resubmitted. When the routed
+reviewer is the requester (any of their logins), the request goes to a board
+vote instead; nobody approves their own request.
+
+## Withdrawing a request
+
+The requester (or the staff member who prepared it) can withdraw a request
+from its detail view while it is submitted, up for a board vote, or sent back
+for changes. Withdrawal closes it with status `declined` and a `withdrawn`
+history entry, following the duplicate precedent, so queues, reminders, votes,
+payment gates and the ledger need no new status. The reviewer, treasurer,
+configured board list and requester are notified, and a PDF archive is
+captured. Receipts and history remain. Lists show it as Declined; the detail
+view shows "Withdrawn by requester". Approved or paid requests cannot be
+withdrawn. There is no hard delete: requests are financial records. Admins
+archive test or stale records instead. Migration:
+`20261102030000_check_request_withdraw.sql`; test:
+`supabase/tests/check_request_withdraw.sql`.

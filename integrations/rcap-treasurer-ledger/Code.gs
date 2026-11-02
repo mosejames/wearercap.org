@@ -65,7 +65,7 @@ function syncLedger() {
     const root = DriveApp.getFolderById(LEDGER_FOLDER_ID);
     const requestRows = data.requests.map((request) => {
       const actions = data.history.filter((action) => action.request_id === request.id);
-      const decision = actions.filter((action) => ['approved', 'declined', 'duplicate'].includes(action.action)).pop();
+      const decision = actions.filter((action) => ['approved', 'declined', 'duplicate', 'withdrawn'].includes(action.action)).pop();
       const documents = request.documents || [];
       const folderUrl = copyDocuments(root, request.reference, documents);
       documentFolders.set(request.id, folderUrl);

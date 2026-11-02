@@ -85,6 +85,7 @@ const HISTORY_LABEL = {
   vote_approve: "Voted yes",
   vote_decline: "Voted no",
   duplicate: "Closed as duplicate",
+  withdrawn: "Withdrawn by requester",
   paid: "Funds released",
   item_note: "Expense note added",
   assigned: "Assigned",
@@ -1931,6 +1932,33 @@ function Detail({
                   Every action is recorded with your name and the time.
                 </p>
               </div>
+            )}
+            {allowed("withdraw") && (
+              <details className="duplicate-box withdraw-box">
+                <summary>Withdraw this request</summary>
+                <p className="muted">
+                  Pulls the request back before approval. Your reviewer is
+                  notified, nothing is paid, and the record and receipts stay
+                  in Past requests. To ask again, submit a new request.
+                </p>
+                <Field label="Reason (optional)">
+                  <textarea
+                    maxLength={2000}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="For example: submitted twice, or the expense was covered another way."
+                  />
+                </Field>
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() => change("withdraw")}
+                  >
+                    Withdraw request
+                  </button>
+                </div>
+              </details>
             )}
             {allowed("duplicate") && (
               <details className="duplicate-box">
