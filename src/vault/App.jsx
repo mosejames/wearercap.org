@@ -5,7 +5,7 @@ import { sortGallery } from './gallerySort.js';
 import { Fragment, lazy, Suspense, createContext, useContext, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   HOUSE, YEAR, SITE, ASK, KINDS, promosFor, galleryCardIdsFor, GALLERY_CARD_OPTIONS, UPLOAD_PROMPT_CARD_ID,
-  MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS,
+  MAX_BATCH, ADMIN_HINT, CONTACT, WORDS, IS_SCHOOL, RCA_HOUSES, ALBUM_PAIRS, VIDEO_UPLOADS,
   fmtDate, fmtRange, monthKey, monthLabel, todayISO, msUntilNextDay, acceptsUploads, plural,
 } from './config.js';
 import {
@@ -330,10 +330,20 @@ function ProfileSheet({ profile, onSaved, onClose, firstTime, reason }) {
 
 /* -------------------------------------------------------------- upload */
 
-function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
-  const [files, setFiles] = useState(initialFiles || []);
+function LargeVideoUpload({ event }) {
+  const url = VIDEO_UPLOADS[event.slug];
+  if (!url) return null;
+  return <aside className="large-video-upload" aria-label="Video uploads">
+    <a className="btn ghost" href={url} target="_blank" rel="noreferrer">Upload videos through Dropbox ↗</a>
+    <p className="fine">Opens Dropbox in a new tab. Choose your videos there and keep that tab open until the upload finishes. Videos sent through Dropbox will appear in this gallery after we prepare and add them.</p>
+  </aside>;
+}
+
+export function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
+  const externalVideos = !!VIDEO_UPLOADS[event.slug];
+  const [files, setFiles] = useState(() => (initialFiles || []).filter(f => !externalVideos || !isVideo(f)));
   const [state, setState] = useState(null);
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState(() => externalVideos && initialFiles?.some(isVideo) ? 'Use the Dropbox button to upload your videos.' : '');
   const abort = useRef(null);
   const inputRef = useRef(null);
   const [quality, setQuality] = useState('original');
@@ -372,12 +382,13 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
 
   // One funnel for all three ways in: the picker, a drop, a paste.
   const take = useCallback((list) => {
-    const ok = (list || []).filter(droppable);
-    if (!ok.length) { setErr('Choose photos or MP4, MOV, or WebM videos.'); return; }
-    setErr(ok.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
+    const hasExternalVideos = externalVideos && (list || []).some(isVideo);
+    const ok = (list || []).filter(f => droppable(f) && (!externalVideos || !isVideo(f)));
+    if (!ok.length) { setErr(externalVideos ? 'Choose photos here. Use the Dropbox button for videos.' : 'Choose photos or MP4, MOV, or WebM videos.'); return; }
+    setErr(hasExternalVideos ? 'Your photos are ready below. Use the Dropbox button to upload your videos separately.' : ok.length > MAX_BATCH ? `First ${MAX_BATCH} taken. Add the rest in another round.` : '');
     setFiles(ok.slice(0, MAX_BATCH));
     setOptimized(null); setOptimizationNotes([]);
-  }, []);
+  }, [externalVideos]);
 
   const pick = (e) => take(Array.from(e.target.files || []));
 
@@ -414,11 +425,15 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
     <Sheet title={`Add photos or videos · ${event.title}`} onClose={() => { optimizationAbort.current?.abort(); onClose(); }}>
       {!state ? (
         <div className={`stack dz-wrap${drop.over ? ' over' : ''}`} {...drop.handlers}>
-          <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. {IS_SCHOOL ? 'Photos are automatically resized for crisp viewing and sharing. Your phone’s originals stay untouched.' : 'Photos keep their originals.'} Videos use the quality you choose below.</p>
-          <input ref={inputRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm" multiple hidden onChange={pick} />
+          {VIDEO_UPLOADS[event.slug] && <>
+            <p className="lede"><b>Photos here. Videos through Dropbox.</b><br/>For photos, choose them below, then tap “Add photos to the Capsule.” For videos, tap the Dropbox button.</p>
+            <LargeVideoUpload event={event} />
+          </>}
+          {!VIDEO_UPLOADS[event.slug] && <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. {IS_SCHOOL ? 'Photos are automatically resized for crisp viewing and sharing. Your phone’s originals stay untouched.' : 'Photos keep their originals.'} Videos use the quality you choose below.</p>}
+          <input ref={inputRef} type="file" accept={externalVideos ? 'image/*,.heic,.heif' : 'image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm'} multiple hidden onChange={pick} />
           <button className="dz" disabled={optimizing} onClick={() => inputRef.current?.click()}>
             <span className="dz-icon">{I.plus}</span>
-            <b>{files.length ? `${plural(files.length, 'file')} ready · change` : 'Choose photos or videos'}</b>
+            <b>{files.length ? `${plural(files.length, 'file')} ready · change` : externalVideos ? 'Choose photos' : 'Choose photos or videos'}</b>
             <span className="dz-sub desk">or drag them here. A whole folder works.</span>
             <span className="dz-sub touch">Straight from your camera roll.</span>
           </button>
@@ -444,7 +459,7 @@ function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
           </div>}
           {err && <p className="err">{err}</p>}
           <button className="btn primary" disabled={!files.length || optimizing || (files.some(isVideo) && quality === 'smaller' && !optimized)} onClick={start}>
-            Add {files.length ? plural(files.length, 'file') : 'files'} to the {WORDS.placeLower}
+            Add {files.length ? plural(files.length, externalVideos ? 'photo' : 'file') : externalVideos ? 'photos' : 'files'} to the {WORDS.placeLower}
           </button>
           <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in {WORDS.group} can see, like, comment on, and download what you add.</p>
         </div>
@@ -1239,6 +1254,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <a href={`#/e/${pair.booth}`} aria-current={event.slug===pair.booth?'page':undefined}><ImagePlus size={20} aria-hidden="true"/><span>Photo booth<small>Poses, smiles &amp; costumes</small></span></a>
           </nav>}
           {simpleGallery && <a className="trunk-survey-link" href="/feedback/trunk-or-treat-2026"><MessageSquare size={18} aria-hidden="true"/>How was Trunk or Treat? Take the quick survey →</a>}
+          <LargeVideoUpload event={event} />
           <div className="gallery-order">
             <label>Arrange by <select aria-label="Arrange photos by" value={sort} onChange={e => setSort(e.target.value)}>
               <option value="time">Date taken: oldest first</option>
