@@ -4,7 +4,7 @@ This branch is local preparation only. Do not publish portraits or results until
 
 The reveal uses the authenticated user's persisted student-game scores, including upload contributions, and that user's attempt status. It never accepts a client-selected player ID. Competition rank includes zero-point committed guessers and upload-only participants; excludes staff, anonymous/unverified/deleted/banned identities, sign-in-only and adult-only accounts. Practice data lives in the browser and is never eligible. No explicit production test/demo account marker exists in the game schema; do not exclude real people by guessing from their display names. If organizer-designated test identities exist, resolve them explicitly before publication.
 
-`20261102031605_little_boo_confirmed_nickname_credit.sql` has already been applied and read back: four confirmed nickname corrections, +12 guessing points, no upload changes, no first-correct winner changes. Do not apply again manually. The 24 uncertain attempts (16 distinct target/guess pairs) remain unchanged in a separate private review artifact.
+`20261102031605_little_boo_confirmed_nickname_credit.sql` has already been applied and read back: four confirmed nickname corrections, +12 guessing points, no upload changes, no first-correct winner changes. Do not apply again manually. The subsequent 24 reviewed attempts (16 distinct target/guess pairs) were explicitly approved by the organizer and corrected through the DML repair below.
 
 `20261102033228_little_boo_private_reveal.sql` is NOT applied. It installs closed/reviewed/explicit-publication gates, owner-only preparation/preview, and authenticated private media authorization. Publication also requires all active entries mapped to ready portraits. The public phase exposes only a boolean availability flag. Organizer import stores sealed objects and registrations, never publishes. Failed retries verify existing encrypted content instead of overwriting or deleting it.
 
@@ -28,3 +28,11 @@ BOO_TEST_BASE=http://127.0.0.1:5183 node scripts/test-boo-reveal-browser.mjs
 Browser verification uses only intercepted fictional responses and image fixtures. It verifies 55 distinct entries, shared portrait references, combined portraits, score/rank/status presentation, lazy authenticated media, mobile/desktop layout, logout clearing, unpublished/member-preview denial and import consent gating. It does not prove real portrait matching or production authentication/storage integration.
 
 Private local review route after implementation deployment would be `/little-boo/?view=reveal&preview=organizer`; it requires server-confirmed owner access. No deployed preview is claimed by this branch.
+
+## Organizer-reviewed spelling correction
+
+Applied once in production at 2026-11-02 03:46:22 UTC using `supabase/repairs/little_boo_reviewed_spelling_credit.sql`, with the exact 24 attempt IDs plus raw guess/name hashes supplied privately as a transaction-local parameter. No real identifiers or child names are embedded in this source. This DML repair is already complete; do not execute a new batch casually.
+
+Audit reference: `little-boo-2026-11-02-organizer-reviewed-24-v1`. There are 24 per-attempt receipts and one batch receipt. Verified 15 affected players, +72 points (all late unaided, 3 points each), 657 to 681 correct, 152 to 128 incorrect, 1811 to 1883 guessing points, 809 attempts unchanged. Upload points remain 165. Existing positive scores and first-correct winners are fingerprint-checked in the transaction. No aliases, guesses, hint use, submissions or awards changed. Top-three order remains unchanged, scores 131/120/119, no top-three tie. These are a snapshot while guessing is still open, not final published standings.
+
+The rollback-only SQL tests run the exact repair twice, check hint scoring, retain an unreviewed attempt unchanged, and verify atomic rejection when a target's raw guess changes. No deployment or reveal publication accompanied this correction.

@@ -141,6 +141,19 @@ try {
       "PASS: little_boo_nickname_repair.sql (actual nickname migration twice, rollback only)",
     );
   }
+  const reviewedRepair = await fs.readFile(root + "/supabase/repairs/little_boo_reviewed_spelling_credit.sql", "utf8");
+  const reviewedFixture = (await fs.readFile(root + "/supabase/tests/little_boo_reviewed_spelling_credit.sql", "utf8")).split("-- APPLY_ACTUAL_REVIEWED_REPAIR");
+  await db.exec(reviewedFixture[0]);
+  await db.exec("savepoint changed_review;update boo_private.plays set guess='Changed fictional guess' where user_id='a6000000-0000-4000-8000-000000000003';");
+  let rejectedChangedReview=false;
+  try {await db.exec(reviewedRepair);}catch(e){rejectedChangedReview=e.message.includes('changed; no credits');}
+  await db.exec("rollback to savepoint changed_review;");
+  if(!rejectedChangedReview)throw Error("Changed reviewed attempt must reject atomically");
+  await db.exec(reviewedRepair);
+  await db.exec(reviewedFixture[1]);
+  await db.exec(reviewedRepair);
+  await db.exec(reviewedFixture[2]);
+  console.log("PASS: exact 24 reviewed spelling attempts, 1/3 points, scope/preservation, atomic tamper rejection and idempotent rerun (rollback only)");
   await db.close();
 } catch (e) {
   console.error(
