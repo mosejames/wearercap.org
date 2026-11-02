@@ -140,7 +140,10 @@ function image(img, href, inset) {
   if (!src) return '';
   const tag = `<img src="${esc(src)}" alt="${esc(img.alt || '')}" width="${inset ? 588 : 640}" style="display:block;width:100%;max-width:${inset ? 588 : 640}px;height:auto;border:0;${inset ? 'border-radius:12px;margin:0 0 18px;' : ''}">`;
   const link = safeUrl(href);
-  return link ? `<a href="${esc(link)}" style="text-decoration:none;">${tag}</a>` : tag;
+  const framed = String(img.frame?.title || '').trim()
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;table-layout:fixed;border:3px solid #d6b461;border-radius:18px;background:${C.navy};margin:0 0 18px;border-spacing:0;"><tr><td style="padding:19px 12px 15px;text-align:center;"><span aria-hidden="true" style="color:#f5d783;font-size:20px;">★ &nbsp; ★ &nbsp; ★</span><p style="margin:8px 0 0;color:#f5d783;font-size:22px;line-height:1.2;font-weight:800;letter-spacing:1px;">${esc(img.frame.title)}</p></td></tr><tr><td style="padding:0 12px;">${tag.replace('border-radius:12px;margin:0 0 18px;', 'border-radius:10px;margin:0;')}</td></tr><tr><td style="padding:16px 12px 20px;text-align:center;color:#faf4ea;font-size:13px;line-height:1.5;font-weight:700;">${esc(img.frame.caption || '')}</td></tr></table>`
+    : tag;
+  return link ? `<a href="${esc(link)}" style="text-decoration:none;">${framed}</a>` : framed;
 }
 const row = (bg, padding, html) => html ? `<tr><td style="padding:${padding};background:${bg};">${html}</td></tr>` : '';
 

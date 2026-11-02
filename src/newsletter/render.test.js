@@ -100,3 +100,13 @@ describe('web addresses', () => {
     expect(slugify('R&B Karaoke Night!')).toBe('r-and-b-karaoke-night');
   });
 });
+
+describe('photo spotlight frames',()=>{
+ it('renders an optional navy/gold frame around the existing photo with escaped labels',()=>{
+  const c={blocks:[{id:'spotlight',type:'story',image:{url:'https://example.org/existing.jpg',alt:'Existing photo',frame:{title:'Week 2 Raffle Star',caption:'Fable S. · Guest announcer <script>'}}}]};
+  const html=renderDocument(c);expect(html).toContain('Week 2 Raffle Star');expect(html).toContain('border:3px solid #d6b461');expect(html).toContain('Fable S. · Guest announcer &lt;script&gt;');expect(html).not.toContain('<script>');expect(html.match(/src="https:\/\/example.org\/existing.jpg"/g)).toHaveLength(1);
+ });
+ it('leaves ordinary photo presentation unchanged when no frame is selected',()=>{
+  const html=renderDocument({blocks:[{id:'plain',type:'photo',image:{url:'https://example.org/plain.jpg',alt:'Plain'}}]});expect(html).toContain('plain.jpg');expect(html).not.toContain('border:3px solid #d6b461');
+ });
+});

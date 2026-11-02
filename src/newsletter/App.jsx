@@ -255,6 +255,8 @@ function ImageField({ issueId, value = {}, onChange, onError }) {
       <img src={value.url} alt="" />
       <div className="nb-photo-fields">
         <Field label="Describe the photo" value={value.alt} onChange={(v) => onChange({ ...value, alt: v })} placeholder="Parents decorating trunks" />
+        <label><input type="checkbox" checked={!!value.frame} onChange={(e) => onChange({ ...value, frame: e.target.checked ? { title: 'Photo spotlight', caption: '' } : null })} /> Add a navy and gold spotlight frame</label>
+        {value.frame && <><Field label="Frame title" value={value.frame.title} onChange={(v) => onChange({ ...value, frame: { ...value.frame, title: v } })} /><Field label="Frame caption" value={value.frame.caption} onChange={(v) => onChange({ ...value, frame: { ...value.frame, caption: v } })} /></>}
         <div className="nb-photo-actions">
           <button type="button" className="nb-text" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Adding…' : 'Replace'}</button>
           <button type="button" className="nb-text" onClick={() => onChange({ url: '', alt: '' })}>Remove</button>

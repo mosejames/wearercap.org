@@ -83,3 +83,7 @@ shared R2 bucket. No Supabase Storage fallback, per the vault rule.
 The builder flags em dashes, exclamation points in body copy, photos without
 a description, and quotes without a named student. Suggestions only. "Fix the
 dashes for me" swaps them the way the house style asks.
+
+## Optional photo spotlight frames
+
+Photo fields can carry an optional `frame` object with `title` and `caption`. The native preview and shared renderer draw a navy/gold table frame with small star accents around the existing image URL. This changes presentation only, does not edit or upload a photo, and escapes both labels. Ordinary unframed photos are unchanged. Editors can enable the frame and edit its labels in the existing Photo panel. A small issue label belongs in the masthead dateline; an empty headline omits the large opener.
