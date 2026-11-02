@@ -427,7 +427,6 @@ export function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
         <div className={`stack dz-wrap${drop.over ? ' over' : ''}`} {...drop.handlers}>
           {VIDEO_UPLOADS[event.slug] && <>
             <p className="lede"><b>Photos here. Videos through Dropbox.</b><br/>For photos, choose them below, then tap “Add photos to the Capsule.” For videos, tap the Dropbox button.</p>
-            <LargeVideoUpload event={event} />
           </>}
           {!VIDEO_UPLOADS[event.slug] && <p className="lede">Choose photos or videos, up to 50 MB each. MP4, MOV, and WebM videos are supported when your browser can read them. H.264 MP4 works best across devices. {IS_SCHOOL ? 'Photos are automatically resized for crisp viewing and sharing. Your phone’s originals stay untouched.' : 'Photos keep their originals.'} Videos use the quality you choose below.</p>}
           <input ref={inputRef} type="file" accept={externalVideos ? 'image/*,.heic,.heif' : 'image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mp4,.mov,.webm'} multiple hidden onChange={pick} />
@@ -462,6 +461,7 @@ export function UploadSheet({ event, profile, initialFiles, onClose, onDone }) {
             Add {files.length ? plural(files.length, externalVideos ? 'photo' : 'file') : externalVideos ? 'photos' : 'files'} to the {WORDS.placeLower}
           </button>
           <p className="fine">Adding as <b>{profile?.display_name}</b>. Anyone in {WORDS.group} can see, like, comment on, and download what you add.</p>
+          <LargeVideoUpload event={event} />
         </div>
       ) : (
         <div className="stack">
@@ -1254,7 +1254,6 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <a href={`#/e/${pair.booth}`} aria-current={event.slug===pair.booth?'page':undefined}><ImagePlus size={20} aria-hidden="true"/><span>Photo booth<small>Poses, smiles &amp; costumes</small></span></a>
           </nav>}
           {simpleGallery && <a className="trunk-survey-link" href="/feedback/trunk-or-treat-2026"><MessageSquare size={18} aria-hidden="true"/>How was Trunk or Treat? Take the quick survey →</a>}
-          <LargeVideoUpload event={event} />
           <div className="gallery-order">
             <label>Arrange by <select aria-label="Arrange photos by" value={sort} onChange={e => setSort(e.target.value)}>
               <option value="time">Date taken: oldest first</option>
