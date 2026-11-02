@@ -82,6 +82,14 @@ try {
     );
   const contributorMigration = process.env.BOO_CONTRIBUTOR_MIGRATION || (await fs.readdir(root + '/supabase/migrations')).find(name => name.endsWith('_little_boo_contributor_reveal_access.sql'));
   if (contributorMigration) await db.exec(await fs.readFile(process.env.BOO_CONTRIBUTOR_MIGRATION || root + '/supabase/migrations/' + contributorMigration, 'utf8'));
+  const scopedSettingsMigration=(await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_scoped_settings_updates.sql"));
+  if(scopedSettingsMigration){
+    const repair=await fs.readFile(root + "/supabase/migrations/"+scopedSettingsMigration,"utf8");
+    await db.exec(repair);await db.exec(repair);
+    const scoped=await db.query(`select count(*)::int writes from regexp_matches(pg_get_functiondef('boo_private.game(text,jsonb)'::regprocedure),'update boo_private.settings set [^;]+ where id=true;','g')`);
+    if(scoped.rows[0].writes!==3)throw Error("All three game settings writes must have an explicit singleton predicate");
+    console.log("PASS: scoped settings/finalize/drawing SQL guard patch, idempotent twice");
+  }
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",
