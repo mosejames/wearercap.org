@@ -35,6 +35,8 @@ import {
 } from "./Phases.jsx";
 import { easternTime } from "./phases.js";
 import "./style.css";
+import RevealImport from "./RevealImport.jsx";
+const RevealPage = React.lazy(() => import("./Reveal.jsx"));
 const HOUSES = ["Amistad", "Altruismo", "Isibindi", "Reveur"];
 const GRADES = ["4th", "5th", "6th", "7th", "8th", "Other / alumni"];
 const GameRequest = React.createContext(liveRequest);
@@ -407,7 +409,9 @@ function App({ preview = null }) {
         </div>
         <p className="fine">
           Top players earn 25, 15 or 10 raffle tickets: more chances in the RCAP
-          raffle. Organizer drawing for tied ticket places. Results follow after guessing closes and organizer review. Tickets are issued by the organizer after review.
+          raffle. Organizer drawing for tied ticket places. Results follow after
+          guessing closes and organizer review. Tickets are issued by the
+          organizer after review.
         </p>
       </section>
       <main>
@@ -1369,8 +1373,10 @@ function Boards({ data, mode }) {
       )}
       <p className="fine">
         Student totals combine guess points and a separate 3-point bonus per
-        student’s first accepted photo. Guessing is extended through Sunday, November 1 at
-        11:59 p.m. Eastern. Organizer drawing settles tied prize places. Results follow after guessing closes and organizer review. No tickets are issued by this app.
+        student’s first accepted photo. Guessing is extended through Sunday,
+        November 1 at 11:59 p.m. Eastern. Organizer drawing settles tied prize
+        places. Results follow after guessing closes and organizer review. No
+        tickets are issued by this app.
       </p>
     </section>
   );
@@ -1421,8 +1427,8 @@ function Rules() {
       </ol>
       <p>
         Photo submissions close Friday, October 30 at 11:59 a.m. Eastern.
-        Guessing: Friday, October 30 at noon Eastern through Sunday, November
-        1 at 11:59 p.m. Eastern. Results follow after guessing closes, organizer
+        Guessing: Friday, October 30 at noon Eastern through Sunday, November 1
+        at 11:59 p.m. Eastern. Results follow after guessing closes, organizer
         review and drawings for tied prize places. Removing a photo removes its
         live guess points and contribution bonus, but its permanent receipt
         prevents earning the bonus again.
@@ -1500,13 +1506,14 @@ function Admin({ run, busy, refresh }) {
           </div>
         ))
       )}
+      <RevealPublicationControls request={request} run={run} busy={busy} />
       <h3>Confirmed round schedule</h3>
       <p>
         Photo submissions end Friday, October 30 at 11:59 a.m. Eastern. Guessing
         opens Friday, October 30 at noon Eastern and closes Sunday, November 1
-        at 11:59 p.m. Eastern. Results follow after guessing closes and organizer review. Opening-text
-        requests: {d.openingNoticeRequests || 0}. None are scheduled by this
-        app.
+        at 11:59 p.m. Eastern. Results follow after guessing closes and
+        organizer review. Opening-text requests: {d.openingNoticeRequests || 0}.
+        None are scheduled by this app.
       </p>
       <form
         onSubmit={(e) => {
@@ -1612,6 +1619,100 @@ function Admin({ run, busy, refresh }) {
         </>
       )}
     </>
+  );
+}
+function RevealPublicationControls({ request, run, busy }) {
+  const [state, setState] = useState(null),
+    [error, setError] = useState(""),
+    [cleared, setCleared] = useState(false),
+    [confirmed, setConfirmed] = useState(false);
+  const load = () =>
+    request("reveal-admin")
+      .then(setState)
+      .catch((e) => setError(e.message));
+  useEffect(() => {
+    load();
+  }, []);
+  return (
+    <section className="panel reveal-admin-controls">
+      <h3>Private then &amp; now reveal</h3>
+      <p>
+        School portraits stay private until reuse permission is confirmed,
+        guessing closes, results are reviewed and you explicitly publish.
+      </p>
+      <a href="/little-boo/?view=reveal&amp;preview=organizer">
+        Open private organizer preview
+      </a>
+      {error ? (
+        <p role="status">Reveal preparation is unavailable: {error}</p>
+      ) : state ? (
+        <>
+          <p>
+            {state.mappedEntries} of {state.activeEntries} entries mapped;{" "}
+            {state.readyPortraits} private portraits ready.
+          </p>
+          {!state.publishedAt && <RevealImport request={request} run={run} busy={busy} onDone={load} />}
+          {state.publishedAt ? (
+            <button
+              disabled={busy}
+              onClick={() =>
+                run(async () => {
+                  await request("reveal-hide");
+                  await load();
+                })
+              }
+            >
+              Hide reveal
+            </button>
+          ) : (
+            <>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={cleared}
+                  onChange={(e) => setCleared(e.target.checked)}
+                />
+                I have confirmed permission to reuse the school portraits for
+                this reveal.
+              </label>
+              <label className="check-label">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                />
+                I reviewed the mappings and authorize publishing the reveal.
+              </label>
+              <button
+                className="gold"
+                disabled={
+                  busy ||
+                  !cleared ||
+                  !confirmed ||
+                  !state.guessingClosed ||
+                  !state.resultsReviewed ||
+                  state.activeEntries === 0 ||
+                  state.mappedEntries !== state.activeEntries
+                }
+                onClick={() =>
+                  run(async () => {
+                    await request("reveal-publish", {
+                      confirm: true,
+                      portraitUseApproved: true,
+                    });
+                    await load();
+                  })
+                }
+              >
+                Publish the reviewed reveal
+              </button>
+            </>
+          )}
+        </>
+      ) : (
+        <p>Checking private reveal readiness…</p>
+      )}
+    </section>
   );
 }
 function DrawingForm({ awards, busy, run, onSave }) {
@@ -1827,7 +1928,12 @@ function PreviewGate() {
   );
 }
 createRoot(document.getElementById("root")).render(
-  new URLSearchParams(window.location.search).get("preview") === "guessing" ? (
+  new URLSearchParams(window.location.search).get("view") === "reveal" ? (
+    <React.Suspense fallback={<p>Loading your reveal…</p>}>
+      <RevealPage />
+    </React.Suspense>
+  ) : new URLSearchParams(window.location.search).get("preview") ===
+    "guessing" ? (
     <PreviewGate />
   ) : (
     <App />

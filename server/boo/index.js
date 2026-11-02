@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { AwsClient } from "aws4fetch";
 import sharp from "sharp";
 import { seal, open, hash } from "./crypto.js";
+import { importPrivatePortrait } from "./reveal-import.js";
 import { adjudicate } from "./spelling.js";
 const fail = (message, status = 400) =>
   Object.assign(Error(message), { status });
@@ -159,6 +160,16 @@ export default async function handler(req, res) {
       await rpc("admin", {}, authorization);
       return res.status(200).json({ allowed: true });
     }
+    if (a === "reveal-upload")
+      return res
+        .status(200)
+        .json(
+          await importPrivatePortrait(b, {
+            rpc,
+            storage: (key, init) => store()(key, init),
+            authorization,
+          }),
+        );
     if (a === "upload") {
       await rpc("get", { mode: b.mode }, authorization); // Authenticate before decoding or storage work.
       const source = Buffer.from(String(b.image || ""), "base64"),
@@ -204,6 +215,19 @@ export default async function handler(req, res) {
         throw e;
       }
     }
+    if (a === "reveal-media" || a === "reveal-preview-media") {
+      const { key } = await rpc(
+        a,
+        { photoId: b.photoId, portraitId: b.portraitId, kind: b.kind },
+        authorization,
+      );
+      const response = await store()(key);
+      if (!response.ok) throw fail("This reveal photo is unavailable.", 404);
+      res.setHeader("Content-Type", "image/jpeg");
+      return res
+        .status(200)
+        .send(open(Buffer.from(await response.arrayBuffer())));
+    }
     if (a === "media") {
       const { key } = await rpc("media", { id: b.id }, authorization);
       const r = await store()(key);
@@ -215,6 +239,12 @@ export default async function handler(req, res) {
     if (
       ![
         "get",
+        "reveal",
+        "reveal-preview",
+        "reveal-publish",
+        "reveal-hide",
+        "reveal-admin",
+        "reveal-register-entries",
         "opening-notice",
         "drawing-results",
         "profile",

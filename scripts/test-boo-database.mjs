@@ -12,7 +12,7 @@ try {
   );
   const db = new PGlite();
   await db.exec(
-    `create role anon;create role authenticated;create schema auth;create schema vault_private;create schema extensions;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz,is_anonymous bool);create table vault_private.staff(user_id uuid primary key,role text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function extensions.digest(v text,a text) returns bytea language sql immutable as $$select sha256(convert_to(v,'UTF8'))$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;`,
+    `create role anon;create role authenticated;create schema auth;create schema vault_private;create schema extensions;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz,is_anonymous bool,deleted_at timestamptz,banned_until timestamptz);create table vault_private.staff(user_id uuid primary key,role text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function extensions.digest(v text,a text) returns bytea language sql immutable as $$select sha256(convert_to(v,'UTF8'))$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;`,
   );
   await db.exec(
     await fs.readFile(
@@ -60,11 +60,32 @@ try {
         "utf8",
       ),
     );
+  const nicknameMigration = (
+    await fs.readdir(root + "/supabase/migrations")
+  ).find((name) => name.endsWith("_little_boo_confirmed_nickname_credit.sql"));
+  if (nicknameMigration)
+    await db.exec(
+      await fs.readFile(
+        root + "/supabase/migrations/" + nicknameMigration,
+        "utf8",
+      ),
+    );
+  const revealMigration = (
+    await fs.readdir(root + "/supabase/migrations")
+  ).find((name) => name.endsWith("_little_boo_private_reveal.sql"));
+  if (revealMigration)
+    await db.exec(
+      await fs.readFile(
+        root + "/supabase/migrations/" + revealMigration,
+        "utf8",
+      ),
+    );
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",
     "little_boo_phases.sql",
     "little_boo_first_names.sql",
+    "little_boo_reveal.sql",
   ]) {
     try {
       const sql = await fs.readFile(root + "/supabase/tests/" + name, "utf8");
@@ -96,6 +117,28 @@ try {
     await db.exec(chunks[2]);
     console.log(
       "PASS: little_boo_first_name_repair.sql (actual repair twice, rollback only)",
+    );
+  }
+  if (nicknameMigration) {
+    const source = await fs.readFile(
+      root + "/supabase/migrations/" + nicknameMigration,
+      "utf8",
+    );
+    const body = source.replace(/^begin;\s*/, "").replace(/commit;\s*$/, "");
+    const chunks = (
+      await fs.readFile(
+        root + "/supabase/tests/little_boo_nickname_repair.sql",
+        "utf8",
+      )
+    ).split("-- APPLY_ACTUAL_NICKNAME_MIGRATION");
+    if (chunks.length !== 3) throw Error("Nickname test boundaries missing");
+    await db.exec(chunks[0]);
+    await db.exec(body);
+    await db.exec(chunks[1]);
+    await db.exec(body);
+    await db.exec(chunks[2]);
+    console.log(
+      "PASS: little_boo_nickname_repair.sql (actual nickname migration twice, rollback only)",
     );
   }
   await db.close();

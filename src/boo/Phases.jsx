@@ -183,6 +183,13 @@ export function PhaseStart({
           </button>
         </>
       )}
+      {schedule.revealPublished && (
+        <p>
+          <a className="reveal-launch" href="/little-boo/?view=reveal">
+            See your then &amp; now reveal
+          </a>
+        </p>
+      )}
       {["soon", "submissions", "waiting"].includes(phase) && (
         <div className="reveal-stats">
           <section

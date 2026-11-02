@@ -431,26 +431,30 @@ export function SignIn({
             : "Back to the game"}
       </button>
       <span className="eyebrow">
-        {intent === "preview"
-          ? "PRIVATE ORGANIZER REHEARSAL"
-          : intent === "upload"
-            ? "YOUR PHOTO IS STILL HERE"
-            : intent === "notice"
-              ? "ONE OPTIONAL OPENING TEXT"
-              : intent === "standings"
-                ? "THE GAME STANDINGS"
-                : "GUESS A KID · EARN POINTS"}
+        {intent === "reveal"
+          ? "YOUR PRIVATE RESULTS"
+          : intent === "preview"
+            ? "PRIVATE ORGANIZER REHEARSAL"
+            : intent === "upload"
+              ? "YOUR PHOTO IS STILL HERE"
+              : intent === "notice"
+                ? "ONE OPTIONAL OPENING TEXT"
+                : intent === "standings"
+                  ? "THE GAME STANDINGS"
+                  : "GUESS A KID · EARN POINTS"}
       </span>
       <h2>
-        {intent === "preview"
-          ? "Sign in as the organizer."
-          : intent === "upload"
-            ? "Sign in. Then add your kid."
-            : intent === "notice"
-              ? "Sign in to save your text request."
-              : intent === "standings"
-                ? "Sign in to see the standings."
-                : "Sign in to see the kids."}
+        {intent === "reveal"
+          ? "Sign in to see your reveal."
+          : intent === "preview"
+            ? "Sign in as the organizer."
+            : intent === "upload"
+              ? "Sign in. Then add your kid."
+              : intent === "notice"
+                ? "Sign in to save your text request."
+                : intent === "standings"
+                  ? "Sign in to see the standings."
+                  : "Sign in to see the kids."}
       </h2>
       {intent === "upload" && draft.image && (
         <div className="signin-photo">

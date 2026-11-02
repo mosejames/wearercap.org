@@ -5,7 +5,11 @@ export async function request(action, payload = {}) {
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ action, ...payload }),
   });
-  if (action === "media" && r.ok) return URL.createObjectURL(await r.blob());
+  if (
+    ["media", "reveal-media", "reveal-preview-media"].includes(action) &&
+    r.ok
+  )
+    return URL.createObjectURL(await r.blob());
   const data = await r.json();
   if (!r.ok)
     throw Object.assign(Error(data.error || "Please try again."), {
