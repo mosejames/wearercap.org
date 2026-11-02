@@ -188,3 +188,10 @@ not a guest photo. Responsive WebP assets live in `public/dc/`; `dc-backdrop.js`
 embeds the smaller JPEG for the identical studio/server share-card renderer.
 `dates.js` keeps the hero and share-card dates readable. Specific photo cards
 continue to use the requested photo's existing web rendition.
+
+DC supports the same separate Dropbox video collection flow as NYC. When the
+published trip has `features.videos` enabled and a `videoUploadUrl`, the hero
+and photo dialog show Share trip videos. The link opens a separate tab with
+noopener/noreferrer. Archive hides the contribution link. Photo intake remains
+photo-only; video submission does not imply automatic gallery ingestion. Each
+trip must use its own approved Dropbox file request and destination.

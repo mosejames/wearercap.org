@@ -44,3 +44,17 @@ it('uses one DC gallery and needs no group selection even when this device remem
  expect(host.querySelector('dialog input[type=radio]')).toBeNull();
  expect(host.querySelector('dialog').textContent).not.toContain('Change groups');
 });
+it('offers the configured DC video request in the hero and photo form without enabling video files in photo intake',async()=>{
+ const url='https://www.dropbox.com/request/dc-verification';
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',features:{...trip.features,videos:true},videoUploadUrl:url},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.dc-video-link').href).toBe(url);
+ expect(host.querySelector('.dc-video-link').rel).toContain('noopener');
+ await click('Add trip photos');
+ expect(host.querySelector('dialog a[href="'+url+'"]').textContent).toContain('Share trip videos');
+ expect(host.querySelector('dialog input[type=file]').accept).not.toContain('video');
+});
+it('does not show a video upload link when DC collection is disabled or the trip is archived',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',phase:'Archive',features:{...trip.features,videos:true},videoUploadUrl:'https://www.dropbox.com/request/dc-verification'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));expect(host.querySelector('.dc-video-link')).toBeNull();
+});
