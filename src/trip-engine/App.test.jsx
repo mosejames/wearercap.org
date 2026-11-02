@@ -22,3 +22,14 @@ it('opens an exact deep-linked photo even when it is beyond the first gallery pa
 
 it('gives Washington DC its custom design and a working invitation guide',async()=>{gallery.mockResolvedValue({trip:{...trip,destination:'Washington, DC',cohort:'2030'},photos:[],count:0,hasMore:false});await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-dc')).not.toBeNull();expect(host.textContent).toContain('Big history.');expect(host.querySelector('#downloads')).not.toBeNull();await click('Full-trip downloads');expect(host.querySelector('dialog').textContent).toContain('private download invitation');expect(host.querySelector('dialog input[type=email]')).toBeNull();});
 it('does not add the DC design or download section to other configured trips',async()=>{await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-dc')).toBeNull();expect(host.querySelector('#downloads')).toBeNull();expect(host.querySelector('.engine-intro')).not.toBeNull();});
+it('shows the supplied guide only for the matching DC trip, without inventing a daily schedule',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',start:'2026-11-08',end:'2026-11-10'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelectorAll('.engine-trip-guide li')).toHaveLength(12);
+ expect(host.querySelector('.engine-trip-guide').textContent).toContain('Ford’s Theater');
+ expect(host.querySelector('.engine-trip-guide').textContent).not.toContain('JW Marriott');
+});
+it('keeps another DC cohort from inheriting the 2030 itinerary',async()=>{
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2031',destination:'Washington, DC',cohort:'2031'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-trip-guide')).toBeNull();
+});

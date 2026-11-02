@@ -160,3 +160,17 @@ and refuse non-local fixture targets. Integration fixtures never publish a real
 trip or send a real email. After release, verify live anonymous protections and
 existing vault endpoints. Keep DC private until its organizer completes setup and
 explicitly launches it.
+
+## Class of 2030 Washington, DC guide
+
+The November 8–10, 2026 trip uses `washington-dc-2030`, Class of 2030,
+Washington, DC, and America/New_York. Its compact, expandable family guide is
+in `src/trip-engine/TripGuide.jsx`; the supplied 12 planned stops live in
+`trip-guides.js`. Matching includes slug, cohort and dates so other DC trips
+do not inherit this event's itinerary. No day-by-day stop schedule was supplied.
+The guide does not publish the letter's contact numbers, hotel or flight details.
+
+This source addition does not launch a trip or update the encrypted registry.
+Save and launch the configured trip through the administrator workspace.
+The engine's existing per-trip uploads, moderation, exact-photo sharing and
+no-store share-card checks remain the production path.
