@@ -94,6 +94,8 @@ try {
   if(restrictedMigration){const sql=await fs.readFile(root+"/supabase/migrations/"+restrictedMigration,"utf8");await db.exec(sql);await db.exec(sql);console.log("PASS: pre-close guesser-only restoration, idempotent twice");}
   const publicWinnersMigration=(await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_public_winners.sql"));
   if(publicWinnersMigration)await db.exec(await fs.readFile(root+"/supabase/migrations/"+publicWinnersMigration,"utf8"));
+  const ownerMigration=process.env.BOO_OWNER_REVEAL_MIGRATION || (await fs.readdir(root + "/supabase/migrations")).find(name=>name.endsWith("_little_boo_owner_reveal_access.sql"));
+  if(ownerMigration){const sql=await fs.readFile(process.env.BOO_OWNER_REVEAL_MIGRATION || root+"/supabase/migrations/"+ownerMigration,"utf8");await db.exec(sql);await db.exec(sql);console.log("PASS: owner normal reveal exception, idempotent twice");}
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",

@@ -86,7 +86,14 @@ begin
  for r in select jsonb_build_object('action',v) from unnest(array['reveal-preview','reveal-media','reveal-preview-media'])v loop
   begin perform public.boo_game(r->>'action',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));raise exception 'FAIL: anonymous direct reveal/media';exception when insufficient_privilege then null;end;
  end loop;
- perform set_config('request.jwt.claim.sub',owner_id::text,true);perform public.boo_game('reveal-hide','{}');
+ perform set_config('request.jwt.claim.sub',owner_id::text,true);
+ r:=public.boo_game('reveal','{}');
+ if jsonb_array_length(r->'entries')<>4 or r->'me'->>'eligible'<>'false' or r->'me'->>'totalPlayers'<>'7' or exists(select 1 from boo_private.reveal_rankings() where user_id=owner_id) then raise exception 'FAIL: owner normal access changed player eligibility/rankings';end if;
+ r:=public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));if r->>'key' is null then raise exception 'FAIL: owner normal childhood image';end if;
+ r:=public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','now','portraitId',a1));if r->>'key'<>'little-boo/reveal/v1/'||a1||'.bin' then raise exception 'FAIL: owner normal school portrait';end if;
+ perform public.boo_game('reveal-hide','{}');
+ begin perform public.boo_game('reveal','{}');raise exception 'FAIL: owner normal route bypassed publication';exception when insufficient_privilege then null;end;
+
  perform set_config('request.jwt.claim.sub',u2::text,true);begin perform public.boo_game('reveal-media',jsonb_build_object('photoId',p1,'kind','then'));raise exception 'FAIL: hidden known media';exception when insufficient_privilege then null;end;
  if public.boo_phase()->>'revealPublished'<>'false' then raise exception 'FAIL: stale publication flag';end if;
  if baseline is distinct from (select md5(string_agg(to_jsonb(s)::text,',' order by s.user_id,s.photo)) from boo_private.plays s) then raise exception 'FAIL: reveal mutated guesses/scores';end if;
