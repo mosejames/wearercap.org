@@ -43,9 +43,18 @@ export function shareImage(content) {
   return firstImage(content);
 }
 
+export function shareVideo(content) {
+  const video = content?.shareVideo;
+  try {
+    const url = new URL(video?.url);
+    if (url.protocol !== "https:" || url.username || url.password || !/\.mp4$/i.test(url.pathname) || !Number.isInteger(video.width) || !Number.isInteger(video.height) || video.width < 150 || video.width > 4096 || video.height < 150 || video.height > 4096) return null;
+    return { url: url.href, width: video.width, height: video.height };
+  } catch { return null; }
+}
+
 const strip = (s) => String(s || '').replace(/\*\*|\[|\]\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
 
-function shell({ title, desc, canonical, image, imageAlt, imageWidth, imageHeight, imageType, robots = 'index, follow', body }) {
+function shell({ title, desc, canonical, image, imageAlt, imageWidth, imageHeight, imageType, video, robots = 'index, follow', body }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -64,6 +73,11 @@ function shell({ title, desc, canonical, image, imageAlt, imageWidth, imageHeigh
 <meta property="og:image" content="${esc(image)}">
 ${imageWidth && imageHeight ? `<meta property="og:image:width" content="${imageWidth}">\n<meta property="og:image:height" content="${imageHeight}">${imageType ? `\n<meta property="og:image:type" content="${esc(imageType)}">` : ''}` : image === OG ? '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:image:type" content="image/png">' : ''}
 <meta property="og:image:alt" content="${esc(imageAlt)}">
+${video ? `<meta property="og:video" content="${esc(video.url)}">
+<meta property="og:video:secure_url" content="${esc(video.url)}">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="${video.width}">
+<meta property="og:video:height" content="${video.height}">` : ''}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(desc)}">
@@ -129,7 +143,7 @@ export default async function newsletterPage(req, res) {
   const title = strip(c.subject || c.headline || issue.title) || 'RCAP newsletter';
   const desc = strip(c.preheader || c.body).slice(0, 180) || 'A note from your RCAP family.';
   return res.status(200).send(shell({
-    title, desc, canonical: `${SITE}/newsletter/${issue.slug}`,
+    title, desc, canonical: `${SITE}/newsletter/${issue.slug}`, video: shareVideo(c),
     image: img?.url || OG, imageAlt: img?.alt || 'The RCAP Newsletter', imageWidth: img?.width, imageHeight: img?.height, imageType: img?.type,
     body: `<div class="nl-bar"><a href="/">wearercap.org</a><a href="/newsletter">All issues</a></div><main class="nl-issue">${renderEmail(c,{analytics:true,trackingLinks:signedNewsletterLinks(c,issue.slug),webUrl:`${SITE}/newsletter/${issue.slug}`})}</main>`,
   }));
