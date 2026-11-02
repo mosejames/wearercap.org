@@ -80,6 +80,8 @@ try {
         "utf8",
       ),
     );
+  const contributorMigration = process.env.BOO_CONTRIBUTOR_MIGRATION || (await fs.readdir(root + '/supabase/migrations')).find(name => name.endsWith('_little_boo_contributor_reveal_access.sql'));
+  if (contributorMigration) await db.exec(await fs.readFile(process.env.BOO_CONTRIBUTOR_MIGRATION || root + '/supabase/migrations/' + contributorMigration, 'utf8'));
   for (const name of [
     "little_boo_contributions.sql",
     "little_boo.sql",

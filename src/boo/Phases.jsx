@@ -180,7 +180,7 @@ export function PhaseStart({
           ) : (
             <a className="reveal-launch" href="/little-boo/reveal">Reveal coming soon</a>
           )}
-          <p className="fine">Passcode login required. Only players who guessed before closing can view the reveal.</p>
+          <p className="fine">Passcode login required. Players who guessed or earned photo-submission points before closing can view the reveal.</p>
           <button className={schedule.revealPublished ? "text-button" : "gold phase-primary"} onClick={onStandings}>
             <Trophy size={20} />
             {schedule.resultsPublished ? "See results" : "See provisional standings"}

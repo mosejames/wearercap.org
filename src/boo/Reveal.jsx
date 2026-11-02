@@ -85,13 +85,13 @@ export function RevealList({ data }) {
           <summary>How placement works</summary>
           <p>
             Ranked by total persisted student-game points, including upload
-            bonuses. Only verified players with a committed student-game guess before closing are ranked, including zero-point guessers. Upload-only, organizer/staff, sign-in-only, adult-only and practice accounts do not count.
+            bonuses. Verified players qualify by submitting a student-game guess or earning photo-submission points before closing. Zero-point guessers and photo-only contributors are included. Organizer/staff, sign-in-only, adult-only and practice accounts do not count.
             Equal totals share a place, and the next rank skips the tied
             positions.
           </p>
         </details>
       </section>
-      {data.topFive?.length > 0 && <section className="panel" aria-label="Top five guessers"><h2>Top five guessers</h2><p>Total points include photo contributions. Ties share a place; everyone tied at fifth is shown.</p><ol>{data.topFive.map((player,i)=><li key={i}>{ordinal(player.place)} · {player.display}{player.you ? " (you)" : ""} · {player.points} points{player.ties > 1 ? " · tied" : ""}</li>)}</ol><p>Your individual guesses remain private.</p></section>}
+      {data.topFive?.length > 0 && <section className="panel" aria-label="Top five participants"><h2>Top five participants</h2><p>Total points include photo contributions. Ties share a place; everyone tied at fifth is shown.</p><ol>{data.topFive.map((player,i)=><li key={i}>{ordinal(player.place)} · {player.display}{player.you ? " (you)" : ""} · {player.points} points{player.ties > 1 ? " · tied" : ""}</li>)}</ol><p>Your individual guesses remain private.</p></section>}
       <header className="reveal-list-heading">
         <span className="eyebrow">THEN &amp; NOW</span>
         <h2>Who was that little boo?</h2>
