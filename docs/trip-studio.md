@@ -180,3 +180,11 @@ selection or group labels in the viewer. `src/trip-engine/groups.js` supplies
 that trip's presentation policy. Its uploads use the existing neutral `Mixed`
 value internally, including when an older device remembered Group A or Group AA.
 Other trips retain their configured grouping. No media or identities are moved.
+
+The DC family page follows the NYC reference: cream paper, navy and gold centered
+headline, a softly washed Washington backdrop, compact milestone card above the
+hero and the trip album immediately below. The generated decorative backdrop is
+not a guest photo. Responsive WebP assets live in `public/dc/`; `dc-backdrop.js`
+embeds the smaller JPEG for the identical studio/server share-card renderer.
+`dates.js` keeps the hero and share-card dates readable. Specific photo cards
+continue to use the requested photo's existing web rendition.

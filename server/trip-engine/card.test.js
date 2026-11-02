@@ -15,3 +15,9 @@ it('does not substitute another photo when the requested one is removed',()=>{co
 it('escapes user text and provides absolute OG and Twitter URLs',()=>{const s=renderCard(cardFor({trip,photos:[]},q));expect(s).toContain('Verification &lt;trip&gt;');expect(s).toContain('summary_large_image');expect(s).toContain('https://wearercap.org/trips/verification-trip/og.jpg');});
 it('renders the same branded 1200 by 630 layout used by the dashboard',async()=>{const jpeg=await ogImage(trip);const m=await sharp(jpeg).metadata();expect(m).toMatchObject({width:1200,height:630,format:'jpeg'});});
 it('rechecks visibility on every fresh request and fails closed for a private trip',async()=>{engineRpc.mockRejectedValue(Object.assign(Error('Trip not available'),{status:404}));const res={headers:{},setHeader(k,v){this.headers[k]=v;},status(s){this.code=s;return this;},send(body){this.body=body;return this;}};await handler({method:'GET',query:q},res);expect(res.code).toBe(404);expect(res.headers['Cache-Control']).toBe('no-store');expect(res.body).not.toContain(trip.destination);});
+it('renders the DC scenic card with matching class identity and human-readable trip dates',async()=>{
+ const {shareSvg}=await import('../../src/trip-engine/branding.js');
+ const dc={...trip,destination:'Washington, DC',cohort:'2030',start:'2026-11-08',end:'2026-11-10'};
+ const svg=shareSvg(dc);expect(svg).toContain('Small moments.');expect(svg).toContain('Big history.');expect(svg).toContain('November 8–10, 2026');expect(svg).toContain('data:image/jpeg;base64,');
+ const m=await sharp(await ogImage(dc)).metadata();expect(m).toMatchObject({width:1200,height:630,format:'jpeg'});
+});
