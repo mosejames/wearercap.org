@@ -33,3 +33,14 @@ it('keeps another DC cohort from inheriting the 2030 itinerary',async()=>{
  gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2031',destination:'Washington, DC',cohort:'2031'},photos:[],count:0,hasMore:false});
  await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-trip-guide')).toBeNull();
 });
+it('uses one DC gallery and needs no group selection even when this device remembered Group A',async()=>{
+ localStorage.setItem('trip-engine:verification-trip:group','Group A');
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030'},photos:[photo('a'),photo('b','Group AA')],count:2,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.engine-group-filters')).toBeNull();
+ expect(host.querySelectorAll('.engine-gallery>button')).toHaveLength(2);
+ expect(host.textContent).not.toContain('All groups');
+ await click('Add trip photos');
+ expect(host.querySelector('dialog input[type=radio]')).toBeNull();
+ expect(host.querySelector('dialog').textContent).not.toContain('Change groups');
+});

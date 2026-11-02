@@ -174,3 +174,9 @@ This source addition does not launch a trip or update the encrypted registry.
 Save and launch the configured trip through the administrator workspace.
 The engine's existing per-trip uploads, moderation, exact-photo sharing and
 no-store share-card checks remain the production path.
+
+The Class of 2030 DC trip uses one gallery without group filters, upload group
+selection or group labels in the viewer. `src/trip-engine/groups.js` supplies
+that trip's presentation policy. Its uploads use the existing neutral `Mixed`
+value internally, including when an older device remembered Group A or Group AA.
+Other trips retain their configured grouping. No media or identities are moved.
