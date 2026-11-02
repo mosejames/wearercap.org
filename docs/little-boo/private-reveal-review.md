@@ -6,7 +6,7 @@ The reveal uses the authenticated user's persisted student-game scores, includin
 
 `20261102031605_little_boo_confirmed_nickname_credit.sql` has already been applied and read back: four confirmed nickname corrections, +12 guessing points, no upload changes, no first-correct winner changes. Do not apply again manually. The subsequent 24 reviewed attempts (16 distinct target/guess pairs) were explicitly approved by the organizer and corrected through the DML repair below.
 
-`20261102033228_little_boo_private_reveal.sql` is NOT applied. It installs closed/reviewed/explicit-publication gates, owner-only preparation/preview, and authenticated private media authorization. Publication also requires all active entries mapped to ready portraits. The public phase exposes only a boolean availability flag. Organizer import stores sealed objects and registrations, never publishes. Failed retries verify existing encrypted content instead of overwriting or deleting it.
+`20261102130332_little_boo_private_reveal.sql` is NOT applied. It installs closed/reviewed/explicit-publication gates, owner-only preparation/preview, and authenticated private media authorization. Publication also requires all active entries mapped to ready portraits. The public phase exposes only a boolean availability flag. Organizer import stores sealed objects and registrations, never publishes. Failed retries verify existing encrypted content instead of overwriting or deleting it.
 
 Offline preparation:
 
@@ -58,3 +58,7 @@ The organizer narrowed access to existing verified non-staff players with a comm
 Reveal OTP requests use shouldCreateUser:false. The closed game's other sign-in flows consult the authoritative phase and also disable account creation. A server-side game profile guard rejects new player registrations after closing. Other applications keep their existing account behavior. No global Auth configuration or account access was changed.
 
 The initial schema confirmation expired; the revised request was interrupted. Readback after both confirmed no schema execution, no finalization and all 28 prior correction receipts preserved. The user subsequently said publish. No scoring repair may be replayed during the release.
+
+## Installed held schema
+
+The authorized retry succeeded on November 2. Production recorded migration version 20261102130332, and this filename now matches that readback. The private reveal schema is installed with zero assets/mappings, publication flags false, and no finalization. The existing-guesser eligibility function returns 41 eligible non-staff players. Direct anonymous table/function access is revoked. The four nickname and 24 reviewed correction receipts remain unchanged. The next stage is the gated code deployment and owner-session producer import; real-image QA must precede finalization/publication.
