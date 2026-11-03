@@ -29,3 +29,19 @@ it('does not offer a download or saved confirmation when the private upload fail
  expect(document.getElementById('download-photo').hidden).toBe(true);expect(document.getElementById('done').hidden).toBe(true);expect(document.getElementById('preview').hidden).toBe(false);expect(document.getElementById('error').textContent).toBe('Please retry.');
  await submit();expect(document.getElementById('download-photo').hidden).toBe(false);expect(fetchMock.mock.calls[1][1].headers['X-Photo-ID']).toBe(fetchMock.mock.calls[0][1].headers['X-Photo-ID']);
 });
+
+it('opens the phone share sheet with the finished JPEG and never a public URL',async()=>{
+ const share=vi.fn(async()=>{});Object.defineProperty(navigator,'share',{configurable:true,value:share});Object.defineProperty(navigator,'canShare',{configurable:true,value:vi.fn(()=>true)});
+ await submit();await document.getElementById('save-photo').onclick();
+ const data=share.mock.calls[0][0];expect(Object.keys(data)).toEqual(['files']);expect(data.files[0].type).toBe('image/jpeg');expect(data.files[0].size).toBe(output.size);expect(document.getElementById('saved-photo').hidden).toBe(true);
+ delete navigator.share;delete navigator.canShare;
+});
+it('uses a touch-and-hold photo fallback without triggering a browser download',async()=>{
+ await submit();await document.getElementById('save-photo').onclick();
+ expect(document.getElementById('saved-photo').hidden).toBe(false);expect(document.getElementById('saved-photo').getAttribute('src')).toBe('blob:test-2');expect(document.getElementById('save-help').textContent).toContain('Touch and hold');
+});
+it('leaves the photo available after cancelling the share sheet without pretending it was saved',async()=>{
+ Object.defineProperty(navigator,'share',{configurable:true,value:vi.fn(async()=>{throw new DOMException('Cancelled','AbortError');})});Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});
+ await submit();await document.getElementById('save-photo').onclick();expect(document.getElementById('saved-photo').hidden).toBe(true);expect(document.getElementById('save-photo').disabled).toBe(false);expect(document.getElementById('done').hidden).toBe(false);
+ delete navigator.share;delete navigator.canShare;
+});

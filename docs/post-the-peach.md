@@ -21,3 +21,7 @@ Vercel external API rewrites forward binary uploads and protected collection req
 A selected sticker has a red × touch target at its upper-left corner. A prominent Delete selected sticker button also appears directly below the canvas, ahead of the sticker chooser. Either removes only the selected sticker. Editing controls remain frozen while saving.
 
 After a successful private upload, Download my photo offers the exact same finished JPEG bytes locally via a blob URL. It includes the chosen crop and stickers without editing guides. Failed uploads do not show a saved confirmation or download. Starting another photo revokes the previous local URL. No public photo URL or extra private-gallery permission is created.
+
+## Save to a phone photo library
+
+After the private upload succeeds, Save to phone passes the finished JPEG File to the native Web Share sheet from an explicit tap. The person chooses Save Image, Save to Photos or an installed photo app when offered by their phone. A website cannot silently save to the photo library or determine the chosen share target. Cancelling does not start a browser download or report a successful photo-library save. Unsupported or blocked sharing reveals the full finished image with touch-and-hold save instructions; View photo to save also opens this fallback explicitly. Desktop file download remains secondary, hidden for coarse-pointer devices. The exact privately uploaded JPEG is used in every case. Physical iOS/Android save targets require on-device verification.
