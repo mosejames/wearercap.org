@@ -184,6 +184,9 @@ export function Question({ q, value, onChange }) {
 }
 export function SurveyFlow({ survey, preview = false }) {
   const chaperone = survey.slug === "chaperone-vault";
+  const coverUrl = chaperone
+    ? "/images/feedback/chaperone-vault-hero.jpg"
+    : survey.cover_url;
   const [step, setStep] = useState(-1),
     [answers, setAnswers] = useState({}),
     [busy, setBusy] = useState(false),
@@ -296,12 +299,16 @@ export function SurveyFlow({ survey, preview = false }) {
   if (step === -1)
     return (
       <section className="card intro">
-        {(survey.cover_url || survey.slug.startsWith("rb-karaoke")) && (
-          <div className={`event-cover ${survey.cover_url ? "has-photo" : ""}`}>
-            {survey.cover_url ? (
+        {(coverUrl || survey.slug.startsWith("rb-karaoke")) && (
+          <div className={`event-cover ${coverUrl ? "has-photo" : ""}`}>
+            {coverUrl ? (
               <img
-                src={survey.cover_url}
-                alt={`${survey.event_name}: share your family’s feedback`}
+                src={coverUrl}
+                alt={chaperone
+                  ? "Students and chaperones sharing a moment during a school trip"
+                  : `${survey.event_name}: share your family’s feedback`}
+                width={chaperone ? 1536 : undefined}
+                height={chaperone ? 864 : undefined}
               />
             ) : (
               <div className="cover-placeholder">
