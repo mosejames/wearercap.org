@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/api/post-the-peach/overlay","destination":"https://post-the-peach.mosejames.chatgpt.site/api/overlay"},
+    {"source":"/api/post-the-peach/upload","destination":"https://post-the-peach.mosejames.chatgpt.site/api/upload"},
+    {"source":"/api/post-the-peach/photos","destination":"https://post-the-peach.mosejames.chatgpt.site/api/photos"},
+    {"source":"/api/post-the-peach/photos/:id","destination":"https://post-the-peach.mosejames.chatgpt.site/api/photos/:id"},
+    {"source":"/post-the-peach","destination":"/post-the-peach/index.html"},
+    {"source":"/post-the-peach/review","destination":"/post-the-peach/review/index.html"},
     {"source":"/api/little-boo","destination":"/api/m3-sign?vault=little-boo"},
     {"source":"/api/london-export","destination":"/api/m3-sign?vault=london-export"},
     {"source":"/api/trip-engine","destination":"/api/m3-sign?vault=trip-engine"},
