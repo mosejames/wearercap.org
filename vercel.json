@@ -107,6 +107,10 @@
       "destination": "/feedback/trunk-or-treat-2026/index.html"
     },
     {
+      "source": "/feedback/dc-chaperone-vault",
+      "destination": "/feedback/dc-chaperone-vault/index.html"
+    },
+    {
       "source": "/feedback/:path*",
       "destination": "/feedback/index.html"
     },

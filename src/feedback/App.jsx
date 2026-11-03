@@ -285,10 +285,10 @@ export function SurveyFlow({ survey, preview = false }) {
           is using this device, they can share their own experience.
         </p>
         <button className="primary" onClick={() => setDuplicate(false)}>
-          I’m another parent
+          I’m another respondent
         </button>
         <a className="text-link" href={survey.gallery_url}>
-          Back to the RCAP Capsule ↗
+          Back to the photos ↗
         </a>
       </section>
     );
@@ -343,7 +343,7 @@ export function SurveyFlow({ survey, preview = false }) {
         </p>
         <div className="photos-shortcut">
           <h2>Just here for the photos?</h2>
-          <p>Couldn’t make it? You’re still part of the community. Enjoy the photos, no survey needed.</p>
+          <p>Explore the gallery whenever you like. Sharing feedback is optional.</p>
           <a className="text-link" href={survey.gallery_url}>Skip to the photos ↗</a>
         </div>
       </section>
