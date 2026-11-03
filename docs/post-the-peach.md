@@ -15,3 +15,9 @@ Submitting freezes both layers and exports the visible composition to a separate
 Existing completed photos are not modified or reframed. The private review page retains legacy pending-photo finalization for older open clients, using the already installed frame, but no longer offers frame installation as part of the current workflow. Photo list, downloads and removals still require the existing private capability. No credentials, storage or access rules change. There is no public gallery or automatic Instagram posting.
 
 Vercel external API rewrites forward binary uploads and protected collection requests to the existing Post the Peach backend. The branded 1200x630 share card and Twitter large-image metadata remain on the public page.
+
+## Delete and personal download
+
+A selected sticker has a red × touch target at its upper-left corner. A prominent Delete selected sticker button also appears directly below the canvas, ahead of the sticker chooser. Either removes only the selected sticker. Editing controls remain frozen while saving.
+
+After a successful private upload, Download my photo offers the exact same finished JPEG bytes locally via a blob URL. It includes the chosen crop and stickers without editing guides. Failed uploads do not show a saved confirmation or download. Starting another photo revokes the previous local URL. No public photo URL or extra private-gallery permission is created.

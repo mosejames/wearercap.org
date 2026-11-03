@@ -15,6 +15,7 @@ export function createEditor(canvas, onChange = () => {}) {
       s.cx = Math.max(ex, Math.min(W - ex, s.cx)); s.cy = Math.max(ey, Math.min(H - ey, s.cy));
     }
   }
+  function deleteGrip(s) { const p = rotate({ x: -s.w / 2, y: -s.h / 2 }, s.angle); return { x: s.cx + p.x, y: s.cy + p.y }; }
   function grip(s) { const p = rotate({ x: s.w / 2, y: s.h / 2 }, s.angle); return { x: s.cx + p.x, y: s.cy + p.y }; }
   function draw(target, guides = false) {
     target.clearRect(0, 0, W, H); if (!photo) return;
@@ -27,6 +28,8 @@ export function createEditor(canvas, onChange = () => {}) {
         target.strokeRect(-s.w / 2 - 8, -s.h / 2 - 8, s.w + 16, s.h + 16);
         target.setLineDash([]); target.beginPath(); target.arc(s.w / 2, s.h / 2, 40, 0, Math.PI * 2); target.fillStyle = '#152845'; target.fill(); target.stroke();
         target.fillStyle = '#fff'; target.font = 'bold 44px sans-serif'; target.textAlign = 'center'; target.textBaseline = 'middle'; target.fillText('↔', s.w / 2, s.h / 2);
+        target.beginPath(); target.arc(-s.w / 2, -s.h / 2, 48, 0, Math.PI * 2); target.fillStyle = '#a03430'; target.fill(); target.stroke();
+        target.fillStyle = '#fff'; target.font = 'bold 58px sans-serif'; target.fillText('×', -s.w / 2, -s.h / 2);
       }
       target.restore();
     }
@@ -57,6 +60,8 @@ export function createEditor(canvas, onChange = () => {}) {
     if (!photo || disabled || points.size >= 2) return;
     e.preventDefault(); const p = pos(e), s = selected();
     if (!points.size) {
+      const d = s && deleteGrip(s);
+      if (d && Math.hypot(d.x - p.x, d.y - p.y) < 80) { remove(); return; }
       const g = s && grip(s);
       if (g && Math.hypot(g.x - p.x, g.y - p.y) < 76) handle = { id: e.pointerId };
       else { active = [...stickers].reverse().find(item => hit(item, p))?.id || null; handle = null; }

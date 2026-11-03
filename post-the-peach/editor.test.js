@@ -48,3 +48,9 @@ it('freezes all layers during submit, retains retry identity, and removes only t
   editor.disable(true);editor.addSticker(artwork,'ami');editor.removeSticker();pointer('pointerdown',100,100);pointer('pointermove',200,200);expect(state.composition).toBe(before);
   editor.disable(false);expect(state.composition).toBe(before);editor.removeSticker();expect(state.count).toBe(1);expect(layers()[0].key).toBe('rca');expect(state.active).toBe('photo');
 });
+it('deletes a rotated sticker with its red X touch target, leaving other stickers intact',()=>{
+  editor.addSticker();drag(layers()[0],0,-700);const first=layers()[0];editor.addSticker(artwork,'rizmo');
+  canvas.dispatchEvent(new KeyboardEvent('keydown',{key:']',cancelable:true}));const s=layers()[1];
+  const gx=s.cx-Math.cos(s.angle)*s.w/2+Math.sin(s.angle)*s.h/2,gy=s.cy-Math.sin(s.angle)*s.w/2-Math.cos(s.angle)*s.h/2;
+  pointer('pointerdown',gx,gy);expect(state.count).toBe(1);expect(layers()[0]).toEqual(first);expect(state.active).toBe('photo');
+});
