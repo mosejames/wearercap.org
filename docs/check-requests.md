@@ -236,3 +236,31 @@ withdrawn. There is no hard delete: requests are financial records. Admins
 archive test or stale records instead. Migration:
 `20261102025041_check_request_withdraw.sql`; test:
 `supabase/tests/check_request_withdraw.sql`.
+
+## Submission attempt diagnostics
+
+Receipt preparation, uploads and request submission report sanitized diagnostic
+stages through `cr_log_attempt`, separately from the `cr_action` transaction.
+The private `cr_private.attempt_events` table stores random correlation and attempt
+IDs, sequence, server time, stage/outcome, an allowlisted error category/code and,
+only after confirmed success, an existing request number owned by the submitter.
+It contains no receipt content, filenames, storage paths, contact information,
+request payloads, exception messages or credentials. Clients cannot read or
+modify the table directly. These are client-reported diagnostics; financial
+history remains in `cr_history`.
+
+Logging is best effort. All diagnostic calls in one submission share a total
+1.5-second waiting budget. If an early call exhausts that budget, a later upload
+or database failure may have no diagnostic event. Offline operation, expired
+authentication, browser interruption or a logging/database outage can also leave
+no record. A started event without a terminal event means completion is unknown;
+a lost response does not establish that the submission rolled back. Correlation
+covers retries within the current page and resets on reload or memory eviction.
+Successful uploads remain reusable on retry. Logging errors preserve the
+existing submission result/error and never send notices.
+
+Migration: `20261103225817_check_request_attempt_diagnostics.sql`. Apply the
+migration before publishing the client. Tests: `src/check-requests/attempts.test.js`
+and `scripts/test-check-request-attempts.mjs`. The latter uses local PGlite with
+a deliberate transaction-failure fixture; it does not replace hosted
+PostgreSQL/PostgREST or full finance-schema integration verification.

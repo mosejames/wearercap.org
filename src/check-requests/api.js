@@ -1,5 +1,6 @@
 import { supabase } from "../carpool/supabaseClient.js";
 import { normalizePhone, receiptMime, toCents } from "./model.js";
+import { submissionAttempt } from "./attempts.js";
 export { supabase };
 export async function loadRequests() {
   const records = [];
@@ -76,68 +77,87 @@ export async function addItemNote(requestId, itemIndex, note) {
   return data;
 }
 export async function submit(d, user, onProgress, canNotify = false) {
-  const { approval_recipients, approval_recipients_text, ...request } = d;
-  const items = [];
-  for (const [i, item] of d.items.entries()) {
-    const receipts = [];
-    for (const receipt of item.receipts) {
-      if (receipt.path) {
-        receipts.push({ path: receipt.path, name: receipt.name });
-        continue;
-      }
-      onProgress(`Uploading receipt for expense ${i + 1}…`);
-      const contentType = await receiptMime(receipt.file);
-      const path = `${user.id}/${d.id}/${crypto.randomUUID()}.${{ "image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf" }[contentType]}`;
-      const { error } = await supabase.storage
-        .from("check-receipts")
-        .upload(path, receipt.file, {
-          contentType,
-          upsert: false,
-        });
-      if (error)
-        throw new Error(
-          "A receipt could not be uploaded. Check your connection and try again.",
-        );
-      // Keep successful uploads on a failed attempt, so retry does not duplicate them.
-      receipt.path = path;
-      receipts.push({ path, name: receipt.name });
-    }
-    items.push({
-      date: item.date,
-      vendor: d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
-      description: item.description.trim(),
-      amount_cents: toCents(item.amount),
-      document_total_cents: toCents(item.partial ? item.document_total : item.amount),
-      coverage_note: item.partial ? (item.coverage_note || "").trim() : "",
-      receipts,
-    });
-  }
-  onProgress("Saving your request…");
-  return act("submit", {
-    ...request,
-    ...(canNotify
-      ? {
-          approval_recipients: (approval_recipients_text || "")
-            .split(/[,;\n]/)
-            .map((e) => e.trim())
-            .filter(Boolean),
+  const attempt = submissionAttempt(supabase, d.id);
+  let stage = "prepare";
+  await attempt.log(stage, "started");
+  try {
+    const { approval_recipients, approval_recipients_text, ...request } = d;
+    const items = [];
+    for (const [i, item] of d.items.entries()) {
+      const receipts = [];
+      for (const receipt of item.receipts) {
+        if (receipt.path) {
+          receipts.push({ path: receipt.path, name: receipt.name });
+          continue;
         }
-      : {}),
-    payee_contact: d.on_behalf
-      ? d.payee_contact.includes("@")
-        ? d.payee_contact.trim().toLowerCase()
-        : "+1" + normalizePhone(d.payee_contact)
-      : "",
-    archive_email: (d.archive_email || "").trim().toLowerCase(),
-    phone: normalizePhone(d.phone),
-    zelle_contact:
-      d.delivery === "zelle"
-        ? d.zelle_contact.includes("@")
-          ? d.zelle_contact.trim().toLowerCase()
-          : normalizePhone(d.zelle_contact)
+        onProgress(`Uploading receipt for expense ${i + 1}…`);
+        stage = "prepare";
+        const contentType = await receiptMime(receipt.file);
+        const path = `${user.id}/${d.id}/${crypto.randomUUID()}.${{ "image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf" }[contentType]}`;
+        stage = "upload";
+        await attempt.log(stage, "started");
+        const { error } = await supabase.storage
+          .from("check-receipts")
+          .upload(path, receipt.file, {
+            contentType,
+            upsert: false,
+          });
+        if (error) {
+          await attempt.log(stage, "failed", error);
+          throw new Error(
+            "A receipt could not be uploaded. Check your connection and try again.",
+          );
+        }
+        // Keep successful uploads on a failed attempt, so retry does not duplicate them.
+        receipt.path = path;
+        await attempt.log(stage, "succeeded");
+        receipts.push({ path, name: receipt.name });
+      }
+      stage = "prepare";
+      items.push({
+        date: item.date,
+        vendor: d.request_type === "vendor" ? "" : (item.vendor || "").trim(),
+        description: item.description.trim(),
+        amount_cents: toCents(item.amount),
+        document_total_cents: toCents(item.partial ? item.document_total : item.amount),
+        coverage_note: item.partial ? (item.coverage_note || "").trim() : "",
+        receipts,
+      });
+    }
+    onProgress("Saving your request…");
+    stage = "submit";
+    await attempt.log(stage, "started");
+    const result = await act("submit", {
+      ...request,
+      ...(canNotify
+        ? {
+            approval_recipients: (approval_recipients_text || "")
+              .split(/[,;\n]/)
+              .map((e) => e.trim())
+              .filter(Boolean),
+          }
+        : {}),
+      payee_contact: d.on_behalf
+        ? d.payee_contact.includes("@")
+          ? d.payee_contact.trim().toLowerCase()
+          : "+1" + normalizePhone(d.payee_contact)
         : "",
-    items,
-  });
+      archive_email: (d.archive_email || "").trim().toLowerCase(),
+      phone: normalizePhone(d.phone),
+      zelle_contact:
+        d.delivery === "zelle"
+          ? d.zelle_contact.includes("@")
+            ? d.zelle_contact.trim().toLowerCase()
+            : normalizePhone(d.zelle_contact)
+          : "",
+      items,
+    });
+    await attempt.log(stage, "succeeded", null, result?.reference);
+    return result;
+  } catch (error) {
+    await attempt.fail(stage, error);
+    throw error;
+  }
 }
 export async function details(id) {
   const [h, n] = await Promise.all([
