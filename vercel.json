@@ -107,8 +107,8 @@
       "destination": "/feedback/trunk-or-treat-2026/index.html"
     },
     {
-      "source": "/feedback/dc-chaperone-vault",
-      "destination": "/feedback/dc-chaperone-vault/index.html"
+      "source": "/feedback/chaperone-vault",
+      "destination": "/feedback/chaperone-vault/index.html"
     },
     {
       "source": "/feedback/:path*",
@@ -180,6 +180,7 @@
     }
   ],
   "redirects": [
+    { "source": "/feedback/dc-chaperone-vault", "destination": "/feedback/chaperone-vault", "permanent": true },
     {
       "source": "/nyc-sendoff/",
       "destination": "/nyc-vault/",

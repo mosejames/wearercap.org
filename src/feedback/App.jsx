@@ -183,6 +183,7 @@ export function Question({ q, value, onChange }) {
   );
 }
 export function SurveyFlow({ survey, preview = false }) {
+  const chaperone = survey.slug === "chaperone-vault";
   const [step, setStep] = useState(-1),
     [answers, setAnswers] = useState({}),
     [busy, setBusy] = useState(false),
@@ -273,7 +274,7 @@ export function SurveyFlow({ survey, preview = false }) {
             )}
           </div>
         )}
-        <GalleryInvite survey={survey} />
+        {!chaperone && <GalleryInvite survey={survey} />}
       </section>
     );
   if (duplicate)
@@ -318,34 +319,34 @@ export function SurveyFlow({ survey, preview = false }) {
         )}
 
         <p className="eyebrow">
-          RCAP Feedback ·{" "}
+          {chaperone ? "RCAP · Chaperone voices" : <>RCAP Feedback ·{" "}
           {new Date(survey.event_date + "T12:00:00").toLocaleDateString(
             "en-US",
             { month: "long", day: "numeric", year: "numeric" },
-          )}
+          )}</>}
         </p>
         <div className="event-tag">{survey.event_name}</div>
         <h1>{survey.title}</h1>
-        <p className="intro-copy">{survey.intro}</p>
+        <p className="intro-copy" style={chaperone ? {whiteSpace: "pre-line"} : undefined}>{survey.intro}</p>
         <div className="intro-meta">
           <span>{survey.questions.length} questions</span>
           <span>
-            About {Math.max(1, Math.round(survey.questions.length / 3))} minutes
+            About {(chaperone ? 2 : Math.max(1, Math.round(survey.questions.length / 3)))} minutes
           </span>
           <span>Anonymous</span>
         </div>
         <button className="primary" onClick={() => setStep(0)}>
-          Let’s talk about it <span>→</span>
+          {chaperone ? "Share your experience" : "Let’s talk about it"} <span>→</span>
         </button>
         <p className="privacy">
           No login. No names, email addresses or phone numbers. Just your honest
           experience.
         </p>
-        <div className="photos-shortcut">
+        {!chaperone && <div className="photos-shortcut">
           <h2>Just here for the photos?</h2>
           <p>Explore the gallery whenever you like. Sharing feedback is optional.</p>
           <a className="text-link" href={survey.gallery_url}>Skip to the photos ↗</a>
-        </div>
+        </div>}
       </section>
     );
   return (
