@@ -1,0 +1,2 @@
+export const DEFAULT_EXPECTATIONS={enabled:false,title:'Before the adventure',content:'A little preparation makes room for a wonderful trip.\n\nChaperones, enjoy being with our scholars. Share photos when you have a quiet minute and a steady connection, including the next morning.\n\nFamilies, updates will arrive when sharing fits around the day. Thank you for following along.',uploadsOpen:false};
+export function expectationsFor(trip){return {...DEFAULT_EXPECTATIONS,...trip?.expectations};}

@@ -264,8 +264,8 @@
       ]
     },
     "api/m3-sign.js": {
-      "maxDuration": 180,
-      "includeFiles": "server/london-dedupe/seed.json"
+      "maxDuration": 300,
+      "includeFiles": "{server/london-dedupe/seed.json,public/dc/washington-morning-v2.webp}"
     }
   }
 }

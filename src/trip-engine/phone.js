@@ -1,0 +1,1 @@
+export function normalizePhone(value){const raw=value.trim(),digits=raw.replace(/\D/g,'');if(!raw.startsWith('+')&&/^\d{10}$/.test(digits))return '+1'+digits;if(/^1\d{10}$/.test(digits))return '+'+digits;if(raw.startsWith('+')&&/^[1-9]\d{7,14}$/.test(digits))return '+'+digits;throw Error('Enter a US mobile number, or include + and your country code.');}

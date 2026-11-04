@@ -32,7 +32,7 @@ export default async function handler(req,res){
    const authorization=bearer(req),photo=await engineRpc('reserve',payload,authorization);
    if(photo.duplicate)return res.status(200).json(photo);
    for(const key of [photo.key,photo.webKey,photo.thumbKey]){const r=await aws().fetch(objectUrl(key),{method:'HEAD',signal:AbortSignal.timeout(10000)});if(!r.ok||Number(r.headers.get('content-length'))<1)throw problem('The photo upload is incomplete. Please try again.');}
-   return res.status(200).json(await engineRpc('finalize',{slug:q.trip,id:b.id},authorization));
+   return res.status(200).json(await engineRpc('finalize',{slug:q.trip,id:photo.id},authorization));
   }
   const auth=b.action==='conversation'?req.headers?.authorization:bearer(req);
   const result=await engineRpc(b.action,payload,auth);

@@ -1,5 +1,6 @@
+import {DEFAULT_EXPECTATIONS} from '../trip-engine/expectations-model.js';
 export const DEFAULT_MILESTONES = [{count:100,label:'First 100 moments in {destination}'},{count:250,label:'250 windows into the adventure'},{count:500,label:'500+ memories to bring home'}];
-export const PHASES = ['Draft', 'Send-off', 'Active trip', 'Wrap-up', 'Archive'];
+export const PHASES = ['Draft', 'Expectations', 'Send-off', 'Active trip', 'Wrap-up', 'Archive'];
 export const FEATURES = {
   sendoff: 'Parent packing and send-off photos', videos: 'Separate video collection',
   conversations: 'Reactions and comments', remember: 'Remember chaperone name and group',
@@ -10,7 +11,7 @@ export const REFERENCES = [
   { id: 'london-2028', destination: 'London & Paris', cohort: '2028', dates: 'October 11–17, 2026', href: '/2028-london/' },
 ];
 export function newDraft(id = crypto.randomUUID(), destination = '') {
-  return { id, destination, cohort: '', start: '', end: '', timezone: '', slug: '', status: 'draft', visibility: 'private',
+  return { expectations:{...DEFAULT_EXPECTATIONS}, id, destination, cohort: '', start: '', end: '', timezone: '', slug: '', status: 'draft', visibility: 'private',
     colors: { navy: '#102448', yellow: '#f5cc48', paper: '#faf9f4' }, logo: '', hero: '',
     milestones: DEFAULT_MILESTONES.map(m=>({...m})),
     features: Object.fromEntries(Object.keys(FEATURES).map(k => [k, true])), groups: ['Group A', 'Group AA', 'Mixed'],
@@ -35,6 +36,7 @@ export function messageFor(trip, phase, audience, liveUrl) {
   const cohort = trip.cohort ? `Class of ${trip.cohort}` : '[class year]';
   const destination = trip.destination || '[destination]';
   const link = liveUrl || '[trip link available after launch]';
+  if(phase==='Expectations')return `${cohort} is preparing for ${destination}. Read what to expect at ${link}.${trip.expectations?.uploadsOpen?' Preparation photos are welcome.':' Photo and video contributions are not open yet.'}`;
   if (audience === 'Chaperones') return `Thank you for bringing ${cohort}’s ${destination} adventure home to families. Open ${link}, choose ${trip.groups.join(', ')} for this batch, confirm your name and add a few photos.${trip.features.remember ? ' Your name and group are remembered on this device. Change groups whenever needed.' : ''} No scholar names needed.${trip.features.videos && trip.videoUploadUrl ? ' Use Share videos for clips.' : ''}`;
   return {
     Draft: `${cohort} is heading to ${destination}. Our trip album is being prepared. We’ll share the family link when it is ready.`,
@@ -45,6 +47,7 @@ export function messageFor(trip, phase, audience, liveUrl) {
   }[phase];
 }
 export const PHASE_COPY = {
+  Expectations: ['Help everyone feel ready.', 'Editable guidance before the trip. You choose whether contributions are open.'],
   Draft: ['Review before families arrive.', 'Private preview. Public viewing and uploads are closed.'],
   'Send-off': ['The story starts at home.', 'Families share packing, front-door smiles and airport hugs.'],
   'Active trip': ['One tap into their day.', 'Chaperone intake leads. Families follow the shared gallery.'],

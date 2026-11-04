@@ -195,3 +195,13 @@ and photo dialog show Share trip videos. The link opens a separate tab with
 noopener/noreferrer. Archive hides the contribution link. Photo intake remains
 photo-only; video submission does not imply automatic gallery ingestion. Each
 trip must use its own approved Dropbox file request and destination.
+
+## DC and future vault upload release, November 4, 2026
+
+The shared engine uses confirmed photo counts, compact six-photo selection with a separate full review, failed-only retry, and a graphical thank-you with gallery and share-more actions. Original-byte SHA-256 duplicate protection and canonical reservation IDs remain authoritative. A lost confirmation is checked before retrying. Keep the page open and the screen awake; background completion is not guaranteed. Selected files remain in memory through sign-in, not after a reload.
+
+Prepare the whole journey includes optional Expectations content and a separately controlled contribution gate, closed by default. Existing live phases are preserved. The production migration adds the phase and recovery behavior without updating trip configurations or photo records. London and NYC keep their existing implementations.
+
+Brand & sharing generates scenic artwork through the authenticated Trip Studio API using the existing server-side OpenAI key and fixed reference. No contributed photos are sent to OpenAI. Generation has a conditional R2-backed per-administrator lease and 10-attempt daily limit. Results stay in the administrator's browser until selected and saved; publishing remains explicit. Existing live video collection links survive a publish from a legacy draft that omitted that link.
+
+Verification includes the full test/build suite and an isolated database run covering reservation expiry, canonical identity, lost confirmation, hidden duplicates, cross-account isolation, anonymous denial, Expectations contribution gates and unchanged table grants. Physical-phone background behavior remains subject to browser and OS suspension.

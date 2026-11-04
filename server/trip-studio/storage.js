@@ -17,12 +17,12 @@ export function open(bytes) {
   decipher.setAuthTag(bytes.subarray(12, 28));
   return JSON.parse(Buffer.concat([decipher.update(bytes.subarray(28)), decipher.final()]).toString());
 }
-async function request(init = {}) {
+async function request(init = {}, path = PATH) {
   const {R2_ACCOUNT_ID: account, R2_BUCKET: bucket, R2_ACCESS_KEY_ID: accessKeyId, R2_SECRET_ACCESS_KEY: secretAccessKey} = process.env;
   if (![account, bucket, accessKeyId, secretAccessKey].every(Boolean)) throw problem('Private draft storage is not configured.', 503);
   key();
   const aws = new AwsClient({accessKeyId, secretAccessKey, service: 's3', region: 'auto'});
-  return aws.fetch(`https://${account}.r2.cloudflarestorage.com/${bucket}/${PATH}`, {...init, signal: AbortSignal.timeout(15000)});
+  return aws.fetch(`https://${account}.r2.cloudflarestorage.com/${bucket}/${path}`, {...init, signal: AbortSignal.timeout(15000)});
 }
 export async function readRegistry() {
   const r = await request();
@@ -38,4 +38,16 @@ export async function writeRegistry(value, etag) {
   const r = await request({method:'PUT', body, headers:{'Content-Type':'application/octet-stream', 'Cache-Control':'no-store', ...(etag ? {'If-Match':etag} : {'If-None-Match':'*'})}});
   if ([409, 412].includes(r.status)) throw problem('Another save arrived first. Reload saved drafts before trying again.', 409);
   if (!r.ok) throw problem('Could not save this draft. Your changes remain on screen.', 503);
+}
+
+export async function claimHero(email) {
+ const path='_private/trip-studio/hero-limits/'+crypto.createHash('sha256').update(email.toLowerCase()).digest('hex')+'.json';
+ const response=await request({},path);if(response.status!==404&&!response.ok)throw problem('Could not check image usage.',503);
+ const old=response.status===404?{}:await response.json(),etag=response.headers.get('etag'),day=new Date().toISOString().slice(0,10);
+ if(old.until>Date.now())throw problem('An image is already being created. Please wait.',429);
+ const count=old.day===day?old.count:0;if(count>=10)throw problem('The daily limit of 10 image generations has been reached.',429);
+ const lease={day,count:count+1,until:Date.now()+300000,job:crypto.randomUUID()};
+ const saved=await request({method:'PUT',body:JSON.stringify(lease),headers:{'Content-Type':'application/json',...(etag?{'If-Match':etag}:{'If-None-Match':'*'})}},path);
+ if(!saved.ok)throw problem('Another image request arrived first. Please wait.',429);
+ return async()=>{const latest=await request({},path);if(!latest.ok)return;const current=await latest.json();if(current.job!==lease.job)return;await request({method:'PUT',body:JSON.stringify({...current,until:0}),headers:{'Content-Type':'application/json','If-Match':latest.headers.get('etag')}},path);};
 }
