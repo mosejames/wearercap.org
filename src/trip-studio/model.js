@@ -4,7 +4,7 @@ export const PHASES = ['Draft', 'Expectations', 'Send-off', 'Active trip', 'Wrap
 export const FEATURES = {
   sendoff: 'Parent packing and send-off photos', videos: 'Separate video collection',
   conversations: 'Reactions and comments', remember: 'Remember chaperone name and group',
-  milestones: '100 / 250 / 500+ photo milestones', download: 'Individual photo downloads',
+  milestones: 'Photo milestones · choose your own targets', download: 'Individual photo downloads',
 };
 export const REFERENCES = [
   { id: 'nyc-2026', destination: 'New York City', cohort: '2029', dates: 'October 21–23, 2026', href: '/nyc-vault/' },
@@ -23,6 +23,7 @@ export function suggestedSlug(trip) {
 }
 export function readiness(t) {
   const missing = [];
+  if(milestoneError(t.milestones??DEFAULT_MILESTONES))missing.push('Valid photo milestone counts');
   if (!t.destination.trim()) missing.push('Destination');
   if (!/^20\d{2}$/.test(t.cohort)) missing.push('Class year');
   if (!t.start || !t.end) missing.push('Trip dates');
@@ -54,3 +55,11 @@ export const PHASE_COPY = {
   'Wrap-up': ['Bring the story home.', 'Collect late moments, thank contributors and prepare staff downloads.'],
   Archive: ['Keep the memories close.', 'New uploads close. Gallery viewing and individual downloads remain available.'],
 };
+
+export function milestoneError(items){
+ if(!Array.isArray(items)||items.length!==3)return 'Set all three photo milestones.';
+ if(items.some(m=>!Number.isInteger(m?.count)||m.count<1||m.count>1000000))return 'Enter whole photo counts from 1 to 1,000,000.';
+ if(items.some((m,i)=>i>0&&m.count<=items[i-1].count))return 'Milestone photo counts must increase, with no duplicates.';
+ return '';
+}
+export function changeMilestoneCount(items,index,count){return items.map((m,i)=>{if(i!==index)return m;const [prefix,suffix]=DEFAULT_MILESTONES[i].label.split(String(DEFAULT_MILESTONES[i].count));const middle=m.label.slice(prefix.length,m.label.length-suffix.length);const followsDefault=m.label.startsWith(prefix)&&m.label.endsWith(suffix)&&/^\d+$/.test(middle);const label=followsDefault&&Number.isInteger(count)?`${prefix}${count}${suffix}`:m.label;return {...m,count,label};});}

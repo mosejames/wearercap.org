@@ -1,4 +1,4 @@
-import {newDraft, FEATURES, REFERENCES} from '../../src/trip-studio/model.js';
+import {newDraft, FEATURES, REFERENCES, milestoneError} from '../../src/trip-studio/model.js';
 export function problem(message, status = 400) { return Object.assign(Error(message), { status }); }
 function text(value, max, label) {
   if (typeof value !== 'string' || value.length > max || /[\u0000-\u001f\u2014]/.test(value)) throw problem(`Check ${label}.`);
@@ -39,9 +39,8 @@ export function cleanDraft(value) {
   }
   for (const key of Object.keys(FEATURES)) { if (typeof value.features?.[key] !== 'boolean') throw problem('Check the feature settings.'); d.features[key] = value.features[key]; }
   const milestones = value.milestones ?? d.milestones;
-  if (!Array.isArray(milestones) || milestones.length !== 3) throw problem('Check the photo milestones.');
+  const milestoneProblem=milestoneError(milestones);if(milestoneProblem)throw problem(milestoneProblem);
   d.milestones = milestones.map((m,i) => {
-    if (m?.count !== [100,250,500][i]) throw problem('Use the 100, 250 and 500 photo milestones.');
     const label = text(m.label, 80, 'milestone label');
     if (!label) throw problem('Add a label for every milestone.');
     return {count:m.count,label};

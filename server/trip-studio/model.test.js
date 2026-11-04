@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {initialRegistry,newDraft,readiness,messageFor} from '../../src/trip-studio/model.js';
+import {initialRegistry,newDraft,readiness,messageFor,changeMilestoneCount} from '../../src/trip-studio/model.js';
 import {cleanDraft,saveDraft} from './model.js';
 describe('private trip draft boundaries',()=>{
   it('seeds only DC with no inferred dates, cohort, timezone or video links',()=>{
@@ -32,3 +32,7 @@ describe('private trip draft boundaries',()=>{
     d.features.videos=false;d.features.remember=false;const m=messageFor(d,'Active trip','Chaperones');expect(m).not.toContain('Share videos');expect(m).not.toContain('remembered');expect(m).toContain('No scholar names');
   });
 });
+it('accepts customized increasing photo targets with their captions',()=>{const d=initialRegistry().trips[0];d.milestones=[{count:50,label:'First fifty'},{count:200,label:'Two hundred moments'},{count:1000,label:'A thousand memories'}];expect(cleanDraft(d).milestones).toEqual(d.milestones);});
+it.each([[0,200,500],[50,50,500],[300,200,500],[1.5,200,500],['50',200,500],[50,200,1000001]])('rejects invalid milestone thresholds: %j',counts=>{const d=initialRegistry().trips[0];d.milestones=d.milestones.map((m,i)=>({...m,count:counts[i]}));expect(()=>cleanDraft(d)).toThrow();});
+
+it('keeps default captions in sync through clearing and retyping, without rewriting custom captions',()=>{const original=initialRegistry().trips[0].milestones;const empty=changeMilestoneCount(original,0,'');expect(changeMilestoneCount(empty,0,50)[0].label).toBe('First 50 moments in {destination}');const custom=original.map((m,i)=>i===1?{...m,label:'Our favorite moments'}:m);expect(changeMilestoneCount(custom,1,300)[1].label).toBe('Our favorite moments');});
