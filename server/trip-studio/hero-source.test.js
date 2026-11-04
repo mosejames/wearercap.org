@@ -1,8 +1,8 @@
 // @vitest-environment node
 import {afterEach,expect,it,vi} from 'vitest';
 import sharp from 'sharp';
-vi.mock('./storage.js',()=>({claimHero:vi.fn(async()=>vi.fn(async()=>{}))}));
-import {claimHero} from './storage.js';
+vi.mock('./hero-lease.js',()=>({claimHero:vi.fn(async()=>vi.fn(async()=>{}))}));
+import {claimHero} from './hero-lease.js';
 import {generateHero,prepareHeroSource,heroPrompt} from './hero.js';
 const fields={destination:'Washington, DC',landmarks:'National Mall',season:'Autumn',setting:'Morning',fit:'extend'};
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();vi.clearAllMocks();});

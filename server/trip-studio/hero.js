@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import {fileURLToPath} from 'node:url';
 import {problem} from './model.js';
-import {claimHero} from './storage.js';
+import {claimHero} from './hero-lease.js';
 export function heroPrompt(input){
  const clean=(key,max,required=false)=>{const v=input?.[key];if(typeof v!=='string'||v.length>max||required&&!v.trim())throw Error(`Check ${key}.`);return v.trim();};
  const destination=clean('destination',80,true),landmarks=clean('landmarks',250),season=clean('season',40),setting=clean('setting',400);
@@ -17,12 +17,12 @@ export async function prepareHeroSource(value){
  catch{throw problem('Could not read this photo. Choose a JPEG, PNG or WebP.');}
 }
 
-export async function generateHero(input,email){
+export async function generateHero(input,email,authorization){
  const key=process.env.OPENAI_API_KEY;if(!key)throw problem('Image generation is not configured.',503);
  let prompt;try{prompt=heroPrompt(input);}catch(e){throw problem(e.message);}
  if(input.fit!==undefined&&!['extend','crop'].includes(input.fit))throw problem('Choose how the photo should fit.');
  const source=await prepareHeroSource(input.sourcePhoto);
- const release=await claimHero(email);
+ const release=await claimHero(authorization);
  try{
  const reference=await sharp(fileURLToPath(new URL('../../public/dc/washington-morning-v2.webp',import.meta.url))).resize({width:1200,withoutEnlargement:true}).png().toBuffer();
  const form=new FormData();for(const [k,v] of Object.entries({model:'gpt-image-2',prompt,size:'1536x864',quality:'medium',n:'1',output_format:'jpeg'}))form.set(k,v);

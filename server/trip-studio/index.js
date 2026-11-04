@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     if (typeof body === 'string') { if (Buffer.byteLength(body) > 2500000) throw problem('Choose smaller branding images.', 413); try { body = JSON.parse(body); } catch { throw problem('Could not read the draft.'); } }
     if (!body || Buffer.byteLength(JSON.stringify(body)) > 2500000) throw problem('Choose smaller branding images.', 413);
     if(body.action==='hero-status')return res.status(200).json({ready:!!process.env.OPENAI_API_KEY});
-    if(body.action==='hero-generate'){const {generateHero}=await import('./hero.js');return res.status(200).json(await generateHero(body,me.email));}
+    if(body.action==='hero-generate'){const {generateHero}=await import('./hero.js');return res.status(200).json(await generateHero(body,me.email,req.headers.authorization));}
     if(body.action==='discard-test'){const {discardTest}=await import('../trip-engine/discard-test.js');return res.status(200).json({registry:await discardTest(req,body),me});}
     if (['publish','phase','unpublish'].includes(body.action)) {
       const {registry}=await readRegistry();
