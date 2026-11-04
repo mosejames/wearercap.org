@@ -42,12 +42,17 @@ export async function writeRegistry(value, etag) {
 
 export async function claimHero(email) {
  const path='_private/trip-studio/hero-limits/'+crypto.createHash('sha256').update(email.toLowerCase()).digest('hex')+'.json';
- const response=await request({},path);if(response.status!==404&&!response.ok)throw problem('Could not check image usage.',503);
- const old=response.status===404?{}:await response.json(),etag=response.headers.get('etag'),day=new Date().toISOString().slice(0,10);
- if(old.until>Date.now())throw problem('An image is already being created. Please wait.',429);
- const count=old.day===day?old.count:0;if(count>=10)throw problem('The daily limit of 10 image generations has been reached.',429);
- const lease={day,count:count+1,until:Date.now()+300000,job:crypto.randomUUID()};
- const saved=await request({method:'PUT',body:JSON.stringify(lease),headers:{'Content-Type':'application/json',...(etag?{'If-Match':etag}:{'If-None-Match':'*'})}},path);
- if(!saved.ok)throw problem('Another image request arrived first. Please wait.',429);
- return async()=>{const latest=await request({},path);if(!latest.ok)return;const current=await latest.json();if(current.job!==lease.job)return;await request({method:'PUT',body:JSON.stringify({...current,until:0}),headers:{'Content-Type':'application/json','If-Match':latest.headers.get('etag')}},path);};
+ for(let attempt=0;attempt<3;attempt++){
+  const response=await request({},path);if(response.status!==404&&!response.ok)throw problem('Could not check image usage. Your photo is still selected.',503);
+  const missing=response.status===404,old=missing?{}:await response.json(),etag=missing?null:response.headers.get('etag'),day=new Date().toISOString().slice(0,10);
+  if(!missing&&!etag)throw problem('Image preparation could not verify its storage version. Your photo is still selected. Please try again.',503);
+  if(old.until>Date.now())throw problem('An image is already being created. Please wait for it to finish before trying again.',429);
+  const count=old.day===day?old.count:0;if(count>=10)throw problem('The daily limit of 10 image generations has been reached.',429);
+  const lease={day,count:count+1,until:Date.now()+300000,job:crypto.randomUUID()};
+  const saved=await request({method:'PUT',body:JSON.stringify(lease),headers:{'Content-Type':'application/json',...(etag?{'If-Match':etag}:{'If-None-Match':'*'})}},path);
+  if([409,412].includes(saved.status))continue;
+  if(!saved.ok){const body=await saved.text();const code=body.match(/<Code>([A-Za-z0-9]+)<\/Code>/)?.[1]||'Unknown';console.warn('hero-lease-storage',{status:saved.status,code});throw problem(`Image preparation is temporarily unavailable (storage ${saved.status}: ${code}). Your photo is still selected. Please try again later.`,503);}
+  return async()=>{const latest=await request({},path);if(!latest.ok)return;const current=await latest.json();if(current.job!==lease.job)return;await request({method:'PUT',body:JSON.stringify({...current,until:0}),headers:{'Content-Type':'application/json','If-Match':latest.headers.get('etag')}},path);};
+ }
+ throw problem('Another image request is starting. Your photo is still selected. Please try again shortly.',429);
 }
