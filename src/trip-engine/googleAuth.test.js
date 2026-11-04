@@ -1,0 +1,15 @@
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {googleWindow,authMessage,finishGoogleReturn} from './googleAuth.js';
+let popup,client;
+const user={id:'original-phone-owner',identities:[{provider:'phone'},{provider:'google'}]};
+beforeEach(()=>{vi.useFakeTimers();popup={closed:false,close:vi.fn(),location:{href:''}};client={auth:{getSession:vi.fn(async()=>({data:{session:{user}}})),getUser:vi.fn(async()=>({data:{user}})),linkIdentity:vi.fn(async()=>({data:{url:'https://accounts.google.com/authorize'}})),signInWithOAuth:vi.fn(async()=>({data:{url:'https://accounts.google.com/authorize'}})),initialize:vi.fn(async()=>({error:null}))}};});
+afterEach(()=>{vi.useRealTimers();});
+async function tick(){await vi.advanceTimersByTimeAsync(0);}
+function returned(origin=location.origin,source=popup){window.dispatchEvent(new MessageEvent('message',{origin,source,data:{type:'rca-vault-auth',ok:true}}));}
+it('links Google to the existing verified phone owner, using only basic scopes',async()=>{const pending=googleWindow({link:true,client,open:()=>popup});await tick();expect(client.auth.signInWithOAuth).not.toHaveBeenCalled();expect(client.auth.linkIdentity).toHaveBeenCalledWith(expect.objectContaining({provider:'google',options:expect.objectContaining({scopes:'openid email profile',skipBrowserRedirect:true})}));returned();await expect(pending).resolves.toMatchObject({user:{id:'original-phone-owner'}});});
+it('does not trust another window or origin to finish sign-in',async()=>{const pending=googleWindow({client,open:()=>popup});await tick();returned('https://other.example');returned(location.origin,null);await tick();expect(client.auth.getUser).not.toHaveBeenCalled();returned();await expect(pending).resolves.toMatchObject({user});});
+it('rejects an unexpected identity instead of reporting a successful link',async()=>{client.auth.getUser.mockResolvedValue({data:{user:{...user,id:'another-owner'}}});const pending=googleWindow({link:true,client,open:()=>popup});const check=expect(pending).rejects.toThrow('original phone');await tick();returned();await check;});
+it('keeps phone fallback available when popups are blocked',async()=>{await expect(googleWindow({client,open:()=>null})).rejects.toThrow('phone code');expect(client.auth.signInWithOAuth).not.toHaveBeenCalled();});
+it('cleans up a cancelled window',async()=>{const pending=googleWindow({client,open:()=>popup});const check=expect(pending).rejects.toThrow('closed');await tick();popup.closed=true;await vi.advanceTimersByTimeAsync(500);await check;});
+it('reports linking conflicts without claiming photos were moved',()=>{expect(authMessage(Error('identity_already_exists'))).toContain('original uploads remain with your phone account');});
+it('finishes the callback only after checking the authenticated Google identity',async()=>{history.replaceState(null,'','/trip-vault/?auth_callback=1&code=test');await expect(finishGoogleReturn(client)).resolves.toMatchObject({id:user.id});expect(location.search).toBe('?auth_callback=1');expect(client.auth.initialize).toHaveBeenCalled();expect(client.auth.getUser).toHaveBeenCalled();});

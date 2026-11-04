@@ -4,7 +4,7 @@ export function authClient() {
   if (!instance) {
     const url = import.meta.env.VITE_SUPABASE_URL, key = import.meta.env.VITE_SUPABASE_ANON_KEY;
     if (!url || !key) throw Error('Administrator sign-in is not configured.');
-    instance = createClient(url, key, {auth:{storageKey:'rcap-trip-studio-auth-v1', persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+    instance = createClient(url, key, {auth:{storageKey:'rcap-trip-studio-auth-v1', persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:'pkce'}});
   }
   return instance;
 }
