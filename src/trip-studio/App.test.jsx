@@ -6,7 +6,7 @@ vi.mock('./client.js',()=>({authClient:vi.fn(),callStudio:vi.fn()}));
 vi.mock('./images.js',()=>({shareImage:vi.fn(async()=> 'data:image/png;base64,AAAA'),prepareBrandImage:vi.fn(),downloadFile:vi.fn()}));
 import {authClient,callStudio} from './client.js';
 import App from './App.jsx';
-import {prepareBrandImage} from './images.js';
+import {prepareBrandImage,shareImage} from './images.js';
 let root,host;
 const button=text=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes(text));
 async function click(text){await act(async()=>button(text).click());}
@@ -31,3 +31,5 @@ it('does not save before a selected branding image finishes preparing',async()=>
   expect(button('Save draft').disabled).toBe(false);
   await click('Save draft');expect(callStudio.mock.calls.find(c=>c[1]?.action==='save')[1].draft.logo).toBe('data:image/png;base64,AAAA');
 });
+
+it('updates the share preview from a generated option without silently applying or saving it',async()=>{const image='data:image/jpeg;base64,AAAA';callStudio.mockImplementation(async(method,body)=>body?.action==='hero-status'?{ready:true}:body?.action==='hero-generate'?{image,download:image}:body?.action==='save'?{registry:{revision:1,trips:[body.draft]},me:{email:'operator@example.org'}}:{registry:initialRegistry(),me:{email:'operator@example.org'}});await act(async()=>root.render(<App/>));await click('Continue setup');await click('Brand & sharing');await click('Generate hero image');expect(shareImage).toHaveBeenLastCalledWith(expect.objectContaining({hero:image}));expect(host.textContent).toContain('Previewing your latest generated image');expect(button('Saved').disabled).toBe(true);expect(callStudio.mock.calls.filter(c=>c[1]?.action==='save')).toHaveLength(0);await click('Use this image in the draft');expect(button('Save draft').disabled).toBe(false);await click('Save draft');expect(callStudio.mock.calls.find(c=>c[1]?.action==='save')[1].draft.hero).toBe(image);});

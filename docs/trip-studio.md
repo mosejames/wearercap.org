@@ -239,3 +239,9 @@ This is an Active trip preview with an illustrative empty album. Its content is 
 ### Shared full-width scenic heroes
 
 A selected hero is now a viewport-wide background behind centered text rather than a small side image for DC and future engine vaults. The shared ScenicHero component supplies the real vault and creator previews, with the existing cream wash, responsive cover crop and readable foreground. Generic destinations use Big memories plus their destination name; Washington keeps Big history and its existing assets. Custom draft colors are preserved. No Washington-specific notes, downloads or landmark content are added to other trips. Vaults without a hero keep the text fallback. This is a presentation-only release; no photo records, saved drafts, trip phases or access rules change. London and NYC are unchanged.
+
+### Scenic share-card preview
+
+The generic trip share renderer now uses the selected hero across the full 1200 × 630 card, with the same cream wash, centered headline, destination, logo, cohort and dates as the scenic vault direction. The browser preview, downloadable share image and server-rendered OG image share this renderer. DC keeps its existing scenic card. Exact-photo shares still use the requested visible photo's existing web rendition and fresh visibility checks.
+
+A newly generated option immediately previews in Brand & sharing without modifying the draft hero. The pending option is labeled, can be viewed on desktop/mobile, and becomes draft content only through Use this image in the draft or Use this hero. Saving and publishing remain separate. Switching trips clears pending artwork; leaving with an unused generated image warns before discarding it. Missing artwork has a cream branded fallback and a choose/create hint, rather than showing an unrelated image.
