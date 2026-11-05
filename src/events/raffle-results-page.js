@@ -111,7 +111,12 @@ renderProgress(data);
 if (archive) renderLocked(data);
 else renderLocked({ winners: [latestDrawing] });
 if (!archive && !edition.results.winners.some(w => w.drawing === latestDrawing.drawing)) $('edition-next').textContent = 'The November 1 drawing is posted below. The next weekly standings will appear after review.';
-const students = data.students || [];
+const holdOverall = overall && Boolean(data.studentsAsOf);
+if (holdOverall) {
+  document.querySelector('#rr-top-title').textContent = 'Our next raffle stars';
+  $('top-note').textContent = 'Check back after Sunday’s drawing for the next student standings.';
+}
+const students = holdOverall ? [] : data.students || [];
 
 for (const student of students.filter(student => student.rank <= 5)) {
   const card = studentCard(student, false, overall, weekNumber);

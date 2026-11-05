@@ -1,46 +1,46 @@
 {
-  "asOf": "Sunday, November 1 at 10:21 a.m.",
+  "asOf": "Wednesday, November 4 at 6:30 p.m.",
   "goal": 20000,
-  "total": 6716,
-  "unassigned": 61,
+  "total": 8943,
+  "unassigned": 86,
   "houses": [
     {
       "name": "Isibindi",
-      "amount": 2245
+      "amount": 2910
     },
     {
       "name": "Rêveur",
-      "amount": 2036
-    },
-    {
-      "name": "Amistad",
-      "amount": 1232
+      "amount": 2756
     },
     {
       "name": "Altruismo",
-      "amount": 1142
+      "amount": 1678
+    },
+    {
+      "name": "Amistad",
+      "amount": 1513
     }
   ],
   "classes": [
     {
       "name": "2031",
-      "amount": 2548
+      "amount": 3273
     },
     {
       "name": "2030",
-      "amount": 2269
-    },
-    {
-      "name": "2028",
-      "amount": 758
+      "amount": 2729
     },
     {
       "name": "2029",
-      "amount": 685
+      "amount": 1401
+    },
+    {
+      "name": "2028",
+      "amount": 814
     },
     {
       "name": "2027",
-      "amount": 395
+      "amount": 640
     }
   ],
   "topFive": null,
@@ -472,5 +472,6 @@
       "amount": 5,
       "rank": 59
     }
-  ]
+  ],
+  "studentsAsOf": "Sunday, November 1 at 10:21 a.m."
 }

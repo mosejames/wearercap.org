@@ -15,7 +15,7 @@ function updatePeriod() {
  paidTickets = !edition || edition.period.ticketBasis === 'paid';
  lookupData = edition ? edition.results : overallData;
  weekNumber = edition ? editions.length - editions.indexOf(edition) : 1;
- $('snapshot-lookup').textContent = `Updated ${lookupData.asOf} Eastern. Posted results, not live tracking.`;
+ $('snapshot-lookup').textContent = `Updated ${lookupData.studentsAsOf || lookupData.asOf} Eastern. Posted results, not live tracking.`;
  $('lookup-note').textContent = lookupOverall ? 'Search by first name for overall paid tickets and standing.' : `Search by first name for Week ${weekNumber} ${paidTickets ? 'paid tickets' : 'tickets'} and standing.`;
  renderStudents();
 }

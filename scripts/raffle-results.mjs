@@ -6,6 +6,8 @@
 // Aggregates and approved abbreviated rankings only. Full names never enter
 // the repo. Initial full-ranking approval uses --release-students; subsequent
 // updates preserve that state. Use --withhold-students to remove rankings.
+// --hold-standings updates aggregates while retaining the last released student snapshot.
+// Later refreshes keep this hold until an explicit --release-students.
 // Legacy top-five release:
 //
 //   node scripts/raffle-results.mjs path/to/file.html --release-top-five
@@ -40,6 +42,13 @@ const results = buildPublicResults(parsed, {
   releaseStudents: args.includes('--release-students') || (Array.isArray(previous.students) && !args.includes('--withhold-students')),
   winners: previous.winners || [],
 });
+
+const holdStandings = args.includes('--hold-standings') || Boolean(previous.studentsAsOf);
+if (holdStandings && !args.includes('--release-students') && !args.includes('--withhold-students')) {
+  results.studentsAsOf = previous.studentsAsOf || previous.asOf;
+  results.students = previous.students || [];
+  results.topFive = null;
+}
 
 // Publishing a dated edition is deliberate; an ordinary refresh changes overall data only.
 const option = name => args.find(arg => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=');

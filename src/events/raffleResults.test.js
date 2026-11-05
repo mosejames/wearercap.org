@@ -90,7 +90,9 @@ describe('what is actually published', () => {
     for (const winner of published.winners) {
       if (winner.announcer) expect(winner.announcer.name).toMatch(/^[\p{L}’-]+(?: [\p{L}]\.)?$/u);
     }
-    expect(Object.keys(published).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners', 'students'].sort());
+    const { studentsAsOf, ...requiredFields } = published;
+    if (studentsAsOf !== undefined) expect(studentsAsOf).toMatch(/^[A-Za-z]+, [A-Za-z]+ \d{1,2} at \d{1,2}(?::\d{2})? [ap]\.m\.$/);
+    expect(Object.keys(requiredFields).sort()).toEqual(['asOf', 'goal', 'total', 'unassigned', 'houses', 'classes', 'topFive', 'winners', 'students'].sort());
     for (const group of [published.houses, published.classes]) {
       for (const row of group) expect(Object.keys(row).sort()).toEqual(['amount', 'name']);
     }
