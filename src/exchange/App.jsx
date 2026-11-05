@@ -775,6 +775,7 @@ function OfferSheet({ bins, onDone, onClose }) {
   return (
     <Sheet onClose={onClose} title="Donate clothes">
       <p className="fine">{DONATION_STANDARD.body}</p>
+      <p className="fine">White button-down shirts (Oxford shirts and blouses) are supplied brand new. You can request them, but we do not accept them as donations or drop-offs.</p>
       <div className="grid2">
         <label>Your name *
           <input value={form.parentName} onChange={set('parentName')} placeholder="Danielle" maxLength={60} />
