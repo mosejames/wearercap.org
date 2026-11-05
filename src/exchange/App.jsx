@@ -8,6 +8,7 @@ import {
   typeMaxQty, REQUEST_MAX_ITEMS, onlySize, sizeSetFor,
   typeLabel, binUrl, holderUrl, CONTACT, TEXT_FROM } from './config.js';
 import * as db from './data.js';
+import { binItemTypes, isBottomsBin } from './bins.js';
 import { byBin, totals, pickBin, drift, stockByHouse,
   sheetLines, sheetExtras, sheetDirty } from './inventory.js';
 import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
@@ -19,11 +20,11 @@ import { qrSvg } from './qr.js';
 // who wore it. Co-ed pieces sit in their own group: one line, one total.
 const GENDER_LABEL = { girls: 'Girls', boys: 'Boys', coed: 'Either' };
 
-function ItemPicker({ value, onChange, disabled = false }) {
+function ItemPicker({ value, onChange, disabled = false, types = visibleItemTypes() }) {
   const groups = [
-    ['Girls', visibleItemTypes().filter((t) => t.gender === 'girls')],
-    ['Boys', visibleItemTypes().filter((t) => t.gender === 'boys')],
-    ['Either', visibleItemTypes().filter((t) => (t.gender || 'coed') === 'coed')],
+    ['Girls', types.filter((t) => t.gender === 'girls')],
+    ['Boys', types.filter((t) => t.gender === 'boys')],
+    ['Either', types.filter((t) => (t.gender || 'coed') === 'coed')],
   ].filter(([, list]) => list.length);
 
   return (
@@ -732,7 +733,7 @@ function RequestSheet({ order, inv, assigned, bins, settings, onDone, onClose })
 // house bin; the holder reaches out to arrange the pickup.
 // ---------------------------------------------------------------------------
 function OfferSheet({ bins, onDone, onClose }) {
-  const [form, setForm] = useState({ parentName: '', contact: '', house: '', itemsDesc: '' });
+  const [form, setForm] = useState({ parentName: '', contact: '', house: '', itemsDesc: '', binCategory: 'house' });
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [err, setErr] = useState('');
@@ -747,8 +748,8 @@ function OfferSheet({ bins, onDone, onClose }) {
     if (!form.itemsDesc.trim()) { setErr('Tell us roughly what you have.'); return; }
     setBusy(true); setErr('');
     try {
-      const houseBin = bins.find((b) => !b.retired && b.holder_house === form.house)
-        || bins.find((b) => !b.retired);
+      const eligible = bins.filter((b) => !b.retired && isBottomsBin(b) === (form.binCategory === 'bottoms'));
+      const houseBin = eligible.find((b) => b.holder_house === form.house) || eligible[0];
       const row = await db.addOffer(form, houseBin ? houseBin.id : null);
       setResult(row);
     } catch (e) {
@@ -792,6 +793,13 @@ function OfferSheet({ bins, onDone, onClose }) {
       <label>Cell number * (so your bin holder can arrange the pickup)
         <input value={form.contact} onChange={set('contact')} inputMode="tel" placeholder="404-555-1234" maxLength={80} />
       </label>
+      <label>Where should these go?
+        <select value={form.binCategory} onChange={set('binCategory')}>
+          <option value="house">House uniforms or a mixed donation</option>
+          <option value="bottoms">Bottoms only: pants, shorts or skirts</option>
+        </select>
+      </label>
+      <p className="fine">Bottoms are shared across all houses. For a mixed donation, your house holder can help coordinate.</p>
       <label>What do you have? *
         <textarea
           rows={3} value={form.itemsDesc} onChange={set('itemsDesc')} maxLength={400}
@@ -1665,7 +1673,7 @@ function BinView({ bin, code, bins, inv, refresh }) {
     );
   }
 
-  const house = houseById(bin.holder_house);
+  const house = isBottomsBin(bin) ? null : houseById(bin.holder_house);
   const mine = byBin(inv).get(bin.id) || new Map();
   const items = [...mine.values()].filter((i) => i.qty > 0)
     .sort((a, b) =>
@@ -2019,10 +2027,7 @@ function BinBar({ token, bins, binId, setBinId, reload }) {
             <input value={f.name} maxLength={60} placeholder="The bin in my trunk"
               onChange={set('name')} />
           </label>
-          <label>Mostly full of (optional)
-            <input value={f.focus} maxLength={40} placeholder="polos, bottoms, small sizes…"
-              onChange={set('focus')} />
-          </label>
+          <p className="fine">{isBottomsBin(f) ? 'Bottoms for all houses.' : 'House uniforms. Bottoms have their own shared bin.'} Ask the coordinator to change bin contents.</p>
           {err && <p className="fine">{err}</p>}
           <div className="avail-actions">
             <button className="btn flame" disabled={busy} onClick={save}>
@@ -2110,7 +2115,7 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
   const [saved, setSaved] = useState(null);
   const wide = useWide();
 
-  const types = visibleItemTypes();
+  const types = binItemTypes(bins.find((b) => b.id === binId), visibleItemTypes());
   // A housed item in a house bin is that house's. Neutral kit is nobody's.
   const houseOf = (typeId) => (typeHoused(typeId) ? (holder.house || '') : '');
 
@@ -2217,6 +2222,7 @@ function CountSheet({ token, holder, bins, inventory, reload, onPrint }) {
       <p className="sub">
         Type what's actually in the bin — rough is fine, it's a bin. Every size is
         already here; put a number where you have clothes and leave the rest blank.
+        {isBottomsBin(bin) ? ' This bin holds bottoms for every house.' : ' Pants, shorts and skirts are counted in the shared Bottoms bin.'}
       </p>
 
       <BinBar token={token} bins={bins} binId={binId} setBinId={setBinId} reload={reload} />
@@ -2477,12 +2483,13 @@ function MoveHandoffSheet({ token, req, holder, onDone, onClose }) {
 
 // Add / take items — a running list so a whole grocery bag logs in one go.
 function MoveSheet({ bin, sign, onDone, onClose }) {
+  const types = binItemTypes(bin, visibleItemTypes());
   const [lines, setLines] = useState([]);
   const [cur, setCur] = useState({
-    itemType: visibleItemTypes()[0]?.id || 'polo',
-    size: firstSize(visibleItemTypes()[0]?.id), qty: 1,
+    itemType: types[0]?.id || 'polo',
+    size: firstSize(types[0]?.id), qty: 1,
     // House bins mostly hold their own house's gear — start there.
-    house: typeHoused(visibleItemTypes()[0]?.id) ? (bin.holder_house || '') : '',
+    house: typeHoused(types[0]?.id) ? (bin.holder_house || '') : '',
   });
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -2515,6 +2522,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
         <label>Item
           <ItemPicker
             value={cur.itemType}
+            types={types}
             onChange={(e) => {
               const itemType = e.target.value;
               setCur({
@@ -3273,8 +3281,11 @@ function BinSheet({ bin, holders, defaultHolderId, onSave, onClose }) {
           ))}
         </select>
       </label>
-      <label>What's mostly in it? (optional)
-        <input value={f.focus} onChange={set('focus')} placeholder="Shirts · Pants · Everything" maxLength={40} />
+      <label>Bin contents
+        <select value={isBottomsBin(f) ? 'Bottoms only' : ''} onChange={set('focus')}>
+          <option value="">House uniforms (no bottoms)</option>
+          <option value="Bottoms only">Bottoms for all houses</option>
+        </select>
       </label>
       {err && <p className="err">{err}</p>}
       <button className="btn flame wide" disabled={busy} onClick={save}>

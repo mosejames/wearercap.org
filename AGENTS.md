@@ -413,3 +413,21 @@ thank-yous. Summary counts are batched by `reactionCounts.js`; unavailable
 counts must never stop photos loading. Supabase builders must be awaited rather
 than assuming they expose native Promise methods. Run both reaction SQL files
 in `supabase/tests/` for rollback-only authorization and lifecycle checks.
+
+## Shared uniform bottoms bin
+
+The Uniform Exchange reserves `ue_bins.focus = 'Bottoms only'` for the one
+active shared Bottoms bin. The existing AMI-2 QR remains valid; its name is
+Bottoms and Mose James IV currently carries it. Shekita retains AMI-1. The
+focus belongs to the bin, independent of the holder's house. Use the admin
+Bin contents select when changing scope. Holders can rename without changing
+scope. `src/exchange/bins.js` filters counting and movement options, retaining
+legacy stock as count-sheet extras. Bottoms-only donations route to this bin.
+Migration `20261105145558_route_shared_bottoms_holder.sql` was applied to live
+production via SQL Editor. Its trigger synchronizes item request-holder routing
+when a bin is reassigned or retired. A unique partial index prevents multiple
+active shared bottoms bins. Bottoms-only holders are excluded from generic
+house alerts. Reassignment/restoration was checked inside a rollback transaction.
+Vitest 4 with jsdom 29 works here using `--pool=vmThreads --maxWorkers=2`,
+with Node webcrypto and web streams supplied in a temporary setup file for
+the server/ZIP tests. Full verification passed: 191 files, 1315 tests.
