@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {X,Share,PlusSquare,Download,Check,MoreVertical,ArrowUpRight} from 'lucide-react';
-export default function InstallGuide({dialogRef,install,setInstall}) {
+export default function InstallGuide({dialogRef,install,setInstall,onSaved}) {
   const [device,setDevice] = useState('iphone');
   return <dialog ref={dialogRef} className="install-dialog" onClick={e=>{if(e.target===dialogRef.current)dialogRef.current.close();}}>
     <div className="dialog-top"><span className="eyebrow">YOUR COMMUNITY. ONE TAP AWAY.</span><button className="circle" onClick={()=>dialogRef.current.close()} aria-label="Close home screen guide"><X size={22}/></button></div>
@@ -24,6 +24,6 @@ export default function InstallGuide({dialogRef,install,setInstall}) {
     </div>:<div className="device-instructions"><h3>On your computer</h3><ol><li><strong>Open this page in Chrome or Edge.</strong><span>Go to <a href="https://wearercap.org/app/">wearercap.org/app/</a>.</span></li><li><strong>Choose Install.</strong><span>Look for the install icon in the address bar, or open the browser menu and find <strong>Install We Are RCAP</strong> or <strong>Install this site as an app</strong>.</span></li><li><strong>Open We Are RCAP.</strong><span>Find it with your other apps and pin it to your Dock or taskbar if you’d like. On a Mac in Safari, you can also choose <strong>File → Add to Dock</strong>.</span></li></ol>{install&&<button className="primary-button" onClick={async()=>{await install.prompt();await install.userChoice;setInstall(null);}}>Install We Are RCAP <Download size={18}/></button>}</div>}
     <div className="install-finish"><Check size={19} aria-hidden="true"/><p><strong>Next time, just tap the icon.</strong><span>There’s no new account to create for the hub. Individual family tools keep their usual sign-in. Newsletters and galleries need an internet connection.</span></p></div>
     <p className="install-existing">Saved an earlier RCAP icon? Add this page again to pick up the new artwork.</p>
-    <button className="primary-button" onClick={()=>dialogRef.current.close()}>Got it <Check size={18}/></button>
+    <button className="primary-button" onClick={onSaved}>I’ve added it <Check size={18}/></button><button className="install-later" onClick={()=>dialogRef.current.close()}>Close instructions</button>
   </dialog>;
 }

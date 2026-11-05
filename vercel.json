@@ -230,6 +230,7 @@
     }
   ],
   "headers": [
+    {"source":"/community-content.json","headers":[{"key":"Cache-Control","value":"no-store"}]},
     {"source":"/little-boo/:path*","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"Cache-Control","value":"private, no-store"},{"key":"Referrer-Policy","value":"no-referrer"}]},
     {"source":"/trip-studio/:path*","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"Cache-Control","value":"private, no-store"},{"key":"Referrer-Policy","value":"no-referrer"}]},
     {

@@ -1,3 +1,4 @@
+import {communityContent} from './scripts/community-content-plugin.mjs';
 import { defineConfig } from "vite";
 import {booDev} from './server/boo/dev.js';
 import react from "@vitejs/plugin-react";
@@ -7,6 +8,7 @@ import { resolve } from "node:path";
 export default defineConfig({
   plugins: [
     react(),
+    communityContent(),
     booDev(),
     tripStudioDev(),
     {

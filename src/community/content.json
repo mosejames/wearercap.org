@@ -1,0 +1,750 @@
+{
+  "schemaVersion": 1,
+  "groups": {
+    "everyday": {
+      "title": "Everyday connections",
+      "intro": "Uniforms, rides, and the people in our community."
+    },
+    "resources": {
+      "title": "Resources & ways to help",
+      "intro": "Guides, forms, and ways to lend a hand. Your everyday tools are on Home."
+    },
+    "updates": {
+      "title": "Stay in the loop",
+      "intro": "News from our community, with a place for your story, too."
+    },
+    "photos": {
+      "title": "Our shared memories",
+      "intro": "The big moments. The little moments. The people who make it RCAP."
+    },
+    "involved": {
+      "title": "Find your place",
+      "intro": "There is a place for every parent. Start here."
+    },
+    "contact": {
+      "title": "Let’s connect",
+      "intro": "Your RCAP community is a tap away."
+    }
+  },
+  "tools": [
+    {
+      "id": "newsletter",
+      "title": "RCAP Newsletters",
+      "detail": "The latest notes and every published issue.",
+      "href": "/newsletter",
+      "icon": "Newspaper",
+      "group": "updates",
+      "color": "gold"
+    },
+    {
+      "id": "calendar",
+      "title": "School Calendar",
+      "detail": "Upcoming dates, grouped by month. The full school calendar is here, too.",
+      "href": "/app/#calendar",
+      "icon": "CalendarDays",
+      "group": "everyday",
+      "color": "blue"
+    },
+    {
+      "id": "capsule",
+      "title": "RCAP Capsule",
+      "detail": "All-school memories. Find an album or add your own.",
+      "href": "/rcap-capsule/",
+      "icon": "Camera",
+      "group": "photos",
+      "color": "rose"
+    },
+    {
+      "id": "uniforms",
+      "title": "Uniform Exchange",
+      "detail": "Find, request, and pass along gently loved uniforms.",
+      "href": "/uniform-exchange/",
+      "icon": "Shirt",
+      "group": "everyday",
+      "color": "green",
+      "homepage": {
+        "variant": "exchange",
+        "body": "Uniforms that grow with you. Gently loved pieces passed from one RCA family to the next.",
+        "action": "Open exchange",
+        "order": 3
+      }
+    },
+    {
+      "id": "carpool",
+      "title": "Carpool",
+      "detail": "Connect with RCA families heading your way.",
+      "href": "/carpool/",
+      "icon": "Car",
+      "group": "resources",
+      "color": "blue",
+      "homepage": {
+        "variant": "carpool",
+        "body": "Only if it helps. If you drive in from a way out and would rather share the trip, find families near you. Your address stays private.",
+        "action": "Find a ride",
+        "order": 4
+      }
+    },
+    {
+      "id": "volunteer",
+      "title": "Serve at EXP",
+      "detail": "Find a shift and see the EXP schedule.",
+      "href": "/invite/",
+      "icon": "HandHeart",
+      "group": "involved",
+      "color": "gold",
+      "signupHref": "https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/"
+    },
+    {
+      "id": "hours",
+      "title": "Log Volunteer Hours",
+      "detail": "Record your service in Track It Forward.",
+      "href": "https://www.trackitforward.com/site/the-ron-clark-academy",
+      "icon": "Clock",
+      "group": "involved",
+      "color": "green"
+    },
+    {
+      "id": "collective",
+      "title": "The RCAP Collective",
+      "detail": "Businesses, services, and talent in our community.",
+      "href": "/directory/",
+      "icon": "Users",
+      "group": "everyday",
+      "color": "rose",
+      "homepage": {
+        "variant": "committee",
+        "body": "What you need might be right here. Discover businesses, services, creative work, and student ventures from our own RCA community.",
+        "action": "Explore the Collective",
+        "order": 1
+      }
+    },
+    {
+      "id": "committee",
+      "title": "Find Your Place",
+      "detail": "Explore committees and tell us how you want to help.",
+      "href": "/committee-interest/",
+      "icon": "HeartHandshake",
+      "group": "involved",
+      "color": "gold",
+      "homepage": {
+        "variant": "committee",
+        "body": "Tell us your committee interests and see where you fit. Raise your hand to chair one, or just join in.",
+        "action": "Open the form",
+        "order": 2
+      }
+    },
+    {
+      "id": "tips",
+      "title": "One Thing I Wish I Knew",
+      "detail": "Parent tips, questions, and ideas for the board.",
+      "href": "/wish-i-knew/read/",
+      "icon": "Lightbulb",
+      "group": "resources",
+      "color": "gold",
+      "homepage": {
+        "variant": "wik",
+        "body": "The open floor. Share a tip, ask a question, answer one, or put an idea in front of the board. Every RCA parent, every class.",
+        "action": "Read what parents said",
+        "order": 5,
+        "href": "/wish-i-knew/",
+        "actionHref": "/wish-i-knew/read/"
+      }
+    },
+    {
+      "id": "howto",
+      "title": "How-to Guides",
+      "detail": "A little help using the RCAP family tools.",
+      "href": "/how-to/",
+      "icon": "BookOpen",
+      "group": "resources",
+      "color": "blue"
+    },
+    {
+      "id": "expguide",
+      "title": "What to Expect at EXP",
+      "detail": "Get to know the day before your first shift.",
+      "href": "/what-to-expect/",
+      "icon": "Compass",
+      "group": "involved",
+      "color": "green"
+    },
+    {
+      "id": "submit",
+      "title": "Share a Newsletter Story",
+      "detail": "Send news, photos, or a community highlight to RCAP.",
+      "href": "/newsletter/submit/",
+      "icon": "Send",
+      "group": "updates",
+      "color": "green"
+    },
+    {
+      "id": "raffle",
+      "title": "Fall Raffle Results",
+      "detail": "Drawings, winners, and the latest results.",
+      "href": "/events/2026/fall-raffle/results/",
+      "icon": "Ticket",
+      "group": "updates",
+      "color": "gold"
+    },
+    {
+      "id": "board",
+      "title": "Your RCAP Board",
+      "detail": "Meet the parents helping make it all happen.",
+      "href": "/board/",
+      "icon": "Users",
+      "group": "contact",
+      "color": "blue"
+    },
+    {
+      "id": "email",
+      "title": "Email RCAP",
+      "detail": "hello@wearercap.org",
+      "href": "mailto:hello@wearercap.org",
+      "icon": "Mail",
+      "group": "contact",
+      "color": "gold"
+    },
+    {
+      "id": "instagram",
+      "title": "RCAP on Instagram",
+      "detail": "Follow along with @rcaparents.",
+      "href": "https://www.instagram.com/rcaparents/",
+      "icon": "Instagram",
+      "group": "contact",
+      "color": "rose"
+    },
+    {
+      "id": "checks",
+      "title": "Check Requests",
+      "detail": "Submit an RCAP reimbursement or payment request.",
+      "href": "/check-requests/",
+      "icon": "ClipboardList",
+      "group": "resources",
+      "color": "green"
+    },
+    {
+      "id": "recap",
+      "title": "The RCAP Recap",
+      "detail": "Photos and one-word memories from our community.",
+      "href": "/rcap-recap/",
+      "icon": "Camera",
+      "group": "photos",
+      "color": "gold",
+      "app": false,
+      "homepage": {
+        "variant": "recap",
+        "body": "After a big day, the vault opens and everyone drops in their photos and their one word. Right now you are looking at the last one.",
+        "action": "See the last vault",
+        "countdown": "2026-09-10T09:00:00-04:00",
+        "order": 6
+      }
+    }
+  ],
+  "calendar": {
+    "source": "/rca-calendar-2026-2027.pdf",
+    "edition": "RCA 2026–2027 calendar, issued August 12, 2026",
+    "dates": [
+      {
+        "start": "2026-11-03",
+        "end": "2026-11-03",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2026-11-04",
+        "end": "2026-11-04",
+        "title": "End of Quarter 1",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-11-05",
+        "end": "2026-11-06",
+        "title": "RCA EXP",
+        "detail": "Welcome visiting educators. Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2026-11-05",
+        "end": "2026-11-05",
+        "title": "Open House",
+        "detail": "For donors.",
+        "kind": "school"
+      },
+      {
+        "start": "2026-11-08",
+        "end": "2026-11-10",
+        "title": "5th grade DC trip",
+        "detail": "5th grade.",
+        "kind": "school"
+      },
+      {
+        "start": "2026-11-11",
+        "end": "2026-11-11",
+        "title": "5th grade: no school",
+        "detail": "5th grade only.",
+        "kind": "break"
+      },
+      {
+        "start": "2026-11-12",
+        "end": "2026-11-13",
+        "title": "Signature Series Conference",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-11-17",
+        "end": "2026-11-17",
+        "title": "Monopoly Day",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-11-19",
+        "end": "2026-11-20",
+        "title": "RCA EXP",
+        "detail": "Welcome visiting educators. Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2026-11-23",
+        "end": "2026-11-27",
+        "title": "Thanksgiving holiday",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2026-11-30",
+        "end": "2026-12-04",
+        "title": "8th grade: no school",
+        "detail": "8th grade only.",
+        "kind": "break"
+      },
+      {
+        "start": "2026-12-05",
+        "end": "2026-12-05",
+        "title": "RCA Robotics Competition",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-10",
+        "end": "2026-12-11",
+        "title": "RCA EXP",
+        "detail": "Welcome visiting educators. Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2026-12-10",
+        "end": "2026-12-10",
+        "title": "Open House",
+        "detail": "For donors.",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-13",
+        "end": "2026-12-19",
+        "title": "Homecoming week",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-18",
+        "end": "2026-12-18",
+        "title": "Family Holiday Lunch",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-18",
+        "end": "2026-12-18",
+        "title": "Homecoming / Alumni Event",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-19",
+        "end": "2026-12-19",
+        "title": "7th / 8th grade parent party",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2026-12-21",
+        "end": "2027-01-05",
+        "title": "Holiday break",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-01-13",
+        "end": "2027-01-13",
+        "title": "Bingo Night",
+        "detail": "6 p.m. • For all RCA families.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-01-18",
+        "end": "2027-01-18",
+        "title": "Martin Luther King Jr. Day",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-01-19",
+        "end": "2027-01-19",
+        "title": "Teacher work day",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-01-20",
+        "end": "2027-01-20",
+        "title": "End of Quarter 2",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-01-21",
+        "end": "2027-01-22",
+        "title": "RCA EXP",
+        "detail": "Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-01-21",
+        "end": "2027-01-21",
+        "title": "Open House",
+        "detail": "For donors.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-01-23",
+        "end": "2027-01-26",
+        "title": "7th grade Utah trip",
+        "detail": "7th grade.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-01-27",
+        "end": "2027-01-27",
+        "title": "7th grade: no school",
+        "detail": "7th grade only.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-01-28",
+        "end": "2027-01-29",
+        "title": "House Mania",
+        "detail": "Dress uniform dates.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-01-30",
+        "end": "2027-02-06",
+        "title": "8th grade trip",
+        "detail": "8th grade.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-02-03",
+        "end": "2027-02-03",
+        "title": "Trivia Night",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-02-08",
+        "end": "2027-02-08",
+        "title": "Teacher work day",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-02-09",
+        "end": "2027-02-09",
+        "title": "The Amazing Shake",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-02-15",
+        "end": "2027-02-15",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-02-16",
+        "end": "2027-02-17",
+        "title": "Teacher work days",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-02-18",
+        "end": "2027-02-19",
+        "title": "RCA EXP",
+        "detail": "Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-02-18",
+        "end": "2027-02-18",
+        "title": "Open House",
+        "detail": "For donors.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-02-25",
+        "end": "2027-02-26",
+        "title": "Admin Conference",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-03-01",
+        "end": "2027-03-01",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-03-05",
+        "end": "2027-03-05",
+        "title": "RCA EXP",
+        "detail": "Dress uniform date.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-03-11",
+        "end": "2027-03-12",
+        "title": "RCA EXP",
+        "detail": "Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-03-16",
+        "end": "2027-03-16",
+        "title": "End of Quarter 3",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-03-17",
+        "end": "2027-03-17",
+        "title": "Teacher work day",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-03-18",
+        "end": "2027-03-20",
+        "title": "Global Amazing Shake",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-03-22",
+        "end": "2027-03-22",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-03-27",
+        "end": "2027-04-11",
+        "title": "Spring break",
+        "detail": "No school.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-04-15",
+        "end": "2027-04-16",
+        "title": "RCA EXP",
+        "detail": "Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-04-19",
+        "end": "2027-04-19",
+        "title": "Talent show submissions due",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-04-20",
+        "end": "2027-04-20",
+        "title": "Meet & Greet",
+        "detail": "4–6 p.m.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-04-22",
+        "end": "2027-04-23",
+        "title": "House Mania",
+        "detail": "Dress uniform dates.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-04-25",
+        "end": "2027-05-01",
+        "title": "Teacher Appreciation Week",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-04",
+        "end": "2027-05-05",
+        "title": "Standardized testing",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-07",
+        "end": "2027-05-07",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-05-08",
+        "end": "2027-05-08",
+        "title": "RCA Talent Show",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-10",
+        "end": "2027-05-10",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-05-13",
+        "end": "2027-05-14",
+        "title": "RCA EXP",
+        "detail": "Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-05-13",
+        "end": "2027-05-13",
+        "title": "Open House",
+        "detail": "For donors.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-15",
+        "end": "2027-05-15",
+        "title": "Sports & Teams Banquet",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-18",
+        "end": "2027-05-19",
+        "title": "EOG tests / class finals",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-20",
+        "end": "2027-05-21",
+        "title": "House Mania",
+        "detail": "Dress uniform dates.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-24",
+        "end": "2027-05-24",
+        "title": "Spirit Day",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-25",
+        "end": "2027-05-25",
+        "title": "Field Day",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-26",
+        "end": "2027-05-26",
+        "title": "Awards Night",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-28",
+        "end": "2027-05-28",
+        "title": "Graduation",
+        "detail": "",
+        "kind": "school"
+      },
+      {
+        "start": "2027-05-31",
+        "end": "2027-05-31",
+        "title": "No school",
+        "detail": "School holiday.",
+        "kind": "break"
+      },
+      {
+        "start": "2027-06-01",
+        "end": "2027-06-02",
+        "title": "RCA EXP",
+        "detail": "All students. Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-06-04",
+        "end": "2027-06-05",
+        "title": "House Mania",
+        "detail": "All students. Dress uniform dates.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-06-07",
+        "end": "2027-06-11",
+        "title": "Summer school",
+        "detail": "For required students only.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-06-14",
+        "end": "2027-06-18",
+        "title": "Summer school",
+        "detail": "For required students only.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-06-21",
+        "end": "2027-06-25",
+        "title": "Summer school",
+        "detail": "For required students only.",
+        "kind": "school"
+      },
+      {
+        "start": "2027-07-19",
+        "end": "2027-07-20",
+        "title": "RCA EXP",
+        "detail": "All students. Dress uniform dates.",
+        "kind": "exp"
+      },
+      {
+        "start": "2027-07-22",
+        "end": "2027-07-23",
+        "title": "RCA EXP",
+        "detail": "All students. Dress uniform dates.",
+        "kind": "exp"
+      }
+    ]
+  },
+  "events": [],
+  "homepage": {
+    "eventsIntro": "A few dates to keep on your radar, with the next ones always first."
+  }
+}

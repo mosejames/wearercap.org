@@ -448,3 +448,24 @@ combining fulfilled request quantities and unlinked giveaway quantities.
 `supabase/tests/holder_intake.sql` checks routing, privacy, stock, idempotency,
 optional confirmations, and the anonymous API role in a rollback transaction
 with SMS dispatch disabled. Never test by recording real public giveaways.
+
+## Main website and app content throughline
+
+Public tool links, calendar dates, and dated announcements live once in
+`src/community/content.json`. Main-site tool cards, date cards, EXP chips,
+app directories, app calendar, and Next up derive from that source. Do not
+add a second events/tool array in `src/main.jsx` or `src/app/`. The validated
+feed is published at `/community-content.json` by the Vite plugin, with
+no-store headers. Both views refresh it every minute and on focus. Keep the
+feed out of service-worker caches. Preserve old content on transport/schema
+failure. Add new public family tools to this registry once; optional
+`homepage` settings control their marketing card. Curated app grid order stays
+separate. Do not automatically expose internal tools or personal/class vaults.
+
+Capsule pullouts read visible `house = rcap` albums directly and revalidate on
+refresh. New visible school-wide albums need no manual registry entry. Published
+newsletters use the existing archive. A revised school PDF still requires
+reconciling the shared structured dates; do not claim automatic PDF ingestion.
+Run shared-content, date-boundary, install-preference and provider refresh tests
+along with the build/full suite before shipping. Keep standalone detection and
+remembered install-card dismissal intact; setup help remains in the header.

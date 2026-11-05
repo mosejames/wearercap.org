@@ -1,3 +1,8 @@
+import initialCommunity from './community/content.json';
+import {CommunityProvider,useCommunityContent} from './community/CommunityContent.jsx';
+import {upcomingItems,homepageTools,dateCard} from './community/model.js';
+import {useEasternDay} from './community/useEasternDay.js';
+import {dateLabel} from './community/calendar.js';
 import { hasSeenPromo, markPromoSeen } from './media/promo-visit.js';
 import { fullscreenOnFirstPlay } from './media/fullscreen.js';
 import Brand from './components/Brand.jsx';
@@ -118,21 +123,10 @@ function normaliseAnswer(value) {
 
 
 
-// Next time the RCAP Recap vault opens for submissions. Local time, which is
-// what a parent in Atlanta is reading it in.
-// Next vault opening. 09:00 on 2026-09-10 in New York; the offset is -04:00
-// because Eastern is still on daylight time in September.
-const VAULT_OPENS = new Date('2026-09-10T09:00:00-04:00');
 const ROLL_MS = 420;
-const contactEmail = 'hello@wearercap.org';
-const contactHref = `mailto:${contactEmail}`;
-const socials = [
-  { icon: Instagram, label: '@rcaparents', href: 'https://www.instagram.com/rcaparents/' },
-];
 // The RCA calendar PDF as released, all-school edition dated 08/12/2026.
-const calendarHref = '/rca-calendar-2026-2027.pdf';
-const volunteerHref = 'https://www.signupgenius.com/go/60B0949A4AB29A2F94-rcaexp2#/';
-const hoursHref = 'https://www.trackitforward.com/site/the-ron-clark-academy';
+const volunteerHref = initialCommunity.tools.find(tool=>tool.id==='volunteer').signupHref;
+const hoursHref = initialCommunity.tools.find(tool=>tool.id==='hours').href;
 const youtubeEmbedUrl = 'https://www.youtube.com/embed/6UA9ZZjm66c?rel=0&modestbranding=1';
 // TEMPORARY. Replaces the hero with tonight's meeting so the join link is the
 // first thing on the page. Set this back to false to restore the normal hero;
@@ -158,23 +152,12 @@ const navLinks = [
 ];
 
 /* ------------------------------------------------------------------------
- * EDIT ZONE — the content below changes during the year.
- * Everything in this block is plain data: no code knowledge needed beyond
- * matching the surrounding punctuation. Until the admin screens exist, this
- * is the one place to update events and open calls.
+ * Site-specific presentation and open calls. Public dates and tool links
+ * belong in community/content.json so the website and app stay synchronized.
  * ---------------------------------------------------------------------- */
 
-// Happening now — the next few real dates families can plan around.
-// Keep this list SHORT (2-4 items) and CURRENT: delete dates once they pass.
-// Split into month / day / weekday so each date can be set like a calendar
-// tile: banner across the top, day number large underneath. `day` may be a
-// range ("24 & 25"), which the card detects and sizes down for.
-// School dates remain below this week’s event features.
-const upcomingEvents = [
-  { month: 'Nov', year: '2026', weekday: 'Sun', day: '1', label: 'Second raffle drawing', detail: 'Enter by Oct 31 at 11:59 p.m. Eastern.', href: RAFFLE_URL, cta: 'Buy tickets' },
-  { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '5 & 6', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
-  { month: 'Nov', year: '2026', weekday: 'Thu + Fri', day: '19 & 20', label: 'RCA EXP', detail: 'Welcome visiting educators.', href: volunteerHref, cta: 'Volunteer at EXP' },
-];
+// Upcoming dates are derived from community/content.json inside App.
+
 
 
 // The single most time-sensitive ask. One item, not a list — if everything
@@ -202,96 +185,19 @@ const committeePop = {
 
 /* ---------------------------- end edit zone --------------------------- */
 
-// Tools — the apps RCAP has actually built and shipped. Each one lives under
-// wearercap.org as its own page. Add a row here when a new one goes live; the
-// section renders straight from this list.
-const tools = [
-  {
-    variant: 'committee',
-    icon: Users,
-    title: 'The RCAP Collective',
-    body:
-      'What you need might be right here. Discover businesses, services, ' +
-      'creative work, and student ventures from our own RCA community.',
-    href: '/directory/',
-    badge: 'New',
-    action: 'Explore the Collective',
-  },
-  {
-    variant: 'committee',
-    icon: Users,
-    title: 'Find Your Place',
-    body:
-      'Tell us your committee interests and see where you fit. Raise your ' +
-      'hand to chair one, or just join in.',
-    href: '/committee-interest/',
-    badge: 'New',
-    action: 'Open the form',
-  },
-  {
-    variant: 'exchange',
-    icon: Shirt,
-    title: 'Uniform Exchange',
-    body:
-      'Uniforms that grow with you. Gently loved pieces passed from one RCA ' +
-      'family to the next.',
-    href: '/uniform-exchange/',
-    badge: 'Live',
-    action: 'Open exchange',
-  },
-  {
-    variant: 'carpool',
-    icon: Car,
-    title: 'Carpool',
-    body:
-      'Only if it helps. If you drive in from a way out and would rather share ' +
-      'the trip, find families near you. Your address stays private.',
-    href: '/carpool/',
-    badge: 'Live',
-    action: 'Find a ride',
-  },
-  {
-    variant: 'wik',
-    icon: Lightbulb,
-    title: 'One Thing I Wish I Knew',
-    body:
-      'The open floor. Share a tip, ask a question, answer one, or put an ' +
-      'idea in front of the board. Every RCA parent, every class.',
-    href: '/wish-i-knew/',
-    // The only row whose action goes somewhere other than the row itself.
-    action: 'Read what parents said',
-    actionHref: '/wish-i-knew/read/',
-  },
-  {
-    variant: 'recap',
-    icon: Camera,
-    title: 'The RCAP Recap',
-    body:
-      'After a big day, the vault opens and everyone drops in their photos ' +
-      'and their one word. Right now you are looking at the last one.',
-    href: '/rcap-recap/',
-    action: 'See the last vault',
-    countdown: VAULT_OPENS,
-  },
-];
+// Public tool data is shared with the app in community/content.json.
+// Keep only presentation-specific icon components here.
+const homeToolIcons = {Users,Shirt,Car,Lightbulb,Camera};
 
 
-// The 2026-27 EXP schedule, straight off the RCA calendar. Every session runs a
-// Thursday and a Friday. Delete a row once it has passed.
-// This semester only. The spring sessions live on the schedule page, which the
-// second card points at, so the chips stay a short list of what is actually
-// close enough to plan around.
-const expDates = [
-  { label: 'Nov 5 & 6', next: true },
-  { label: 'Nov 19 & 20' },
-  { label: 'Dec 10 & 11' },
-];
 
-const expActions = [
+// EXP date chips use the same calendar as the app and main event cards.
+const baseExpActions = [
   {
     image: '/images/rcap-exp-day.jpg',
     alt: 'An RCAP parent in an XPERTS shirt leading visitors through the building',
     title: 'See what a day looks like',
+    toolId: 'expguide',
     body: 'The posts, the energy, the people. Our recap from a recent EXP.',
     href: '/what-to-expect/',
     label: 'Read the recap',
@@ -301,6 +207,7 @@ const expActions = [
     image: '/images/rcap-exp-schedule.jpg',
     alt: 'Two RCAP dads walking the courtyard during EXP',
     title: 'The whole schedule',
+    toolId: 'volunteer',
     body: 'Every session this year, what each post involves, and the other weeks the building fills up.',
     href: '/invite/',
     label: 'See the year',
@@ -310,6 +217,7 @@ const expActions = [
     image: '/images/rcap-exp-shift.jpg',
     alt: 'An RCAP parent carrying a stack of folding chairs in the gym',
     title: 'Take a shift',
+    toolId: 'volunteer', useSignup: true,
     body: 'Grab a spot on SignUpGenius. Shifts for the later sessions post closer to the date.',
     href: volunteerHref,
     label: 'Sign up',
@@ -317,10 +225,11 @@ const expActions = [
   },
 ];
 
-const serveActions = [
+const baseServeActions = [
   {
     icon: MapPin,
     title: 'Find your place',
+    toolId: 'committee',
     body:
       'Tell us what you are into and see which committees fit. Chair one, ' +
       'or just join a team.',
@@ -331,6 +240,7 @@ const serveActions = [
   {
     icon: Users,
     title: 'Volunteer sign-up',
+    toolId: 'volunteer', useSignup: true,
     body: 'See current needs and claim a spot when help is needed.',
     href: volunteerHref,
     label: 'Open sign-up',
@@ -339,6 +249,7 @@ const serveActions = [
   {
     icon: Clock,
     title: 'Log volunteer hours',
+    toolId: 'hours',
     body: 'Already helped? Record your time through Track It Forward.',
     href: hoursHref,
     label: 'Log hours',
@@ -605,6 +516,19 @@ function KaraokeWelcome() {
 }
 
 function App() {
+  const community = useCommunityContent();
+  const today = useEasternDay();
+  const termEnd = today.slice(0,4)+(Number(today.slice(5,7))<=6?'-06-30':'-12-31');
+  const expDates = upcomingItems(community,today).filter(item=>item.kind==='exp' && item.start<=termEnd).map((item,index)=>({label:dateLabel(item),next:index===0}));
+  const currentAction = action => {const tool=community.tools.find(tool=>tool.id===action.toolId);return {...action,href:(action.useSignup?tool?.signupHref:tool?.href)||action.href};};
+  const expActions=baseExpActions.map(currentAction), serveActions=baseServeActions.map(currentAction);
+  const tools = homepageTools(community).map(tool=>({...tool,icon:homeToolIcons[tool.icon]||Users}));
+  const upcomingEvents = upcomingItems(community,today).slice(0,3).map(item=>({...dateCard(item),href:item.href || (item.kind==='exp'?community.tools.find(tool=>tool.id==='volunteer').href:'/app/#calendar'),cta:item.cta || (item.kind==='exp'?'Serve at EXP':'View calendar')}));
+  const calendarHref = community.calendar.source;
+  const contactHref = community.tools.find(tool=>tool.id==='email').href;
+  const contactEmail = contactHref.replace(/^mailto:/,'');
+  const socials = [{icon:Instagram,label:'@rcaparents',href:community.tools.find(tool=>tool.id==='instagram').href}];
+
   const [isVideoOpen, setIsVideoOpen] = React.useState(false);
   const [isPopOpen, setIsPopOpen] = React.useState(false);
   const serveRef = React.useRef(null);
@@ -746,7 +670,7 @@ function App() {
             <div className="hero-actions">
               <a
                 className="button primary button-join"
-                href={upcomingEvents[0].join}
+                href={upcomingEvents[0]?.href || '/app/#calendar'}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -793,13 +717,13 @@ function App() {
       </section>
 
       {/* Happening now — short, current, dated. The part that must never rot.
-          Dates come off the RCA 2026-2027 calendar; delete them once they
-          pass and pull the next few forward. */}
+          Dates come from community/content.json and expired dates drop out
+          automatically, matching the family hub. */}
       <section id="events" className="content-section events-section">
         <div className="section-heading">
           <p className="section-label">This week with RCAP</p>
           <h2>See what’s next with RCAP.</h2>
-          <p>Our second raffle drawing is this Sunday. Keep up with the dates ahead.</p>
+          <p>{community.homepage.eventsIntro}</p>
         </div>
         <HomeRaffle />
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
@@ -1462,4 +1386,4 @@ function Root() {
   return <App />;
 }
 
-createRoot(document.getElementById('root')).render(<Root />);
+createRoot(document.getElementById('root')).render(<CommunityProvider><Root /></CommunityProvider>);

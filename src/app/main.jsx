@@ -1,28 +1,31 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
 import {ArrowLeft, ArrowRight, ArrowUpRight, Search, X, Home, Newspaper, Camera, Grid2X2, CalendarDays, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Mail, Instagram, ClipboardList, Smartphone, PlusSquare, Globe} from 'lucide-react';
-import {links, groups} from './catalog.js';
+import {CommunityProvider,useCommunityContent} from '../community/CommunityContent.jsx';
+import {publicTools} from '../community/model.js';
+import {INSTALL_NUDGE_KEY,readInstallPreference,saveInstallPreference} from './installPreference.js';
+import NextUp from './NextUp.jsx';
 import {fetchCapsuleAlbums} from './albums.js';
 import Calendar from './Calendar.jsx';
 import InstallGuide from './InstallGuide.jsx';
 import './styles.css';
 
 const icons = {Newspaper,CalendarDays,Camera,Shirt,Car,HandHeart,Clock,Users,HeartHandshake,Lightbulb,BookOpen,Compass,Send,Ticket,Images,Mail,Instagram,ClipboardList};
-const tiles = [
-  {title:'Newsletters',icon:'Newspaper',page:'updates',color:'gold'},
-  {title:'Calendar',icon:'CalendarDays',page:'calendar',color:'green'},
-  {title:'RCAP Capsule',icon:'Camera',page:'photos',color:'rose'},
-  {title:'Serve at EXP',icon:'HandHeart',href:'/invite/',color:'gold'},
-  {title:'Uniforms',icon:'Shirt',href:'/uniform-exchange/',color:'green'},
-  {title:'Carpool',icon:'Car',href:'/carpool/',color:'blue'},
+const tileOrder = [
+  {id:'calendar',title:'Calendar',page:'calendar'},
+  {id:'capsule',title:'RCAP Capsule',page:'photos'},
+  {id:'newsletter',title:'Newsletter',page:'updates'},
+  {id:'volunteer',title:'Serve at EXP'},
   {title:'Resources',icon:'BookOpen',page:'resources',color:'blue'},
-  {title:'Our community',icon:'Users',href:'/directory/',color:'rose'},
+  {id:'uniforms',title:'Uniforms'},
+  {id:'hours',title:'Volunteer hours'},
+  {id:'collective',title:'Our community'},
   {title:'Contact',icon:'Mail',page:'contact',color:'blue'},
 ];
 const nav = [['home','Home',Home],['updates','Updates',Newspaper],['photos','Photos',Camera],['more','More',Grid2X2]];
 function currentPage() {
   const value = location.hash.slice(1);
-  return ['home','more','search','calendar',...Object.keys(groups)].includes(value) ? value : 'home';
+  return ['home','more','search','calendar','everyday','resources','updates','photos','involved','contact'].includes(value) ? value : 'home';
 }
 function Icon({name,...props}) {
   const Component = icons[name] || Grid2X2;
@@ -75,6 +78,13 @@ function useCapsuleAlbums(enabled, online) {
   return {...state,retry:()=>setAttempt(n=>n+1)};
 }
 function App() {
+  const community=useCommunityContent();
+  const links=publicTools(community), groups=community.groups;
+  const tiles=tileOrder.map(tile=>({...links.find(link=>link.id===tile.id),...tile,...(tile.page?{href:undefined}:{})}));
+  const [installHidden,setInstallHidden]=useState(()=>{try{return readInstallPreference(window.localStorage);}catch{return false;}});
+  function hideInstall(reason='dismissed') {setInstallHidden(true);try{saveInstallPreference(window.localStorage,reason);}catch{}}
+  function openInstall() {hideInstall('seen');dialog.current.showModal();}
+
   const [page,setPage] = useState(currentPage);
   const [query,setQuery] = useState('');
   const [online,setOnline] = useState(navigator.onLine);
@@ -86,13 +96,16 @@ function App() {
     const route = () => {setPage(currentPage());setQuery('');};
     const on = () => setOnline(true), off = () => setOnline(false);
     const prompt = e => {e.preventDefault();setInstall(e);};
-    const saved = () => setInstalled(true);
+    const saved = () => {setInstalled(true);hideInstall('installed');};
+    const storage = e => {if(e.key===INSTALL_NUDGE_KEY) {try{setInstallHidden(readInstallPreference(window.localStorage));}catch{}}};
+    window.addEventListener('storage',storage);
+    if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true) hideInstall('installed');
     window.addEventListener('hashchange',route);
     window.addEventListener('online',on);window.addEventListener('offline',off);
     window.addEventListener('beforeinstallprompt',prompt);
     window.addEventListener('appinstalled',saved);
     if('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/app/sw.js',{scope:'/app/'}).catch(()=>{});
-    return () => {window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);window.removeEventListener('appinstalled',saved);};
+    return () => {window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);window.removeEventListener('appinstalled',saved);window.removeEventListener('storage',storage);};
   },[]);
   const heading = page==='calendar'?'A little easier to plan.':page==='search'?'Find your next tap.':page==='more'?'All things RCAP.':groups[page]?.title || 'RCAP Family Hub';
   useEffect(() => {
@@ -108,7 +121,7 @@ function App() {
     <a className="skip" href="#content">Skip to content</a>
     <header className="topbar">
       <a href="#home" className="brand" aria-label="RCAP Family Hub home"><img src="/brand/we-are-rcap.svg" alt="We Are RCAP"/><span>FAMILY HUB</span></a>
-      <div className="header-actions"><button onClick={()=>dialog.current.showModal()} aria-label="How to add We Are RCAP to your Home Screen" className="install-top"><Smartphone size={19}/><span>{installed?'Home screen help':'Add to Home Screen'}</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
+      <div className="header-actions"><button onClick={openInstall} aria-label="How to add We Are RCAP to your Home Screen" className="install-top"><Smartphone size={19}/><span>{installed||installHidden?'Home screen help':'Add to Home Screen'}</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
     </header>
     {!online&&<div className="offline" role="status">You’re offline. Your saved hub and calendar are here; tools and galleries need a connection.</div>}
     <main id="content">
@@ -117,7 +130,11 @@ function App() {
           <div className="welcome-photo" aria-hidden="true"><img src="/app-assets/community-wide.jpg" alt="" fetchPriority="high"/></div>
           <div className="welcome-copy"><p className="eyebrow"><span/> ONE COMMUNITY. EVERY FAMILY.</p><h1 ref={title} tabIndex={-1}>Your RCAP.<br/><em>Right here.</em></h1><p>Everything you reach for.<br/>The community you belong to.</p></div>
         </section>
-        {!installed&&<button className="install-banner install-save-card" onClick={()=>dialog.current.showModal()}><img src="/app-assets/we-are-rcap-180.png" width="58" height="58" alt="We Are RCAP app icon"/><span><strong>Add We Are RCAP to your Home Screen</strong><small>Save this icon. Open RCAP like an app.</small><b>Show me how <ArrowRight size={14}/></b></span><PlusSquare size={22} aria-hidden="true"/></button>}
+        {!installed&&!installHidden&&<aside className="install-save-card install-nudge" aria-label="Save We Are RCAP">
+          <button className="install-nudge-open" onClick={openInstall}><img src="/app-assets/we-are-rcap-180.png" width="58" height="58" alt="We Are RCAP app icon"/><span><strong>Add We Are RCAP to your Home Screen</strong><small>Save this icon. Open RCAP like an app.</small><b>Show me how <ArrowRight size={14}/></b></span></button>
+          <button className="install-nudge-dismiss" onClick={()=>hideInstall()} aria-label="Dismiss home screen setup"><X size={18}/></button>
+        </aside>}
+        <NextUp/>
         <section className="quick-section" aria-labelledby="quick-title">
           <div className="section-heading"><h2 id="quick-title">What do you need today?</h2><span>LET’S GET YOU THERE</span></div>
           <div className="tile-grid">{tiles.map(tile=>{
@@ -148,7 +165,7 @@ function App() {
       <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={activeNav===key?'active':''} aria-current={activeNav===key?'page':undefined}><span><Component size={22} strokeWidth={activeNav===key?2.2:1.7}/></span>{label}</a>)}</nav>
-    <InstallGuide dialogRef={dialog} install={install} setInstall={setInstall}/>
+    <InstallGuide dialogRef={dialog} install={install} setInstall={setInstall} onSaved={()=>{hideInstall('confirmed');dialog.current.close();}}/>
   </div>;
 }
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(<CommunityProvider><App/></CommunityProvider>);

@@ -8,19 +8,32 @@ The homepage navigation and footer link to the hub.
 
 ## Keep it current
 
-`src/app/catalog.js` is the hub's public destination registry. Add or edit a
-single record there to update category pages and search.
-Use stable public destinations, not dated newsletter issues or individual
-photo URLs. Published newsletters appear at `/newsletter`; visible RCAP albums
-are managed in the existing Capsule. Updating those tools updates what parents
-reach from the hub. A new tool still needs an entry in this registry and any
-relevant full-website listing. Internal consoles and prototypes do not belong
-in this public family directory.
+`src/community/content.json` is the single public source for tool destinations,
+calendar dates, and dated RCAP events. Both the main website and app consume it.
+The build validates it and publishes `/community-content.json`; both browser
+views refresh it every minute and on return/focus. A bad or offline response
+keeps the last good content. The service worker never caches this feed.
 
-The home grid is the nine primary destinations. Uniforms, Carpool, and the
-Collective are everyday destinations; the Resources screen contains supporting
-guides, forms, and ways to help. No second shortcuts section or repeated
-newsletter promotion appears on Home. The newsletter feature lives on Updates.
+Add a public family tool once in `tools`. By default it appears in the app's
+category list and search. An optional `homepage` object controls its main-site
+card, order, descriptive copy, and action. App-specific grid order is curated
+in `src/app/main.jsx`; adding a tool does not automatically replace one of the
+nine primary buttons. Use `app: false` for an explicitly excluded legacy main
+website tool, never as a substitute for real access control. Internal consoles,
+house vaults, and class vaults must not be added to the public family registry.
+
+The grid is Calendar, RCAP Capsule, Newsletter; Serve at EXP, Resources,
+Uniforms; Volunteer hours, Our community, Contact. Carpool is in Resources.
+Next up and the main site's upcoming date cards use the same event selection.
+EXP chips also derive from those dates. Expired dates leave both views after
+the final day in Atlanta time. Add RCAP-specific dated announcements in
+`events`; matching calendar date/title records merge so links can be added
+without duplication. The source is edited once and deployed through the normal
+website release, with no separate app publication or skill required.
+
+Newsletters link to the published archive, so publishing an issue makes it
+available without editing the hub. Site-specific design and promotional copy
+are still site-specific; arbitrary HTML changes are not copied into the app.
 
 Photos highlights only the school-wide RCAP Capsule. `src/app/albums.js` reads
 public `vault_events` album metadata filtered to `house = 'rcap'` and
@@ -29,7 +42,7 @@ minute and when returning to the page. Failed/offline reads remove the album
 pullouts and retain the main Capsule link. House and class vaults are excluded
 from both the registry and search. No gallery photos are fetched or cached.
 
-`src/app/calendar.js` holds the upcoming school dates transcribed from RCA's
+The `calendar` section of the shared content file holds dates transcribed from RCA's
 All School Calendar dated August 12, 2026, including the color-coded dates.
 When RCA issues a revised calendar, reconcile these records with it. This is
 not an automatic PDF import. The list removes a date after its final day in
@@ -71,6 +84,9 @@ The header provides a persistent help button. `src/app/InstallGuide.jsx` has
 iPhone/iPad, Android, and computer instructions, an icon preview, official
 Apple/Google help links, and the final step of opening the saved icon.
 The home card is hidden when running standalone or after an install event.
+Opening the guide, explicitly dismissing the card, or confirming “I’ve added
+it” also persists dismissal in this browser. The header help button remains.
+Storage-blocked browsers retain dismissal only for the current visit.
 
 The app name and Apple title are We Are RCAP. `scripts/create-app-icons.mjs`
 reuses the official vector outlines, spaces WE ARE across the RCAP width,
