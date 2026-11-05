@@ -1,0 +1,25 @@
+{
+  "order": [
+    "cover",
+    "agenda",
+    "welcome",
+    "minutes",
+    "financial-summary",
+    "budget",
+    "reconciliation",
+    "audit",
+    "officers",
+    "community",
+    "trunk-survey",
+    "trunk-feedback",
+    "trunk-photos-1",
+    "trunk-photos-2",
+    "committees",
+    "unfinished",
+    "livestream",
+    "prize-process",
+    "upcoming",
+    "actions",
+    "close"
+  ]
+}

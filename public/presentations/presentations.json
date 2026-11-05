@@ -1,6 +1,19 @@
 {
   "presentations": [
     {
+      "slug": "executive-board-november-4-2026",
+      "title": "Executive Board Meeting: November 4, 2026",
+      "headline": "We Are RCAP.",
+      "description": "RCAP Executive Board meeting agenda, committee updates, financial review, and November 16 drawing planning.",
+      "date": "2026-11-04",
+      "audience": "RCAP Executive Board",
+      "presenter": "Mose James IV, Chairperson",
+      "slides": 21,
+      "url": "/presentations/executive-board-november-4-2026/",
+      "pdf": "/presentations/executive-board-november-4-2026/rcap-executive-board-2026-11-04.pdf",
+      "image": "/presentations/executive-board-november-4-2026/share.jpg"
+    },
+    {
       "slug": "advisory-board-onboarding",
       "title": "Advisory Board Onboarding",
       "headline": "We Are The Bridge.",
