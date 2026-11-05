@@ -129,14 +129,15 @@ export default async function handler(req, res) {
   if (p === 'bin') {
     const bin = await describeBin(String(v).toUpperCase());
     if (bin) {
-      const house = HOUSE[bin.holder_house] || '';
+      const bottoms = bin.focus === 'Bottoms only';
+      const house = bottoms ? '' : (HOUSE[bin.holder_house] || '');
       const who = String(bin.holder_name || '').trim().split(' ')[0];
       c.og = `${bin.code} · ${bin.name}`;
-      c.title = `${bin.code} · ${bin.name} — RCAP Uniform Exchange`;
+      c.title = `${bin.code} · ${bin.name} · RCAP Uniform Exchange`;
       // Altruismo, Amistad and Isibindi take "an"; Rêveur takes "a".
       const article = /^[aeiou]/i.test(house) ? 'An' : 'A';
       c.desc = [
-        house ? `${article} ${house} bin` : 'A uniform bin',
+        bottoms ? 'A shared bottoms bin for every house' : house ? `${article} ${house} bin` : 'A uniform bin',
         who ? `carried by ${who}` : null,
         bin.total ? `· about ${bin.total} item${bin.total === 1 ? '' : 's'} on hand` : null,
       ].filter(Boolean).join(' ') +

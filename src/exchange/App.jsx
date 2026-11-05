@@ -2534,7 +2534,7 @@ function MoveSheet({ bin, sign, onDone, onClose }) {
           />
         </label>
         <label>House
-          <select value={cur.house} onChange={(e) => setCur({ ...cur, house: e.target.value })}>
+          <select value={typeHoused(cur.itemType) ? cur.house : ''} disabled={!typeHoused(cur.itemType)} onChange={(e) => setCur({ ...cur, house: e.target.value })}>
             {HOUSE_CHOICES.map((h) => (
               <option key={h.id || 'any'} value={h.id}>{h.id ? h.name : 'Any house / no house colors'}</option>
             ))}
