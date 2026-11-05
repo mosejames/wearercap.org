@@ -5,7 +5,8 @@ import {newsletterRpc} from './newsletter-console.js';
 const ROOT='_newsletter/intake/';const rates=new Map();
 export function cleanSubmission(body){
  const text=(key,max,required=false)=>{const value=String(body[key]||'').trim();if(value.length>max||(required&&!value))throw Object.assign(Error(`Please check ${key}.`),{status:400});return value;};
- const item={name:text('name',100,true),email:text('email',200,true),title:text('title',160),details:text('details',6000,true),links:text('links',2000),requestedDate:text('requestedDate',10),category:text('category',40)||'Other',phone:text('phone',40),relationship:text('relationship',40)};
+ const item={name:text('name',100,true),email:text('email',200,true),title:text('title',160),details:text('details',6000,true),links:text('links',2000),requestedDate:text('requestedDate',10),category:text('category',40)||'Other',phone:text('phone',40),relationship:text('relationship',40),linkUrl:text('linkUrl',2000),actionText:text('actionText',100)};
+ if(item.linkUrl){try{const url=new URL(item.linkUrl);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw Error();}catch{throw Object.assign(Error('Enter a complete http or https link, or leave it blank.'),{status:400});}}
  if(!item.title)item.title=item.details.replace(/\s+/g,' ').slice(0,100);
  if(item.relationship&&!['Parent or family member','Staff member','Student','Community member'].includes(item.relationship))throw Object.assign(Error('Choose how you are sharing.'),{status:400});
  if(item.phone&&(!/^[+0-9().\s-]+$/.test(item.phone)||item.phone.replace(/\D/g,'').length<7))throw Object.assign(Error('Please check your phone number, or leave it blank.'),{status:400});
