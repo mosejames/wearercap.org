@@ -153,6 +153,7 @@ const navLinks = [
   { label: 'Volunteer', href: '#serve' },
   { label: 'EXP', href: '#exp' },
   { label: 'Resources', href: '#tools' },
+  { label: 'Family Hub', href: '/app/' },
   { label: 'Board', href: '/board/' },
 ];
 
@@ -1029,6 +1030,7 @@ function App() {
           <a href="#events">Events</a>
           <a href="#serve">Serve</a>
           <a href="#tools">Tools</a>
+          <a href="/app/">RCAP Family Hub</a>
           <a href="/how-to/">How-to Guides</a>
           <a href="/directory/">The RCAP Collective</a>
           <a href="/uniform-exchange/">Uniform Exchange</a>

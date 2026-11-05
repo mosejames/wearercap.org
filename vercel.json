@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    {"source":"/app","destination":"/app/index.html"},
     {"source":"/api/post-the-peach/overlay","destination":"https://post-the-peach.mosejames.chatgpt.site/api/overlay"},
     {"source":"/api/post-the-peach/upload","destination":"https://post-the-peach.mosejames.chatgpt.site/api/upload"},
     {"source":"/api/post-the-peach/photos","destination":"https://post-the-peach.mosejames.chatgpt.site/api/photos"},
