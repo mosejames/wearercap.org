@@ -1,44 +1,155 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowLeft, ArrowRight, ArrowUpRight, Search, X, Home, Newspaper, Camera, Grid2X2, CalendarDays, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Heart, Plane, Building2, Mail, Instagram, ClipboardList, Smartphone, Share, PlusSquare, Download, Pin, Check, Globe} from 'lucide-react';
+import {ArrowLeft, ArrowRight, ArrowUpRight, Search, X, Home, Newspaper, Camera, Grid2X2, CalendarDays, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Mail, Instagram, ClipboardList, Smartphone, Share, PlusSquare, Download, Check, Globe} from 'lucide-react';
 import {links, groups} from './catalog.js';
+import {fetchCapsuleAlbums} from './albums.js';
+import Calendar from './Calendar.jsx';
 import './styles.css';
-const icons = {Newspaper, CalendarDays, Camera, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Heart, Plane, Building2, Mail, Instagram, ClipboardList};
-const defaults = ['newsletter','uniforms','volunteer'];
-const readPins = () => {try {const saved=JSON.parse(localStorage.getItem('rcap-hub-pins-v1')); return Array.isArray(saved) ? saved.filter(id=>links.some(l=>l.id===id)).slice(0,6) : defaults;} catch {return defaults;}};
-function currentPage(){const value=location.hash.slice(1);return ['home','more','search',...Object.keys(groups)].includes(value) ? value : 'home';}
-function Icon({name,...props}) {const Component=icons[name] || Grid2X2;return <Component aria-hidden="true" strokeWidth={1.7} {...props}/>;}
-function App(){
- const [page,setPage]=useState(currentPage), [query,setQuery]=useState(''), [pins,setPins]=useState(readPins), [editing,setEditing]=useState(false), [online,setOnline]=useState(navigator.onLine), [install,setInstall]=useState(null), [notice,setNotice]=useState('');
- const dialog=useRef(null), title=useRef(null), first=useRef(true);
- useEffect(()=>{const route=()=>setPage(currentPage());window.addEventListener('hashchange',route); const on=()=>setOnline(true),off=()=>setOnline(false);window.addEventListener('online',on);window.addEventListener('offline',off);const prompt=e=>{e.preventDefault();setInstall(e);};window.addEventListener('beforeinstallprompt',prompt);if('serviceWorker' in navigator && import.meta.env.PROD)navigator.serviceWorker.register('/app/sw.js',{scope:'/app/'}).catch(()=>{});return()=>{window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);};},[]);
- useEffect(()=>{window.scrollTo(0,0);document.title=(groups[page]?.title || (page==='search'?'Search RCAP':page==='more'?'Explore RCAP':'RCAP Family Hub'))+' | We Are RCAP';if(first.current){first.current=false;}else title.current?.focus();},[page]);
- function go(next){setEditing(false);setQuery('');location.hash=next;}
- function toggle(id){const next=pins.includes(id)?pins.filter(p=>p!==id):[...pins,id].slice(-6);setPins(next);try{localStorage.setItem('rcap-hub-pins-v1',JSON.stringify(next));}catch{setNotice('Your favorites will last for this visit. This browser could not save them.');}}
- const filtered=links.filter(l=>(l.title+' '+l.detail+' '+l.group).toLowerCase().includes(query.trim().toLowerCase()));
- function row(link){return <div className="tool-row" key={link.id}><a href={link.href}><span className={'icon-box '+link.color}><Icon name={link.icon} size={24}/></span><span className="row-copy"><strong>{link.title}</strong><small>{link.detail}</small></span><ArrowUpRight className="row-arrow" size={19} aria-hidden="true"/></a>{editing&&<button className={'pin-button '+(pins.includes(link.id)?'selected':'')} aria-label={`${pins.includes(link.id)?'Unpin':'Pin'} ${link.title}`} aria-pressed={pins.includes(link.id)} onClick={()=>toggle(link.id)}>{pins.includes(link.id)?<Check size={19}/>:<Pin size={19}/>}</button>}</div>;}
- const nav=[['home','Home',Home],['updates','Updates',Newspaper],['photos','Photos',Camera],['more','More',Grid2X2]];
- const tiles=[{title:'Newsletters',icon:'Newspaper',page:'updates',color:'gold'},{title:'Resources',icon:'BookOpen',page:'resources',color:'blue'},{title:'Calendar',icon:'CalendarDays',href:'/rca-calendar-2026-2027.pdf',color:'green'},{title:'Photo galleries',icon:'Camera',page:'photos',color:'rose'},{title:'Uniforms',icon:'Shirt',href:'/uniform-exchange/',color:'green'},{title:'Carpool',icon:'Car',href:'/carpool/',color:'blue'},{title:'Get involved',icon:'HandHeart',page:'involved',color:'gold'},{title:'Our community',icon:'Users',href:'/directory/',color:'rose'},{title:'Contact',icon:'Mail',page:'contact',color:'blue'}];
- return <div className="hub"><a className="skip" href="#content">Skip to content</a><header className="topbar"><a href="#home" className="brand" aria-label="RCAP Family Hub home"><img src="/brand/we-are-rcap.svg" alt="We Are RCAP"/><span>FAMILY HUB</span></a><div className="header-actions"><button onClick={()=>dialog.current.showModal()} aria-label="Add RCAP to your home screen" className="install-top"><Smartphone size={19}/><span>Add to home</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div></header>
- {!online&&<div className="offline" role="status">You’re offline. Your saved hub is here; tools and galleries need a connection.</div>}
- <main id="content">
- {page==='home'?<>
- <section className="welcome"><div className="welcome-copy"><p className="eyebrow"><span/> ONE COMMUNITY. EVERY FAMILY.</p><h1 ref={title} tabIndex={-1}>Your RCAP.<br/><em>Right here.</em></h1><p>Everything you reach for.<br/>The community you belong to.</p><button className="hero-link" onClick={()=>go('resources')}>Find what you need <ArrowRight size={18}/></button></div><div className="welcome-photo"><img src="/app-assets/community.jpg" alt="RCA families together at a community event" fetchPriority="high"/><div className="photo-caption"><Heart size={13} fill="currentColor"/> Built by parents. For our community.</div></div></section>
- <section className="quick-section" aria-labelledby="quick-title"><div className="section-heading"><h2 id="quick-title">What do you need today?</h2><span>LET’S GET YOU THERE</span></div><div className="tile-grid">{tiles.map(tile=>{const inside=<><span className={'tile-icon '+tile.color}><Icon name={tile.icon} size={29}/></span><span>{tile.title}</span></>;return tile.href?<a className="tile" href={tile.href} key={tile.title}>{inside}</a>:<button className="tile" onClick={()=>go(tile.page)} key={tile.title}>{inside}</button>;})}</div></section>
- <section className="favorites" aria-labelledby="favorites-title"><div className="section-heading"><h2 id="favorites-title"><Pin size={15}/> Your shortcuts</h2><button onClick={()=>{go('more');setEditing(true);}}>Customize <PlusSquare size={14}/></button></div>{pins.length?<div className="pin-grid">{pins.map(id=>links.find(l=>l.id===id)).filter(Boolean).map(link=><a href={link.href} key={link.id}><Icon name={link.icon} size={20}/><span>{link.title}</span><ArrowUpRight size={14}/></a>)}</div>:<p className="empty">Pin the tools you use most. They’ll be waiting right here.</p>}</section>
- <a className="newsletter-banner" href="/newsletter"><span className="banner-icon"><Newspaper size={28}/></span><span><small>FROM OUR COMMUNITY</small><strong>A little news. A lot of RCAP.</strong><span>Catch up on the newsletters.</span></span><ArrowUpRight size={23}/></a>
- <button className="install-banner" onClick={()=>dialog.current.showModal()}><span className="install-icon"><Smartphone size={24}/></span><span><strong>Make yourself at home.</strong><small>Add RCAP to your phone’s home screen.</small></span><PlusSquare size={22}/></button>
- </>:<>
- <div className="page-heading"><button className="back" onClick={()=>go('home')} aria-label="Back to home"><ArrowLeft size={21}/></button><p className="eyebrow">YOUR RCAP FAMILY HUB</p><h1 ref={title} tabIndex={-1}>{page==='search'?'Find your next tap.':page==='more'?'All things RCAP.':groups[page].title}</h1><p>{page==='search'?'Search tools, resources, and ways to connect.':page==='more'?'One community. Everything that brings us together.':groups[page].intro}</p></div>
- {(page==='search'||page==='more')&&<label className="search-box"><Search size={21} aria-hidden="true"/><input autoFocus={page==='search'} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search RCAP tools…" aria-label="Search RCAP tools" type="search"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={19}/></button>}</label>}
- {page==='more'&&<div className="customize"><span>{editing?'Choose up to 6 shortcuts for your home.':'Keep your favorite tools close.'}</span><button onClick={()=>setEditing(!editing)}>{editing?'Done':'Edit shortcuts'} {editing?<Check size={16}/>:<Pin size={15}/>}</button></div>}
- {page==='photos'&&<div className="photo-intro"><Camera size={28}/><p><strong>Every album has a story.</strong><span>Open a vault to browse, share, or add photos. Each vault keeps its own sharing and sign-in experience.</span></p></div>}
- {page==='search'?<><p className="result-count" role="status">{filtered.length} {filtered.length===1?'result':'results'}</p><div className="tool-list">{filtered.map(row)}</div>{!filtered.length&&<div className="empty"><Search size={30}/><h2>No tools found</h2><p>Try “photos,” “uniforms,” or “volunteer.”</p><button onClick={()=>setQuery('')}>Show all tools</button></div>}</>:page==='more'?Object.entries(groups).map(([key,group])=>{const items=filtered.filter(l=>l.group===key);return items.length?<section className="catalog-group" key={key}><h2>{group.title}</h2><div className="tool-list">{items.map(row)}</div></section>:null;}):<div className="tool-list">{links.filter(l=>l.group===page).map(row)}</div>}
- {page==='more'&&query&&!filtered.length&&<p className="empty" role="status">No tools found. Try a different search.</p>}
- </>}
- <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
- </main><nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={page===key?'active':''} aria-current={page===key?'page':undefined}><span><Component size={22} strokeWidth={page===key?2.2:1.7}/></span>{label}</a>)}</nav>
- <dialog ref={dialog} className="install-dialog" onClick={e=>{if(e.target===dialog.current)dialog.current.close();}}><div className="dialog-top"><span className="eyebrow">RCAP, A TAP AWAY</span><button className="circle" onClick={()=>dialog.current.close()} aria-label="Close home screen guide"><X size={22}/></button></div><img src="/app-assets/icon-180.png" width="76" height="76" alt="RCAP home screen icon"/><h2>A little more connected.</h2><p>Give RCAP a spot on your home screen. It opens in its own window, ready when you are.</p>{install&&<button className="primary-button" onClick={async()=>{await install.prompt();const result=await install.userChoice;if(result.outcome==='accepted')dialog.current.close();setInstall(null);}}>Install RCAP <Download size={18}/></button>}<h3>On iPhone or iPad</h3><ol><li>Open <strong>wearercap.org/app/</strong> in Safari.</li><li>Tap the <Share size={16}/> <strong>Share</strong> button. You may find it under the browser’s menu.</li><li>Choose <PlusSquare size={16}/> <strong>Add to Home Screen</strong>. If shown, leave <strong>Open as Web App</strong> on, then tap <strong>Add</strong>.</li></ol><h3>On Android or your computer</h3><p>Open this page in Chrome or Edge and choose <strong>Install app</strong> or <strong>Add to Home screen</strong> from the browser menu, if available.</p><small className="install-note">Your favorite tools open their existing RCAP pages. They need an internet connection. No App Store download or new account needed for the hub.</small><button className="primary-button" onClick={()=>dialog.current.close()}>Got it <Check size={18}/></button></dialog>
- <div className="sr-only" role="status">{notice}</div></div>;
+
+const icons = {Newspaper,CalendarDays,Camera,Shirt,Car,HandHeart,Clock,Users,HeartHandshake,Lightbulb,BookOpen,Compass,Send,Ticket,Images,Mail,Instagram,ClipboardList};
+const tiles = [
+  {title:'Newsletters',icon:'Newspaper',page:'updates',color:'gold'},
+  {title:'Calendar',icon:'CalendarDays',page:'calendar',color:'green'},
+  {title:'RCAP Capsule',icon:'Camera',page:'photos',color:'rose'},
+  {title:'Serve at EXP',icon:'HandHeart',href:'/invite/',color:'gold'},
+  {title:'Uniforms',icon:'Shirt',href:'/uniform-exchange/',color:'green'},
+  {title:'Carpool',icon:'Car',href:'/carpool/',color:'blue'},
+  {title:'Resources',icon:'BookOpen',page:'resources',color:'blue'},
+  {title:'Our community',icon:'Users',href:'/directory/',color:'rose'},
+  {title:'Contact',icon:'Mail',page:'contact',color:'blue'},
+];
+const nav = [['home','Home',Home],['updates','Updates',Newspaper],['photos','Photos',Camera],['more','More',Grid2X2]];
+function currentPage() {
+  const value = location.hash.slice(1);
+  return ['home','more','search','calendar',...Object.keys(groups)].includes(value) ? value : 'home';
+}
+function Icon({name,...props}) {
+  const Component = icons[name] || Grid2X2;
+  return <Component aria-hidden="true" strokeWidth={1.7} {...props}/>;
+}
+function ToolRow({link}) {
+  return <div className="tool-row"><a href={link.href}>
+    <span className={'icon-box '+link.color}><Icon name={link.icon} size={24}/></span>
+    <span className="row-copy"><strong>{link.title}</strong><small>{link.detail}</small></span>
+    <ArrowUpRight className="row-arrow" size={19} aria-hidden="true"/>
+  </a></div>;
+}
+function ToolList({items}) {
+  return <div className="tool-list">{items.map(link=><ToolRow key={link.id} link={link}/>)}</div>;
+}
+function NewsletterCard() {
+  return <a className="newsletter-banner" href="/newsletter">
+    <span className="banner-icon"><Newspaper size={28} aria-hidden="true"/></span>
+    <span><small>FROM OUR COMMUNITY</small><strong>A little news. A lot of RCAP.</strong><span>Read the latest newsletter and past issues.</span></span>
+    <ArrowUpRight size={23} aria-hidden="true"/>
+  </a>;
+}
+function useCapsuleAlbums(enabled, online) {
+  const [state,setState] = useState({albums:[],status:'loading'});
+  const [attempt,setAttempt] = useState(0);
+  useEffect(() => {
+    if(!enabled) return;
+    if(!online) {setState({albums:[],status:'error'});return;}
+    let controller, disposed = false;
+    async function refresh() {
+      controller?.abort();
+      controller = new AbortController();
+      const request = controller;
+      const timeout = window.setTimeout(()=>request.abort(),8000);
+      try {
+        const albums = await fetchCapsuleAlbums(request.signal);
+        if(!disposed && controller===request) setState({albums,status:'ready'});
+      } catch {
+        if(!disposed && controller===request) setState({albums:[],status:'error'});
+      } finally {window.clearTimeout(timeout);}
+    }
+    setState({albums:[],status:'loading'});
+    refresh();
+    const interval = window.setInterval(refresh,60000);
+    const visible = () => {if(document.visibilityState==='visible') refresh();};
+    document.addEventListener('visibilitychange',visible);
+    window.addEventListener('focus',visible);
+    return () => {disposed=true;controller?.abort();window.clearInterval(interval);document.removeEventListener('visibilitychange',visible);window.removeEventListener('focus',visible);};
+  },[enabled,online,attempt]);
+  return {...state,retry:()=>setAttempt(n=>n+1)};
+}
+function App() {
+  const [page,setPage] = useState(currentPage);
+  const [query,setQuery] = useState('');
+  const [online,setOnline] = useState(navigator.onLine);
+  const [install,setInstall] = useState(null);
+  const dialog = useRef(null), title = useRef(null), searchInput = useRef(null), first = useRef(true);
+  const {albums,status:albumStatus,retry} = useCapsuleAlbums(['photos','search','more'].includes(page),online);
+  useEffect(() => {
+    const route = () => {setPage(currentPage());setQuery('');};
+    const on = () => setOnline(true), off = () => setOnline(false);
+    const prompt = e => {e.preventDefault();setInstall(e);};
+    window.addEventListener('hashchange',route);
+    window.addEventListener('online',on);window.addEventListener('offline',off);
+    window.addEventListener('beforeinstallprompt',prompt);
+    if('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/app/sw.js',{scope:'/app/'}).catch(()=>{});
+    return () => {window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);};
+  },[]);
+  const heading = page==='calendar'?'A little easier to plan.':page==='search'?'Find your next tap.':page==='more'?'All things RCAP.':groups[page]?.title || 'RCAP Family Hub';
+  useEffect(() => {
+    document.title = heading+' | We Are RCAP';
+    if(first.current) first.current=false;
+    else {(page==='search'?searchInput:title).current?.focus({preventScroll:true});window.scrollTo(0,0);}
+  },[page,heading]);
+  function go(next) {setQuery('');location.hash=next;}
+  const filtered = [...links,...(online ? albums : [])].filter(link=>(link.title+' '+link.detail+' '+link.group).toLowerCase().includes(query.trim().toLowerCase()));
+  const activeNav = ['home','updates','photos'].includes(page)?page:'more';
+  const intro = page==='calendar'?'Your next school dates, one month at a time.':page==='search'?'Search tools, resources, and ways to connect.':page==='more'?'The full directory, whenever you need it.':groups[page]?.intro;
+  return <div className="hub">
+    <a className="skip" href="#content">Skip to content</a>
+    <header className="topbar">
+      <a href="#home" className="brand" aria-label="RCAP Family Hub home"><img src="/brand/we-are-rcap.svg" alt="We Are RCAP"/><span>FAMILY HUB</span></a>
+      <div className="header-actions"><button onClick={()=>dialog.current.showModal()} aria-label="Add RCAP to your home screen" className="install-top"><Smartphone size={19}/><span>Add to home</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
+    </header>
+    {!online&&<div className="offline" role="status">You’re offline. Your saved hub and calendar are here; tools and galleries need a connection.</div>}
+    <main id="content">
+      {page==='home'?<>
+        <section className="welcome">
+          <div className="welcome-photo" aria-hidden="true"><img src="/app-assets/community-wide.jpg" alt="" fetchPriority="high"/></div>
+          <div className="welcome-copy"><p className="eyebrow"><span/> ONE COMMUNITY. EVERY FAMILY.</p><h1 ref={title} tabIndex={-1}>Your RCAP.<br/><em>Right here.</em></h1><p>Everything you reach for.<br/>The community you belong to.</p></div>
+        </section>
+        <section className="quick-section" aria-labelledby="quick-title">
+          <div className="section-heading"><h2 id="quick-title">What do you need today?</h2><span>LET’S GET YOU THERE</span></div>
+          <div className="tile-grid">{tiles.map(tile=>{
+            const inside=<><span className={'tile-icon '+tile.color}><Icon name={tile.icon} size={29}/></span><span>{tile.title}</span></>;
+            return tile.href?<a className="tile" href={tile.href} key={tile.title}>{inside}</a>:<button className="tile" onClick={()=>go(tile.page)} key={tile.title}>{inside}</button>;
+          })}</div>
+        </section>
+        <button className="install-banner" onClick={()=>dialog.current.showModal()}><span className="install-icon"><Smartphone size={24}/></span><span><strong>Make yourself at home.</strong><small>Add RCAP to your phone’s home screen.</small></span><PlusSquare size={22}/></button>
+      </>:<>
+        <div className="page-heading"><button className="back" onClick={()=>go('home')} aria-label="Back to home"><ArrowLeft size={21}/></button><p className="eyebrow">YOUR RCAP FAMILY HUB</p><h1 ref={title} tabIndex={-1}>{heading}</h1><p>{intro}</p></div>
+        {(page==='search'||page==='more')&&<label className="search-box"><Search size={21} aria-hidden="true"/><input ref={searchInput} autoFocus={page==='search'} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search RCAP tools…" aria-label="Search RCAP tools" type="search"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={19}/></button>}</label>}
+        {page==='calendar'?<Calendar/>:page==='photos'?<>
+          <a className="capsule-feature" href="/rcap-capsule/"><span className="icon-box rose"><Camera size={29} aria-hidden="true"/></span><span><small>OUR SCHOOL-WIDE PHOTO HOME</small><strong>The RCAP Capsule</strong><span>Browse every album, share a memory, or add your own.</span></span><ArrowUpRight size={23} aria-hidden="true"/></a>
+          <section className="album-pullouts"><h2>Inside the Capsule</h2><p>Jump into a school-wide album.</p>
+            {albumStatus==='loading'?<p role="status">Finding the latest albums…</p>:albumStatus==='error'?<div className="album-unavailable" role="status"><p>We couldn’t check the album list right now. You can still open the Capsule above.</p><button onClick={retry}>Try again</button></div>:albums.length?<ToolList items={albums}/>:<p>New albums will appear here when they’re available in the Capsule.</p>}
+          </section>
+        </>:page==='updates'?<><NewsletterCard/><ToolList items={links.filter(link=>link.group==='updates'&&link.id!=='newsletter')}/></>:page==='resources'?<>
+          {['resources','involved'].map(key=><section className="catalog-group" key={key}><h2>{key==='resources'?'Guides & forms':'Ways to help'}</h2><ToolList items={links.filter(link=>link.group===key)}/></section>)}
+        </>:page==='search'?<>
+          <p className="result-count" role="status">{filtered.length} {filtered.length===1?'result':'results'}</p><ToolList items={filtered}/>
+          {!filtered.length&&<div className="empty"><Search size={30}/><h2>No tools found</h2><p>Try “photos,” “uniforms,” or “volunteer.”</p><button onClick={()=>setQuery('')}>Show all tools</button></div>}
+        </>:page==='more'?<>
+          {Object.entries(groups).map(([key,group])=>{const items=filtered.filter(link=>link.group===key);return items.length?<section className="catalog-group" key={key}><h2>{group.title}</h2><ToolList items={items}/></section>:null;})}
+          {filtered.some(link=>link.group==='albums')&&<section className="catalog-group"><h2>Inside the RCAP Capsule</h2><ToolList items={filtered.filter(link=>link.group==='albums')}/></section>}
+          {query&&!filtered.length&&<p className="empty" role="status">No tools found. Try a different search.</p>}
+        </>:<ToolList items={links.filter(link=>link.group===page)}/>}
+      </>}
+      <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
+    </main>
+    <nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={activeNav===key?'active':''} aria-current={activeNav===key?'page':undefined}><span><Component size={22} strokeWidth={activeNav===key?2.2:1.7}/></span>{label}</a>)}</nav>
+    <dialog ref={dialog} className="install-dialog" onClick={e=>{if(e.target===dialog.current)dialog.current.close();}}>
+      <div className="dialog-top"><span className="eyebrow">RCAP, A TAP AWAY</span><button className="circle" onClick={()=>dialog.current.close()} aria-label="Close home screen guide"><X size={22}/></button></div>
+      <img src="/app-assets/icon-180.png" width="76" height="76" alt="RCAP home screen icon"/><h2>A little more connected.</h2><p>Give RCAP a spot on your home screen. It opens in its own window, ready when you are.</p>
+      {install&&<button className="primary-button" onClick={async()=>{await install.prompt();const result=await install.userChoice;if(result.outcome==='accepted')dialog.current.close();setInstall(null);}}>Install RCAP <Download size={18}/></button>}
+      <h3>On iPhone or iPad</h3><ol><li>Open <strong>wearercap.org/app/</strong> in Safari.</li><li>Tap the <Share size={16}/> <strong>Share</strong> button. You may find it under the browser’s menu.</li><li>Choose <PlusSquare size={16}/> <strong>Add to Home Screen</strong>. If shown, leave <strong>Open as Web App</strong> on, then tap <strong>Add</strong>.</li></ol>
+      <h3>On Android or your computer</h3><p>Open this page in Chrome or Edge and choose <strong>Install app</strong> or <strong>Add to Home screen</strong> from the browser menu, if available.</p><small className="install-note">Your tools open their existing RCAP pages. They need an internet connection. No App Store download or new account needed for the hub.</small><button className="primary-button" onClick={()=>dialog.current.close()}>Got it <Check size={18}/></button>
+    </dialog>
+  </div>;
 }
 createRoot(document.getElementById('root')).render(<App/>);

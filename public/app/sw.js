@@ -1,5 +1,5 @@
 // Cache only the public hub shell. Never cache APIs, accounts, or gallery media.
-const CACHE = 'rcap-hub-v1';
+const CACHE = 'rcap-hub-v2';
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
@@ -8,7 +8,7 @@ self.addEventListener('install', event => {
     const html = await response.clone().text();
     // Vite lists the entry, shared chunks, and CSS in the initial HTML.
     const assets = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map(match => match[1]);
-    await cache.addAll([...new Set([...assets, '/brand/we-are-rcap.svg', '/brand/rcap.svg', '/app-assets/community.jpg', '/app-assets/icon-180.png', '/app-assets/icon-192.png'])]);
+    await cache.addAll([...new Set([...assets, '/brand/we-are-rcap.svg', '/brand/rcap.svg', '/app-assets/community-wide.jpg', '/app-assets/icon-180.png', '/app-assets/icon-192.png'])]);
     await cache.put('/app/', response);
   })());
 });
