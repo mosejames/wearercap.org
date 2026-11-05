@@ -1,3 +1,5 @@
+import HolderIntake, { HolderRequestActions } from './HolderIntake.jsx';
+import ImpactSummary from './ImpactSummary.jsx';
 import Brand from '../components/Brand.jsx';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
@@ -12,7 +14,7 @@ import { binItemTypes, isBottomsBin } from './bins.js';
 import { byBin, totals, pickBin, drift, stockByHouse,
   sheetLines, sheetExtras, sheetDirty } from './inventory.js';
 import { nextSlots, schoolMornings, slotLabel, handoffSummary, availabilityLine, myRequestsLead, WEEKDAYS } from './handoff.js';
-import { socialProof, suggestedPost } from './social.js';
+import { suggestedPost } from './social.js';
 import { qrSvg } from './qr.js';
 
 // A bin holds whatever a family outgrew, so a holder needs the whole list —
@@ -249,60 +251,9 @@ export default function App() {
 }
 
 // ---------------------------------------------------------------------------
-// Proof of life.
-//
-// A swap dies quietly: the tubs are full, the page looks like a form, and every
-// family who lands on it assumes nothing's in there and nobody else is using
-// it. So one line at a time, something true drifts up from the corner —
-// somebody dropped off six polos, an Amistad family took khakis home, forty
-// polos are sitting in a tub right now.
-//
-// One at a time, never stacked, dismissible, and it stops after the last one
-// rather than looping forever and turning into wallpaper.
-// ---------------------------------------------------------------------------
-function ProofBubbles({ movements, inv, bins }) {
-  const lines = useMemo(
-    () => socialProof(movements, inv, bins, new Date(), 6),
-    [movements, inv, bins]
-  );
-  const [i, setI] = useState(0);
-  const [shown, setShown] = useState(false);
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (done || !lines.length || i >= lines.length) return undefined;
-    // Someone reading with reduced motion gets the words and none of the drift.
-    const quick = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const inAt = setTimeout(() => setShown(true), i === 0 ? 1400 : 600);
-    const outAt = setTimeout(() => setShown(false), (i === 0 ? 1400 : 600) + (quick ? 9000 : 6500));
-    const nextAt = setTimeout(() => setI(i + 1), (i === 0 ? 1400 : 600) + (quick ? 9600 : 7100));
-    return () => { clearTimeout(inAt); clearTimeout(outAt); clearTimeout(nextAt); };
-  }, [i, lines.length, done]);
-
-  if (done || !lines.length || i >= lines.length) return null;
-
-  return (
-    <div className={`proof ${shown ? 'on' : ''}`} aria-live="polite">
-      <span className="proof-dot" aria-hidden="true" />
-      <p>{lines[i].text}</p>
-      <button className="proof-x" onClick={() => setDone(true)} aria-label="Hide these updates">×</button>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Home — search everything, request an item.
 // ---------------------------------------------------------------------------
 function Home({ bins, inv, commitments, refresh, settings }) {
-  // The movement log is already public and carries no names — it's what makes
-  // the front page feel like a place things happen rather than a form.
-  const [moves, setMoves] = useState([]);
-  useEffect(() => {
-    let live = true;
-    db.listMovements(null, 40).then((m) => live && setMoves(m)).catch(() => {});
-    return () => { live = false; };
-  }, []);
-
   const [gender, setGender] = useState('');
   const [type, setType] = useState('');
   const [size, setSize] = useState('');
@@ -486,7 +437,7 @@ function Home({ bins, inv, commitments, refresh, settings }) {
           onClose={() => setSheet(false)}
         />
       )}
-      <ProofBubbles movements={moves} inv={inv} bins={bins} />
+      <ImpactSummary />
 
       {offering && (
         <OfferSheet
@@ -902,7 +853,7 @@ function MyRequests({ token, bins, settings }) {
   return (
     <section className="shell section">
       <h2 className="h2">{who ? `${who}'s requests` : 'My requests'}</h2>
-      <p className="sub">{myRequestsLead(rows)}</p>
+      <p className="sub">{rows.some(r => r.coordination === 'holder') ? 'Your bin holder is coordinating the requests marked below. You can track their progress here.' : myRequestsLead(rows)}</p>
       {err && <p className="err">{err}</p>}
       <ul className="req-list">
         {rows.map((r) => {
@@ -914,6 +865,7 @@ function MyRequests({ token, bins, settings }) {
               <div className="req-main">
                 <b>{typeLabel(r.item_type)} · {sizeLabel(r.size)}{r.qty > 1 ? ` ×${r.qty}` : ''} <HouseTag id={r.house} /></b>
                 {r.student && <span>for {r.student}</span>}
+                {r.coordination === 'holder' && <span>Your bin holder is coordinating pickup. {r.pickup_note}</span>}
                 {plan && <span className="plan">🤝 {plan}{r.holder_name ? ` · with ${r.holder_name}` : ''}</span>}
                 {r.status === 'scheduled' && (
                   <span className={`plan confirm-line ${r.holder_confirmed_at ? 'yes' : ''}`}>
@@ -948,10 +900,10 @@ function MyRequests({ token, bins, settings }) {
                 </span>
                 {due && <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
 
-                {r.status === 'assigned' && (
+                {r.status === 'assigned' && r.coordination !== 'holder' && (
                   <button className="btn small flame" onClick={() => setPicking(r)}>Pick a time</button>
                 )}
-                {r.status === 'scheduled' && (
+                {r.status === 'scheduled' && r.coordination !== 'holder' && (
                   <button className="linkish" onClick={() => setPicking(r)}>change time</button>
                 )}
                 {(r.status === 'scheduled' || r.status === 'handed_off') && (
@@ -1222,7 +1174,7 @@ function HolderHome({ token }) {
 
       <div className="shell">
         <div className="mode-tabs page-tabs">
-          {[['todo', `To do${todo ? ` (${todo})` : ''}`], ['counts', 'My bins'], ['me', 'My setup']]
+          {[['todo', `To do${todo ? ` (${todo})` : ''}`], ['counts', 'My bins'], ['intake', 'Giveaways & requests'], ['me', 'My setup']]
             .map(([k, label]) => (
               <button key={k} className={`mode ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>
                 {label}
@@ -1242,6 +1194,8 @@ function HolderHome({ token }) {
         <HolderTodo token={token} holder={holder} bins={bins} queue={queue} pickups={pickups}
           inventory={inventory} reload={load} />
       )}
+
+      {tab === 'intake' && <HolderIntake token={token} holder={holder} bins={live} reload={load} />}
 
       {tab === 'counts' && (
         <CountSheet
@@ -1563,12 +1517,13 @@ function HolderTodo({ token, holder, bins, queue, pickups, inventory, reload }) 
                     )}
                     <span className="plan">
                       {binCode(r.bin_id)}{' · '}
-                      {r.status === 'assigned' ? '⏳ waiting on them to pick a time'
+                      {r.coordination === 'holder' ? (r.status === 'open' ? 'Waiting for stock. You are coordinating.' : `You are coordinating. ${r.pickup_note || 'Record the agreed pickup or handoff below.'}`) : r.status === 'assigned' ? '⏳ waiting on them to pick a time'
                         : r.status === 'handed_off' ? `✅ ${sentLabel(r, 'past')} · ${plan} — waiting on them to tap Got it`
                         : r.holder_confirmed_at ? `✅ ${plan} — you confirmed, they know`
                         : `🤝 ${plan} — they're waiting to hear you've seen this`}
                     </span>
                   </div>
+                  <HolderRequestActions token={token} request={r} reload={reload} />
                   <div className="req-side">
                     {due && r.status === 'scheduled' &&
                       <span className={`due ${due.urgent ? 'urgent' : ''}`}>{due.label}</span>}
@@ -1583,7 +1538,7 @@ function HolderTodo({ token, holder, bins, queue, pickups, inventory, reload }) 
                         {r.handoff_mode === 'student' ? "Can't do this one" : 'Change the day'}
                       </button>
                     )}
-                    {r.status !== 'handed_off' && (
+                    {r.coordination !== 'holder' && r.status !== 'handed_off' && r.status !== 'open' && (
                       <button className={`btn small ${r.holder_confirmed_at || r.status !== 'scheduled' ? 'flame' : 'ghost'}`}
                         title="Tells the family it's on its way"
                         onClick={async () => { await db.handoffSent(r.id, holder.name); reload(); }}>
@@ -3620,6 +3575,8 @@ function AdminInventory({ bins, inv, reqs, setPrintBins }) {
 }
 
 function AdminReports({ bins, inv, reqs }) {
+  const [impact, setImpact] = useState(null);
+  useEffect(() => { db.impactTotals().then(setImpact).catch(() => {}); }, [reqs]);
   const all = totals(inv);
   const onHand = all.reduce((n, t) => n + t.qty, 0);
   const fulfilled = reqs.filter((r) => r.status === 'fulfilled');
@@ -3631,7 +3588,7 @@ function AdminReports({ bins, inv, reqs }) {
     house: h,
     onHand: all.filter((t) => t.house === h).reduce((n, t) => n + t.qty, 0),
     requested: reqs.filter((r) => (r.house || '') === h && r.status !== 'canceled').length,
-    rehomed: fulfilled.filter((r) => (r.house || '') === h).length,
+    rehomed: fulfilled.filter((r) => (r.house || '') === h).reduce((n, r) => n + r.qty, 0),
   })).filter((r) => r.onHand || r.requested || r.rehomed);
 
   // Average days from request to front desk.
@@ -3643,11 +3600,12 @@ function AdminReports({ bins, inv, reqs }) {
   return (
     <Fold
       id="reports" title="Reports"
-      note={`${onHand} on hand · ${fulfilled.length} rehomed`}
+      note={`${onHand} on hand · ${impact?.items ?? fulfilled.reduce((n, r) => n + r.qty, 0)} rehomed`}
     >
       <div className="report-stats">
         <div><b>{onHand}</b><span>items on hand</span></div>
-        <div><b>{fulfilled.length}</b><span>uniforms rehomed</span></div>
+        <div><b>{impact?.items ?? fulfilled.reduce((n, r) => n + r.qty, 0)}</b><span>uniform items rehomed</span></div>
+        <div><b>{impact?.transactions ?? fulfilled.length}</b><span>giveaway transactions</span></div>
         <div><b>{waitlist.length}</b><span>on the waitlist</span></div>
         {avgDays && <div><b>{avgDays}d</b><span>avg request to in hand</span></div>}
       </div>

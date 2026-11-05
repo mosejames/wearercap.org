@@ -431,3 +431,20 @@ house alerts. Reassignment/restoration was checked inside a rollback transaction
 Vitest 4 with jsdom 29 works here using `--pool=vmThreads --maxWorkers=2`,
 with Node webcrypto and web streams supplied in a temporary setup file for
 the server/ZIP tests. Full verification passed: 191 files, 1315 tests.
+
+## Holder giveaways and assisted requests
+
+The private holder page has a Giveaways & requests tab. `HolderIntake.jsx`
+records anonymous impact counts, optionally deducts exact unreserved bin stock,
+and creates family requests with either family or holder coordination. Holder
+coordination suppresses automatic family scheduling texts, including later
+stock matching. Explicit confirmations are opt-in. Existing requests are
+completed by ID, with one stock deduction and one impact contribution.
+`ue_holder_action` is an invoker wrapper around an active-holder-token-checked
+private function. Save keys prevent duplicate submissions; request row locks
+prevent repeat completion. Recipient audit data lives in `ue_private.giveaways`
+and is not directly readable by clients. Public `ue_impact` returns counts only,
+combining fulfilled request quantities and unlinked giveaway quantities.
+`supabase/tests/holder_intake.sql` checks routing, privacy, stock, idempotency,
+optional confirmations, and the anonymous API role in a rollback transaction
+with SMS dispatch disabled. Never test by recording real public giveaways.

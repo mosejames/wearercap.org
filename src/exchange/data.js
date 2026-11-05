@@ -69,7 +69,10 @@ export async function listCommitments() {
 export async function myRequests(token) {
   const { data, error } = await supabase.rpc('ue_my_requests', { p_token: token });
   if (error) throw error;
-  return data || [];
+  const { data: modes, error: modeError } = await supabase.rpc('ue_request_modes', { p_token: token });
+  if (modeError) throw modeError;
+  const byId = new Map((modes || []).map(r => [r.id, r]));
+  return (data || []).map(r => ({ ...r, ...byId.get(r.id) }));
 }
 
 // Lost the link: we text a fresh one. Says nothing about whether we know you.
@@ -452,4 +455,18 @@ export async function holderUpdateSelf(token, f) {
 export async function holderRequestLink(phone) {
   const { error } = await supabase.rpc('ue_holder_request_link', { p_phone: phone });
   if (error) throw error;
+}
+
+export async function holderAction(token, action, payload) {
+  const { data, error } = await supabase.rpc('ue_holder_action', {
+    p_token: token, p_action: action, p_data: payload,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function impactTotals() {
+  const { data, error } = await supabase.rpc('ue_impact');
+  if (error) throw error;
+  return data;
 }
