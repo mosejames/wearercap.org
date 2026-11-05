@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { COMMITTEES } from './committee/data.js';
 import './styles.css';
-import HomeRaffle, { RAFFLE_URL } from './components/HomeRaffle.jsx';
+import Announcements from './community/Announcements.jsx';
 import MembershipThermometer from './membership/MembershipThermometer.jsx';
 
 // Pulled straight from the Find Your Place data so the two can never drift.
@@ -725,7 +725,7 @@ function App() {
           <h2>See what’s next with RCAP.</h2>
           <p>{community.homepage.eventsIntro}</p>
         </div>
-        <HomeRaffle />
+        <Announcements view="main" placement="featured"/>
         <div className="home-dates-heading"><h3>On the school calendar</h3><a className="text-link" href={calendarHref} target="_blank" rel="noopener noreferrer">Full calendar <ArrowUpRight size={15} aria-hidden="true" /></a></div>
         <div className="event-grid home-upcoming-dates" aria-label="More upcoming RCAP dates">
           {upcomingEvents.map(({ month, year, weekday, day, label, detail, href, cta }) => (
@@ -747,29 +747,7 @@ function App() {
           ))}
         </div>
 
-        <div className="callouts">
-          <a className="callout callout-social has-photo" href="/feedback/trunk-or-treat-2026">
-            <img className="callout-photo" src="/images/events/trunk-or-treat.png" alt="" loading="lazy" width="1200" height="800" />
-            <span className="callout-kicker">Trunk or Treat Survey</span>
-            <strong>How was Trunk or Treat?</strong>
-            <span className="callout-body">What did you love? What would you change? Share your honest take in our quick, anonymous survey.</span>
-            <span className="callout-go">Take the survey <ArrowRight size={17} aria-hidden="true" /></span>
-          </a>
-          <a className="callout callout-capsule has-photo" href="/rcap-capsule/#/e/rcap-trunk-or-treat-2026">
-            <img className="callout-photo" src="/images/events/trunk-or-treat.png" alt="" loading="lazy" width="1200" height="800" />
-            <span className="callout-kicker">The RCAP Capsule</span>
-            <strong>Add your Trunk or Treat photos</strong>
-            <span className="callout-body">We’ve got some of the pictures. You’ve got the rest. Enjoy the memories and add your moments to the mix.</span>
-            <span className="callout-go">See the photos &amp; add yours <ArrowRight size={17} aria-hidden="true" /></span>
-          </a>
-          <a className="callout callout-capsule has-photo" href="/events/2026/fall-raffle/results/">
-            <img className="callout-photo" src="/images/rcap-raffle-second-drawing.png" alt="" loading="lazy" width="1200" height="630" />
-            <span className="callout-kicker">The RCAP Fall Raffle</span>
-            <strong>A little applause. More to come.</strong>
-            <span className="callout-body">Celebrate this week’s raffle stars and winner. Then help keep the momentum going for our school.</span>
-            <span className="callout-go">See the weekly results <ArrowRight size={17} aria-hidden="true" /></span>
-          </a>
-        </div>
+        <Announcements view="main" placement="card"/>
       </section>
 
       {/* Story — where the hero's video went. A first-time parent gets the

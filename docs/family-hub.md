@@ -32,8 +32,8 @@ without duplication. The source is edited once and deployed through the normal
 website release, with no separate app publication or skill required.
 
 Newsletters link to the published archive, so publishing an issue makes it
-available without editing the hub. Site-specific design and promotional copy
-are still site-specific; arbitrary HTML changes are not copied into the app.
+available without editing the hub. Site-specific layout stays separately designed. Promotions and announcements
+are also shared, as described below. Arbitrary HTML is not scraped into the app.
 
 Photos highlights only the school-wide RCAP Capsule. `src/app/albums.js` reads
 public `vault_events` album metadata filtered to `house = 'rcap'` and
@@ -96,3 +96,30 @@ maskable version leaves additional safe space. Run it directly or through
 `create-app-assets.mjs`. Keep the manifest, HTML, guide, and service-worker
 icon paths together when revising the artwork. Physical iPhone installation
 must be checked on the phone; browser QA validates the guide and asset wiring.
+
+## Promotions and announcements
+
+Create or update a record in `announcements` in the same shared source. Both
+the homepage and app render it automatically. Do not hardcode a separate
+promotion in `src/main.jsx`, `HomeRaffle.jsx`, or the app. The main site uses
+featured and card layouts; the app shows active records in From RCAP on Home
+and Updates. Existing survey, Capsule, and raffle-result cards were migrated.
+The old second-drawing entry promotion has its actual entry cutoff and no
+longer appears after that cutoff.
+
+Each record has a unique id, `status` (draft, published, archived), placement
+(card or featured), numeric priority (higher first), kicker, title, body,
+href, CTA, optional image/alt text, and nullable startsAt/endsAt. Scheduling
+requires ISO timestamps with an explicit UTC offset or Z. Start is inclusive;
+end is exclusive. Use Eastern offsets for school deadlines, accounting for
+daylight saving time. Leave dates null only for intentionally evergreen cards.
+Use a new image filename when replacing artwork so already-open pages pick
+up the new URL. Do not store private data or credentials in public content.
+
+The build validates schedules and links, strips drafts and archived records
+from both the emitted feed and bundled JSON, and both views use the same
+active-record selector. The existing one-minute/focus refresh picks up edits,
+publication, and archival. A local clock also activates and expires scheduled
+cards while the page stays open. Republishing a record changes both views
+through the normal single website release. Never represent a draft as published
+to make it visible in a preview.

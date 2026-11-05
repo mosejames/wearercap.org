@@ -469,3 +469,17 @@ reconciling the shared structured dates; do not claim automatic PDF ingestion.
 Run shared-content, date-boundary, install-preference and provider refresh tests
 along with the build/full suite before shipping. Keep standalone detection and
 remembered install-card dismissal intact; setup help remains in the header.
+
+## Shared promotions and announcements
+
+Homepage promotions and announcement cards must be records in the shared
+content file's `announcements` array and rendered through
+`src/community/Announcements.jsx`. The app consumes the same records on Home
+and Updates. Preserve exact authored copy, destination, status, priority,
+start/end schedule, and image metadata. Do not introduce homepage-only
+promotion copy in JSX. Layout is view-specific; publication is shared.
+Draft and archived records are stripped from the public feed and compiled
+content by the Vite plugin. Active selection rechecks clock boundaries every
+minute and on focus. Use explicit time-zone offsets, exclusive end times,
+and versioned image filenames. Run announcement visibility, scheduling, public
+projection and two-view refresh tests before release.

@@ -5,6 +5,7 @@ import {CommunityProvider,useCommunityContent} from '../community/CommunityConte
 import {publicTools} from '../community/model.js';
 import {INSTALL_NUDGE_KEY,readInstallPreference,saveInstallPreference} from './installPreference.js';
 import NextUp from './NextUp.jsx';
+import Announcements,{useAnnouncements} from '../community/Announcements.jsx';
 import {fetchCapsuleAlbums} from './albums.js';
 import Calendar from './Calendar.jsx';
 import InstallGuide from './InstallGuide.jsx';
@@ -79,6 +80,7 @@ function useCapsuleAlbums(enabled, online) {
 }
 function App() {
   const community=useCommunityContent();
+  const announcements=useAnnouncements();
   const links=publicTools(community), groups=community.groups;
   const tiles=tileOrder.map(tile=>({...links.find(link=>link.id===tile.id),...tile,...(tile.page?{href:undefined}:{})}));
   const [installHidden,setInstallHidden]=useState(()=>{try{return readInstallPreference(window.localStorage);}catch{return false;}});
@@ -142,7 +144,7 @@ function App() {
             return tile.href?<a className="tile" href={tile.href} key={tile.title}>{inside}</a>:<button className="tile" onClick={()=>go(tile.page)} key={tile.title}>{inside}</button>;
           })}</div>
         </section>
-
+        <Announcements/>
       </>:<>
         <div className="page-heading"><button className="back" onClick={()=>go('home')} aria-label="Back to home"><ArrowLeft size={21}/></button><p className="eyebrow">YOUR RCAP FAMILY HUB</p><h1 ref={title} tabIndex={-1}>{heading}</h1><p>{intro}</p></div>
         {(page==='search'||page==='more')&&<label className="search-box"><Search size={21} aria-hidden="true"/><input ref={searchInput} autoFocus={page==='search'} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search RCAP tools…" aria-label="Search RCAP tools" type="search"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={19}/></button>}</label>}
@@ -151,7 +153,7 @@ function App() {
           <section className="album-pullouts"><h2>Inside the Capsule</h2><p>Jump into a school-wide album.</p>
             {albumStatus==='loading'?<p role="status">Finding the latest albums…</p>:albumStatus==='error'?<div className="album-unavailable" role="status"><p>We couldn’t check the album list right now. You can still open the Capsule above.</p><button onClick={retry}>Try again</button></div>:albums.length?<ToolList items={albums}/>:<p>New albums will appear here when they’re available in the Capsule.</p>}
           </section>
-        </>:page==='updates'?<><NewsletterCard/><ToolList items={links.filter(link=>link.group==='updates'&&link.id!=='newsletter')}/></>:page==='resources'?<>
+        </>:page==='updates'?<><Announcements/><NewsletterCard/><ToolList items={links.filter(link=>link.group==='updates'&&link.id!=='newsletter'&&!announcements.some(item=>item.href===link.href))}/></>:page==='resources'?<>
           {['resources','involved'].map(key=><section className="catalog-group" key={key}><h2>{key==='resources'?'Guides & forms':'Ways to help'}</h2><ToolList items={links.filter(link=>link.group===key)}/></section>)}
         </>:page==='search'?<>
           <p className="result-count" role="status">{filtered.length} {filtered.length===1?'result':'results'}</p><ToolList items={filtered}/>

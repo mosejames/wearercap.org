@@ -16,6 +16,18 @@ export function validateContent(value) {
   for(const event of [...value.calendar.dates,...value.events]) {
     if(!validDate(event.start) || !validDate(event.end) || event.end<event.start || typeof event.title!=='string' || !event.title || (event.href&&!safeUrl(event.href)) || (event.detail!==undefined&&typeof event.detail!=='string') || (event.cta!==undefined&&typeof event.cta!=='string')) throw Error('Invalid community event');
   }
+  if(value.announcements!==undefined && !Array.isArray(value.announcements)) throw Error('Invalid announcements');
+  const announcementIds=new Set();
+  for(const item of value.announcements||[]) {
+    if(typeof item.id!=='string' || !item.id || announcementIds.has(item.id) || !['draft','published','archived'].includes(item.status)) throw Error('Invalid announcement identity or status');
+    if(!['card','featured'].includes(item.placement) || !Number.isFinite(item.priority)) throw Error('Invalid announcement placement');
+    for(const field of ['kicker','title','body','cta']) if(typeof item[field]!=='string' || !item[field].trim()) throw Error('Invalid announcement copy');
+    if(!safeUrl(item.href) || (item.image&&!safeUrl(item.image)) || (item.secondaryHref&&!safeUrl(item.secondaryHref))) throw Error('Invalid announcement link');
+    for(const field of ['imageAlt','note','secondaryCta']) if(item[field]!==undefined&&typeof item[field]!=='string') throw Error('Invalid announcement copy');
+    for(const field of ['startsAt','endsAt']) if(item[field]!=null && (typeof item[field]!=='string' || !validDate(item[field].slice(0,10)) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(item[field]) || !Number.isFinite(Date.parse(item[field])))) throw Error('Use an explicit time zone for announcement scheduling');
+    if(item.startsAt&&item.endsAt&&Date.parse(item.endsAt)<=Date.parse(item.startsAt)) throw Error('Announcement must end after it starts');
+    announcementIds.add(item.id);
+  }
   return value;
 }
 export const publicTools = content => content.tools.filter(tool=>tool.app!==false);
@@ -33,4 +45,14 @@ export function dateCard(item) {
   const start=new Date(item.start+'T12:00:00Z'), end=new Date(item.end+'T12:00:00Z');
   const fmt=(date,field)=>date.toLocaleDateString('en-US',{[field]:'short',timeZone:'UTC'});
   return {...item,month:fmt(start,'month')+(item.start.slice(0,7)!==item.end.slice(0,7)?'–'+fmt(end,'month'):''),year:String(start.getUTCFullYear())+(start.getUTCFullYear()!==end.getUTCFullYear()?'–'+end.getUTCFullYear():''),weekday:fmt(start,'weekday')+(item.start!==item.end?'–'+fmt(end,'weekday'):''),day:String(start.getUTCDate())+(item.start!==item.end?'–'+end.getUTCDate():''),label:item.title};
+}
+
+// Draft and archived copy is excluded from the public feed and browser bundles.
+export function publicContent(content) {
+  return {...content,announcements:(content.announcements||[]).filter(item=>item.status==='published')};
+}
+export function activeAnnouncements(content,now=new Date()) {
+  const instant=+now;
+  return (content.announcements||[]).filter(item=>item.status==='published' && (!item.startsAt||Date.parse(item.startsAt)<=instant) && (!item.endsAt||instant<Date.parse(item.endsAt)))
+    .slice().sort((a,b)=>b.priority-a.priority || a.id.localeCompare(b.id));
 }

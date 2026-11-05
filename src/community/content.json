@@ -746,5 +746,73 @@
   "events": [],
   "homepage": {
     "eventsIntro": "A few dates to keep on your radar, with the next ones always first."
-  }
+  },
+  "announcements": [
+    {
+      "id": "fall-raffle-second-drawing",
+      "status": "published",
+      "placement": "featured",
+      "priority": 40,
+      "startsAt": null,
+      "endsAt": "2026-11-01T00:00:00-04:00",
+      "kicker": "Second drawing: Sunday, November 1",
+      "title": "Another Sunday. Another chance.",
+      "body": "Your $1 ticket helps celebrate the teachers and staff who give our scholars so much.",
+      "note": "Enter by Saturday, October 31 at 11:59 p.m.",
+      "href": "https://www.zeffy.com/en-US/ticketing/ron-clark-academy-parents-fall-fundraiser--2026",
+      "cta": "Buy tickets",
+      "image": "/images/rcap-raffle-second-drawing.png",
+      "imageAlt": "RCAP Fall Raffle. Second drawing Sunday, November 1. Enter by October 31.",
+      "secondaryHref": "/events/2026/fall-raffle/",
+      "secondaryCta": "Raffle details and drawing dates"
+    },
+    {
+      "id": "trunk-or-treat-survey",
+      "status": "published",
+      "placement": "card",
+      "priority": 30,
+      "startsAt": null,
+      "endsAt": null,
+      "tone": "social",
+      "kicker": "Trunk or Treat Survey",
+      "title": "How was Trunk or Treat?",
+      "body": "What did you love? What would you change? Share your honest take in our quick, anonymous survey.",
+      "href": "/feedback/trunk-or-treat-2026",
+      "cta": "Take the survey",
+      "image": "/images/events/trunk-or-treat.png",
+      "imageAlt": "RCAP Trunk or Treat"
+    },
+    {
+      "id": "trunk-or-treat-photos",
+      "status": "published",
+      "placement": "card",
+      "priority": 20,
+      "startsAt": null,
+      "endsAt": null,
+      "tone": "capsule",
+      "kicker": "The RCAP Capsule",
+      "title": "Add your Trunk or Treat photos",
+      "body": "We’ve got some of the pictures. You’ve got the rest. Enjoy the memories and add your moments to the mix.",
+      "href": "/rcap-capsule/e/rcap-trunk-or-treat-2026",
+      "cta": "See the photos & add yours",
+      "image": "/images/events/trunk-or-treat.png",
+      "imageAlt": "RCAP Trunk or Treat"
+    },
+    {
+      "id": "fall-raffle-results",
+      "status": "published",
+      "placement": "card",
+      "priority": 10,
+      "startsAt": null,
+      "endsAt": null,
+      "tone": "capsule",
+      "kicker": "The RCAP Fall Raffle",
+      "title": "A little applause. More to come.",
+      "body": "Celebrate this week’s raffle stars and winner. Then help keep the momentum going for our school.",
+      "href": "/events/2026/fall-raffle/results/",
+      "cta": "See the weekly results",
+      "image": "/images/events/fall-raffle-results-og.png",
+      "imageAlt": "RCAP Fall Raffle results"
+    }
+  ]
 }
