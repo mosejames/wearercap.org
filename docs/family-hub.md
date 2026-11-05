@@ -63,3 +63,20 @@ Run the repository build and tests, verify phone/desktop behavior, and verify
 after release. Keep initial HTML OG/Twitter metadata and image dimensions
 intact. Hub links go to the Capsule and verified album pages; existing vault code handles exact
 photo sharing and visibility checks.
+
+## Installation guide and icon
+
+The home screen shows a prominent Add We Are RCAP to your Home Screen card.
+The header provides a persistent help button. `src/app/InstallGuide.jsx` has
+iPhone/iPad, Android, and computer instructions, an icon preview, official
+Apple/Google help links, and the final step of opening the saved icon.
+The home card is hidden when running standalone or after an install event.
+
+The app name and Apple title are We Are RCAP. `scripts/create-app-icons.mjs`
+reuses the official vector outlines, spaces WE ARE across the RCAP width,
+removes the small descriptor, and renders a blue square with white RCA and
+gold P. It generates versioned Apple, standard, and maskable icons. The
+maskable version leaves additional safe space. Run it directly or through
+`create-app-assets.mjs`. Keep the manifest, HTML, guide, and service-worker
+icon paths together when revising the artwork. Physical iPhone installation
+must be checked on the phone; browser QA validates the guide and asset wiring.

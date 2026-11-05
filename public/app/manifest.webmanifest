@@ -1,11 +1,11 @@
 {
-  "id":"/app/", "name":"We Are RCAP Family Hub", "short_name":"RCAP",
+  "id":"/app/", "name":"We Are RCAP", "short_name":"We Are RCAP",
   "description":"Your RCAP community, a tap away.",
   "start_url":"/app/", "scope":"/app/", "display":"standalone",
   "background_color":"#faf7f0", "theme_color":"#14315b",
   "icons":[
-    {"src":"/app-assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"/app-assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"/app-assets/icon-maskable.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {"src":"/app-assets/we-are-rcap-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"/app-assets/we-are-rcap-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"/app-assets/we-are-rcap-maskable.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
   ]
 }

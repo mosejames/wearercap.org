@@ -1,9 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowLeft, ArrowRight, ArrowUpRight, Search, X, Home, Newspaper, Camera, Grid2X2, CalendarDays, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Mail, Instagram, ClipboardList, Smartphone, Share, PlusSquare, Download, Check, Globe} from 'lucide-react';
+import {ArrowLeft, ArrowRight, ArrowUpRight, Search, X, Home, Newspaper, Camera, Grid2X2, CalendarDays, Shirt, Car, HandHeart, Clock, Users, HeartHandshake, Lightbulb, BookOpen, Compass, Send, Ticket, Images, Mail, Instagram, ClipboardList, Smartphone, PlusSquare, Globe} from 'lucide-react';
 import {links, groups} from './catalog.js';
 import {fetchCapsuleAlbums} from './albums.js';
 import Calendar from './Calendar.jsx';
+import InstallGuide from './InstallGuide.jsx';
 import './styles.css';
 
 const icons = {Newspaper,CalendarDays,Camera,Shirt,Car,HandHeart,Clock,Users,HeartHandshake,Lightbulb,BookOpen,Compass,Send,Ticket,Images,Mail,Instagram,ClipboardList};
@@ -78,17 +79,20 @@ function App() {
   const [query,setQuery] = useState('');
   const [online,setOnline] = useState(navigator.onLine);
   const [install,setInstall] = useState(null);
+  const [installed,setInstalled] = useState(()=>window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true);
   const dialog = useRef(null), title = useRef(null), searchInput = useRef(null), first = useRef(true);
   const {albums,status:albumStatus,retry} = useCapsuleAlbums(['photos','search','more'].includes(page),online);
   useEffect(() => {
     const route = () => {setPage(currentPage());setQuery('');};
     const on = () => setOnline(true), off = () => setOnline(false);
     const prompt = e => {e.preventDefault();setInstall(e);};
+    const saved = () => setInstalled(true);
     window.addEventListener('hashchange',route);
     window.addEventListener('online',on);window.addEventListener('offline',off);
     window.addEventListener('beforeinstallprompt',prompt);
+    window.addEventListener('appinstalled',saved);
     if('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/app/sw.js',{scope:'/app/'}).catch(()=>{});
-    return () => {window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);};
+    return () => {window.removeEventListener('hashchange',route);window.removeEventListener('online',on);window.removeEventListener('offline',off);window.removeEventListener('beforeinstallprompt',prompt);window.removeEventListener('appinstalled',saved);};
   },[]);
   const heading = page==='calendar'?'A little easier to plan.':page==='search'?'Find your next tap.':page==='more'?'All things RCAP.':groups[page]?.title || 'RCAP Family Hub';
   useEffect(() => {
@@ -104,7 +108,7 @@ function App() {
     <a className="skip" href="#content">Skip to content</a>
     <header className="topbar">
       <a href="#home" className="brand" aria-label="RCAP Family Hub home"><img src="/brand/we-are-rcap.svg" alt="We Are RCAP"/><span>FAMILY HUB</span></a>
-      <div className="header-actions"><button onClick={()=>dialog.current.showModal()} aria-label="Add RCAP to your home screen" className="install-top"><Smartphone size={19}/><span>Add to home</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
+      <div className="header-actions"><button onClick={()=>dialog.current.showModal()} aria-label="How to add We Are RCAP to your Home Screen" className="install-top"><Smartphone size={19}/><span>{installed?'Home screen help':'Add to Home Screen'}</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
     </header>
     {!online&&<div className="offline" role="status">You’re offline. Your saved hub and calendar are here; tools and galleries need a connection.</div>}
     <main id="content">
@@ -113,6 +117,7 @@ function App() {
           <div className="welcome-photo" aria-hidden="true"><img src="/app-assets/community-wide.jpg" alt="" fetchPriority="high"/></div>
           <div className="welcome-copy"><p className="eyebrow"><span/> ONE COMMUNITY. EVERY FAMILY.</p><h1 ref={title} tabIndex={-1}>Your RCAP.<br/><em>Right here.</em></h1><p>Everything you reach for.<br/>The community you belong to.</p></div>
         </section>
+        {!installed&&<button className="install-banner install-save-card" onClick={()=>dialog.current.showModal()}><img src="/app-assets/we-are-rcap-180.png" width="58" height="58" alt="We Are RCAP app icon"/><span><strong>Add We Are RCAP to your Home Screen</strong><small>Save this icon. Open RCAP like an app.</small><b>Show me how <ArrowRight size={14}/></b></span><PlusSquare size={22} aria-hidden="true"/></button>}
         <section className="quick-section" aria-labelledby="quick-title">
           <div className="section-heading"><h2 id="quick-title">What do you need today?</h2><span>LET’S GET YOU THERE</span></div>
           <div className="tile-grid">{tiles.map(tile=>{
@@ -120,7 +125,7 @@ function App() {
             return tile.href?<a className="tile" href={tile.href} key={tile.title}>{inside}</a>:<button className="tile" onClick={()=>go(tile.page)} key={tile.title}>{inside}</button>;
           })}</div>
         </section>
-        <button className="install-banner" onClick={()=>dialog.current.showModal()}><span className="install-icon"><Smartphone size={24}/></span><span><strong>Make yourself at home.</strong><small>Add RCAP to your phone’s home screen.</small></span><PlusSquare size={22}/></button>
+
       </>:<>
         <div className="page-heading"><button className="back" onClick={()=>go('home')} aria-label="Back to home"><ArrowLeft size={21}/></button><p className="eyebrow">YOUR RCAP FAMILY HUB</p><h1 ref={title} tabIndex={-1}>{heading}</h1><p>{intro}</p></div>
         {(page==='search'||page==='more')&&<label className="search-box"><Search size={21} aria-hidden="true"/><input ref={searchInput} autoFocus={page==='search'} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search RCAP tools…" aria-label="Search RCAP tools" type="search"/>{query&&<button onClick={()=>setQuery('')} aria-label="Clear search"><X size={19}/></button>}</label>}
@@ -143,13 +148,7 @@ function App() {
       <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={activeNav===key?'active':''} aria-current={activeNav===key?'page':undefined}><span><Component size={22} strokeWidth={activeNav===key?2.2:1.7}/></span>{label}</a>)}</nav>
-    <dialog ref={dialog} className="install-dialog" onClick={e=>{if(e.target===dialog.current)dialog.current.close();}}>
-      <div className="dialog-top"><span className="eyebrow">RCAP, A TAP AWAY</span><button className="circle" onClick={()=>dialog.current.close()} aria-label="Close home screen guide"><X size={22}/></button></div>
-      <img src="/app-assets/icon-180.png" width="76" height="76" alt="RCAP home screen icon"/><h2>A little more connected.</h2><p>Give RCAP a spot on your home screen. It opens in its own window, ready when you are.</p>
-      {install&&<button className="primary-button" onClick={async()=>{await install.prompt();const result=await install.userChoice;if(result.outcome==='accepted')dialog.current.close();setInstall(null);}}>Install RCAP <Download size={18}/></button>}
-      <h3>On iPhone or iPad</h3><ol><li>Open <strong>wearercap.org/app/</strong> in Safari.</li><li>Tap the <Share size={16}/> <strong>Share</strong> button. You may find it under the browser’s menu.</li><li>Choose <PlusSquare size={16}/> <strong>Add to Home Screen</strong>. If shown, leave <strong>Open as Web App</strong> on, then tap <strong>Add</strong>.</li></ol>
-      <h3>On Android or your computer</h3><p>Open this page in Chrome or Edge and choose <strong>Install app</strong> or <strong>Add to Home screen</strong> from the browser menu, if available.</p><small className="install-note">Your tools open their existing RCAP pages. They need an internet connection. No App Store download or new account needed for the hub.</small><button className="primary-button" onClick={()=>dialog.current.close()}>Got it <Check size={18}/></button>
-    </dialog>
+    <InstallGuide dialogRef={dialog} install={install} setInstall={setInstall}/>
   </div>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
