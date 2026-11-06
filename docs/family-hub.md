@@ -140,3 +140,5 @@ works, but the preference cannot persist across future visits. This is
 client routing, so share-preview HTML and desktop/JavaScript-disabled access
 remain available. Tests execute the real entry script against both choices,
 mobile/tablet/desktop inputs, deep links, and blocked storage.
+
+The app Updates screen shows published newsletter issues only, read from the same published-only archive RPC as `/newsletter`. It refreshes every minute and on focus/online and links directly to each original issue. Shared announcement cards remain on Home.

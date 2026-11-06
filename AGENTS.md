@@ -474,8 +474,8 @@ remembered install-card dismissal intact; setup help remains in the header.
 
 Homepage promotions and announcement cards must be records in the shared
 content file's `announcements` array and rendered through
-`src/community/Announcements.jsx`. The app consumes the same records on Home
-and Updates. Preserve exact authored copy, destination, status, priority,
+`src/community/Announcements.jsx`. The app consumes the same records on Home. Updates shows newsletter issues
+only, directly from the published archive. Preserve exact authored copy, destination, status, priority,
 start/end schedule, and image metadata. Do not introduce homepage-only
 promotion copy in JSX. Layout is view-specific; publication is shared.
 Draft and archived records are stripped from the public feed and compiled
