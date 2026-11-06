@@ -483,3 +483,13 @@ content by the Vite plugin. Active selection rechecks clock boundaries every
 minute and on focus. Use explicit time-zone offsets, exclusive end times,
 and versioned image filenames. Run announcement visibility, scheduling, public
 projection and two-view refresh tests before release.
+
+## Mobile homepage entry and full-site choice
+
+Keep `public/mobile-entry.js` scoped to the main homepage. Mobile visitors
+without an explicit section hash default to the family hub. Do not redirect
+individual tools, newsletters, galleries, or album/photo share links. Preserve
+the `/?view=full` bypass and remembered full-site choice to prevent loops.
+App header/footer links use this bypass. `/?view=app` clears the preference.
+Keep campaign parameters and JavaScript-disabled/share-preview access intact.
+Run `src/community/mobile-entry.test.js` when changing this routing.

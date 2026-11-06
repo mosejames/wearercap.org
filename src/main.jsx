@@ -1,3 +1,4 @@
+import MobileSiteChoice from './community/MobileSiteChoice.jsx';
 import initialCommunity from './community/content.json';
 import {CommunityProvider,useCommunityContent} from './community/CommunityContent.jsx';
 import {upcomingItems,homepageTools,dateCard} from './community/model.js';
@@ -1364,4 +1365,4 @@ function Root() {
   return <App />;
 }
 
-createRoot(document.getElementById('root')).render(<CommunityProvider><Root /></CommunityProvider>);
+createRoot(document.getElementById('root')).render(<CommunityProvider><MobileSiteChoice/><Root /></CommunityProvider>);

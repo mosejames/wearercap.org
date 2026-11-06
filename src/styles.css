@@ -2622,3 +2622,5 @@ button {
 .home-event-detail { font-size: 14px; line-height: 1.5; margin: 4px 14px 14px; color: var(--muted); }
 @media (max-width: 1000px) { .homepage-refresh .events-section .home-upcoming-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .homepage-refresh .events-section .home-upcoming-dates { grid-template-columns: 1fr; } }
+
+.mobile-site-choice{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 18px;padding:11px 18px;background:#14315b;color:#fffdf7;font-size:12px;line-height:1.6}.mobile-site-choice a{display:flex;align-items:center;gap:7px;min-height:34px;color:#f8c65d;font-weight:650;text-decoration:underline;text-underline-offset:3px}.mobile-site-choice a:focus-visible{outline:3px solid #f8c65d;outline-offset:3px}

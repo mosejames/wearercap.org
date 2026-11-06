@@ -123,7 +123,7 @@ function App() {
     <a className="skip" href="#content">Skip to content</a>
     <header className="topbar">
       <a href="#home" className="brand" aria-label="RCAP Family Hub home"><img src="/brand/we-are-rcap.svg" alt="We Are RCAP"/><span>FAMILY HUB</span></a>
-      <div className="header-actions"><button onClick={openInstall} aria-label="How to add We Are RCAP to your Home Screen" className="install-top"><Smartphone size={19}/><span>{installed||installHidden?'Home screen help':'Add to Home Screen'}</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
+      <div className="header-actions"><a className="circle" href="/?view=full" aria-label="Visit the full website" title="Visit the full website"><Globe size={19} aria-hidden="true"/></a><button onClick={openInstall} aria-label="How to add We Are RCAP to your Home Screen" className="install-top"><Smartphone size={19}/><span>{installed||installHidden?'Home screen help':'Add to Home Screen'}</span></button><button className="circle" onClick={()=>go(page==='search'?'home':'search')} aria-label={page==='search'?'Close search':'Search RCAP'}>{page==='search'?<X size={21}/>:<Search size={21}/>}</button></div>
     </header>
     {!online&&<div className="offline" role="status">You’re offline. Your saved hub and calendar are here; tools and galleries need a connection.</div>}
     <main id="content">
@@ -164,7 +164,7 @@ function App() {
           {query&&!filtered.length&&<p className="empty" role="status">No tools found. Try a different search.</p>}
         </>:<ToolList items={links.filter(link=>link.group===page)}/>}
       </>}
-      <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
+      <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/?view=full">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={activeNav===key?'active':''} aria-current={activeNav===key?'page':undefined}><span><Component size={22} strokeWidth={activeNav===key?2.2:1.7}/></span>{label}</a>)}</nav>
     <InstallGuide dialogRef={dialog} install={install} setInstall={setInstall} onSaved={()=>{hideInstall('confirmed');dialog.current.close();}}/>

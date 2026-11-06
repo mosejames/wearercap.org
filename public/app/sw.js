@@ -1,5 +1,5 @@
 // Cache only the public hub shell. Never cache APIs, accounts, or gallery media.
-const CACHE = 'rcap-hub-v5';
+const CACHE = 'rcap-hub-v6';
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);

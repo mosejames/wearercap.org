@@ -123,3 +123,20 @@ publication, and archival. A local clock also activates and expires scheduled
 cards while the page stays open. Republishing a record changes both views
 through the normal single website release. Never represent a draft as published
 to make it visible in a preview.
+
+## Mobile homepage routing
+
+`public/mobile-entry.js` runs early on the main homepage. Phone and tablet
+visitors entering `/` without a section hash go to `/app/`. Desktop visitors
+stay on the main site. Existing tool, newsletter, gallery, and explicit main
+section links retain their destinations. Campaign query parameters survive.
+The script is included only in the main HTML and never redirects the app.
+
+The app header and footer link to `/?view=full`, which bypasses routing and
+remembers a full-site preference in this browser. The full site shows mobile
+visitors a Use the family hub link (`/?view=app`) that clears the preference
+and opens the app. If storage is blocked, the explicit full-site URL still
+works, but the preference cannot persist across future visits. This is
+client routing, so share-preview HTML and desktop/JavaScript-disabled access
+remain available. Tests execute the real entry script against both choices,
+mobile/tablet/desktop inputs, deep links, and blocked storage.
