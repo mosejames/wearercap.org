@@ -140,5 +140,3 @@ works, but the preference cannot persist across future visits. This is
 client routing, so share-preview HTML and desktop/JavaScript-disabled access
 remain available. Tests execute the real entry script against both choices,
 mobile/tablet/desktop inputs, deep links, and blocked storage.
-
-Updates combines active shared announcements and published newsletter issues in one card list. It reads the same published-only archive RPC as `/newsletter`, refreshes every minute and on focus/online, and links directly to each original issue. There is no second publishing step or newsletter banner detour.

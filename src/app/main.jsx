@@ -5,7 +5,6 @@ import {CommunityProvider,useCommunityContent} from '../community/CommunityConte
 import {publicTools} from '../community/model.js';
 import {INSTALL_NUDGE_KEY,readInstallPreference,saveInstallPreference} from './installPreference.js';
 import NextUp from './NextUp.jsx';
-import Updates from './Updates.jsx';
 import Announcements,{useAnnouncements} from '../community/Announcements.jsx';
 import {fetchCapsuleAlbums} from './albums.js';
 import Calendar from './Calendar.jsx';
@@ -42,6 +41,13 @@ function ToolRow({link}) {
 }
 function ToolList({items}) {
   return <div className="tool-list">{items.map(link=><ToolRow key={link.id} link={link}/>)}</div>;
+}
+function NewsletterCard() {
+  return <a className="newsletter-banner" href="/newsletter">
+    <span className="banner-icon"><Newspaper size={28} aria-hidden="true"/></span>
+    <span><small>FROM OUR COMMUNITY</small><strong>A little news. A lot of RCAP.</strong><span>Read the latest newsletter and past issues.</span></span>
+    <ArrowUpRight size={23} aria-hidden="true"/>
+  </a>;
 }
 function useCapsuleAlbums(enabled, online) {
   const [state,setState] = useState({albums:[],status:'loading'});
@@ -147,7 +153,7 @@ function App() {
           <section className="album-pullouts"><h2>Inside the Capsule</h2><p>Jump into a school-wide album.</p>
             {albumStatus==='loading'?<p role="status">Finding the latest albums…</p>:albumStatus==='error'?<div className="album-unavailable" role="status"><p>We couldn’t check the album list right now. You can still open the Capsule above.</p><button onClick={retry}>Try again</button></div>:albums.length?<ToolList items={albums}/>:<p>New albums will appear here when they’re available in the Capsule.</p>}
           </section>
-        </>:page==='updates'?<><Updates/><ToolList items={links.filter(link=>link.group==='updates'&&link.id!=='newsletter'&&!announcements.some(item=>item.href===link.href))}/></>:page==='resources'?<>
+        </>:page==='updates'?<><Announcements/><NewsletterCard/><ToolList items={links.filter(link=>link.group==='updates'&&link.id!=='newsletter'&&!announcements.some(item=>item.href===link.href))}/></>:page==='resources'?<>
           {['resources','involved'].map(key=><section className="catalog-group" key={key}><h2>{key==='resources'?'Guides & forms':'Ways to help'}</h2><ToolList items={links.filter(link=>link.group===key)}/></section>)}
         </>:page==='search'?<>
           <p className="result-count" role="status">{filtered.length} {filtered.length===1?'result':'results'}</p><ToolList items={filtered}/>
