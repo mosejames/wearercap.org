@@ -71,3 +71,9 @@ it('places Before the Trip above the DC hero and opens the existing photo upload
  gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',phase:'Send-off'},photos:[],count:0,hasMore:false});
  await act(async()=>root.render(<App/>));const before=host.querySelector('.before-trip'),hero=host.querySelector('.scenic-hero');expect(before).not.toBeNull();expect(before.compareDocumentPosition(hero)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();await click('I’m a parent');await click('Add packing photos');expect(host.querySelector('dialog .upload-next')).not.toBeNull();
 });
+it('remembers the trip guide choice and restores the matching sign-in route on return',async()=>{
+ history.replaceState(null,'','/trip-vault/?trip=washington-dc-2030');
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',phase:'Send-off'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));await click('I’m a chaperone');expect(localStorage.getItem('trip-engine:washington-dc-2030:role')).toBe('chaperone');
+ await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App/>));expect(host.querySelector('#before-chaperone').hidden).toBe(false);await click('Sign in with RCA Google');expect(host.querySelector('dialog .engine-auth-roles button[aria-pressed=true]').textContent).toBe('I’m a chaperone');expect(host.querySelector('dialog').textContent).toContain('Continue with RCA Google');
+});
