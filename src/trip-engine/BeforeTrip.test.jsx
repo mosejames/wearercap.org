@@ -1,0 +1,15 @@
+import {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {beforeEach,afterEach,expect,it,vi} from 'vitest';
+import BeforeTrip from './BeforeTrip.jsx';
+let host,root;
+const trip={cohort:'2030',phase:'Send-off',features:{videos:true},videoUploadUrl:'https://www.dropbox.com/request/dc-test'};
+const handlers={onPhotos:vi.fn(),onSignIn:vi.fn(),onAppreciation:vi.fn()};
+const render=async props=>act(async()=>root.render(<BeforeTrip trip={trip} {...handlers} {...props}/>));
+const button=label=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes(label));
+const click=async label=>act(async()=>button(label).click());
+beforeEach(()=>{globalThis.IS_REACT_ACT_ENVIRONMENT=true;vi.clearAllMocks();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
+it('guides parents to the existing photo flow and the configured Dropbox video request',async()=>{await render();await click('I’m a parent');expect(host.querySelector('#before-parent').hidden).toBe(false);expect(host.textContent).toContain('What do you expect?');expect(host.textContent).toContain('What excites you?');expect(host.querySelector('#before-parent a').href).toBe(trip.videoUploadUrl);expect(host.querySelector('#before-parent a').textContent).toContain('Dropbox');expect(host.querySelector('#before-parent').textContent).toContain('do not appear immediately');await click('Add packing photos');expect(handlers.onPhotos).toHaveBeenCalledOnce();});
+it('gives chaperones sign-in and appreciation without requiring a role on uploads',async()=>{await render();await click('I’m a chaperone');expect(host.querySelector('#before-parent').hidden).toBe(true);expect(host.querySelector('#before-chaperone').textContent).toContain('phone number');await click('Get signed in');await click('Notes from home');expect(handlers.onSignIn).toHaveBeenCalledOnce();expect(handlers.onAppreciation).toHaveBeenCalledOnce();});
+it('does not expose Dropbox uploads when videos are disabled, in preview, or in archive',async()=>{await render({trip:{...trip,features:{videos:false}}});await click('I’m a parent');expect(host.querySelector('#before-parent a')).toBeNull();expect(host.querySelector('#before-parent').textContent).toContain('aren’t available');await render({trip,preview:true});expect(host.querySelector('#before-parent a')).toBeNull();await render({trip:{...trip,phase:'Archive'}});expect(host.querySelector('#before-parent a')).toBeNull();expect(button('Add trip photos')).toBeUndefined();expect(host.textContent).toContain('New uploads are closed');});
