@@ -158,7 +158,7 @@ function App() {
           {query&&!filtered.length&&<p className="empty" role="status">No tools found. Try a different search.</p>}
         </>:<ToolList items={links.filter(link=>link.group===page)}/>}
       </>}
-      <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/?view=full">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
+      <footer className="footer"><img src="/brand/rcap.svg" alt="RCAP. Ron Clark Academy Parents"/><span>Built by parents. For our community.</span><a href="/privacy/">Privacy policy</a><a href="/?view=full">Visit the full website <Globe size={14}/><ArrowUpRight size={13}/></a></footer>
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{nav.map(([key,label,Component])=><a key={key} href={'#'+key} className={activeNav===key?'active':''} aria-current={activeNav===key?'page':undefined}><span><Component size={22} strokeWidth={activeNav===key?2.2:1.7}/></span>{label}</a>)}</nav>
     <InstallGuide dialogRef={dialog} install={install} setInstall={setInstall} onSaved={()=>{hideInstall('confirmed');dialog.current.close();}}/>

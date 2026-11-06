@@ -969,6 +969,7 @@ function App() {
 
         <div className="footer-legal">
           <p className="footer-mark">wearercap.org &middot; Established 2026</p>
+          <p><a href="/privacy/">Privacy policy</a></p>
           <p>
             This is a parent-led site. It is not owned, operated, sponsored, or
             endorsed by the Ron Clark Academy, and nothing here is an official
