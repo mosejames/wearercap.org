@@ -647,7 +647,7 @@ function Lightbox({ photos, index, onIndex, onClose, owner, profile, liked, onLi
         <button className="icon-btn" onClick={onClose} aria-label="Close">{I.close}</button>
         <span className="lb-count">{index + 1} / {photos.length}</span>
         <div className="lb-top-actions">
-          <button className="icon-btn" onClick={share} aria-label="Share photo link">{I.share}</button>
+          {!event.adminOnly && <button className="icon-btn" onClick={share} aria-label="Share photo link">{I.share}</button>}
           <button className="icon-btn" onClick={() => setSaving(true)} aria-label="Download or save to Photos">{I.down}</button>
         </div>
       </div>
@@ -936,7 +936,7 @@ function EventCard({ e, covers, today }) {
       </div>
       <div className="ev-body">
         <span className="ev-date">{e.ongoing ? 'All year' : fmtRange(e.startsOn, e.endsOn)}{e.kind !== 'everyday' && <i> · {kind.label}</i>}</span>
-        <h3>{e.title}</h3>
+        <h3>{e.title}</h3>{e.adminOnly && <p className="fine">Locked · Administrators only</p>}
         {e.kind === 'everyday' && <p className="fine">At home, at school, or out together. The little moments belong here, too.</p>}
         <p className="ev-stat">
           {e.photoCount
@@ -1267,9 +1267,9 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
           <div className="gallery-actions">
             {acceptsUploads(event, today) ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus} Add photos &amp; videos</button> : <span className="closed">{status === 'upcoming' ? `Opens ${fmtDate(event.startsOn)}` : 'Uploads closed'}</span>}
             {!simpleGallery && <button className="gallery-action" onClick={() => setLeaderboard(true)}><Trophy aria-hidden="true" /><span>Leaderboard</span></button>}
-            {!simpleGallery && <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>}
+            {!simpleGallery && !event.adminOnly && <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>}
             {canMove && visible.length > 0 && <button className="gallery-action" onClick={() => { setSelecting(!selecting); setSelected(new Set()); }}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting ? 'Cancel selection' : 'Select uploads'}</span></button>}
-            {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
+            {admin && !event.adminOnly && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {admin && <a className="gallery-action" href={`#/admin?gallery=${encodeURIComponent(event.slug)}`}><SlidersHorizontal aria-hidden="true" /><span>Gallery setup</span></a>}
           </div>
         </div>
@@ -1277,7 +1277,7 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
         <div className="shell">
           <a href="#/" className="crumb">← The year</a>
           <span className="ev-date big">{event.ongoing ? 'All year long' : fmtRange(event.startsOn, event.endsOn)} <i>· {kind.label}</i></span>
-          <h1>{event.title}</h1><a className="event-leaders" href={`#/community/${event.id}`}>Meet this event’s memory makers →</a>
+          <h1>{event.title}</h1>{event.adminOnly && <p role="status">Locked · Administrators only. Uploads and sharing are paused.</p>}<a className="event-leaders" href={`#/community/${event.id}`}>Meet this event’s memory makers →</a>
           {(event.kind === 'everyday' || event.blurb) && <p className="ev-blurb">{event.kind === 'everyday' ? 'At home, at school, or out together. The little moments belong here, too. Share photos and videos from life beyond scheduled events.' : event.blurb}</p>}
           <p className="ev-counts">
             {photos ? <>{plural(visible.length, 'photo')} · {plural(new Set(visible.map((p) => p.owner)).size, 'family', 'families')} · {plural(visible.reduce((n, p) => n + p.likes, 0), 'love')}</> : 'Loading…'}
@@ -1286,12 +1286,12 @@ function EventPage({ event, events, homeMode = false, canMove, owner, profile, a
             <div className="ev-share-actions">
             {acceptsUploads(event, today)
               ? <button className="btn primary" onClick={() => onAdd(event)} aria-label="Add photos or videos">{I.plus}<span>Add photos<span className="ev-video-label"> / videos</span></span></button>
-              : <span className="closed">Opens {fmtDate(event.startsOn, { weekday: 'long' })}</span>}
-            <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>
+              : <span className="closed">{event.adminOnly ? 'Uploads paused' : `Opens ${fmtDate(event.startsOn, { weekday: 'long' })}`}</span>}
+            {!event.adminOnly && <button className="ev-invite" onClick={() => onInvite(event)} aria-label="Invite to upload">{I.share}<span>Invite</span></button>}
             </div>
             {/* Admins manage bulk download access through private share links. */}
             {canMove&&visible.length>0&&<button className="gallery-action" onClick={()=>{setSelecting(!selecting);setSelected(new Set());}}>{selecting ? I.close : <ListChecks aria-hidden="true" />}<span>{selecting?'Cancel selection':'Select uploads'}</span></button>}
-            {admin && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
+            {admin && !event.adminOnly && <button className="gallery-action" onClick={() => setShareLinkOpen(true)}><Link2 aria-hidden="true" /><span className="gallery-action-copy"><span>Share downloads</span><small>All photos + videos</small></span></button>}
             {visible.length > 1 && (
               <div className="sort">
                 {[['time', 'In order'], ['loved', 'Most loved'], ['new', 'Newest']].map(([k, l]) => (
@@ -1834,7 +1834,7 @@ export default function App() {
     } catch (e) { showToast(e.message || `Could not load the ${WORDS.placeLower}.`); }
   }, [showToast]);
 
-  useEffect(() => { storageConfig().then(setStorage).catch(() => showToast('Photo storage could not load. Please refresh.')); refresh(); }, [refresh]);
+  useEffect(() => { storageConfig().then(setStorage).catch(() => showToast('Photo storage could not load. Please refresh.')); refresh(); }, [refresh, owner, staffRole]);
 
   // Covers: the four most recent thumbs per event, from the recent strip plus
   // one light query for events the strip does not reach.

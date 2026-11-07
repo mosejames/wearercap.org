@@ -42,6 +42,9 @@ export const ownsUpload = (owner) => owned.has(owner);
 export async function syncIdentity() {
   const { data: { session } } = await supabase.auth.getSession();
   ownerCache = null; owned = new Set();
+  if ((session?.user?.id || null) !== privateUser) {
+    privateMedia.clear(); privateEventIds.clear(); privateUser = session?.user?.id || null;
+  }
   if (!session) return null;
   const { data, error } = await supabase.rpc('vault_join', { p_token: getToken() });
   if (error) throw error;
@@ -58,6 +61,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) throw error;
   ownerCache = null; owned = new Set();
+  privateMedia.clear(); privateEventIds.clear();
   try { localStorage.removeItem(NAME_KEY); } catch { /* private browsing */ }
 }
 
@@ -141,12 +145,34 @@ export async function storageConfig() {
   return storageCfg;
 }
 
+let privateUser = null;
+const privateMedia = new Map();
+const privateEventIds = new Set();
+const protectedMediaKey = key => /\/(afterhours|ami-halloween-party)\//.test(key || '');
+
+async function preparePrivateMedia(photos) {
+  const restricted = photos.filter(p => privateEventIds.has(p.eventId) || protectedMediaKey(p.key));
+  const missing = restricted.filter(p => !privateMedia.has(p.key) || privateMedia.get(p.key).expires < Date.now());
+  for (let i = 0; i < missing.length; i += 80) {
+    const response = await fetch('/api/vault-sign', {
+      method: 'POST', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', ...await authHeaders() },
+      body: JSON.stringify({ action: 'read-private', ids: missing.slice(i, i + 80).map(p => p.id) }),
+    });
+    if (!response.ok) throw new Error('Sign in as an administrator to view this locked gallery.');
+    const result = await response.json();
+    for (const item of result.items || []) privateMedia.set(item.key, { ...item, expires: Date.now() + 240000 });
+  }
+  return photos;
+}
+
 const SUPA_BASE = `${url}/storage/v1/object/public/vault-media`;
 
 // Public URL for a stored key. Rows remember which store they went to, so the
 // R2 cut-over does not orphan anything uploaded before it.
 export function mediaUrl(photo, which = 'web') {
   const key = which === 'orig' ? photo.key : which === 'thumb' ? photo.thumbKey : photo.webKey;
+  if (protectedMediaKey(key) || privateEventIds.has(photo.eventId)) return privateMedia.get(photo.key)?.urls?.[which] || '';
   if (photo.storage === 'r2') return `${storageCfg?.publicBase || ''}/${key}`;
   return `${SUPA_BASE}/${key}`;
 }
@@ -166,7 +192,8 @@ const eventFromRow = (r, s = {}) => ({
   coverPhoto: r.cover_photo,
   open: r.open,
   featured: r.featured,
-  hidden: r.hidden,
+  hidden: r.admin_only ? false : r.hidden,
+  adminOnly: !!r.admin_only,
   galleryCards: Array.isArray(r.gallery_cards) ? r.gallery_cards : null,
   photoCount: Number(s.photo_count || 0),
   contributorCount: Number(s.contributor_count || 0),
@@ -181,6 +208,8 @@ export async function listEvents() {
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
+  privateEventIds.clear();
+  for (const event of ev || []) if (event.admin_only) privateEventIds.add(event.id);
   const stats = new Map((st || []).map((s) => [s.event_id, s]));
   return (ev || []).map((r) => eventFromRow(r, stats.get(r.id)));
 }
@@ -262,6 +291,7 @@ export async function listPhotos(eventId) {
     .order('created_at', { ascending: true });
   if (error) throw error;
   const photos = (data || []).map(photoFromRow);
+  await preparePrivateMedia(photos);
   await attachLikes(photos);
   return photos;
 }
@@ -274,7 +304,7 @@ export async function listTopPhotos(limit = 60, eventId = null) {
   const { data, error: e2 } = await supabase.from('vault_photos').select('*').in('id', ids);
   if (e2) throw e2;
   const n = new Map(likes.map((l) => [l.photo_id, l.likes]));
-  return (data || []).map(photoFromRow).map((p) => ({ ...p, likes: n.get(p.id) || 0 }))
+  return (await preparePrivateMedia((data || []).map(photoFromRow))).map((p) => ({ ...p, likes: n.get(p.id) || 0 }))
     .sort((a, b) => b.likes - a.likes || (a.createdAt < b.createdAt ? 1 : -1));
 }
 
@@ -284,6 +314,7 @@ export async function listRecentPhotos(limit = 24) {
     .order('created_at', { ascending: false }).limit(limit);
   if (error) throw error;
   const photos = (data || []).map(photoFromRow);
+  await preparePrivateMedia(photos);
   await attachLikes(photos);
   return photos;
 }
@@ -292,7 +323,7 @@ export async function listMyPhotos() {
   const { data, error } = await supabase.rpc('vault_my_uploads');
   if (error) throw error;
   // One identity spans every vault; this page only shows this vault's uploads.
-  return (data || []).filter((r) => (r.house || 'amistad') === HOUSE.id).map(photoFromRow);
+  return preparePrivateMedia((data || []).filter((r) => (r.house || 'amistad') === HOUSE.id).map(photoFromRow));
 }
 
 // Photos per RCA house, busiest first. All four houses are always present.
@@ -498,6 +529,7 @@ export async function listContributorPhotos(owner, offset = 0, event = null) {
   if (photoError) throw photoError;
   const rows = new Map((data || []).map(r => [r.id, photoFromRow(r)]));
   const photos = gallery.ids.map(id => rows.get(id)).filter(Boolean);
+  await preparePrivateMedia(photos);
   await attachLikes(photos);
   return { ...gallery, photos };
 }
@@ -514,7 +546,7 @@ export async function listCoverPhotos(eventId, { random = false, total = 0, limi
   } else query = query.order('created_at',{ascending:false}).limit(limit);
   const {data,error}=await query;
   if(error)throw error;
-  return (data||[]).map(photoFromRow);
+  return preparePrivateMedia((data||[]).map(photoFromRow));
 }
 
 export async function duplicateHashes(eventId, hashes) {

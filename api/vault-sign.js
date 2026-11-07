@@ -27,6 +27,7 @@
 // ---------------------------------------------------------------------------
 
 import { AwsClient } from 'aws4fetch';
+import { privateMediaRead } from '../server/vault-private-media.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 
@@ -103,6 +104,7 @@ export default async function handler(req, res) {
   }
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
+  if (body?.action === 'read-private') return privateMediaRead(req, res, body, { supabase: SUPABASE_URL, apiKey: process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY, r2: R2, client: r2client });
   const files = Array.isArray(body?.files) ? body.files.slice(0, MAX_FILES) : [];
   if (!files.length) return res.status(400).json({ error: 'No files' });
   const house = body?.house == null ? 'amistad' : String(body.house);
