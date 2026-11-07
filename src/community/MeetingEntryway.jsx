@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, CalendarPlus } from 'lucide-react';
 import './meeting-entryway.css';
 
 export default function MeetingEntryway({ item }) {
@@ -11,6 +11,7 @@ export default function MeetingEntryway({ item }) {
 
   if (item.endsAt && now >= Date.parse(item.endsAt)) return null;
 
+  const canJoin = now >= Date.parse(item.joinOpensAt ?? item.meetingStartsAt);
   const seconds = Math.max(0, Math.ceil((Date.parse(item.meetingStartsAt) - now) / 1000));
   const countdown = [
     ['Days', Math.floor(seconds / 86400)],
@@ -23,7 +24,7 @@ export default function MeetingEntryway({ item }) {
     <section className="meeting-entryway" aria-label={item.title}>
       <p className="meeting-entryway-brand">{item.kicker}</p>
       <p className="meeting-entryway-status">
-        {seconds > 0 ? 'Waiting for the meeting' : 'It’s time to join'}
+        {canJoin ? 'It’s time to join' : 'Waiting for the meeting'}
       </p>
       <h2>{item.title}</h2>
       <p className="meeting-entryway-detail">{item.body}</p>
@@ -38,8 +39,16 @@ export default function MeetingEntryway({ item }) {
         </div>
       )}
       <div className="meeting-entryway-actions">
-        <a href={item.href}>{item.cta} <ArrowUpRight size={18} aria-hidden="true" /></a>
-        <a href={item.secondaryHref}>{item.secondaryCta} <ArrowUpRight size={18} aria-hidden="true" /></a>
+        {canJoin ? (
+          <>
+            <a href={item.href}>{item.cta} <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <a href={item.secondaryHref}>{item.secondaryCta} <ArrowUpRight size={18} aria-hidden="true" /></a>
+          </>
+        ) : (
+          <a href={item.calendarHref} download>
+            Add to Calendar <CalendarPlus size={18} aria-hidden="true" />
+          </a>
+        )}
       </div>
     </section>
   );

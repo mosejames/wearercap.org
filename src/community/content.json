@@ -821,13 +821,15 @@
       "priority": 100,
       "kicker": "WE ARE RCAP",
       "title": "General Meeting & Live Fall Raffle Drawing",
-      "body": "Monday, November 16 at 7:00 PM Eastern. Join us on Zoom, or watch on RCAP YouTube if Zoom is full.",
+      "body": "Monday, November 16 at 7:00 PM Eastern.",
       "cta": "Join on Zoom",
       "href": "https://us06web.zoom.us/j/85772789540?pwd=x9qlcKeAGC8aOKDTBYJRMaBkJYbYqc.1",
       "secondaryCta": "Watch YouTube overflow",
       "secondaryHref": "https://youtube.com/live/pYnkQ4aBRf8",
       "startsAt": "2026-11-07T00:00:00-05:00",
       "meetingStartsAt": "2026-11-16T19:00:00-05:00",
+      "joinOpensAt": "2026-11-16T18:50:00-05:00",
+      "calendarHref": "/events/2026/rcap-november-general-meeting.ics",
       "endsAt": "2026-11-16T19:45:00-05:00"
     }
   ]
