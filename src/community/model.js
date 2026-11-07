@@ -24,7 +24,7 @@ export function validateContent(value) {
     for(const field of ['kicker','title','body','cta']) if(typeof item[field]!=='string' || !item[field].trim()) throw Error('Invalid announcement copy');
     if(!safeUrl(item.href) || (item.image&&!safeUrl(item.image)) || (item.secondaryHref&&!safeUrl(item.secondaryHref))) throw Error('Invalid announcement link');
     for(const field of ['imageAlt','note','secondaryCta']) if(item[field]!==undefined&&typeof item[field]!=='string') throw Error('Invalid announcement copy');
-    for(const field of ['startsAt','endsAt']) if(item[field]!=null && (typeof item[field]!=='string' || !validDate(item[field].slice(0,10)) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(item[field]) || !Number.isFinite(Date.parse(item[field])))) throw Error('Use an explicit time zone for announcement scheduling');
+    for(const field of ['startsAt','endsAt','meetingStartsAt']) if(item[field]!=null && (typeof item[field]!=='string' || !validDate(item[field].slice(0,10)) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$/.test(item[field]) || !Number.isFinite(Date.parse(item[field])))) throw Error('Use an explicit time zone for announcement scheduling');
     if(item.startsAt&&item.endsAt&&Date.parse(item.endsAt)<=Date.parse(item.startsAt)) throw Error('Announcement must end after it starts');
     announcementIds.add(item.id);
   }

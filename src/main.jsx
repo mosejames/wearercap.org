@@ -632,6 +632,7 @@ function App() {
 
   return (
     <main className="site-shell homepage-refresh">
+        <Announcements entryway/>
       {KARAOKE_POP_ENABLED ? <KaraokeWelcome /> : null}
       <section className="hero" aria-label="We Are RCAP">
         {/* Photo, scrim and edge travel together. Above 1100px this block is

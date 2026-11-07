@@ -3,6 +3,7 @@ import {ArrowRight,ArrowUpRight} from 'lucide-react';
 import {useCommunityContent} from './CommunityContent.jsx';
 import {activeAnnouncements} from './model.js';
 import './announcements.css';
+import MeetingEntryway from './MeetingEntryway.jsx';
 export function useAnnouncements() {
   const content=useCommunityContent();
   const [now,setNow]=useState(()=>new Date());
@@ -15,9 +16,10 @@ export function useAnnouncements() {
   },[]);
   return activeAnnouncements(content,now);
 }
-export default function Announcements({view='app',placement}) {
+export default function Announcements({view='app',placement,entryway=false}) {
   const all=useAnnouncements();
-  const items=placement?all.filter(item=>item.placement===placement):all;
+  const items=all.filter(item=>Boolean(item.meetingStartsAt)===entryway && (!placement || item.placement===placement));
+  if(entryway) return items.map(item=><MeetingEntryway key={item.id} item={item}/>);
   if(!items.length) return null;
   if(view==='main' && placement==='featured') return <>{items.map(item=><article key={item.id} className="home-collective home-raffle" data-announcement={item.id}>
     <div className="home-collective-copy"><p className="section-label">{item.kicker}</p><h3>{item.title}</h3><p>{item.body}</p>{item.note&&<p><strong>{item.note}</strong></p>}<a className="button primary" href={item.href}>{item.cta} <ArrowUpRight size={18} aria-hidden="true"/></a>{item.secondaryHref&&<p><a href={item.secondaryHref}>{item.secondaryCta} ↗</a></p>}</div>

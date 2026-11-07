@@ -122,6 +122,7 @@ function App() {
     {!online&&<div className="offline" role="status">You’re offline. Your saved hub and calendar are here; tools and galleries need a connection.</div>}
     <main id="content">
       {page==='home'?<>
+        <Announcements entryway/>
         <section className="welcome">
           <div className="welcome-photo" aria-hidden="true"><img src="/app-assets/community-wide.jpg" alt="" fetchPriority="high"/></div>
           <div className="welcome-copy"><p className="eyebrow"><span/> ONE COMMUNITY. EVERY FAMILY.</p><h1 ref={title} tabIndex={-1}>Your RCAP.<br/><em>Right here.</em></h1><p>Everything you reach for.<br/>The community you belong to.</p></div>
