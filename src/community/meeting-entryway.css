@@ -59,3 +59,13 @@
 }
 .meeting-entryway-actions a:first-child { background: #f7c767; color: #17264d; }
 .meeting-entryway-actions a:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+
+.meeting-entryway-calendar-download {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 10px;
+  color: #fffdf7;
+  font-size: .875rem;
+  text-decoration: underline;
+}
+.meeting-entryway-calendar-download:focus-visible { outline: 3px solid white; }

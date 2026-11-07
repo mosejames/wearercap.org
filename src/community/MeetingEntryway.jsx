@@ -2,6 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, CalendarPlus } from 'lucide-react';
 import './meeting-entryway.css';
 
+function googleCalendarLink(item) {
+  const dates = [item.meetingStartsAt, item.endsAt]
+    .map(date => new Date(date).toISOString().replace(/[-:]|\.\d{3}/g, ''))
+    .join('/');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `RCAP ${item.title}`,
+    dates,
+    ctz: 'America/New_York',
+    location: item.href,
+    details: 'If Zoom is full, visit https://wearercap.org/ for the YouTube overflow.',
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
 export default function MeetingEntryway({ item }) {
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
@@ -45,11 +60,16 @@ export default function MeetingEntryway({ item }) {
             <a href={item.secondaryHref}>{item.secondaryCta} <ArrowUpRight size={18} aria-hidden="true" /></a>
           </>
         ) : (
-          <a href={item.calendarHref} download>
-            Add to Calendar <CalendarPlus size={18} aria-hidden="true" />
+          <a href={googleCalendarLink(item)}>
+            Add to Google Calendar <CalendarPlus size={18} aria-hidden="true" />
           </a>
         )}
       </div>
+      {!canJoin && (
+        <a className="meeting-entryway-calendar-download" href={item.calendarHref} download>
+          Download for Apple Calendar or Outlook (.ics)
+        </a>
+      )}
     </section>
   );
 }
