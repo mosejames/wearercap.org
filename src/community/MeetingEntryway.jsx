@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowUpRight, CalendarPlus } from 'lucide-react';
+import { ArrowUpRight, CalendarPlus, Landmark } from 'lucide-react';
 import './meeting-entryway.css';
 
 function googleCalendarLink(item) {
@@ -35,41 +35,50 @@ export default function MeetingEntryway({ item }) {
     ['Seconds', seconds % 60],
   ];
 
+  const [headline, ...subtitle] = item.title.split(' & ');
+
   return (
     <section className="meeting-entryway" aria-label={item.title}>
-      <p className="meeting-entryway-brand">{item.kicker}</p>
-      <p className="meeting-entryway-status">
-        {canJoin ? 'It’s time to join' : 'Waiting for the meeting'}
-      </p>
-      <h2>{item.title}</h2>
-      <p className="meeting-entryway-detail">{item.body}</p>
-      {seconds > 0 && (
-        <div className="meeting-entryway-clock" role="timer" aria-label="Time until the meeting starts">
-          {countdown.map(([label, value]) => (
-            <div key={label}>
-              <strong>{String(value).padStart(2, '0')}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
+      <div className="meeting-entryway-inner">
+        <div className="meeting-entryway-intro">
+          <div className="meeting-entryway-masthead">
+            <span className="meeting-entryway-emblem" aria-hidden="true"><Landmark size={23} strokeWidth={1.5} /></span>
+            <p className="meeting-entryway-brand">{item.kicker}</p>
+          </div>
+          <h2>{headline}{subtitle.length > 0 && <span> &amp; {subtitle.join(' & ')}</span>}</h2>
         </div>
-      )}
-      <div className="meeting-entryway-actions">
-        {canJoin ? (
-          <>
-            <a href={item.href}>{item.cta} <ArrowUpRight size={18} aria-hidden="true" /></a>
-            <a href={item.secondaryHref}>{item.secondaryCta} <ArrowUpRight size={18} aria-hidden="true" /></a>
-          </>
-        ) : (
-          <a href={googleCalendarLink(item)}>
-            Add to Google Calendar <CalendarPlus size={18} aria-hidden="true" />
-          </a>
-        )}
+        <div className="meeting-entryway-program">
+          <p className="meeting-entryway-status">{canJoin ? 'The meeting is open' : 'On the calendar'}</p>
+          <p className="meeting-entryway-detail">{item.body}</p>
+          {seconds > 0 && (
+            <div className="meeting-entryway-clock" role="timer" aria-label="Time until the meeting starts">
+              {countdown.map(([label, value]) => (
+                <div key={label}>
+                  <strong>{String(value).padStart(2, '0')}</strong>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="meeting-entryway-actions">
+            {canJoin ? (
+              <>
+                <a href={item.href}>{item.cta} <ArrowUpRight size={18} aria-hidden="true" /></a>
+                <a href={item.secondaryHref}>{item.secondaryCta} <ArrowUpRight size={18} aria-hidden="true" /></a>
+              </>
+            ) : (
+              <a href={googleCalendarLink(item)}>
+                Add to Google Calendar <CalendarPlus size={18} aria-hidden="true" />
+              </a>
+            )}
+          </div>
+          {!canJoin && (
+            <a className="meeting-entryway-calendar-download" href={item.calendarHref} download>
+              Download for Apple Calendar or Outlook (.ics)
+            </a>
+          )}
+        </div>
       </div>
-      {!canJoin && (
-        <a className="meeting-entryway-calendar-download" href={item.calendarHref} download>
-          Download for Apple Calendar or Outlook (.ics)
-        </a>
-      )}
     </section>
   );
 }
