@@ -872,10 +872,10 @@ export function MemoryStrip({ recent, covers, events }) {
   // late changed the loop width mid-animation, which is what the jumping was.
   // Fixed square tiles need no measurement, so nothing shifts as they load.
   const picks = useMemo(() => {
-    const visible = new Map(events.filter((e) => !e.hidden).map((e) => [e.id, e]));
+    const visible = new Map(events.filter((e) => !e.hidden && !e.adminOnly).map((e) => [e.id, e]));
     const pool = new Map(
       [...recent, ...Array.from(covers.values()).flat()]
-        .filter((ph) => !ph.hidden && !isVideo(ph) && visible.has(ph.eventId))
+        .filter((ph) => !ph.hidden && !ph.removedAt && !isVideo(ph) && visible.has(ph.eventId))
         .map((ph) => [ph.id, ph]),
     );
 

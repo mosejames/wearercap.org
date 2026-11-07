@@ -310,7 +310,9 @@ export async function listTopPhotos(limit = 60, eventId = null) {
 
 export async function listRecentPhotos(limit = 24) {
   const { data, error } = await supabase
-    .from('vault_photos').select('*').eq('house', HOUSE.id)
+    .from('vault_photos').select('*, vault_events!inner(hidden, admin_only)').eq('house', HOUSE.id)
+    .eq('vault_events.hidden', false).eq('vault_events.admin_only', false)
+    .eq('hidden', false).is('removed_at', null)
     .order('created_at', { ascending: false }).limit(limit);
   if (error) throw error;
   const photos = (data || []).map(photoFromRow);
