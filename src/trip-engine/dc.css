@@ -75,3 +75,10 @@
  .engine-dc .engine-gallery{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  .engine-dc .engine-gallery>button>span{padding:6px;font-size:10px;overflow-wrap:anywhere}
 }
+
+.dc-moment-prompts{margin:16px 0 20px;min-width:0}
+.dc-moment-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.dc-moment-heading h3{font-size:16px;margin:0}
+.engine-page .dc-moment-heading button{font-size:12px;text-align:right}
+.dc-moment-pills{display:flex;gap:8px;overflow-x:auto;padding:5px 3px 8px}
+.engine-page .dc-moment-pills button{flex:none;white-space:nowrap;border-radius:999px;background:#f3eddd;font-size:13px;padding:9px 14px;min-height:44px}

@@ -67,15 +67,22 @@ it('renders an isolated draft preview without authentication or gallery requests
 it('uses the full scenic backdrop for a future vault with selected artwork without adding DC-specific tools',async()=>{gallery.mockResolvedValue({trip:{...trip,destination:'College Park GA',hero:'data:image/jpeg;base64,AAAA'},photos:[],count:0,hasMore:false});await act(async()=>root.render(<App/>));expect(host.querySelector('.engine-scenic')).not.toBeNull();expect(host.querySelector('.engine-intro')).toBeNull();expect(host.querySelector('.engine-hero')).toBeNull();expect(host.querySelector('.scenic-hero').textContent).toContain('Big memories.');expect(host.querySelector('.scenic-destination').textContent).toBe('College Park GA');expect(host.querySelector('.dc-appreciation-entry')).toBeNull();expect(host.querySelector('.dc-downloads')).toBeNull();await click('Add trip photos');expect(host.querySelector('dialog .upload-next')).not.toBeNull();});
 
 it('uses configured milestone numbers for the live progress display',async()=>{gallery.mockResolvedValue({trip:{...trip,milestones:[{count:50,label:'First fifty shared'},{count:200,label:'Two hundred moments'},{count:1000,label:'A thousand memories'}]},photos:[],count:51,hasMore:false});await act(async()=>root.render(<App/>));expect(host.querySelector('[role=progressbar]').getAttribute('aria-valuemax')).toBe('200');expect(host.querySelector('.engine-milestone').textContent).toContain('First fifty shared');expect(host.querySelector('.engine-milestone').textContent).toContain('200 · Two hundred moments');});
-it('places Before the Trip above the DC hero and opens the existing photo uploader',async()=>{
+it('replaces the DC guide with prompts and carries the selected moment into the uploader',async()=>{
  gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',phase:'Send-off'},photos:[],count:0,hasMore:false});
- await act(async()=>root.render(<App/>));const before=host.querySelector('.before-trip'),hero=host.querySelector('.scenic-hero');expect(before).not.toBeNull();expect(before.compareDocumentPosition(hero)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();await click('I’m a parent');await click('Add packing photos');expect(host.querySelector('dialog .upload-next')).not.toBeNull();
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.before-trip')).toBeNull();
+ expect(host.querySelector('#gallery .dc-moment-prompts')).not.toBeNull();
+ await click('🤗 Goodbye hugs');
+ expect(host.querySelector('dialog .upload-next h3').textContent).toBe('Goodbye hugs');
 });
-it('remembers the sign-in role while the guide starts collapsed on return',async()=>{
+it('keeps a direct chaperone sign-in after removing the guide',async()=>{
  history.replaceState(null,'','/trip-vault/?trip=washington-dc-2030');
- gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',cohort:'2030',phase:'Send-off'},photos:[],count:0,hasMore:false});
- await act(async()=>root.render(<App/>));await click('I’m a chaperone');expect(localStorage.getItem('trip-engine:washington-dc-2030:role')).toBe('chaperone');
- await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<App/>));expect(host.querySelector('#before-chaperone').hidden).toBe(true);await click('I’m a chaperone');expect(host.querySelector('#before-chaperone').hidden).toBe(false);await click('I’m a chaperone');expect(host.querySelector('#before-chaperone').hidden).toBe(true);expect(localStorage.getItem('trip-engine:washington-dc-2030:role')).toBe('chaperone');await click('I’m a chaperone');await click('Sign in with RCA Google');expect(host.querySelector('dialog .engine-auth-roles button[aria-pressed=true]').textContent).toBe('I’m a chaperone');expect(host.querySelector('dialog').textContent).toContain('Continue with RCA Google');
+ gallery.mockResolvedValue({trip:{...trip,slug:'washington-dc-2030',destination:'Washington, DC',phase:'Active trip'},photos:[],count:0,hasMore:false});
+ await act(async()=>root.render(<App/>));
+ expect(host.querySelector('.dc-moment-pills button').textContent).toContain('First stop');
+ await click('Chaperone sign-in');
+ expect(localStorage.getItem('trip-engine:washington-dc-2030:role')).toBe('chaperone');
+ expect(host.querySelector('dialog').textContent).toContain('Continue with RCA Google');
 });
 function touchEvent(target,type,points){const event=new Event(type,{bubbles:true});Object.defineProperty(event,type==='touchend'?'changedTouches':'touches',{value:points});target.dispatchEvent(event);}
 async function openViewer(){gallery.mockResolvedValue({trip,photos:[photo('a'),photo('b'),photo('c')],count:3,hasMore:false});await act(async()=>root.render(<App/>));await act(async()=>host.querySelector('.engine-gallery>button').click());}
