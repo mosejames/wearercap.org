@@ -22,6 +22,17 @@ export function cleanDraft(value) {
   if (value.status !== 'draft' || value.visibility !== 'private') throw problem('Trips must stay private drafts.', 403);
   const d = newDraft(value.id);
   if(value.expectations!==undefined){const e=value.expectations;if(!e||typeof e.enabled!=='boolean'||typeof e.uploadsOpen!=='boolean')throw problem('Check Expectations settings.');d.expectations={enabled:e.enabled,uploadsOpen:e.uploadsOpen,title:text(e.title,100,'Expectations heading'),content:text(e.content?.replace(/\r\n/g,'\n').replace(/\n/g,'\u2028'),6000,'Expectations content').replace(/\u2028/g,'\n')};if(e.enabled&&(!d.expectations.title||!d.expectations.content))throw problem('Add an Expectations heading and guidance.');}
+  if (value.appreciation !== undefined) {
+    const settings = value.appreciation;
+    if (!settings || typeof settings.enabled !== 'boolean') throw problem('Check chaperone appreciation settings.');
+    d.appreciation = {
+      enabled: settings.enabled,
+      title: text(settings.title, 60, 'appreciation title'),
+      thankYouHeading: text(settings.thankYouHeading, 120, 'thank-you heading'),
+      thankYouMessage: text(settings.thankYouMessage?.replace(/\r\n?/g, '\n').replace(/\n/g, '\u2028'), 800, 'thank-you message').replace(/\u2028/g, '\n'),
+    };
+    if (settings.enabled && Object.values(d.appreciation).some(field => field === '')) throw problem('Add an appreciation title, thank-you heading and message.');
+  }
   d.destination = text(value.destination, 80, 'destination');
   if (!d.destination) throw problem('Add a destination before saving.');
   d.cohort = text(value.cohort, 4, 'class year');

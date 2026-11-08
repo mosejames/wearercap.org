@@ -1,3 +1,4 @@
+import {appreciationFor} from './appreciation-model.js';
 import {useEffect,useState} from 'react';
 import {Heart,MessageCircle,RefreshCw} from 'lucide-react';
 import {browserToken,gallery,request} from './data.js';
@@ -39,11 +40,12 @@ export function LoveFromFamilies({slug,trip,onOpenPhoto}){
  const reactions=moments.reduce((total,moment)=>total+moment.reactions,0);
  const notes=moments.reduce((total,moment)=>total+moment.notes,0);
  const highlights=moments.filter(moment=>moment.reactions||moment.notes).slice(0,3);
+ const settings=appreciationFor(trip);
  const wrapUp=['Wrap-up','Archive'].includes(trip.phase);
  return <details className="dc-family-love" onToggle={event=>setExpanded(event.currentTarget.open)}>
-  <summary><Heart size={15} aria-hidden="true"/> Love from families{wrapUp&&<small> · Trip thank-you</small>}</summary>
+  <summary><Heart size={15} aria-hidden="true"/> {settings.title}{wrapUp&&<small> · Trip thank-you</small>}</summary>
   {expanded&&<div className="dc-family-love-body">
-   {wrapUp&&<p><strong>Thank you for bringing Washington, DC, home.</strong> Your photos gave families a way to share in the trip. We’re grateful for the time and care you gave our class.</p>}
+   {wrapUp&&<p><strong>{settings.thankYouHeading}</strong> {settings.thankYouMessage}</p>}
    {error?<p role="status">Appreciation is unavailable right now. Close and reopen this section to try again.</p>:data?
     <><p>{reactions.toLocaleString()} {reactions===1?'reaction':'reactions'} · {notes.toLocaleString()} {notes===1?'recent note':'recent notes'} on your photos</p>
     {data.unavailable>0&&<p>Some photos could not be checked. Totals may be incomplete.</p>}

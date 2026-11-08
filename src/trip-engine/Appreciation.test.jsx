@@ -23,8 +23,8 @@ it('loads private totals on demand and shows a personal photo highlight at wrap-
  expect(host.textContent).toContain('3 reactions · 1 recent note');
  expect(host.textContent).not.toContain('Thank you!');
  expect(request).toHaveBeenCalledTimes(1);
- await act(async()=>root.render(<LoveFromFamilies slug="dc" trip={{phase:'Wrap-up'}} onOpenPhoto={onOpenPhoto}/>));
- expect(host.textContent).toContain('Thank you for bringing Washington, DC, home.');
+ await act(async()=>root.render(<LoveFromFamilies slug="dc" trip={{phase:'Wrap-up',destination:'Washington, DC'}} onOpenPhoto={onOpenPhoto}/>));
+ expect(host.textContent).toContain('Thank you for bringing Washington, DC home.');
  host.querySelector('button').click();
  expect(onOpenPhoto).toHaveBeenCalledWith(own);
 });

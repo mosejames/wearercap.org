@@ -1,7 +1,7 @@
 import {cleanDraft,problem} from '../trip-studio/model.js';
 import {readiness} from '../../src/trip-studio/model.js';
 import {engineRpc} from './rpc.js';
-export function publicConfig(draft){const d=cleanDraft(draft);const missing=readiness(d);if(missing.length)throw problem(`Complete these before launch: ${missing.join(', ')}.`);return Object.fromEntries(['destination','cohort','start','end','timezone','slug','colors','logo','hero','features','groups','milestones','videoUploadUrl','videoDownloadUrl','exportDays','recipientBinding','expectations'].map(k=>[k,d[k]]));}
+export function publicConfig(draft){const d=cleanDraft(draft);const missing=readiness(d);if(missing.length)throw problem(`Complete these before launch: ${missing.join(', ')}.`);return Object.fromEntries(['destination','cohort','start','end','timezone','slug','colors','logo','hero','features','groups','milestones','videoUploadUrl','videoDownloadUrl','exportDays','recipientBinding','expectations','appreciation'].map(k=>[k,d[k]]));}
 export async function liveList(req){return engineRpc('list',{},req.headers.authorization);}
 export async function publishAction(req,body,registry){
  const draft=registry.trips.find(t=>t.id===body.id);if(!draft)throw problem('Save this draft before launching it.',404);
