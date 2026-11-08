@@ -14,3 +14,22 @@ it('saves and undoes a reaction with server-confirmed counts',async()=>{await re
 it('does not show a previous photo’s reactions while the next photo loads',async()=>{request.mockResolvedValueOnce(state(8,true));await render('a');let finish;request.mockReturnValueOnce(new Promise(r=>{finish=r;}));await render('b');expect(thanks().disabled).toBe(true);expect(thanks().getAttribute('aria-pressed')).toBe('false');expect(thanks().textContent).not.toContain('8');await act(async()=>finish(state(2,false)));expect(thanks().disabled).toBe(false);expect(thanks().textContent).toContain('2');});
 it('keeps the confirmed reaction after a failed write so a family can retry',async()=>{await render('a');request.mockRejectedValueOnce(Error('Connection interrupted. Try again.'));await act(async()=>thanks().click());expect(host.querySelector('[role=alert]').textContent).toContain('Connection interrupted');expect(thanks().getAttribute('aria-pressed')).toBe('false');expect(thanks().disabled).toBe(false);});
 it('allows retry after the initial conversation read fails',async()=>{request.mockRejectedValueOnce(Error('Unavailable'));await render('a');expect(thanks().disabled).toBe(true);request.mockResolvedValueOnce(state(3));await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Try again').click());expect(thanks().disabled).toBe(false);expect(thanks().textContent).toContain('3');});
+it('keeps a failed comment draft and confirms a successful retry',async()=>{
+ await render('a');
+ const form=host.querySelector('.engine-comment-form');
+ expect(form.querySelector('summary').textContent).toBe('Leave a comment');
+ function enter(field,value){
+  Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field),'value').set.call(field,value);
+  field.dispatchEvent(new Event('input',{bubbles:true}));
+ }
+ await act(async()=>{enter(form.querySelector('input'),'Trip family');enter(form.querySelector('textarea'),'Thank you!');});
+ request.mockRejectedValueOnce(Error('Please try again.'));
+ await act(async()=>form.requestSubmit());
+ expect(form.querySelector('[role=alert]').textContent).toBe('Please try again.');
+ expect(form.querySelector('textarea').value).toBe('Thank you!');
+ request.mockResolvedValueOnce({...state(),comments:[{id:'c',name:'Trip family',body:'Thank you!'}]});
+ await act(async()=>form.requestSubmit());
+ expect(form.querySelector('[role=status]').textContent).toBe('Comment posted.');
+ expect(form.querySelector('textarea').value).toBe('');
+ expect(host.querySelector('article').textContent).toContain('Thank you!');
+});
