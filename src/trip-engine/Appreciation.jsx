@@ -17,3 +17,38 @@ export default function Appreciation({slug,trip,session,onSignIn,onOpenPhoto}){
  const recapAvailable=['Wrap-up','Archive'].includes(trip.phase), entries=data?.entries||[],thanks=entries.reduce((sum,e)=>sum+(e.reactions.find(r=>r.kind==='thanks')?.count||0),0),moments=entries.reduce((sum,e)=>sum+(e.reactions.find(r=>r.kind==='mine')?.count||0),0),notes=entries.flatMap(e=>e.comments.map(c=>({...c,photo:e.photo})));
  return <section className="dc-appreciation"><p className="dc-appreciation-kicker">CLASS OF {trip.cohort} · WASHINGTON, DC</p><h3>{view==='recap'?'A little window. A lot of joy.':'Notes from home.'}</h3><p>{view==='recap'?'Thank you for bringing families along on this adventure. These moments are yours to revisit.':'Every photo you share helps families feel a little closer. Here is the appreciation on your photos.'}</p><div className="engine-row dc-appreciation-nav"><button aria-pressed={view==='inbox'} onClick={()=>setView('inbox')}>Appreciation inbox</button>{recapAvailable&&<button aria-pressed={view==='recap'} onClick={()=>setView('recap')}>Your trip recap</button>}<button className="engine-link" onClick={()=>setRefresh(x=>x+1)} disabled={loading}><RefreshCw size={15}/>Refresh</button></div>{!recapAvailable&&<p className="dc-appreciation-hint">Your trip recap will be ready when the organizer moves the trip to wrap-up.</p>}{loading&&<p role="status">{progress||'Gathering your moments…'}</p>}{error&&<p role="alert">{error} <button className="engine-link" onClick={()=>setRefresh(x=>x+1)}>Try again</button></p>}{data&&<><div className="dc-appreciation-stats"><div><strong>{data.ownedCount}</strong><span>photos shared</span></div><div><strong>{thanks}</strong><span>thank-yous</span></div><div><strong>{notes.length}</strong><span>notes shown</span></div></div>{moments>0&&<p className="dc-appreciation-hint">{moments} “That’s my child” {moments===1?'reaction':'reactions'} on your photos.</p>}{notes.length>0&&<p className="dc-appreciation-hint">Showing up to 100 recent notes per photo.</p>}{data.unavailable>0&&<p role="alert">Appreciation for {data.unavailable} {data.unavailable===1?'photo':'photos'} could not be loaded. Totals may be incomplete. Refresh to try again.</p>}{data.ownedCount===0?<p>You haven’t shared any visible photos from this account yet. Thank you for being part of the adventure.</p>:notes.length===0?<p>No notes yet. When families leave a note on one of your photos, it will appear here.</p>:<div className="dc-appreciation-notes">{notes.map(n=><article key={`${n.photo.id}:${n.id}`}><MessageCircle size={17}/><div><p>“{n.body}”</p><small>{n.name} · {new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeZone:trip.timezone}).format(new Date(n.createdAt))}</small><button className="engine-link" onClick={()=>onOpenPhoto(n.photo)}>See the moment</button></div></article>)}</div>}{view==='recap'&&data.ownedCount>0&&<div className="dc-recap"><h4>Your moments</h4><p>Thank you for the care, time and love you gave this class. Your photos helped bring the adventure home.</p><div className="dc-recap-photos">{entries.map(e=><button key={e.photo.id} onClick={()=>onOpenPhoto(e.photo)} aria-label="Open your shared photo"><img src={e.photo.thumb} alt="Your shared trip moment"/></button>)}</div><p><Heart size={16}/> With gratitude, the RCA parent community</p></div>}</>}</section>;
 }
+
+export function LoveFromFamilies({slug,trip,onOpenPhoto}){
+ const [expanded,setExpanded]=useState(false);
+ const [data,setData]=useState(null);
+ const [error,setError]=useState(false);
+ useEffect(()=>{
+  if(!expanded)return;
+  let active=true;
+  setData(null);
+  setError(false);
+  loadAppreciation(slug).then(result=>{if(active)setData(result);})
+   .catch(()=>{if(active)setError(true);});
+  return()=>{active=false;};
+ },[expanded,slug]);
+ const moments=(data?.entries||[]).map(({photo,reactions,comments})=>({
+  photo,
+  reactions:reactions.reduce((total,reaction)=>total+reaction.count,0),
+  notes:comments.length,
+ })).sort((a,b)=>(b.reactions+b.notes)-(a.reactions+a.notes));
+ const reactions=moments.reduce((total,moment)=>total+moment.reactions,0);
+ const notes=moments.reduce((total,moment)=>total+moment.notes,0);
+ const highlights=moments.filter(moment=>moment.reactions||moment.notes).slice(0,3);
+ const wrapUp=['Wrap-up','Archive'].includes(trip.phase);
+ return <details className="dc-family-love" onToggle={event=>setExpanded(event.currentTarget.open)}>
+  <summary><Heart size={15} aria-hidden="true"/> Love from families{wrapUp&&<small> · Trip thank-you</small>}</summary>
+  {expanded&&<div className="dc-family-love-body">
+   {wrapUp&&<p><strong>Thank you for bringing Washington, DC, home.</strong> Your photos gave families a way to share in the trip. We’re grateful for the time and care you gave our class.</p>}
+   {error?<p role="status">Appreciation is unavailable right now. Close and reopen this section to try again.</p>:data?
+    <><p>{reactions.toLocaleString()} {reactions===1?'reaction':'reactions'} · {notes.toLocaleString()} {notes===1?'recent note':'recent notes'} on your photos</p>
+    {data.unavailable>0&&<p>Some photos could not be checked. Totals may be incomplete.</p>}
+    <div className="dc-family-love-photos">{(wrapUp?moments.slice(0,1):highlights).map(({photo},index)=><button key={photo.id} type="button" onClick={()=>onOpenPhoto(photo)} aria-label={wrapUp?'Open your trip highlight':`Open appreciated photo ${index+1}`}><img src={photo.thumb} alt=""/></button>)}</div></>
+    :<p role="status">Gathering appreciation…</p>}
+  </div>}
+ </details>;
+}

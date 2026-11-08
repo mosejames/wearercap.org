@@ -61,3 +61,12 @@
 }
 
 .engine-reaction-label { font-size: clamp(8px, 2vw, 11px); line-height: 1.15; text-align: center; }
+
+.dc-family-love{margin:12px 0;color:#33435d;border:1px solid #ded7c8;border-radius:10px;font-size:13px}
+.dc-family-love summary{cursor:pointer;padding:10px 12px;font-weight:700}
+.dc-family-love summary svg{vertical-align:middle;margin:0 4px;color:#83600e}
+.dc-family-love summary small{font-weight:400}
+.dc-family-love-body{padding:0 14px 12px}
+.dc-family-love-photos{display:flex;gap:8px}
+.engine-page .dc-family-love-photos button{padding:0;overflow:hidden;border-radius:8px}
+.dc-family-love-photos img{display:block;width:56px;height:56px;object-fit:cover}

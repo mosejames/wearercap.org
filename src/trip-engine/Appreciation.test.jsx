@@ -2,7 +2,7 @@ import {act} from 'react';
 import {createRoot} from 'react-dom/client';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 vi.mock('./data.js',()=>({browserToken:()=> 'a'.repeat(64),gallery:vi.fn(),request:vi.fn()}));
-import Appreciation,{loadAppreciation} from './Appreciation.jsx';
+import Appreciation,{loadAppreciation,LoveFromFamilies} from './Appreciation.jsx';
 import {gallery,request} from './data.js';
 let host,root;
 const p=(id,isMine)=>({id,isMine,thumb:`/${id}.jpg`});
@@ -12,3 +12,19 @@ it('only loads appreciation for authenticated-owner photos across pages',async()
 it('reports missing feedback rather than presenting partial counts as complete',async()=>{gallery.mockResolvedValue({photos:[p('mine',true),p('mine2',true)],hasMore:false});request.mockResolvedValueOnce({reactions:[],comments:[]}).mockRejectedValueOnce(Error('hidden'));const result=await loadAppreciation('dc');expect(result.ownedCount).toBe(2);expect(result.entries).toHaveLength(1);expect(result.unavailable).toBe(1);});
 it('requires account sign-in and does not load data for an anonymous viewer',async()=>{await act(async()=>root.render(<Appreciation slug="dc" trip={{cohort:'2030',phase:'Active trip'}} session={null} onSignIn={()=>{}} onOpenPhoto={()=>{}}/>));expect(host.textContent).toContain('same phone number or email');expect(gallery).not.toHaveBeenCalled();});
 it('shows a recap only during wrap-up and archive',async()=>{gallery.mockResolvedValue({photos:[],hasMore:false});const trip={cohort:'2030',phase:'Active trip'};await act(async()=>root.render(<Appreciation slug="dc" trip={trip} session={{user:{id:'u'}}} onOpenPhoto={()=>{}}/>));expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Your trip recap')).toBe(false);await act(async()=>root.render(<Appreciation slug="dc" trip={{...trip,phase:'Wrap-up'}} session={{user:{id:'u'}}} onOpenPhoto={()=>{}}/>));expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Your trip recap')).toBe(true);});
+it('loads private totals on demand and shows a personal photo highlight at wrap-up',async()=>{
+ const own=p('own',true),onOpenPhoto=vi.fn();
+ gallery.mockResolvedValue({photos:[own,p('other',false)],hasMore:false});
+ request.mockResolvedValue({reactions:[{kind:'love',count:2},{kind:'bravo',count:1}],comments:[{body:'Thank you!'}]});
+ await act(async()=>root.render(<LoveFromFamilies slug="dc" trip={{phase:'Active trip'}} onOpenPhoto={onOpenPhoto}/>));
+ expect(gallery).not.toHaveBeenCalled();
+ expect(host.textContent).not.toContain('Trip thank-you');
+ await act(async()=>{const details=host.querySelector('details');details.open=true;details.dispatchEvent(new Event('toggle'));});
+ expect(host.textContent).toContain('3 reactions · 1 recent note');
+ expect(host.textContent).not.toContain('Thank you!');
+ expect(request).toHaveBeenCalledTimes(1);
+ await act(async()=>root.render(<LoveFromFamilies slug="dc" trip={{phase:'Wrap-up'}} onOpenPhoto={onOpenPhoto}/>));
+ expect(host.textContent).toContain('Thank you for bringing Washington, DC, home.');
+ host.querySelector('button').click();
+ expect(onOpenPhoto).toHaveBeenCalledWith(own);
+});
