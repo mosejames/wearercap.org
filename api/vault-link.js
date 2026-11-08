@@ -179,6 +179,14 @@ export default async function handler(req, res) {
     alt = `Photo from ${ev.title}`;
   }
 
+  const servicePreview = ev?.slug === 'service-project' && V.house === 'amistad' && !photoId;
+  if (servicePreview) {
+    img = `${SITE}/vault-previews/ami-service-project.jpg`;
+    alt = 'Amistad families gathered for the Service Project';
+  }
+  const imageType = photo ? photo.type : servicePreview ? 'image/jpeg' : 'image/png';
+  const imageHeight = photo ? photo.height : servicePreview ? 900 : 630;
+
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   // Refresh event details and upload availability regularly.
   res.setHeader('Cache-Control', photoId ? 'no-store' : 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
@@ -199,9 +207,9 @@ export default async function handler(req, res) {
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${esc(canonical)}" />
     <meta property="og:image" content="${esc(img)}" />
-    <meta property="og:image:type" content="${photo ? photo.type : 'image/png'}" />
+    <meta property="og:image:type" content="${imageType}" />
     ${!photo || photo.width ? `<meta property="og:image:width" content="${photo ? photo.width : 1200}" />` : ''}
-    ${!photo || photo.height ? `<meta property="og:image:height" content="${photo ? photo.height : 630}" />` : ''}
+    ${!photo || photo.height ? `<meta property="og:image:height" content="${imageHeight}" />` : ''}
     <meta property="og:image:alt" content="${esc(alt)}" />
 
     <meta name="twitter:card" content="summary_large_image" />
