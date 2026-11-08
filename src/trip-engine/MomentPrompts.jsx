@@ -9,7 +9,7 @@ const adventure = [
  ['😄','Made me laugh','Share a little moment that made everyone smile.'],
  ['⭐','Favorite moment','What’s a moment you’d love to remember? Share it here.'],
 ];
-const partner = ['👯','Adventure partner','Share a photo of the friends who made the adventure even better.'];
+const partner = ['👯','Adventure partners','Share a photo of the friends who made the adventure even better.'];
 
 export default function MomentPrompts({sendoff,onChoose,onChaperoneSignIn}) {
  const moments = sendoff ? [...departure,partner] : [...adventure,partner,...departure];
