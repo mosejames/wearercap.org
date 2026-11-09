@@ -1,42 +1,42 @@
 {
-  "asOf": "Wednesday, November 4 at 6:30 p.m.",
+  "asOf": "Sunday, November 8 at 11:00 a.m.",
   "goal": 20000,
-  "total": 8943,
-  "unassigned": 86,
+  "total": 9746,
+  "unassigned": 62,
   "houses": [
     {
       "name": "Isibindi",
-      "amount": 2910
+      "amount": 3295
     },
     {
       "name": "Rêveur",
-      "amount": 2756
+      "amount": 2941
     },
     {
       "name": "Altruismo",
-      "amount": 1678
+      "amount": 1769
     },
     {
       "name": "Amistad",
-      "amount": 1513
+      "amount": 1679
     }
   ],
   "classes": [
     {
       "name": "2031",
-      "amount": 3273
+      "amount": 3688
     },
     {
       "name": "2030",
-      "amount": 2729
+      "amount": 2775
     },
     {
       "name": "2029",
-      "amount": 1401
+      "amount": 1657
     },
     {
       "name": "2028",
-      "amount": 814
+      "amount": 924
     },
     {
       "name": "2027",
