@@ -190,7 +190,8 @@ describe('dated weekly editions', () => {
     for (const file of readdirSync(directory).filter(f=>f.endsWith('.json'))) {
       const {period,results} = JSON.parse(readFileSync(`${directory}/${file}`,'utf8'));
       expect(file).toBe(`${period.id}.json`);
-      expect(period.end < period.published).toBe(true);
+      expect(period.baselineAsOf ? period.end <= period.published : period.end < period.published).toBe(true);
+      if (period.baselineAsOf) expect(period.sourceAsOf).toBe(results.asOf);
       for (const student of results.students || []) {
         expect(student.name).toMatch(/^[\p{L}’-]+(?: [\p{L}]\.)?$/u);
         expect(Object.keys(student).sort()).toEqual(['amount','classOf','house','name','rank']);

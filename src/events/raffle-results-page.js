@@ -92,18 +92,19 @@ function renderLocked(d) {
 
 const title = overall ? 'Overall progress. Weekly celebrations.' : `Week ${weekNumber}: our raffle stars`;
 $('edition-title').textContent = title;
-const snapshotCutoff = overall ? `${data.asOf} Eastern` : `${dateLabel(edition.period.end)} at 11:59 p.m. Eastern`;
+const snapshotCutoff = overall ? `${data.asOf} Eastern` : `${edition.period.baselineAsOf ? edition.results.asOf : dateLabel(edition.period.end) + ' at 11:59 p.m.'} Eastern`;
 $('snapshot-top').textContent = `Results through ${snapshotCutoff}.`;
 $('edition-kicker').textContent = overall ? 'THE FULL RAFFLE SO FAR' : 'WEEKLY RAFFLE RESULTS';
 $('edition-dates').textContent = overall ? `All paid tickets through ${data.asOf} Eastern.` : `${edition.period.start ? 'Reporting period' : 'First reporting period'}: ${periodLabel(edition.period)}. Cutoff: 11:59 p.m. Eastern. Published ${dateLabel(edition.period.published)}.`;
-if (!overall && edition.period.sourceAsOf) $('edition-dates').textContent += ` Source export: ${edition.period.sourceAsOf} Eastern.`;
+if (!overall && edition.period.baselineAsOf) $('edition-dates').textContent = `New paid tickets since ${edition.period.baselineAsOf} through ${edition.results.asOf} Eastern.`;
+if (!overall && edition.period.sourceAsOf && !edition.period.baselineAsOf) $('edition-dates').textContent += ` Source export: ${edition.period.sourceAsOf} Eastern.`;
 $('edition-note').textContent = 'Each week brings a fresh top five. We celebrate that week’s contributions, so every family has another chance to shine.';
 $('edition-next').textContent = `Who will be our Week ${weekNumber + 1} raffle stars? Find out ${dateLabel(edition.period.nextPublication)}.`;
 if (requestedWeek && !editions.some(item => item.period.id === requestedWeek) && !overall) $('edition-note').textContent = 'That weekly update is not available yet. You’re viewing the latest published results.';
 const addLink = (target, text, href) => { const a = el('a', null, text); a.href = href; target.append(a); };
 if (overall || archive || edition !== editions[0]) addLink($('edition-links'), 'Back to the latest weekly results', '?');
 const older = editions[editions.indexOf(edition) + 1];
-if (!overall && older) addLink($('edition-links'), 'View the previous week', `?week=${older.period.id}`);
+if (!overall && older) addLink($('edition-links'), `View Week ${editions.length - editions.indexOf(older)} results · ${dateLabel(older.period.published)}`, `?week=${older.period.id}`);
 for (const item of editions) { const li = el('li'); addLink(li, periodLabel(item.period), `?week=${item.period.id}`); $('history').append(li); }
 document.querySelector('#rr-top-title').textContent = overall ? 'Overall raffle stars' : `Week ${weekNumber} top five raffle stars`;
 if (overall) $('top-note').textContent = 'All paid tickets so far. Weekly recognition is based on each week separately.';
@@ -115,6 +116,10 @@ const holdOverall = overall && Boolean(data.studentsAsOf);
 if (holdOverall) {
   document.querySelector('#rr-top-title').textContent = 'Our next raffle stars';
   $('top-note').textContent = 'Check back after Sunday’s drawing for the next student standings.';
+}
+if (!overall && !archive) {
+  const winners = $('winners');
+  document.querySelector('.rr-dashboard-grid').before(winners);
 }
 const students = holdOverall ? [] : data.students || [];
 

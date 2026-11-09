@@ -188,3 +188,16 @@ the full drawing pool (including free entries) as dollars or paid-ticket ranking
 credit. Future weekly releases should use timestamped transactions or a confirmed
 cutoff export; the RCAP-directed cutoff convention here is not independent evidence
 for later source files.
+
+## November 8 weekly edition
+
+Week 3 uses new paid entry IDs between the November 1 10:21 a.m. and November 8
+11 a.m. exports (Spark attachments 31437 and 31654). All 6,736 previous entry IDs
+retain holder, buyer, bundle and amount. The 3,040 new entries include ten free
+entries, leaving 3,030 paid entries. Paid cumulative totals reconcile to the
+November 8 dashboard (31653), including a spelling variant and blank student
+credit normalization. No purchase timestamps are supplied, so this edition
+labels the actual snapshot interval rather than asserting a Saturday cutoff.
+Mose approved Week 3 recognition, Dean's video and Lakeisha King's $125 Visa
+prize. Public top five stay count-free. Week 2 remains available at
+?week=2026-11-01 with its original data and announcement.
