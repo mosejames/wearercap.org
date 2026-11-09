@@ -110,7 +110,7 @@ if (overall) $('top-note').textContent = 'All paid tickets so far. Weekly recogn
 renderProgress(data);
 if (archive) renderLocked(data);
 else renderLocked({ winners: [latestDrawing] });
-if (!archive && !edition.results.winners.some(w => w.drawing === latestDrawing.drawing)) $('edition-next').textContent = 'The November 1 drawing is posted below. The next weekly standings will appear after review.';
+if (!archive && !edition.results.winners.some(w => w.drawing === latestDrawing.drawing)) $('edition-next').textContent = `The ${latestDrawing.drawing} drawing is posted below. The next weekly standings will appear after review.`;
 const holdOverall = overall && Boolean(data.studentsAsOf);
 if (holdOverall) {
   document.querySelector('#rr-top-title').textContent = 'Our next raffle stars';
