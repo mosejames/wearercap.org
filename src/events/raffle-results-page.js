@@ -47,6 +47,11 @@ document.querySelectorAll('input[name="progress-view"]').forEach(input => input.
 }));
 const percent = Math.round(progressData.total / progressData.goal * 100);
 $('raised').textContent = money(progressData.total);
+$('raised-label').textContent = archive ? 'Raised this week' : 'Raised overall';
+$('raised-week-link').href = `?week=${edition.period.id}#raised-progress`;
+$('raised-week-link').textContent = `Raised this week · Week ${weekNumber}`;
+$('raised-overall-link').href = `?view=overall&week=${edition.period.id}#raised-progress`;
+$(archive ? 'raised-week-link' : 'raised-overall-link').setAttribute('aria-current', 'page');
 $('percent').textContent = `${percent}%`;
 $('remaining').textContent = progressData.total < progressData.goal ? `${money(progressData.goal - progressData.total)} to go. Let’s keep moving together.` : 'Our goal is reached. Let’s keep the good going.';
 $('goal-fill').style.width = `${Math.min(100, percent)}%`;
