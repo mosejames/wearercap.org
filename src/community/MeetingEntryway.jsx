@@ -8,7 +8,7 @@ function googleCalendarLink(item) {
     .join('/');
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `RCAP ${item.title}`,
+    text: item.title,
     dates,
     ctz: 'America/New_York',
     location: item.href,
