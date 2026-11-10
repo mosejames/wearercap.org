@@ -1,0 +1,7 @@
+import fs from 'node:fs';
+import sharp from 'sharp';
+const data=JSON.parse(fs.readFileSync('src/events/raffle-results.json'));
+const n=x=>x.toLocaleString('en-US');
+const pct=Math.round(data.total/data.goal*100);
+const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460"><rect width="1200" height="460" rx="24" fill="#1a2a56"/><g font-family="Arial,sans-serif"><text x="64" y="68" fill="#f5d783" font-size="22" font-weight="700" letter-spacing="3">LOOK WHAT WE’RE MAKING POSSIBLE</text><text x="64" y="172" fill="#faf4ea" font-size="88" font-weight="800">${n(data.total)}</text><text x="400" y="162" fill="#faf4ea" font-size="34">paid tickets sold together</text><text x="64" y="220" fill="#d3dae8" font-size="27">Our goal: ${n(data.goal)} tickets</text><rect x="64" y="258" width="1072" height="42" rx="21" fill="#43587e"/><rect x="64" y="258" width="${1072*data.total/data.goal}" height="42" rx="21" fill="#f7b719"/><text x="64" y="349" fill="#f5d783" font-size="31" font-weight="700">${pct}% there</text><text x="1136" y="349" fill="#faf4ea" font-size="28" text-anchor="end">${n(data.goal-data.total)} tickets to go</text><text x="64" y="411" fill="#d3dae8" font-size="21">As of November 8, 2026 at 11 a.m. Eastern · Posted results, not live tracking.</text></g></svg>`;
+await sharp(Buffer.from(svg)).png().toFile('public/images/events/raffle-nov08-ticket-progress.png');
