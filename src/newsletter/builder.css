@@ -240,3 +240,5 @@ a { color: var(--navy); }
 .nb-steps { margin: 0 0 4px; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--mist); }
 .nb-steps strong { color: var(--paper); }
 .nb-actions.secondary { margin-top: 10px; }
+
+.nb-tone i.navy { background: var(--navy); }

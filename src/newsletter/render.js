@@ -164,6 +164,13 @@ function storyBlock(b, { leading = false } = {}) {
     : primary + textLink(b.link));
   const countdown = countdownMarkup(b.countdown,b.button?.url);
   const inner = image(b.image, b.button?.url, true) + kicker(b.kicker) + h2(b.heading) + paragraphs(safeUrl(b.button?.url) === RAFFLE_TICKET_URL ? String(b.body || '').replace('Every ticket supports Teacher Appreciation Week.', 'Every ticket supports RCAP’s efforts. This is our main fundraiser for Teacher Appreciation Week.') : b.body) + countdown + actions;
+  if (b.tone === 'navy') {
+    const light = html => html.replaceAll(`color:${C.navy};`, `color:${C.paper};`);
+    const copy = light(paragraphs(b.body)).replaceAll(`style="color:${C.paper};font-weight:700;text-decoration:underline;`, 'style="color:#f5d783;font-weight:700;text-decoration:underline;');
+    const title = light(h2(b.heading)).replace('font-size:30px;', "font-family:Georgia,'Times New Roman',serif;font-size:36px;");
+    const nativeActions = `<div style="text-align:${b.centerActions ? 'center' : 'left'};">${primary}${light(textLink(b.link))}</div>`;
+    return row(C.navy, '36px 26px', image(b.image,b.button?.url,true) + kicker(b.kicker).replace(`color:${C.gold};`, 'color:#f5d783;') + title + '<div style="width:54px;border-top:3px solid #f5d783;margin:20px 0 24px;"></div>' + copy + countdown + (b.cards ? cardItems(b.cards) : nativeActions));
+  }
   return row(b.tone === 'sand' ? C.sand : C.paper, leading ? '14px 26px 30px' : '30px 26px', inner.trim() ? inner : '');
 }
 function photoBlock(b) { return row(C.paper, '0', image(b.image, b.href)); }

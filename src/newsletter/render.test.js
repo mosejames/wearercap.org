@@ -110,3 +110,14 @@ describe('photo spotlight frames',()=>{
   const html=renderDocument({blocks:[{id:'plain',type:'photo',image:{url:'https://example.org/plain.jpg',alt:'Plain'}}]});expect(html).toContain('plain.jpg');expect(html).not.toContain('border:3px solid #d6b461');
  });
 });
+
+it('renders a native navy invitation with readable copy and working actions', () => {
+ const html=renderEmail({subject:'Meeting',blocks:[{id:'meeting',type:'story',tone:'navy',kicker:'NOVEMBER 16',heading:'General meeting & live drawing',body:'Join our **RCAP family**. [Watch online](https://example.org/live)',actionStyle:'solid',button:{label:'Join us',url:'https://example.org/join'}}]});
+ expect(html).toContain('background:#1a2a56;');
+ expect(html).toContain('color:#faf4ea;');
+ expect(html).toContain('color:#f5d783;font-weight:700;text-decoration:underline;');
+ expect(html).toContain('href="https://example.org/join"');
+ expect(html).toContain('background:#f7a81c;');
+ expect(html).toContain('<strong>RCAP family</strong>');
+ expect(html).not.toContain('rcap-nov16-meeting-og.png');
+});

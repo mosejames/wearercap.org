@@ -386,7 +386,7 @@ function BlockEditor({ block, update, issueId, onError }) {
             { key: 'link', label: 'Link', on: !!block.cards||link, add: () => show('link') },
           ]} />
           <div className="nb-tone" role="radiogroup" aria-label="Background">
-            {[['paper', 'Paper'], ['sand', 'Sand']].map(([v, l]) => (
+            {[['paper', 'Paper'], ['sand', 'Sand'], ['navy', 'Navy']].map(([v, l]) => (
               <button key={v} type="button" role="radio" aria-checked={tone === v} className={tone === v ? 'on' : ''} onClick={() => update({ ...block, tone: v })}><i className={v} />{l}</button>
             ))}
           </div>
