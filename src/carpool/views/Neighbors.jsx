@@ -102,7 +102,7 @@ function NearbyCard({ row, family, busy, disabled, onChange }) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
             You're interested
           </p>
-          <p className="cp-fam-sent-note">We'll email you if they say yes. They won't know unless they do.</p>
+          <p className="cp-fam-sent-note">Thank you. We're waiting on this family to show interest too. If they do, we'll email you both. Until then, they won't know.</p>
           <button type="button" className="cp-btn cp-btn--quiet" disabled={busy || disabled} onClick={() => onChange(false)}>
             {busy ? 'Saving…' : 'Change my mind'}
           </button>
@@ -169,7 +169,7 @@ export default function Neighbors({ family, userId, fromIntro = false, onFamilyC
       if (!interested) return 'Done. That family was never told.';
       return result?.mutual
         ? 'You both said yes. Their name and contact are now at the top of this page.'
-        : 'Your interest is saved. That family won\'t know unless they say yes too.';
+        : 'Thank you for showing interest. Now we wait for that family to show interest too. If they do, we\'ll email you both.';
     },
   );
 

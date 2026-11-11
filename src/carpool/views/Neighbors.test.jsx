@@ -40,7 +40,7 @@ it('saves interest privately and confirms the other family was not told', async 
   await render();
   await act(async () => buttons("I'm interested")[0].click());
   expect(api.setInterest).toHaveBeenCalledWith('n1', true);
-  expect(host.textContent).toContain("won't know unless they say yes too");
+  expect(host.textContent).toContain('Thank you for showing interest');
 });
 
 it('reveals name and contact only for a mutual match', async () => {
