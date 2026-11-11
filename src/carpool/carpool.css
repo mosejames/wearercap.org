@@ -1488,3 +1488,26 @@ body {
 }
 .cp-waiting p { margin: 0; font-size: 15px; line-height: 1.45; }
 .cp-waiting .cp-waiting-title { color: var(--gold); font-weight: 800; font-size: 17px; margin-bottom: 4px; }
+.cp-howto-heading { margin: 0; font: inherit; }
+.cp-howto-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cp-howto-toggle:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); border-radius: var(--radius-btn); }
+.cp-howto-toggle-text { display: flex; flex-direction: column; gap: 6px; }
+.cp-howto-toggle .cp-label { margin: 0; }
+.cp-howto-toggle .cp-h3 { margin: 0; }
+.cp-howto-toggle .cp-collapse-chevron { flex: none; }
+#cp-howto-body { margin-top: 12px; }
+.cp-howto--closed { padding-top: 18px; padding-bottom: 18px; }

@@ -1,12 +1,29 @@
 import { useState } from 'react';
+import { readStoredOpen, writeStoredOpen } from './Collapsible.jsx';
 
 export default function HowItWorks() {
   const [videoOpen, setVideoOpen] = useState(false);
+  // Collapsed by default (Mose, 2026-11-10) so the signup form sits higher.
+  // The choice survives the app's in-session remounts, like other sections.
+  const [open, setOpen] = useState(() => readStoredOpen('howto', false));
+  const toggle = () => setOpen((prev) => { writeStoredOpen('howto', !prev); return !prev; });
 
   return (
-    <section className="cp-howto" aria-labelledby="cp-howto-title">
-      <p className="cp-label cp-label--bar">A quick introduction</p>
-      <h2 id="cp-howto-title" className="cp-h3">How it works</h2>
+    <section className={`cp-howto${open ? '' : ' cp-howto--closed'}`} aria-labelledby="cp-howto-title">
+      <h2 className="cp-howto-heading" id="cp-howto-title">
+        <button type="button" className="cp-howto-toggle" aria-expanded={open} aria-controls="cp-howto-body" onClick={toggle}>
+          <span className="cp-howto-toggle-text">
+            <span className="cp-label cp-label--bar">A quick introduction</span>
+            <span className="cp-h3">How it works</span>
+          </span>
+          <span className={`cp-collapse-chevron${open ? ' cp-collapse-chevron--open' : ''}`} aria-hidden="true">
+            <svg viewBox="0 0 20 20" width="18" height="18" focusable="false">
+              <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </button>
+      </h2>
+      <div id="cp-howto-body" hidden={!open}>
       <p className="cp-howto-intro">Three steps, at your own pace. Watch the guide or read below.</p>
       <button type="button" className="cp-btn cp-btn--dark cp-btn--block cp-howto-watch"
         aria-expanded={videoOpen} aria-controls="cp-howto-video"
@@ -55,10 +72,11 @@ export default function HowItWorks() {
         </li>
       </ol>
       <p className="cp-howto-sharing">
-        <strong>You choose to share.</strong> Before creating or requesting to join a group, you agree to share your email and phone with its members, including those the organizer accepts later. A join request must be accepted before sharing starts.{' '}
+        <strong>You choose to share.</strong> Your name and contact stay private until you and another family both say yes. Then only that family sees them.{' '}
         <a href="#sharing">How sharing works</a>
       </p>
       <p className="cp-howto-note">Completely optional. Independent and parent-run, not school-sponsored. RCAP introduces families; parents arrange the rides.</p>
+      </div>
     </section>
   );
 }
