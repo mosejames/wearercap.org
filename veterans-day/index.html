@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0c2039">
+<meta name="description" content="Make a Veterans Day Story honoring a veteran in your RCA family.">
+<link rel="canonical" href="https://wearercap.org/veterans-day/">
+<title>RCAP Veterans Day Tribute</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="./tribute.js"></script>
+</head>
+<body>
+<main>
+<header>
+<img src="/brand/rcap-reversed.svg" alt="RCAP · Ron Clark Academy Parents" width="156">
+<h1>Honor a veteran</h1>
+<p>Create a Veterans Day Story for someone in your RCA family.</p>
+</header>
+<div class="workspace">
+<form id="tribute">
+<label for="photo">Veteran’s photo</label>
+<input id="photo" type="file" accept="image/*" required aria-describedby="photo-help">
+<small id="photo-help">Choose a photo from your phone or computer.</small>
+<div id="position" hidden>
+<label for="crop">Photo fit</label>
+<select id="crop"><option value="cover">Fill the frame</option><option value="contain">Show the full photo</option></select>
+<label for="vertical">Move photo up or down</label>
+<input id="vertical" type="range" min="0" max="100" value="35">
+</div>
+<label for="veteran">Veteran’s name</label>
+<input id="veteran" placeholder="Full name" maxlength="75" required>
+<label for="service">Rank, branch or service details <span>Optional</span></label>
+<input id="service" placeholder="e.g. Airman Second Class · U.S. Air Force" maxlength="105">
+<label for="student">RCA student’s name</label>
+<input id="student" placeholder="Student’s name" maxlength="70" required>
+<div class="pair">
+<div><label for="relationship">Relationship to student</label><input id="relationship" placeholder="e.g. Grandfather" maxlength="40" required></div>
+<div><label for="year">Class year</label><input id="year" placeholder="2028" inputmode="numeric" pattern="20[0-9]{2}" maxlength="4" required></div>
+</div>
+<div class="actions">
+<button type="submit">Download Story</button>
+<button type="button" id="share" class="secondary" hidden>Share Story</button>
+</div>
+<p class="note">Your photo and details stay on this device. Send the finished Story to RCAP to share your tribute.</p>
+<p id="status" role="status"></p>
+</form>
+<section aria-labelledby="preview-title">
+<h2 id="preview-title">Story preview</h2>
+<canvas id="preview" width="1080" height="1920" role="img" aria-label="Live preview of the Veterans Day Story"></canvas>
+</section>
+</div>
+</main>
+</body>
+</html>

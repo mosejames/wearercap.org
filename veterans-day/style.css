@@ -1,0 +1,29 @@
+*{box-sizing:border-box}
+:root{color-scheme:dark;--navy:#0b1a2e;--panel:#10243e;--line:#36506b;--gold:#f7b43c;--paper:#fff5e4;--muted:#b9cadd}
+body{margin:0;background:radial-gradient(ellipse at top,#173754,var(--navy) 65%);color:var(--paper);font:16px/1.5 system-ui,sans-serif;min-height:100vh}
+main{max-width:990px;padding:46px 24px 58px;margin:auto}
+header{margin-bottom:32px}
+header img{display:block;height:auto;margin-bottom:20px}
+h1{font:normal clamp(46px,7vw,76px)/1.04 Georgia,serif;margin:0 0 9px}
+p{margin:0;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,355px);align-items:start;gap:32px}
+form{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:24px}
+label{display:block;font-size:14px;font-weight:650;margin:14px 0 5px}
+form>label:first-child{margin-top:0}
+label span,small,.note{color:var(--muted);font-weight:400;font-size:13px}
+label span{margin-left:5px}
+input,select,button{font:inherit;border-radius:7px}
+input,select{width:100%;min-width:0;border:1px solid var(--line);background:#0b1c31;color:var(--paper);padding:10px 12px}
+input::placeholder{color:#9db0c5}
+input[type=file]{padding:8px}
+input::file-selector-button{font:inherit;background:#284968;color:white;border:0;border-radius:4px;padding:5px 8px;margin-right:8px}
+input[type=range]{accent-color:var(--gold);padding:0}
+.pair{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin:20px 0 12px}
+button{cursor:pointer;border:1px solid transparent;background:var(--gold);color:#152238;font-weight:750;padding:10px 14px}
+button.secondary{background:transparent;border-color:var(--line);color:var(--paper)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h2{font-size:15px;margin:0 0 9px}
+canvas{display:block;width:100%;height:auto;aspect-ratio:9/16;border-radius:10px;border:1px solid var(--line);background:#0c2039}
+#status{font-size:14px;color:var(--gold);margin-top:6px}
+@media(max-width:720px){main{padding:27px 16px 40px}.workspace{grid-template-columns:1fr;gap:23px}form{padding:17px}canvas{max-width:360px;margin:auto}h2{text-align:center}}

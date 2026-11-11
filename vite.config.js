@@ -29,6 +29,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        veteransDay: resolve(__dirname, "veterans-day/index.html"),
         postthepeach: resolve(__dirname, "post-the-peach/index.html"),
         peachreview: resolve(__dirname, "post-the-peach/review/index.html"),
         main: resolve(__dirname, "index.html"),

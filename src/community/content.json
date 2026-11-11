@@ -28,6 +28,15 @@
   },
   "tools": [
     {
+      "id": "veterans-day",
+      "title": "Veterans Day Tribute Builder",
+      "detail": "Create a Veterans Day Story honoring a veteran in your RCA family.",
+      "href": "/veterans-day/",
+      "icon": "Camera",
+      "group": "resources",
+      "color": "gold"
+    },
+    {
       "id": "newsletter",
       "title": "RCAP Newsletters",
       "detail": "The latest notes and every published issue.",
