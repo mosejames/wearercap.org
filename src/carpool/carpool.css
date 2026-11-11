@@ -18,16 +18,22 @@
   /* Gutter beside the content column on wide screens. Ink, not a tan, so it
      reads as one piece with the masthead and footer bands instead of a third
      surface color sitting between them. Invisible on a phone. */
-  --page-bg: #1a1613;
+  /* wearercap.org match (20261111): the gutter, masthead and footer are the
+     homepage navy, not ink. */
+  --navy: #1a2a56;
+  --gold: #f7a81c;
+  --gold-deep: #8f5e04;
+  --band: #fae8c9;
+  --page-bg: var(--navy);
 
   /* text */
   --ink-soft: #5a4f47;
   --on-dark: #faf4ea;
-  --on-dark-muted: #b8a89a;
+  --on-dark-muted: #c9cfe0;
   /* APP EXTENSION — the newsletter's #6f6357 is 3.08:1 on ink, which is fine
      for its display sizes but not for the 13px footer body this app renders in
      it. Lifted to 4.52:1. */
-  --on-dark-dim: #8c7d6e;
+  --on-dark-dim: #aab3cc; /* 6.4:1 on navy */
 
   /* lines + accent */
   --line: #e4d6c0;
@@ -37,7 +43,7 @@
      and it is used ONLY on inputs, selects, textareas and the address widget.
      Cards, rules, notes and dividers keep --line. */
   --line-input: #9c8263;
-  --line-dark: #3a322b;
+  --line-dark: #34457a;
   --orange: #f26a1b;
   /* APP EXTENSION — --orange is 2.80:1 on paper and 3.06:1 on white, so it
      cannot carry the 11px labels and 10.5px tags this app sets in it. This is
@@ -46,12 +52,13 @@
      masthead. TEXT ONLY — rules, borders, fills and focus rings keep --orange
      so the accent itself does not shift. */
   --orange-text: #b0470a;
-  --grad: linear-gradient(100deg, #f7a81c 0%, #f26a1b 42%, #e0218a 100%);
+  --grad: linear-gradient(100deg, #f7a81c 0%, #f26a1b 100%);
   /* APP EXTENSION — the button ramp. Identical to --grad except the magenta
      end, lifted #e0218a -> #ec4d97 so an INK label clears 4.5:1 across the
      whole span (amber 9.6, orange 5.2, magenta 4.6). See .cp-btn--primary for
      why the label is ink rather than the newsletter's white. */
-  --grad-btn: linear-gradient(100deg, #f7a81c 0%, #f26a1b 42%, #ec4d97 100%);
+  /* wearercap.org match: the homepage CTA is solid gold with an ink label. */
+  --grad-btn: var(--gold);
 
   /* semantic */
   --green: #1f9d57;
@@ -64,10 +71,11 @@
   --blue-wash: #ebeff9;
 
   /* shape */
-  --radius: 16px;
+  --radius: 8px;
+  --radius-btn: 6px; /* the homepage button corner */
   --radius-pill: 999px;
   --shadow-page: 0 30px 80px rgba(0, 0, 0, .28);
-  --shadow-primary: 0 8px 22px rgba(242, 106, 27, .32);
+  --shadow-primary: none;
 
   /* type */
   --font-display: 'Archivo', system-ui, sans-serif;
@@ -155,7 +163,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--ink);
+  background: var(--navy);
   color: var(--on-dark);
   padding: 16px var(--gutter);
 }
@@ -189,7 +197,7 @@ body {
 }
 
 .cp-footer {
-  background: var(--ink);
+  background: var(--navy);
   color: var(--on-dark-muted);
   padding: 32px var(--gutter) calc(40px + env(safe-area-inset-bottom));
   margin-top: auto;   /* pin to the bottom of the shell on short screens */
@@ -229,17 +237,13 @@ body {
    The gradient-clipped payload word. One word per heading, never a phrase. */
 
 .cp-hl {
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* wearercap.org match (20261111): no gradient clip. Orange text on paper,
+     gold on the navy bands, like the homepage. */
+  color: var(--orange-text);
 }
-@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  /* Display-size text, so 3:1. --orange gives 2.80:1 on paper; --orange-text
-     gives 5.12:1 there and still 3.21:1 on the ink masthead and footer, where
-     the same fallback lands on .cp-brand and .cp-fmark. */
-  .cp-hl { color: var(--orange-text); }
-}
+.cp-masthead .cp-hl,
+.cp-footer .cp-hl,
+.cp-hero .cp-hl { color: var(--gold); }
 
 /* ------------------------------------------------- signature move no. 3 --
    One label component. Tone is a modifier, not a new class per context. */
@@ -415,11 +419,11 @@ body {
   min-height: var(--tap);
   padding: 14px 24px;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-btn);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 14px;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   text-decoration: none;
   text-align: center;
@@ -444,11 +448,11 @@ body {
   color: var(--ink);
   box-shadow: var(--shadow-primary);
 }
-.cp-btn--dark { background: var(--ink); color: var(--paper); }
+.cp-btn--dark { background: var(--navy); color: var(--paper); }
 .cp-btn--ghost {
   background: transparent;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--navy);
+  box-shadow: inset 0 0 0 1.5px var(--navy);
 }
 /* Destructive must never read as primary: no fill, no shadow, red type. */
 .cp-btn--danger {
@@ -521,7 +525,7 @@ body {
   outline-offset: var(--focus-offset);
   border-radius: 6px;
 }
-.cp-btn:focus-visible { border-radius: var(--radius-pill); }
+.cp-btn:focus-visible { border-radius: var(--radius-btn); }
 
 /* APP EXTENSION — the newsletter's opacity:.45 disabled state fails WCAG AA.
    Disabled is a real style: paper-2 fill, ink-soft type (~6.5:1), no shadow.
@@ -1301,3 +1305,175 @@ body {
   .cp-howto-steps li { gap: 10px; }
   .cp-howto-watch { padding-left: 12px; padding-right: 12px; }
 }
+
+
+/* ------------------------------------------- mutual interest (20261111) -- */
+.cp-hero {
+  background: var(--navy);
+  color: var(--on-dark);
+  padding: 22px var(--gutter) 42px;
+}
+.cp-hero .cp-h1 { color: var(--on-dark); margin: 0 0 10px; }
+.cp-hero .cp-lede { color: rgba(250, 244, 234, .9); margin: 0; max-width: 34em; }
+.cp-intro-note {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: -22px var(--gutter) 0;
+  padding: 14px 16px;
+  background: var(--band);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--gold-deep);
+  position: relative;
+}
+.cp-intro-note svg { flex: none; margin-top: 2px; }
+.cp-intro-note p { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--ink); }
+.cp-neighbors { padding-top: 26px; }
+.cp-section-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--orange-text);
+  margin: 0 4px 12px;
+}
+.cp-fam-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 26px; }
+.cp-fam-list .cp-section-label { margin-bottom: -2px; }
+.cp-fam {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.cp-fam--quiet { margin-bottom: 18px; }
+.cp-fam--warm { background: var(--band); border-color: var(--band); }
+.cp-fam--match { border: 2px solid var(--navy); }
+.cp-fam-head { display: flex; gap: 14px; align-items: center; }
+.cp-fam-avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--gold);
+  font-weight: 900;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cp-fam-name { margin: 0; font-family: var(--font-display); font-size: 19px; font-weight: 800; line-height: 1.2; }
+.cp-fam-meta { margin: 4px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--ink-soft); }
+.cp-fam-overlap {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--paper);
+  border-radius: var(--radius-btn);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.cp-fam-contact {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px 12px;
+  font-size: 15px;
+}
+.cp-fam-contact dt { color: var(--ink-soft); }
+.cp-fam-contact dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.cp-fam-contact a { color: var(--navy); }
+.cp-fam-actions { display: flex; flex-direction: column; gap: 10px; }
+.cp-fam-undo { align-self: center; }
+.cp-fam-confirm { background: var(--red-wash); border-radius: var(--radius-btn); padding: 12px 14px; }
+.cp-fam-confirm p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.45; }
+.cp-fam-confirm-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.cp-fam-sent { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cp-fam-sent-badge {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  border: 1.5px solid var(--green);
+  border-radius: var(--radius-btn);
+  color: #176b3c;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.cp-fam-sent-note { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-soft); text-align: center; }
+.cp-next {
+  background: var(--navy);
+  color: var(--on-dark);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin: 4px 0 22px;
+}
+.cp-next-title {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.cp-next-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.cp-next-steps li { display: flex; gap: 14px; }
+.cp-next-steps p { margin: 0; font-size: 15px; line-height: 1.45; }
+.cp-next-num {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 900;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cp-first-ride { margin: 4px 0 0; }
+.cp-quote {
+  margin: 0;
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-size: 16.5px;
+  color: var(--ink-soft);
+}
+.cp-radius-pills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cp-pill {
+  min-height: 44px;
+  border: 1.5px solid var(--line-input);
+  border-radius: var(--radius-btn);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cp-pill--on { background: var(--navy); border-color: var(--navy); color: var(--on-dark); }
+.cp-pill:focus-visible, .cp-linkbtn:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.cp-neighbors-foot { margin: 0 4px 10px; }
+.cp-linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--navy);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.cp-banner--ok { background: var(--green-wash); }
+.cp-banner--error { background: var(--red-wash); }

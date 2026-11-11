@@ -9,6 +9,8 @@ import MapView from './MapView.jsx';
 import RadiusControl from './RadiusControl.jsx';
 import Groups from './Groups.jsx';
 import Collapsible from './Collapsible.jsx';
+import Neighbors from './Neighbors.jsx';
+import { cameFromIntro } from '../neighbors.js';
 
 // Builds a family record from a stashed onboarding/edit payload, saves it,
 // and clears the stash. Used both when the signed-in user has no family row
@@ -159,19 +161,31 @@ export default function Ready({ isAdmin = false, isPending = false, openAdmin = 
     <>
       {pendingBanner}
       {adminBar}
-      <div className="carpool-shell">
+      {/* Mutual interest (20261111): one question and one button per family.
+          The navy band continues the masthead, matching the wearercap.org hero. */}
+      <section className="cp-hero">
         <h1 className="cp-h1">Share the <span className="cp-hl">drive.</span></h1>
-        <p className="cp-lede">Find a family, start a conversation, and see if sharing the school drive works for you.</p>
-        {family.paused_at && (
-          <div className="cp-banner cp-banner--info" role="status">
-            <strong>Nearby matching is paused.</strong>
-            <p>You are hidden from nearby family searches, and your nearby family list is hidden too. Your existing groups and their contact sharing remain unchanged.</p>
-          </div>
-        )}
-        {/* Existing groups and the next step come before account settings or the map.
-            Keep groups mounted while paused: pausing does not end a membership. */}
-        {!isPending && <Groups family={family} userId={userId} />}
-        {!family.paused_at && <MapView family={family} isPending={isPending} reloadKey={nearbyReloadKey} />}
+        <p className="cp-lede">
+          {isPending
+            ? 'You are almost in. Once you are approved, you will see families near you who drive some of the same days.'
+            : 'Find RCA families near you who drive some of the same days, and see if a carpool could work.'}
+        </p>
+      </section>
+      {isPending ? (
+        <div className="carpool-shell"><MapView family={family} isPending reloadKey={nearbyReloadKey} /></div>
+      ) : (
+        <Neighbors
+          family={family}
+          userId={userId}
+          fromIntro={cameFromIntro(typeof window === 'undefined' ? '' : window.location.search)}
+          onFamilyChange={(patch) => setFamily((f) => ({ ...f, ...patch }))}
+        />
+      )}
+      <div className="carpool-shell">
+        {/* Existing carpool groups keep working for the families already in
+            one. New connections go through mutual interest above, so this
+            renders nothing for a family with no group. */}
+        {!isPending && <Groups family={family} userId={userId} mineOnly />}
         {/* Account details are secondary to finding and connecting with families. */}
         <Collapsible id="cp-family" title="Your account" defaultOpen={false}>
           <div className="cp-card">

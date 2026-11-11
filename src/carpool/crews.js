@@ -52,6 +52,12 @@ function zipOf(label) {
   return match ? match[0] : '';
 }
 
+// placeName(label) -> 'Union City' | null. The same hand-kept table, for the
+// mutual-interest cards, which name an area but never a family before a match.
+export function placeName(label) {
+  return ZIP_TO_PLACE[zipOf(label)] ?? null;
+}
+
 // crewLabel(areaLabels) -> string.
 // areaLabels is the crew families' area_label values (ZIP strings), in
 // nearest-first order. Find the dominant (most common) ZIP, map it to a place

@@ -219,7 +219,7 @@ async function handleFamilyInsert(
 
   const { data: families, error: famErr } = await supabase
     .from("families")
-    .select("user_id, area_lat, area_lng, contact_email, nearby_notified_at")
+    .select("user_id, area_lat, area_lng, contact_email, nearby_notified_at, paused_at")
     .neq("user_id", newUserId);
 
   if (famErr) {
@@ -234,10 +234,13 @@ async function handleFamilyInsert(
     area_lng: number;
     contact_email: string;
     nearby_notified_at: string | null;
+    paused_at: string | null;
   };
 
   const recipients = ((families ?? []) as FamilyRow[]).filter((f) => {
     if (!approvedIds.has(f.user_id)) return false;
+    // A paused family asked not to be part of matching. No nearby emails.
+    if (f.paused_at) return false;
     if (!Number.isFinite(f.area_lat) || !Number.isFinite(f.area_lng)) return false;
     const distance = haversineMiles(newLat, newLng, f.area_lat, f.area_lng);
     if (distance > NEARBY_RADIUS_MILES) return false;
@@ -254,8 +257,8 @@ async function handleFamilyInsert(
   // — recipients log in to see the pin on the map.
   const subject = "A new family joined the carpool map in your area";
   const html = `
-    <p>A new family joined the carpool map in your area.</p>
-    <p>Log in to see where they are on the map.</p>
+    <p>A new RCA family joined carpool near you.</p>
+    <p>Take a look and say if you're interested. It stays private unless they say yes too.</p>
     ${siteLinkParagraph()}
   `;
 
@@ -273,6 +276,54 @@ async function handleFamilyInsert(
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// carpool_interests INSERT -> if the reverse interest already exists, both
+// families just said yes. Email both. Never email on a one-sided interest: the
+// other family must not learn who is interested in them (migration
+// 20261111022500). The body carries no names; they sign in to see each other.
+async function handleInterestInsert(
+  // deno-lint-ignore no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
+  record: Record<string, unknown>,
+): Promise<EmailResult[]> {
+  const fromUser = String(record.from_user ?? "");
+  const toUser = String(record.to_user ?? "");
+  if (!fromUser || !toUser) return [];
+
+  const { data: reverse, error: reverseErr } = await supabase
+    .from("carpool_interests")
+    .select("from_user")
+    .eq("from_user", toUser)
+    .eq("to_user", fromUser)
+    .maybeSingle();
+  if (reverseErr) {
+    console.error("notify: failed to check reverse interest:", reverseErr);
+    return [];
+  }
+  if (!reverse) return [];
+
+  const { data: fams, error: famErr } = await supabase
+    .from("families")
+    .select("user_id, contact_email")
+    .in("user_id", [fromUser, toUser]);
+  if (famErr) {
+    console.error("notify: failed to load matched families:", famErr);
+    return [];
+  }
+
+  const subject = "You both said yes";
+  const html = `
+    <p>A family near you is interested in sharing the drive too.</p>
+    <p>You can now see each other's name and contact on the carpool page. Say hello and plan the rides together.</p>
+    ${siteLinkParagraph()}
+  `;
+  return await Promise.all(
+    ((fams ?? []) as { contact_email: string | null }[])
+      .filter((f) => !!f.contact_email)
+      .map((f) => sendEmail(String(f.contact_email), subject, html)),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -318,6 +369,9 @@ Deno.serve(async (req: Request) => {
     } else if (table === "families" && type === "INSERT" && record) {
       action = "family_insert_notify_nearby";
       results = await handleFamilyInsert(supabase, record);
+    } else if (table === "carpool_interests" && type === "INSERT" && record) {
+      action = "interest_insert_notify_match";
+      results = await handleInterestInsert(supabase, record);
     }
   } catch (err) {
     // Belt-and-suspenders: even an unexpected error in dispatch must not

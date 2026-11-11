@@ -200,7 +200,10 @@ function ContactSharingConsent({ id, organizer = false, checked, onChange }) {
   );
 }
 
-export default function Groups({ family, userId }) {
+// mineOnly (mutual interest, 20261111): show only the groups this family is
+// already part of or asked to join. Finding and starting new connections moved
+// to Neighbors, so the crew card, nearby groups and the create form stay off.
+export default function Groups({ family, userId, mineOnly = false }) {
   // family.user_id is the same person as userId; userId is passed in
   // separately because Ready already holds it and every fetcher here returns
   // an empty list for a missing user, which would otherwise be
@@ -304,7 +307,7 @@ export default function Groups({ family, userId }) {
         // silently to no crew. Any other error is also swallowed to [] on
         // purpose (a warn is left for debugging), because the groups the parent
         // came here for must still render even if the crew cannot be computed.
-        (family?.paused_at ? Promise.resolve([]) : fetchNearby()).catch((err) => {
+        (mineOnly || family?.paused_at ? Promise.resolve([]) : fetchNearby()).catch((err) => {
           if (!isMissingRpcError(err) && typeof console !== 'undefined') {
             console.warn('Suggested crew unavailable:', err?.message ?? err);
           }
@@ -485,9 +488,17 @@ export default function Groups({ family, userId }) {
 
   const showEmptyStates = loaded && !loading;
 
+  // In mineOnly mode a family with no group, no request and nothing to finish
+  // sees nothing here at all, not an empty "Your groups" heading.
+  if (mineOnly && !loadError && (!loaded || (
+    data.myGroups.length === 0 && data.orphanGroups.length === 0 && data.pendingSent.length === 0
+  ))) {
+    return <RetirementNotices userId={me} canCreate={false} onCreate={() => {}} />;
+  }
+
   return (
     <section className="cp-subblock">
-      <RetirementNotices userId={me} canCreate={loaded && data.canOrganize && !family.paused_at} onCreate={() => {
+      <RetirementNotices userId={me} canCreate={!mineOnly && loaded && data.canOrganize && !family.paused_at} onCreate={() => {
         setName(`Area ${family.area_label} crew`);
         setDirection(family.direction);
         setWeekdays([...family.weekdays]);
@@ -719,7 +730,7 @@ export default function Groups({ family, userId }) {
         </Collapsible>
       )}
 
-      {!family.paused_at && <>
+      {!mineOnly && !family.paused_at && <>
       {/* The suggested-crew card sits OUTSIDE the "Start a group" collapsible so
           its button stays tappable while that section is closed: tapping it is
           what opens the section (below) and scrolls to the form. */}
