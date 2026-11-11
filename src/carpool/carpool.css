@@ -51,7 +51,9 @@
      paper-2, and it still clears 3:1 on ink for the .cp-hl fallback in the
      masthead. TEXT ONLY — rules, borders, fills and focus rings keep --orange
      so the accent itself does not shift. */
-  --orange-text: #b0470a;
+  /* Mose 20261110: the burnt orange did not work. Accent TEXT on cream is now
+     navy (12:1 on paper); bright --orange stays only as thin rules and bars. */
+  --orange-text: var(--navy);
   --grad: linear-gradient(100deg, #f7a81c 0%, #f26a1b 100%);
   /* APP EXTENSION — the button ramp. Identical to --grad except the magenta
      end, lifted #e0218a -> #ec4d97 so an INK label clears 4.5:1 across the
