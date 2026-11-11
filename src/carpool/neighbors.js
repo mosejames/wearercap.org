@@ -11,6 +11,14 @@ export async function fetchNeighbors() {
   return data ?? [];
 }
 
+// How many nearby families said yes to you and are waiting on you. A count,
+// never which family.
+export async function fetchWaitingCount() {
+  const { data, error } = await supabase.rpc('carpool_interest_waiting');
+  if (error) throw error;
+  return typeof data === 'number' ? data : 0;
+}
+
 export async function setInterest(familyId, interested) {
   if (!familyId) throw new Error('A family is required.');
   const { data, error } = await supabase.rpc('set_carpool_interest', {

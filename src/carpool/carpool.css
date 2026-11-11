@@ -1477,3 +1477,13 @@ body {
 }
 .cp-banner--ok { background: var(--green-wash); }
 .cp-banner--error { background: var(--red-wash); }
+.cp-waiting {
+  background: var(--navy);
+  color: var(--on-dark);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  border-left: 0;
+}
+.cp-waiting p { margin: 0; font-size: 15px; line-height: 1.45; }
+.cp-waiting .cp-waiting-title { color: var(--gold); font-weight: 800; font-size: 17px; margin-bottom: 4px; }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchNeighbors, setInterest, setPaused, splitNeighbors, areaTitle, distanceLine, firstName } from '../neighbors.js';
+import { fetchNeighbors, fetchWaitingCount, setInterest, setPaused, splitNeighbors, areaTitle, distanceLine, firstName } from '../neighbors.js';
 import { scheduleOverlap } from '../compatibility.js';
 import { setFamilyRadius } from '../family.js';
 import { detectPlatform, groupTextHref } from '../groupHandoff.js';
@@ -118,6 +118,7 @@ function NearbyCard({ row, family, busy, disabled, onChange }) {
 
 export default function Neighbors({ family, userId, fromIntro = false, onFamilyChange }) {
   const [rows, setRows] = useState([]);
+  const [waiting, setWaiting] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busyId, setBusyId] = useState('');
@@ -133,9 +134,14 @@ export default function Neighbors({ family, userId, fromIntro = false, onFamilyC
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchNeighbors();
+      const [data, count] = await Promise.all([
+        fetchNeighbors(),
+        // The waiting count is a courtesy line; it must never block the list.
+        fetchWaitingCount().catch(() => 0),
+      ]);
       if (!mountedRef.current) return;
       setRows(data);
+      setWaiting(count);
       setLoadError('');
     } catch {
       if (mountedRef.current) setLoadError('We could not load families near you. Please try again.');
@@ -207,6 +213,15 @@ export default function Neighbors({ family, userId, fromIntro = false, onFamilyC
               {busyId === 'pause' ? 'Resuming…' : 'Resume carpool'}
             </button>
           </section>
+        )}
+
+        {waiting > 0 && !paused && (
+          <div className="cp-waiting" role="status">
+            <p className="cp-waiting-title">
+              {waiting === 1 ? 'A family near you is interested.' : 'Families near you are interested.'}
+            </p>
+            <p>We won't say which one until you both say yes. Tap I'm interested on any family that could work for you. If it's a match, we'll email you both.</p>
+          </div>
         )}
 
         {loading && <p className="cp-loading">Finding families near you</p>}

@@ -6,7 +6,7 @@ import * as api from '../neighbors.js';
 
 vi.mock('../neighbors.js', async (original) => ({
   ...await original(),
-  fetchNeighbors: vi.fn(), setInterest: vi.fn(), setPaused: vi.fn(),
+  fetchNeighbors: vi.fn(), fetchWaitingCount: vi.fn(), setInterest: vi.fn(), setPaused: vi.fn(),
 }));
 vi.mock('../family.js', () => ({ setFamilyRadius: vi.fn() }));
 
@@ -18,6 +18,7 @@ const render = async (props = {}) => act(async () => root.render(<Neighbors fami
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  api.fetchWaitingCount.mockResolvedValue(0);
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host);
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
@@ -61,4 +62,25 @@ it('offers a wider search when nobody is near', async () => {
   expect(host.textContent).toContain('No families near you yet');
   expect(buttons('25 mi')).toHaveLength(1);
   expect(host.textContent).toContain('You came from an introduction');
+});
+
+it('tells a family someone nearby is interested without pointing at which card', async () => {
+  api.fetchWaitingCount.mockResolvedValue(1);
+  api.fetchNeighbors.mockResolvedValue([
+    { user_id: 'n1', area_label: '30291', direction: 'am', weekdays: ['mon'], distance_miles: 1, interested: false, mutual: false },
+    { user_id: 'n2', area_label: '30349', direction: 'am', weekdays: ['mon'], distance_miles: 3, interested: false, mutual: false },
+  ]);
+  await render();
+  expect(host.textContent).toContain('A family near you is interested.');
+  expect(host.textContent).toContain("We won't say which one");
+  expect(buttons("I'm interested")).toHaveLength(2);
+});
+
+it('still lists families when the waiting count cannot load', async () => {
+  api.fetchWaitingCount.mockRejectedValue(new Error('offline'));
+  api.fetchNeighbors.mockResolvedValue([
+    { user_id: 'n1', area_label: '30291', direction: 'am', weekdays: ['mon'], distance_miles: 1, interested: false, mutual: false },
+  ]);
+  await render();
+  expect(buttons("I'm interested")).toHaveLength(1);
 });

@@ -33,6 +33,11 @@ alter table public.carpool_interests enable row level security;
 -- interested in whom is exactly the secret this feature keeps.
 revoke all on public.carpool_interests from anon, authenticated;
 
+-- When a family says they are interested in you, you hear about it by email
+-- (never who). This throttles that email to one a day per family, so a parent
+-- who signed up months ago is told, but is not flooded.
+alter table public.families add column if not exists interest_notified_at timestamptz;
+
 -- ---------------------------------------------------------------- read --
 create or replace function public.carpool_neighbors()
 returns table (
@@ -104,6 +109,26 @@ as $$
   select * from near
   order by 7 desc, 5 nulls last;
 $$;
+
+-- How many nearby families are waiting on you: they said yes to you, you have
+-- not said yes back. A count only, never which family, so the page can say "a
+-- family near you is interested" without pointing at a card.
+create or replace function public.carpool_interest_waiting()
+returns integer
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select count(*)::int
+  from public.carpool_interests i
+  join public.nearby_families() n on n.user_id = i.from_user
+  where i.to_user = auth.uid()
+    and not exists (select 1 from public.carpool_interests r
+                    where r.from_user = auth.uid() and r.to_user = i.from_user);
+$$;
+revoke all on function public.carpool_interest_waiting() from public, anon;
+grant execute on function public.carpool_interest_waiting() to authenticated;
 
 -- --------------------------------------------------------------- write --
 create or replace function public.set_carpool_interest(p_family uuid, p_interested boolean)
@@ -182,9 +207,11 @@ as $function$
 $function$;
 
 -- ---------------------------------------------------- match notification --
--- Every new interest row goes to the notify edge function, which emails both
--- families only when the reverse row already exists (a mutual match). The
--- record carries two user ids and a timestamp, nothing else.
+-- Every new interest row goes to the notify edge function. If the reverse row
+-- exists it is a match and both families are emailed. If not, the family who
+-- received the interest gets an anonymous "a family near you is interested"
+-- email, throttled by families.interest_notified_at. The record carries two
+-- user ids and a timestamp, nothing else.
 drop trigger if exists carpool_interests_notify on public.carpool_interests;
 create trigger carpool_interests_notify
   after insert on public.carpool_interests

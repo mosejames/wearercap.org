@@ -279,10 +279,49 @@ async function handleFamilyInsert(
 }
 
 // ---------------------------------------------------------------------------
+// One-sided interest -> tell the family who received it, without saying who.
+// A family that signed up months ago must not have to keep checking the site.
+// Skipped for a paused or unapproved family, and throttled to one a day.
+const INTEREST_THROTTLE_MS = 24 * 60 * 60 * 1000;
+async function notifyInterestReceived(
+  // deno-lint-ignore no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
+  toUser: string,
+): Promise<EmailResult[]> {
+  const [{ data: fam, error: famErr }, { data: member, error: memberErr }] = await Promise.all([
+    supabase.from("families").select("contact_email, paused_at, interest_notified_at")
+      .eq("user_id", toUser).maybeSingle(),
+    supabase.from("members").select("approval").eq("user_id", toUser).maybeSingle(),
+  ]);
+  if (famErr || memberErr) {
+    console.error("notify: failed to load interest recipient:", famErr ?? memberErr);
+    return [];
+  }
+  if (!fam?.contact_email || fam.paused_at || member?.approval !== "approved") return [];
+  if (fam.interest_notified_at &&
+      Date.now() - new Date(fam.interest_notified_at).getTime() < INTEREST_THROTTLE_MS) {
+    return [];
+  }
+
+  const subject = "A family near you is interested in carpooling";
+  const html = `
+    <p>A family near you said they're interested in sharing the school drive.</p>
+    <p>We won't share who until you both say yes. Take a look at the families near you and tap I'm interested on any family that could work for you. If it's a match, we'll email you both.</p>
+    ${siteLinkParagraph()}
+  `;
+  const result = await sendEmail(String(fam.contact_email), subject, html);
+  const { error: updateErr } = await supabase.from("families")
+    .update({ interest_notified_at: new Date().toISOString() })
+    .eq("user_id", toUser);
+  if (updateErr) console.error("notify: failed to update interest_notified_at:", updateErr);
+  return [result];
+}
+
+// ---------------------------------------------------------------------------
 // carpool_interests INSERT -> if the reverse interest already exists, both
-// families just said yes. Email both. Never email on a one-sided interest: the
-// other family must not learn who is interested in them (migration
-// 20261111022500). The body carries no names; they sign in to see each other.
+// families just said yes: email both. Otherwise tell the receiving family that
+// someone nearby is interested, never who (migration 20261111022500). No email
+// body carries a name; families sign in to see each other after a match.
 async function handleInterestInsert(
   // deno-lint-ignore no-explicit-any
   supabase: SupabaseClient<any, any, any>,
@@ -302,7 +341,7 @@ async function handleInterestInsert(
     console.error("notify: failed to check reverse interest:", reverseErr);
     return [];
   }
-  if (!reverse) return [];
+  if (!reverse) return await notifyInterestReceived(supabase, toUser);
 
   const { data: fams, error: famErr } = await supabase
     .from("families")
