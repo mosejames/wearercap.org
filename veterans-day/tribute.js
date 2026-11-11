@@ -193,7 +193,7 @@ form.addEventListener('submit', async event => {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 30000);
-    status.textContent = 'Story ready. You can send the PNG to RCAP.';
+    status.textContent = 'Story ready. Tag @rcaparents in your Instagram Story or DM it to @rcaparents.';
   } catch {
     status.textContent = 'The Story could not be downloaded. Try again.';
   }
