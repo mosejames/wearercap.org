@@ -43,14 +43,14 @@ export default function HowItWorks() {
           <span className="cp-howto-number" aria-hidden="true">2</span>
           <div>
             <h3>Find nearby families</h3>
-            <p>After approval, compare families and shared ride times. The map shows general areas, never home addresses. Nearby does not guarantee a match.</p>
+            <p>See families near you who drive some of the same days. You see their general area, never a name or address.</p>
           </div>
         </li>
         <li>
           <span className="cp-howto-number" aria-hidden="true">3</span>
           <div>
-            <h3>Connect and plan</h3>
-            <p>Ask to join a group, or create one once a parent volunteer enables organizer access. Creating a group does not add or invite anyone. Families connect, meet, and agree on rides themselves.</p>
+            <h3>Say you're interested</h3>
+            <p>Tap I'm interested on any family. They only find out if they say yes too. Then you both get an email, see each other's contact, and plan the rides together.</p>
           </div>
         </li>
       </ol>

@@ -239,13 +239,10 @@ body {
    The gradient-clipped payload word. One word per heading, never a phrase. */
 
 .cp-hl {
-  /* wearercap.org match (20261111): no gradient clip. Orange text on paper,
-     gold on the navy bands, like the homepage. */
-  color: var(--orange-text);
+  /* Mose 20261110: the payload word is brand gold everywhere, on cream and
+     on navy, next to a navy heading. No gradient clip. */
+  color: var(--gold);
 }
-.cp-masthead .cp-hl,
-.cp-footer .cp-hl,
-.cp-hero .cp-hl { color: var(--gold); }
 
 /* ------------------------------------------------- signature move no. 3 --
    One label component. Tone is a modifier, not a new class per context. */
@@ -297,6 +294,7 @@ body {
 
 .cp-h1 {
   font-family: var(--font-display);
+  color: var(--navy); /* Mose 20261110: heading navy, payload word gold */
   font-weight: 900;
   font-size: clamp(34px, 8.5vw, 52px);
   letter-spacing: -.02em;
@@ -307,6 +305,7 @@ body {
 }
 .cp-h2 {
   font-family: var(--font-display);
+  color: var(--navy);
   font-weight: 800;
   font-size: clamp(26px, 6vw, 38px);
   letter-spacing: -.02em;
