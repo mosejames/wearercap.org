@@ -27,3 +27,9 @@ h2{font-size:15px;margin:0 0 9px}
 canvas{display:block;width:100%;height:auto;aspect-ratio:9/16;border-radius:10px;border:1px solid var(--line);background:#0c2039}
 #status{font-size:14px;color:var(--gold);margin-top:6px}
 @media(max-width:720px){main{padding:27px 16px 40px}.workspace{grid-template-columns:1fr;gap:23px}form{padding:17px}canvas{max-width:360px;margin:auto}h2{text-align:center}}
+
+.story-preview{position:relative;margin:auto}
+#drag-help{font-size:14px;margin:0 0 8px}
+#photo-drag{position:absolute;left:20.83%;top:26.2%;width:58.33%;height:41.77%;touch-action:none;cursor:grab;user-select:none}
+#photo-drag:active{cursor:grabbing}
+@media(max-width:720px){.story-preview{max-width:360px}#drag-help{text-align:center}}

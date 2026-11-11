@@ -25,6 +25,10 @@
 <div id="position" hidden>
 <label for="crop">Photo fit</label>
 <select id="crop"><option value="cover">Fill the frame</option><option value="contain">Show the full photo</option></select>
+<label for="zoom">Photo zoom</label>
+<input id="zoom" type="range" min="100" max="250" value="100">
+<label for="horizontal">Move photo left or right</label>
+<input id="horizontal" type="range" min="0" max="100" value="50">
 <label for="vertical">Move photo up or down</label>
 <input id="vertical" type="range" min="0" max="100" value="35">
 </div>
@@ -47,7 +51,11 @@
 </form>
 <section aria-labelledby="preview-title">
 <h2 id="preview-title">Story preview</h2>
+<p id="drag-help" hidden>Drag the photo to position it in the frame.</p>
+<div class="story-preview">
 <canvas id="preview" width="1080" height="1920" role="img" aria-label="Live preview of the Veterans Day Story"></canvas>
+<div id="photo-drag" aria-hidden="true" hidden></div>
+</div>
 </section>
 </div>
 </main>

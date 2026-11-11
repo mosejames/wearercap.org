@@ -6,13 +6,23 @@ const fields = Object.fromEntries(
 );
 const status = document.querySelector('#status');
 const position = document.querySelector('#position');
+const dragArea = document.querySelector('#photo-drag');
+const dragHelp = document.querySelector('#drag-help');
 const logo = new Image();
 const flag = new Image();
 let photo = null;
 let photoUrl = '';
 const gold = '#f8b432';
 const cream = '#fff5e5';
-const frame = { x: 233, y: 477, width: 614, height: 760 };
+const frame = { x: 225, y: 503, width: 630, height: 802 };
+let drag = null;
+
+function photoSize() {
+  const fit = fields.crop.value === 'contain' ? Math.min : Math.max;
+  const scale = fit(frame.width / photo.naturalWidth, frame.height / photo.naturalHeight)
+    * Number(fields.zoom.value) / 100;
+  return { width: photo.naturalWidth * scale, height: photo.naturalHeight * scale };
+}
 
 function text(value, y, size, family, color, weight = '') {
   if (!value) return;
@@ -32,15 +42,12 @@ function drawPhoto() {
   context.fillStyle = '#102943';
   context.fillRect(x, y, width, height);
   if (photo) {
-    const fit = fields.crop.value === 'contain' ? Math.min : Math.max;
-    const scale = fit(width / photo.naturalWidth, height / photo.naturalHeight);
-    const drawnWidth = photo.naturalWidth * scale;
-    const drawnHeight = photo.naturalHeight * scale;
+    const { width: drawnWidth, height: drawnHeight } = photoSize();
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
     context.clip();
-    context.drawImage(photo, x + (width - drawnWidth) / 2,
+    context.drawImage(photo, x + (width - drawnWidth) * Number(fields.horizontal.value) / 100,
       y + (height - drawnHeight) * Number(fields.vertical.value) / 100, drawnWidth, drawnHeight);
     context.restore();
   } else {
@@ -61,17 +68,38 @@ function draw() {
   shading.addColorStop(1, 'transparent');
   context.fillStyle = shading;
   context.fillRect(0, 1080, 1080, 730);
-  if (logo.naturalWidth) context.drawImage(logo, 414, 205, 252, 252 * logo.naturalHeight / logo.naturalWidth);
-  text('NOVEMBER 11  /  VETERANS DAY', 356, 29, 'system-ui', gold, '700');
+  context.strokeStyle = gold;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.roundRect(62, 157, 956, 1542, 12);
+  context.stroke();
+  if (logo.naturalWidth) context.drawImage(logo, 414, 230, 252, 252 * logo.naturalHeight / logo.naturalWidth);
+  context.letterSpacing = '4px';
+  text('NOVEMBER 11  /  VETERANS DAY', 371, 26, 'system-ui', gold, '700');
+  context.letterSpacing = '0px';
+  context.beginPath();
+  context.moveTo(334, 441);
+  context.lineTo(497, 441);
+  context.moveTo(583, 441);
+  context.lineTo(746, 441);
+  context.stroke();
+  context.fillStyle = gold;
+  context.beginPath();
+  context.moveTo(540, 420);
+  context.quadraticCurveTo(543, 437, 561, 441);
+  context.quadraticCurveTo(543, 445, 540, 462);
+  context.quadraticCurveTo(537, 445, 519, 441);
+  context.quadraticCurveTo(537, 437, 540, 420);
+  context.fill();
   drawPhoto();
-  text(fields.veteran.value.trim() || 'Veteran’s name', 1354, 96, 'Georgia, serif', cream);
-  text(fields.service.value.trim(), 1456, 40, 'system-ui', gold, '650');
+  text(fields.veteran.value.trim() || 'Veteran’s name', 1405, 112, 'Georgia, serif', cream);
+  text(fields.service.value.trim(), 1503, 42, 'system-ui', gold, '650');
   const student = fields.student.value.trim();
   const relationship = fields.relationship.value.trim();
   const year = fields.year.value.trim();
   const relation = student && relationship ? `${relationship} to ${student}` : student || relationship;
   const family = [relation, year && `Class of ${year}`].filter(Boolean).join(', ');
-  text(family || 'Relationship to RCA student · Class year', fields.service.value.trim() ? 1530 : 1466,
+  text(family || 'Relationship to RCA student · Class year', fields.service.value.trim() ? 1575 : 1510,
     32, 'system-ui', cream);
 }
 
@@ -91,7 +119,10 @@ fields.photo.addEventListener('change', () => {
   const file = fields.photo.files[0];
   photo = null;
   status.textContent = '';
-  position.hidden = true;
+  position.hidden = dragArea.hidden = dragHelp.hidden = true;
+  fields.horizontal.value = 50;
+  fields.vertical.value = 35;
+  fields.zoom.value = 100;
   draw();
   if (!file) return;
   const url = URL.createObjectURL(file);
@@ -100,7 +131,7 @@ fields.photo.addEventListener('change', () => {
   image.onload = () => {
     if (photoUrl !== url) return;
     photo = image;
-    position.hidden = false;
+    position.hidden = dragArea.hidden = dragHelp.hidden = false;
     draw();
   };
   image.onerror = () => {
@@ -109,6 +140,37 @@ fields.photo.addEventListener('change', () => {
     status.textContent = 'This photo could not be opened. Try a JPG or PNG.';
   };
   image.src = url;
+});
+
+dragArea.addEventListener('pointerdown', event => {
+  if (!photo || drag || event.button !== 0) return;
+  const size = photoSize();
+  const bounds = dragArea.getBoundingClientRect();
+  drag = {
+    id: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    horizontal: Number(fields.horizontal.value),
+    vertical: Number(fields.vertical.value),
+    travelX: (frame.width - size.width) * bounds.width / frame.width,
+    travelY: (frame.height - size.height) * bounds.height / frame.height,
+  };
+  dragArea.setPointerCapture(event.pointerId);
+});
+
+dragArea.addEventListener('pointermove', event => {
+  if (event.pointerId !== drag?.id) return;
+  if (Math.abs(drag.travelX) > 0.5) {
+    fields.horizontal.value = drag.horizontal + (event.clientX - drag.x) * 100 / drag.travelX;
+  }
+  if (Math.abs(drag.travelY) > 0.5) {
+    fields.vertical.value = drag.vertical + (event.clientY - drag.y) * 100 / drag.travelY;
+  }
+  draw();
+});
+
+dragArea.addEventListener('lostpointercapture', event => {
+  if (event.pointerId === drag?.id) drag = null;
 });
 
 form.addEventListener('input', draw);
