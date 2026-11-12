@@ -83,7 +83,9 @@ function syncLedger() {
         request.request_type === 'vendor' ? 'Vendor payment' : 'Reimbursement',
         safe(request.payee),
         Number(request.total_cents) / 100,
-        ['approved', 'paid'].includes(request.status) ? Number(request.total_cents) / 100 : '',
+        // Approved can be lower than requested. Older feeds lack the field.
+        ['approved', 'paid'].includes(request.status)
+          ? Number(request.approved_cents == null ? request.total_cents : request.approved_cents) / 100 : '',
         safe(staff.get(request.approver_email) || request.approver_email ||
           (request.status === 'submitted' ? 'Needs reviewer assignment' : 'Treasurer (earlier request)')),
         eastern(decision && decision.created_at),

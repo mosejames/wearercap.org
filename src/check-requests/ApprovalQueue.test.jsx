@@ -9,6 +9,7 @@ vi.mock("./api.js", () => ({
   supabase: {},
   loadRequests: vi.fn(),
   loadStaff: vi.fn(),
+  loadRoutes: vi.fn().mockResolvedValue([]),
   loadApprovalContacts: vi.fn().mockResolvedValue([]),
   submit: vi.fn(),
   act: vi.fn(),

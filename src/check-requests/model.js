@@ -23,6 +23,50 @@ export function toCents(value) {
   const n = Number(a) * 100 + Number(b.padEnd(2, "0"));
   return n > 0 && n <= 100000000 ? n : null;
 }
+// What RCAP authorized. The requested total never changes; the approved
+// amount can be lower, and is what gets paid and totaled after approval.
+export const approvedCents = (r) =>
+  ["approved", "paid"].includes(r.status)
+    ? (r.approved_cents ?? r.total_cents)
+    : null;
+export const amountDiffers = (r) =>
+  approvedCents(r) !== null && approvedCents(r) !== r.total_cents;
+// The amount that counts for a request right now: approved once there is
+// one, requested before that.
+export const payableCents = (r) => approvedCents(r) ?? r.total_cents;
+// Checks an approved amount typed by a reviewer. Returns { cents } or
+// { error }. A reason is needed when the amount is lower than requested, or
+// always for a correction.
+export function checkApprovedAmount(value, r, reason, { correction = false } = {}) {
+  const cents = toCents(value);
+  if (cents === null)
+    return { error: "Enter an approved amount greater than zero, in dollars and cents." };
+  if (cents > r.total_cents)
+    return { error: `The approved amount cannot be more than the ${dollars(r.total_cents)} requested.` };
+  if (correction && cents === approvedCents(r))
+    return { error: "Enter a different amount to make a correction." };
+  const needsReason = correction || cents < r.total_cents;
+  const text = (reason || "").trim();
+  if (needsReason && text.length < 5)
+    return {
+      error: correction
+        ? "Add a short reason for the correction."
+        : "Add a short reason for approving less than the requested amount.",
+    };
+  if (text.length > 500) return { error: "Keep the reason under 500 characters." };
+  return { cents, reason: needsReason ? text : "" };
+}
+// The committee's primary reviewer acts as its board liaison. One person can
+// have a cellphone login and an email login, so match by name as well.
+export function isCommitteeLiaison(r, routes, staff, email) {
+  const route = (routes || []).find(
+    (x) => x.committee === r.committee && x.request_type === r.request_type,
+  );
+  if (!route?.approver_email || !email) return false;
+  if (route.approver_email === email) return true;
+  const mine = staff.find((s) => s.email === email)?.name;
+  return !!mine && staff.find((s) => s.email === route.approver_email)?.name === mine;
+}
 export const normalizePhone = (value) =>
   String(value)
     .replace(/\D/g, "")
@@ -171,6 +215,14 @@ export function actionAllowed(r, role, email, action, opts = {}) {
       assignedReviewer(r) &&
       role !== "treasurer" &&
       r.approver_email === email
+    );
+  // Until payment is recorded, the treasurer or the committee's primary
+  // reviewer can correct the approved amount. Paid requests are locked.
+  if (action === "correct_amount")
+    return (
+      r.status === "approved" &&
+      !opts.ownerIsMe &&
+      (role === "treasurer" || !!opts.isLiaison)
     );
   if (action === "board_review")
     return role === "treasurer" && r.status === "submitted";

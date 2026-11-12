@@ -38,12 +38,18 @@ import {
   contactOf,
   normalizePhone,
   validZelle,
+  approvedCents,
+  amountDiffers,
+  payableCents,
+  checkApprovedAmount,
+  isCommitteeLiaison,
 } from "./model.js";
 import {
   supabase,
   loadRequests,
   loadStaff,
   loadPaymentCommittees,
+  loadRoutes,
   submit,
   act,
   addItemNote,
@@ -86,6 +92,7 @@ const HISTORY_LABEL = {
   vote_decline: "Voted no",
   duplicate: "Closed as duplicate",
   withdrawn: "Withdrawn by requester",
+  amount_corrected: "Approved amount corrected",
   paid: "Funds released",
   item_note: "Expense note added",
   assigned: "Assigned",
@@ -1164,7 +1171,7 @@ export function RequestList({
             dollars(
               active
                 .filter((r) => r.status === "approved")
-                .reduce((n, r) => n + r.total_cents, 0),
+                .reduce((n, r) => n + payableCents(r), 0),
             ),
             "approved",
           ],
@@ -1284,7 +1291,14 @@ export function RequestList({
                 <p className="muted">Next: {next(r)}</p>
               </div>
               <Badge status={r.status === "submitted" ? (assignedReviewer(r) ? "awaiting_approval" : "awaiting_assignment") : r.status} />
-              <strong className="money">{dollars(r.total_cents)}</strong>
+              <strong className="money">
+                {dollars(payableCents(r))}
+                {amountDiffers(r) && (
+                  <small className="money-note">
+                    Approved. Requested {dollars(r.total_cents)}
+                  </small>
+                )}
+              </strong>
               <button
                 className={
                   (pending(r) || canRecordPayment(r)) && !r.archived_at
@@ -1332,7 +1346,7 @@ export function RequestList({
     </>
   );
 }
-function Detail({
+export function Detail({
   record: r,
   role,
   user,
@@ -1352,6 +1366,13 @@ function Detail({
       ["zelle", "debit_card"].includes(r.delivery) ? r.delivery : "zelle",
     ),
     [paymentDate, setPaymentDate] = useState(today()),
+    [approveAmount, setApproveAmount] = useState(
+      (r.total_cents / 100).toFixed(2),
+    ),
+    [amountReason, setAmountReason] = useState(""),
+    [correctAmount, setCorrectAmount] = useState(""),
+    [correctReason, setCorrectReason] = useState(""),
+    [routes, setRoutes] = useState([]),
     [busy, setBusy] = useState(false);
   useEffect(() => {
     let live = true;
@@ -1383,8 +1404,23 @@ function Detail({
   const myName = staff.find((s) => s.email === me)?.name;
   const eligible = voters(staff, r);
   const votes = tally(extra.history, staff, r);
+  // Routes say who each committee's primary reviewer is. Only board logins
+  // can read them, and only an approved request can be corrected.
+  useEffect(() => {
+    if (!role || r.status !== "approved") return;
+    let live = true;
+    loadRoutes()
+      .then((rows) => live && setRoutes(rows))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [role, r.id, r.status]);
   const allowed = (a) =>
     actionAllowed(r, role, me, a, {
+      isLiaison: isCommitteeLiaison(r, routes, staff, me),
+      ownerIsMe:
+        !!myName && staff.find((s) => s.email === r.email)?.name === myName,
       canVote: !!myName && eligible.includes(myName),
       ownerIsTreasurer: staff.some(
         (s) => s.email === r.email && s.role === "treasurer",
@@ -1441,7 +1477,19 @@ function Detail({
       setBusy(false);
     }
   }
+  const approving = checkApprovedAmount(approveAmount, r, amountReason);
+  const typedCents = toCents(approveAmount);
+  const lowering = typedCents !== null && typedCents < r.total_cents;
+  const correcting = checkApprovedAmount(correctAmount, r, correctReason, {
+    correction: true,
+  });
   async function change(a) {
+    const amount =
+      a === "approved" ? approving : a === "correct_amount" ? correcting : null;
+    if (amount?.error) {
+      onError(amount.error);
+      return;
+    }
     setBusy(true);
     onError("");
     try {
@@ -1449,6 +1497,9 @@ function Detail({
         id: r.id,
         version: r.version,
         note,
+        ...(amount
+          ? { approved_cents: amount.cents, amount_reason: amount.reason }
+          : {}),
         ...(["approved", "vote_approve"].includes(a)
           ? {
               approval_recipients: approvalRecipients,
@@ -1461,6 +1512,9 @@ function Detail({
       });
       setNote("");
       setDupOf("");
+      setAmountReason("");
+      setCorrectAmount("");
+      setCorrectReason("");
       onUpdate(updated);
     } catch (e) {
       onError(e.message || "The update could not be saved.");
@@ -1544,8 +1598,14 @@ function Detail({
             <p className="eyebrow">REQUEST #{r.reference}</p>
             <h2 id="payment-action-title">Record payment</h2>
             <p>
-              {dollars(r.total_cents)} to {r.payee}. After sending the funds,
-              enter the bank confirmation and date to mark this request paid.
+              {dollars(payableCents(r))} to {r.payee}.{" "}
+              {amountDiffers(r) &&
+                `This is the approved amount. The request was for ${dollars(r.total_cents)}. `}
+              After sending the funds, enter the bank confirmation and date to
+              mark this request paid.
+              {amountDiffers(r) || allowed("correct_amount")
+                ? " The approved amount locks once payment is recorded."
+                : ""}
             </p>
           </div>
           <div className="fields">
@@ -1730,9 +1790,20 @@ function Detail({
               </div>
             })}
             <div className="total">
-              <span>Total requested</span>
+              <span>{amountDiffers(r) ? "Requested" : "Total requested"}</span>
               <strong>{dollars(r.total_cents)}</strong>
             </div>
+            {amountDiffers(r) && (
+              <div className="total approved-total">
+                <span>
+                  Approved
+                  {r.approved_amount_reason && (
+                    <small>Reason: {r.approved_amount_reason}</small>
+                  )}
+                </span>
+                <strong>{dollars(approvedCents(r))}</strong>
+              </div>
+            )}
             {r.status === "paid" && (
               <p className="notice">
                 Payment recorded on {r.payment_date}. Reference:{" "}
@@ -1859,14 +1930,44 @@ function Detail({
                     />
                   </Field>
                 )}
+                {allowed("approved") && (
+                  <div className="approve-amount">
+                    <Field
+                      label="Amount to approve"
+                      inputMode="decimal"
+                      value={approveAmount}
+                      onChange={(e) => setApproveAmount(e.target.value)}
+                      aria-describedby={`approve-amount-help-${r.id}`}
+                    />
+                    <p className="muted" id={`approve-amount-help-${r.id}`}>
+                      Requested {dollars(r.total_cents)}. Approve the full
+                      amount, or enter a lower one. The requested amount stays
+                      on the record.
+                    </p>
+                    {lowering && (
+                      <Field label="Reason for the lower amount">
+                        <textarea
+                          maxLength={500}
+                          value={amountReason}
+                          onChange={(e) => setAmountReason(e.target.value)}
+                          placeholder="For example: this is what remains in the event budget. The requester sees this."
+                        />
+                      </Field>
+                    )}
+                    {approving.error && (
+                      <p className="muted" role="status">{approving.error}</p>
+                    )}
+                  </div>
+                )}
                 <div className="actions decision">
                   {allowed("approved") && (
                     <button
                       className="primary"
-                      disabled={busy}
+                      disabled={busy || !!approving.error}
                       onClick={() => change("approved")}
                     >
-                      <Check size={16} /> Approve {dollars(r.total_cents)}
+                      <Check size={16} /> Approve
+                      {approving.error ? "" : ` ${dollars(approving.cents)}`}
                     </button>
                   )}
                   {allowed("vote") && (
@@ -1932,6 +2033,45 @@ function Detail({
                   Every action is recorded with your name and the time.
                 </p>
               </div>
+            )}
+            {allowed("correct_amount") && (
+              <details className="duplicate-box correct-box no-print">
+                <summary>Correct the approved amount</summary>
+                <p className="muted">
+                  Approved {dollars(approvedCents(r))} of the{" "}
+                  {dollars(r.total_cents)} requested. You can change the
+                  approved amount until payment is recorded. The requester is
+                  told the new amount and your reason, and the change is
+                  recorded with your name and the time.
+                </p>
+                <Field
+                  label="Corrected approved amount"
+                  inputMode="decimal"
+                  value={correctAmount}
+                  onChange={(e) => setCorrectAmount(e.target.value)}
+                  placeholder={(approvedCents(r) / 100).toFixed(2)}
+                />
+                <Field label="Reason for the correction">
+                  <textarea
+                    maxLength={500}
+                    value={correctReason}
+                    onChange={(e) => setCorrectReason(e.target.value)}
+                    placeholder="For example: this is what remains in the event budget."
+                  />
+                </Field>
+                {correctAmount && correcting.error && (
+                  <p className="muted" role="status">{correcting.error}</p>
+                )}
+                <div className="actions">
+                  <button
+                    className="secondary"
+                    disabled={busy || !!correcting.error}
+                    onClick={() => change("correct_amount")}
+                  >
+                    Save corrected amount
+                  </button>
+                </div>
+              </details>
             )}
             {allowed("withdraw") && (
               <details className="duplicate-box withdraw-box">

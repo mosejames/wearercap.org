@@ -361,3 +361,114 @@ describe("withdrawing a request", () => {
     expect(steps[1].done).toBe(true);
   });
 });
+
+import {
+  approvedCents,
+  amountDiffers,
+  payableCents,
+  checkApprovedAmount,
+  isCommitteeLiaison,
+} from "./model.js";
+describe("adjustable approved amount", () => {
+  const request = { total_cents: 62753, status: "submitted" };
+  it("keeps the requested amount and reads the approved amount beside it", () => {
+    expect(approvedCents(request)).toBe(null);
+    expect(payableCents(request)).toBe(62753);
+    expect(amountDiffers(request)).toBe(false);
+    const reduced = { ...request, status: "approved", approved_cents: 61905 };
+    expect(approvedCents(reduced)).toBe(61905);
+    expect(payableCents(reduced)).toBe(61905);
+    expect(reduced.total_cents).toBe(62753);
+    expect(amountDiffers(reduced)).toBe(true);
+    expect(amountDiffers({ ...reduced, approved_cents: 62753 })).toBe(false);
+    // A record loaded by an older page, before the column existed.
+    expect(approvedCents({ ...request, status: "paid" })).toBe(62753);
+    // A declined request has no approved amount, whatever the row holds.
+    expect(approvedCents({ ...request, status: "declined", approved_cents: 100 })).toBe(null);
+  });
+  it("approves the full amount with no reason", () => {
+    expect(checkApprovedAmount("627.53", request, "")).toEqual({ cents: 62753, reason: "" });
+  });
+  it("approves a lower amount only with a reason", () => {
+    expect(checkApprovedAmount("619.05", request, "").error).toMatch(/reason/);
+    expect(checkApprovedAmount("619.05", request, " no ").error).toMatch(/reason/);
+    expect(
+      checkApprovedAmount("619.05", request, " Only $619.05 remains in the budget. "),
+    ).toEqual({ cents: 61905, reason: "Only $619.05 remains in the budget." });
+    expect(checkApprovedAmount("619.05", request, "x".repeat(501)).error).toMatch(/500/);
+  });
+  it("rejects zero, negative, malformed and above-requested amounts", () => {
+    for (const bad of ["0", "0.00", "-5", "", "abc", "619.055", "1,000"])
+      expect(checkApprovedAmount(bad, request, "A good reason").error).toMatch(/greater than zero/);
+    expect(checkApprovedAmount("627.54", request, "A good reason").error).toMatch(
+      /cannot be more than the \$627\.53 requested/,
+    );
+  });
+  it("requires a new amount and a reason for every correction", () => {
+    const approved = { ...request, status: "approved", approved_cents: 61905 };
+    const fix = (value, reason) =>
+      checkApprovedAmount(value, approved, reason, { correction: true });
+    expect(fix("619.05", "Recount of the budget").error).toMatch(/different amount/);
+    expect(fix("600", "").error).toMatch(/reason for the correction/);
+    expect(fix("627.54", "Recount of the budget").error).toMatch(/cannot be more/);
+    expect(fix("0", "Recount of the budget").error).toMatch(/greater than zero/);
+    expect(fix("600", "Recount of the budget")).toEqual({
+      cents: 60000,
+      reason: "Recount of the budget",
+    });
+    // Restoring the full requested amount is still a correction with a reason.
+    expect(fix("627.53", "")).toHaveProperty("error");
+    expect(fix("627.53", "Committee released the funds")).toEqual({
+      cents: 62753,
+      reason: "Committee released the funds",
+    });
+  });
+  const staff = [
+    { email: "+14045550001", name: "Liaison Person", role: "board" },
+    { email: "liaison@example.test", name: "Liaison Person", role: "board" },
+    { email: "+14045550002", name: "Other Member", role: "board" },
+    { email: "+14045550003", name: "Treasurer Person", role: "treasurer" },
+  ];
+  const routes = [
+    { committee: "Fall Event", request_type: "reimbursement", approver_email: "+14045550001", backup_email: "+14045550002" },
+    { committee: "Fall Event", request_type: "vendor", approver_email: "+14045550002" },
+  ];
+  it("treats the committee's primary reviewer as the liaison, under either login", () => {
+    const r = { committee: "Fall Event", request_type: "reimbursement" };
+    expect(isCommitteeLiaison(r, routes, staff, "+14045550001")).toBe(true);
+    expect(isCommitteeLiaison(r, routes, staff, "liaison@example.test")).toBe(true);
+    // The backup reviewer and other members are not the liaison.
+    expect(isCommitteeLiaison(r, routes, staff, "+14045550002")).toBe(false);
+    expect(isCommitteeLiaison(r, routes, staff, "+14045550003")).toBe(false);
+    // The mapping is per request type, so vendor payments follow their own route.
+    expect(isCommitteeLiaison({ ...r, request_type: "vendor" }, routes, staff, "+14045550002")).toBe(true);
+    expect(isCommitteeLiaison({ ...r, committee: "No Route" }, routes, staff, "+14045550001")).toBe(false);
+    expect(isCommitteeLiaison(r, [], staff, "+14045550001")).toBe(false);
+  });
+  it("lets only the treasurer and the liaison correct, and only before payment", () => {
+    const approved = { email: "parent@example.test", status: "approved", total_cents: 62753, approved_cents: 62753 };
+    const can = (r, role, email, opts) => actionAllowed(r, role, email, "correct_amount", opts);
+    expect(can(approved, "treasurer", "+14045550003")).toBe(true);
+    expect(can(approved, "board", "+14045550001", { isLiaison: true })).toBe(true);
+    expect(can(approved, "manager", "+14045550001", { isLiaison: true })).toBe(true);
+    for (const role of ["board", "secretary", "manager", null])
+      expect(can(approved, role, "+14045550002", { isLiaison: false })).toBe(false);
+    // Nobody corrects their own request, including under a second login.
+    expect(can(approved, "treasurer", "parent@example.test")).toBe(false);
+    expect(can(approved, "treasurer", "+14045550003", { ownerIsMe: true })).toBe(false);
+    expect(
+      can({ ...approved, on_behalf: true, payee_contact: "+14045550001" }, "board", "+14045550001", { isLiaison: true }),
+    ).toBe(false);
+    // Locked once payment is recorded, and never open before approval.
+    for (const status of ["paid", "submitted", "board_review", "needs_changes", "declined"])
+      expect(can({ ...approved, status }, "treasurer", "+14045550003")).toBe(false);
+    expect(can({ ...approved, archived_at: "2026-11-11T00:00:00Z" }, "treasurer", "+14045550003")).toBe(false);
+  });
+  it("leaves approval routing and self-approval rules as they were", () => {
+    const open = { email: "parent@example.test", status: "submitted", approver_email: "+14045550001", routed_approval: true };
+    expect(actionAllowed(open, "board", "+14045550001", "approved")).toBe(true);
+    expect(actionAllowed(open, "board", "+14045550002", "approved")).toBe(false);
+    expect(actionAllowed(open, "treasurer", "+14045550003", "approved")).toBe(false);
+    expect(actionAllowed({ ...open, email: "+14045550001" }, "board", "+14045550001", "approved")).toBe(false);
+  });
+});

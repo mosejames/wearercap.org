@@ -84,3 +84,18 @@ it("keeps an uploaded image on exactly one page", async () => {
     ).getPageCount(),
   ).toBe(1);
 });
+it("builds the permanent record for a reduced approval and for a correction", async () => {
+  for (const action of ["approved", "amount_corrected", "paid"]) {
+    const data = structuredClone(snapshot);
+    Object.assign(data.request, {
+      status: action === "paid" ? "paid" : "approved",
+      total_cents: 62753,
+      approved_cents: 61905,
+      approved_amount_reason: "Only $619.05 remains in the event budget",
+    });
+    data.event.action = action;
+    const doc = await PDFDocument.load(await summaryPdf(data));
+    expect(doc.getPageCount()).toBe(1);
+    expect(doc.getTitle()).toBe(`RCAP request 123 - ${action}`);
+  }
+});

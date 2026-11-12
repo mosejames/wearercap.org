@@ -3,6 +3,10 @@ export function requesterRecap(snapshot: any, attached = true) {
   const event = snapshot.event;
   const vendor = r.request_type === "vendor";
   const money = (n: number) => "$" + (Number(n) / 100).toFixed(2);
+  // Records made before the approved amount existed were approved in full.
+  const approved: number | null = ["approved", "paid"].includes(r.status)
+    ? Number(r.approved_cents ?? r.total_cents)
+    : null;
   const message: Record<string, string> = {
     submitted:
       "Thank you for submitting your payment request. The finance team will review your expenses and supporting documents and coordinate the required board approval.",
@@ -16,6 +20,8 @@ export function requesterRecap(snapshot: any, attached = true) {
       "Your payment request was declined. Please review the decision below and contact RCAP if you have questions.",
     needs_changes:
       "The reviewer needs a few changes before your request can move forward. Please review the note below and update your request.",
+    amount_corrected:
+      "The approved amount on your payment request has been updated. The new amount and the reason are below. Payment has not yet been recorded.",
     paid: "Payment has been recorded for your payment request. Thank you for supporting RCAP.",
   };
   const method: Record<string, string> = {
@@ -33,6 +39,10 @@ export function requesterRecap(snapshot: any, attached = true) {
     `Request type: ${vendor ? "Direct payment to vendor" : "Reimbursement"}`,
     `Within budget: ${r.budget_confirmed ? "Confirmed by requester" : "Not recorded on this version"}`,
     `Total requested: ${money(r.total_cents)}`,
+    ...(approved !== null ? [`Approved amount: ${money(approved)}`] : []),
+    ...(approved !== null && approved !== r.total_cents && r.approved_amount_reason
+      ? [`Reason for the difference: ${r.approved_amount_reason}`]
+      : []),
     `Payment method: ${method[r.delivery] || r.delivery}`,
     `Payable to: ${r.payee}`,
     ...(r.on_behalf ? [`Prepared by: ${r.requester_name}`] : []),

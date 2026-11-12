@@ -93,3 +93,53 @@ it("recaps unpaid vendor payments and budget confirmation", () => {
   expect(body).toContain("Confirmed by requester");
   expect(body).not.toContain("reimbursement request");
 });
+
+it("tells the requester the approved amount and the reason when it is lower", () => {
+  const reduced = {
+    request: {
+      ...snapshot.request,
+      status: "approved",
+      total_cents: 62753,
+      approved_cents: 61905,
+      approved_amount_reason: "Only $619.05 remains in the event budget",
+    },
+    event: { action: "approved", note: "Approved $619.05 payable to Sam Parent." },
+  };
+  const body = requesterRecap(reduced);
+  expect(body).toContain("Total requested: $627.53");
+  expect(body).toContain("Approved amount: $619.05");
+  expect(body).toContain("Reason for the difference: Only $619.05 remains in the event budget");
+});
+it("shows the approved amount without a reason line when approved in full", () => {
+  const full = {
+    request: { ...snapshot.request, status: "approved", approved_cents: 1250 },
+    event: { action: "approved" },
+  };
+  const body = requesterRecap(full);
+  expect(body).toContain("Approved amount: $12.50");
+  expect(body).not.toContain("Reason for the difference");
+  // Before a decision there is no approved amount to show.
+  expect(requesterRecap(snapshot)).not.toContain("Approved amount");
+});
+it("sends the requester the corrected amount and reason", () => {
+  const corrected = {
+    request: {
+      ...snapshot.request,
+      status: "approved",
+      total_cents: 62753,
+      approved_cents: 60000,
+      approved_amount_reason: "Budget recount after a late receipt.",
+    },
+    event: {
+      action: "amount_corrected",
+      note: "Approved amount corrected from $619.05 to $600.00. Requested $627.53. Reason: Budget recount after a late receipt.",
+    },
+  };
+  const body = requesterRecap(corrected, false);
+  expect(body).toContain("approved amount on your payment request has been updated");
+  expect(body).toContain("Payment has not yet been recorded");
+  expect(body).toContain("Approved amount: $600.00");
+  expect(body).toContain("Total requested: $627.53");
+  expect(body).toContain("Reason for the difference: Budget recount after a late receipt.");
+  expect(body).not.toMatch(/[\u2014!]/);
+});

@@ -76,6 +76,12 @@ export async function summaryPdf(snapshot: any) {
   if (r.delivery === "zelle") line(`Zelle contact: ${r.zelle_contact}`);
   line(`Purpose: ${r.purpose}`);
   line(`Total requested: ${money(r.total_cents)}`, true, 15);
+  if (["approved", "paid"].includes(r.status)) {
+    const approved = Number(r.approved_cents ?? r.total_cents);
+    line(`Approved amount: ${money(approved)}`, true, 15);
+    if (approved !== Number(r.total_cents) && r.approved_amount_reason)
+      line(`Reason for the difference: ${r.approved_amount_reason}`);
+  }
   line("EXPENSES", true);
   r.items.forEach((item: any, i: number) => {
     line(

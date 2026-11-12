@@ -1584,3 +1584,40 @@ button.stat[aria-pressed="true"] {
 button.stat:hover { background: #f6f9fb; border-color: #204359; }
 button.stat:focus-visible { outline: 3px solid #204359; outline-offset: 3px; }
 button.stat[aria-pressed="true"] .stat-action { color: #775800; }
+
+/* Requested and approved amounts, where they differ. */
+.money-note {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #5b6770;
+  white-space: nowrap;
+}
+.approved-total {
+  margin-top: 8px;
+  background: #f2f7f3;
+  border: 1px solid #c9ddd0;
+}
+.approved-total span small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #45525a;
+}
+.approve-amount {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.approve-amount input {
+  max-width: 220px;
+  font-variant-numeric: tabular-nums;
+}
+.approve-amount p {
+  margin: 0;
+}
+.correct-box label {
+  display: block;
+  margin-bottom: 12px;
+}
