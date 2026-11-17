@@ -135,4 +135,12 @@ for (const student of students.filter(student => student.rank <= 5)) {
   card.prepend(medal);
   $('top-students').append(card);
 }
+// Keep published snapshots intact while the closed campaign awaits reconciliation.
+$('edition-note').textContent = 'These are earlier published standings. Final fundraising totals and rankings are pending reconciliation.';
+$('edition-next').textContent = 'Live Fall Raffle drawing: December 4 during halftime of the girls’ and boys’ basketball games.';
+if (holdOverall) {
+  document.querySelector('#rr-top-title').textContent = 'Final recognition to come';
+  $('top-note').textContent = 'We’ll celebrate the top fundraising families, house, and class on December 4.';
+}
+$('remaining').textContent = 'Ticket sales are closed. This is an earlier published fundraising snapshot.';
 requestAnimationFrame(() => document.body.classList.add('rr-ready'));
