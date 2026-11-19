@@ -17,13 +17,14 @@ describe('Shared promotions and announcements',()=>{
   expect(activeAnnouncements(data,new Date('2026-11-05T20:00:00Z')).map(a=>a.id)).toEqual(['scheduled']);
   expect(activeAnnouncements(data,new Date('2026-11-05T21:00:00Z'))).toEqual([]);
  });
- it('removes the past raffle promotion and keeps all three current homepage cards',()=>{
-  const items=activeAnnouncements(content,new Date('2026-11-05T20:00:00Z'));
-  expect(items.map(a=>a.id)).toEqual(['trunk-or-treat-survey','trunk-or-treat-photos','fall-raffle-results']);
+ it('features the December 4 drawing, retires Trunk or Treat, and expires each promotion on time',()=>{
+  expect(activeAnnouncements(content,new Date('2026-11-19T12:00:00Z')).map(a=>a.id)).toEqual(['fall-raffle-live-drawing-dec-4','january-25-general-meeting','fall-raffle-results']);
+  expect(activeAnnouncements(content,new Date('2026-12-05T12:00:00Z')).map(a=>a.id)).toEqual(['january-25-general-meeting','fall-raffle-results']);
+  expect(activeAnnouncements(content,new Date('2027-01-26T12:00:00Z')).map(a=>a.id)).toEqual(['fall-raffle-results']);
  });
  it('validates links and rejects ambiguous or backwards schedules before publication',()=>{
   const invalid=clone();invalid.announcements[0].startsAt='2026-11-05T15:00:00';expect(()=>validateContent(invalid)).toThrow(/time zone/);
-  invalid.announcements[0].startsAt='2026-11-06T15:00:00-05:00';expect(()=>validateContent(invalid)).toThrow(/end after/);
+  invalid.announcements[0].startsAt='2026-12-05T15:00:00-05:00';expect(()=>validateContent(invalid)).toThrow(/end after/);
   const unsafe=clone();unsafe.announcements[1].href='javascript:alert(1)';expect(()=>validateContent(unsafe)).toThrow(/link/);
  });
  it('omits draft and archived copy from the public JSON and compiled source',()=>{
@@ -44,9 +45,9 @@ describe('Shared promotions and announcements',()=>{
    await act(async()=>{vi.advanceTimersByTime(60000);});
    expect(ids(node,'#app')).toContain('scheduled-card');expect(ids(node,'#website')).toEqual(ids(node,'#app'));
    await act(async()=>{vi.advanceTimersByTime(60000);});expect(ids(node,'#app')).not.toContain('scheduled-card');
-   payload=structuredClone(payload);payload.announcements.find(a=>a.id==='trunk-or-treat-survey').status='archived';
+   payload=structuredClone(payload);payload.announcements.find(a=>a.id==='fall-raffle-results').status='archived';
    await act(async()=>{window.dispatchEvent(new Event('focus'));});
-   expect(ids(node,'#app')).not.toContain('trunk-or-treat-survey');expect(ids(node,'#website')).toEqual(ids(node,'#app'));
+   expect(ids(node,'#app')).not.toContain('fall-raffle-results');expect(ids(node,'#website')).toEqual(ids(node,'#app'));
   }finally{await act(async()=>root.unmount());node.remove();fetchMock.mockRestore();vi.useRealTimers();globalThis.IS_REACT_ACT_ENVIRONMENT=false;}
  });
 });

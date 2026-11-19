@@ -77,7 +77,6 @@ const officers = [
 
 const meetings = [
   { month: 'Sept', year: '2026', weekday: 'Mon', day: '14', label: '7:00pm, virtual', recap: '/meeting/sept-14/' },
-  { month: 'Nov', year: '2026', weekday: 'Mon', day: '16', label: '7:00pm, virtual' },
   { month: 'Jan', year: '2027', weekday: 'Mon', day: '25', label: '7:00pm, virtual' },
   { month: 'Apr', year: '2027', weekday: 'Mon', day: '26', label: '7:00pm, in person' },
 ];
@@ -279,7 +278,7 @@ function App() {
           <h2 id="meetings-h">Join the next meeting.</h2>
           <p>
             Every RCA parent is welcome. Bring a question, an idea or a friend.
-            Our next meeting is Monday, November 16 at 7 p.m., online.
+            Our next meeting is Monday, January 25 at 7 p.m., online.
           </p>
         </div>
 
