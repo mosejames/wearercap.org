@@ -352,8 +352,8 @@
         "kind": "school"
       },
       {
-        "start": "2026-12-13",
-        "end": "2026-12-19",
+        "start": "2026-12-14",
+        "end": "2026-12-18",
         "title": "Homecoming week",
         "detail": "",
         "kind": "school"
@@ -752,14 +752,75 @@
       }
     ]
   },
-  "events": [],
+  "events": [
+    {
+      "start": "2026-11-21",
+      "end": "2026-11-21",
+      "title": "Holiday Decor day",
+      "detail": "Men of RCAP at 8 AM. Everyone else at 10 AM.",
+      "kind": "rcap",
+      "priority": 10
+    },
+    {
+      "start": "2026-12-04",
+      "end": "2026-12-04",
+      "title": "Live Fall Raffle drawing",
+      "detail": "First home basketball game vs. Chattahoochee Hills. Girls 5:30 PM, boys 6:45 PM. Drawing at halftime.",
+      "kind": "rcap",
+      "priority": 10,
+      "href": "/events/2026/fall-raffle/results/#drawing-update",
+      "cta": "Drawing details"
+    },
+    {
+      "start": "2027-01-25",
+      "end": "2027-01-25",
+      "title": "RCAP General Body Meeting",
+      "detail": "Monday, 7 PM. Virtual.",
+      "kind": "rcap",
+      "priority": 10,
+      "href": "/board/",
+      "cta": "Meeting calendar"
+    }
+  ],
   "homepage": {
     "eventsIntro": "A few dates to keep on your radar, with the next ones always first."
   },
   "announcements": [
     {
-      "id": "fall-raffle-second-drawing",
+      "id": "fall-raffle-live-drawing-dec-4",
       "status": "published",
+      "placement": "featured",
+      "priority": 60,
+      "startsAt": "2026-11-17T00:00:00-05:00",
+      "endsAt": "2026-12-04T21:30:00-05:00",
+      "kicker": "Friday, December 4 · Live drawing",
+      "title": "The Fall Raffle drawing moves to the court.",
+      "body": "Join us at our first home basketball game vs. Chattahoochee Hills. Girls tip off at 5:30 PM and boys at 6:45 PM. We draw winners live at halftime of both games.",
+      "note": "Ticket sales are closed. Thank you for raising about $25,000.",
+      "href": "/events/2026/fall-raffle/results/#drawing-update",
+      "cta": "See the drawing update",
+      "image": "/images/events/fall-raffle-drawing-dec4-og.png",
+      "imageAlt": "RCAP Fall Raffle live drawing. Friday, December 4, at halftime. Girls 5:30 PM, boys 6:45 PM.",
+      "secondaryHref": "/events/2026/fall-raffle/",
+      "secondaryCta": "See the prizes"
+    },
+    {
+      "id": "january-25-general-meeting",
+      "status": "published",
+      "placement": "card",
+      "priority": 25,
+      "startsAt": null,
+      "endsAt": "2027-01-25T20:00:00-05:00",
+      "tone": "social",
+      "kicker": "Save the date",
+      "title": "Next General Body Meeting: January 25",
+      "body": "Monday, January 25 at 7 PM, online. Every RCA parent is welcome. Bring a question or an idea.",
+      "href": "/board/",
+      "cta": "See the meeting calendar"
+    },
+    {
+      "id": "fall-raffle-second-drawing",
+      "status": "archived",
       "placement": "featured",
       "priority": 40,
       "startsAt": null,
@@ -777,7 +838,7 @@
     },
     {
       "id": "trunk-or-treat-survey",
-      "status": "published",
+      "status": "archived",
       "placement": "card",
       "priority": 30,
       "startsAt": null,
@@ -793,7 +854,7 @@
     },
     {
       "id": "trunk-or-treat-photos",
-      "status": "published",
+      "status": "archived",
       "placement": "card",
       "priority": 20,
       "startsAt": null,
@@ -816,16 +877,16 @@
       "endsAt": null,
       "tone": "capsule",
       "kicker": "The RCAP Fall Raffle",
-      "title": "A little applause. More to come.",
-      "body": "Celebrate this week’s raffle stars and winner. Then help keep the momentum going for our school.",
+      "title": "Look what we built together.",
+      "body": "About $25,000 raised for the people who pour into our children. Revisit the weekly stars before the December 4 drawing.",
       "href": "/events/2026/fall-raffle/results/",
-      "cta": "See the weekly results",
+      "cta": "See the raffle results",
       "image": "/images/events/fall-raffle-results-og.png",
       "imageAlt": "RCAP Fall Raffle results"
     },
     {
       "id": "november-16-meeting",
-      "status": "published",
+      "status": "archived",
       "placement": "featured",
       "priority": 100,
       "kicker": "WE ARE RCAP",
