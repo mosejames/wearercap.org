@@ -9,7 +9,7 @@ const credit=[scholar,$('credit-class').textContent.replace(/^ · /,''),$('credi
 const params = new URLSearchParams(location.search);
 const invitationId = params.get('id');
 track(invitationId?'invitationView':'creatorView');
-$('buy').addEventListener('click',()=>track('ticketClick'));
+$('buy')?.addEventListener('click',()=>track('ticketClick'));
 form.elements.frame.forEach(input=>input.addEventListener('change',()=>track('frameChanged')));
 const message = `Help ${scholar} celebrate their awesome teachers! Every $1 raffle ticket supports RCAP’s efforts, including Teacher Appreciation Week. Please credit ${credit} at checkout.`;
 let photo = null;
