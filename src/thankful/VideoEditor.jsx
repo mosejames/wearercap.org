@@ -26,18 +26,29 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
   const outputUrl = useFileUrl(result?.file);
   const preview = useRef(null);
 
-  function loadPreview() {
+  async function loadPreview() {
     const video = preview.current;
     if (video.videoWidth >= video.videoHeight) {
       setError('Please choose a video recorded with your phone upright in portrait.');
       return;
     }
-    if (!Number.isFinite(video.duration) || video.duration <= 0) {
-      setError('We couldn’t read the length of this video. Try exporting it as an MP4 first.');
+    let length = video.duration;
+    if (!Number.isFinite(length) || length <= 0) {
+      // MediaRecorder WebM files can omit the container duration.
+      try {
+        const { Input, BlobSource, ALL_FORMATS } = await import('mediabunny');
+        const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
+        try { length = await input.computeDuration(); }
+        finally { input.dispose(); }
+      } catch { length = 0; }
+    }
+    if (preview.current !== video) return;
+    if (!Number.isFinite(length) || length <= 0) {
+      setError('We couldn’t read the length of this video. Try recording again or uploading an MP4.');
       return;
     }
-    setDuration(video.duration);
-    setEnd(Math.min(video.duration, MAX_LENGTH));
+    setDuration(length);
+    setEnd(Math.min(length, MAX_LENGTH));
   }
 
   function seek(time) {

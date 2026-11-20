@@ -128,7 +128,7 @@ h1 em {
   font-weight:400;
 }
 
-.intro>p,.guide>p,.submission p {
+.intro>p,.submission p {
   line-height:1.65;
   color:var(--muted);
   max-width:35ch;
@@ -293,7 +293,7 @@ h1 em {
   width:100%;
 }
 
-.deck-caption,.deck-actions {
+.deck-actions {
   min-height:48px;
   margin-top:21px;
   display:flex;
@@ -342,30 +342,9 @@ h1 em {
   margin:.28em 0;
 }
 
-.guide ul {
-  padding:0;
-  list-style:none;
-  margin:27px 0 0;
-  display:grid;
-  gap:17px;
-}
-
-.guide li {
-  display:flex;
-  gap:15px;
-  line-height:1.4;
-}
-
-.guide li svg,.submission svg {
-  color:var(--gold);
-  flex:none;
-}
-
-.guide li span {
-  display:block;
-  color:var(--muted);
-  font-size:.9rem;
-  margin-top:3px;
+.submission svg {
+  color: var(--gold);
+  flex: none;
 }
 
 .submission {
@@ -495,7 +474,7 @@ footer a {
   .record {
     padding-inline:22px;
   }
-  .deck-caption,.deck-actions {
+  .deck-actions {
     margin-top:14px;
   }
 }
@@ -593,4 +572,255 @@ footer a {
 .editor progress {
   width:100%;
   accent-color:var(--gold);
+}
+
+.deck {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.deck-top {
+  position: absolute;
+  inset: 0;
+  transform: translateX(var(--drag, 0)) rotate(var(--tilt, 0deg));
+}
+
+.three {
+  transform: rotate(3deg) scale(.96);
+  background: #27364f;
+}
+
+.is-shuffling .stack {
+  animation: shuffle-card .72s cubic-bezier(.36,.04,.25,1) both;
+  --spread: 26%;
+  --spin: 17deg;
+  --rest: rotate(9deg) scale(.94);
+}
+
+.is-shuffling .one {
+  --spread: -30%;
+  --spin: -21deg;
+  --rest: rotate(-10deg) scale(.94);
+}
+
+.is-shuffling .three {
+  --spread: -13%;
+  --spin: -12deg;
+  --rest: rotate(3deg) scale(.96);
+  animation-delay: 45ms;
+}
+
+.is-shuffling .deck-top {
+  animation: shuffle-face .76s ease-in-out both;
+}
+
+.is-shuffling .back:disabled {
+  opacity: 1;
+}
+
+@keyframes shuffle-card {
+  0%, 100% { transform: var(--rest); }
+  34% { transform: translateX(calc(var(--spread) * var(--sweep))) rotate(calc(var(--spin) * var(--sweep))); }
+  70% { transform: translateX(calc(var(--spread) * var(--sweep) * -.5)) rotate(calc(var(--spin) * var(--sweep) * -.6)); }
+}
+
+@keyframes shuffle-face {
+  0%, 100% { transform: translate(0) rotate(0); }
+  32% { transform: translate(calc(31% * var(--sweep)), -8%) rotate(calc(14deg * var(--sweep))); }
+  66% { transform: translate(calc(-17% * var(--sweep)), 5%) rotate(calc(-10deg * var(--sweep))); }
+}
+
+.deck-actions > * {
+  min-height: 44px;
+}
+
+.record {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}
+
+.camera-launch {
+  margin: 0 0 18px;
+  min-height: 48px;
+}
+
+.submission > label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.camera-dialog {
+  width: min(100% - 20px, 430px, (100dvh - 20px) * .63);
+  max-width: none;
+  max-height: calc(100dvh - 20px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 23px;
+  background: var(--night);
+  color: var(--paper);
+  overflow: auto;
+}
+
+.camera-dialog::backdrop {
+  background: #030712dc;
+}
+
+.camera-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 9 / 16;
+  max-height: calc(100dvh - 22px);
+  min-height: 320px;
+  isolation: isolate;
+}
+
+.camera-feed {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.camera-top, .camera-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 14px;
+}
+
+.camera-top {
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  background: linear-gradient(#060c19dd, transparent);
+}
+
+.camera-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #111e36e8;
+  border: 1px solid #fff5;
+  border-radius: 50%;
+  color: white;
+}
+
+.camera-tips, .camera-message {
+  width: calc(100% - 24px);
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #111e36ee;
+}
+
+.camera-tips {
+  position: relative;
+}
+
+.camera-tips h2 {
+  font-size: clamp(1.2rem, 6vw, 1.65rem);
+  padding-right: 40px;
+  margin: 0 0 12px;
+}
+
+.camera-tips .camera-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.camera-tips ul {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 9px;
+  line-height: 1.4;
+  margin: 0 0 14px;
+}
+
+.camera-tips li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.camera-tips svg {
+  color: var(--gold);
+  flex: none;
+}
+
+.camera-tips .button, .camera-controls .button {
+  min-height: 46px;
+  width: 100%;
+}
+
+.camera-count {
+  display: grid;
+  width: 115px;
+  height: 115px;
+  place-items: center;
+  background: #111e36dd;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  color: var(--gold);
+  font: 700 4rem Georgia, serif;
+}
+
+.camera-controls {
+  bottom: 0;
+  display: grid;
+  gap: 8px;
+  padding-top: 28px;
+  background: linear-gradient(transparent, #060c19ee 40%);
+}
+
+.camera-help {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  text-decoration: underline;
+}
+
+.camera-timer {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-size: .86rem;
+  font-weight: 700;
+}
+
+.camera-timer i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #ff685b;
+}
+
+.camera-controls progress {
+  width: 100%;
+  accent-color: var(--gold);
+}
+
+@media (max-width: 620px) {
+  .camera-dialog {
+    width: min(100% - 12px, 430px);
+  }
+  .camera-stage {
+    min-height: min(570px, 100dvh - 18px);
+  }
+  .deck-area {
+    overflow: clip;
+    margin-inline: -18px;
+    padding: 16px 10px 0;
+  }
 }
