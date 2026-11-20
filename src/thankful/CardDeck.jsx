@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const suits = ['♠', '♥', '♣', '♦', '♠', '♥'];
 
 function CardBack() {
   return <div className="playing-back" aria-hidden="true">
@@ -9,7 +8,6 @@ function CardBack() {
 }
 
 export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
-  const suit = suits[cards.indexOf(card)];
   const [remaining, setRemaining] = useState(cards);
   const [shuffling, setShuffling] = useState(false);
   const [drag, setDrag] = useState(0);
@@ -75,8 +73,6 @@ export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
       </div>}
       <div className="deck-top" aria-live="polite" aria-busy={shuffling}>
         {card && !shuffling ? <div className="face prompt" key={card[0]}>
-          <span className={`card-index ${suit === '♥' || suit === '♦' ? 'warm-suit' : ''}`} aria-hidden="true">{suit}</span>
-          <span className={`card-index card-index-opposite ${suit === '♥' || suit === '♦' ? 'warm-suit' : ''}`} aria-hidden="true">{suit}</span>
           <span className="small">Thankful at RCA</span>
           <h2>{card[0]}</h2><p>{card[1]}</p><em>I’m thankful for…</em>
         </div> : shuffling ? <span className="shuffle-status" role="status">Shuffling cards</span> : <button className="face back" onClick={() => draw()} aria-label="Pull a card" aria-describedby="shuffle-hint" disabled={disabled || shuffling}>

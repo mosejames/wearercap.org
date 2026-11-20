@@ -638,6 +638,11 @@ footer a {
   100% { transform: none; }
 }
 
+.deck-actions {
+  position: relative;
+  z-index: 1;
+}
+
 .deck-actions > * {
   min-height: 44px;
 }
@@ -1011,15 +1016,6 @@ footer a {
   background: #fbf4e3;
 }
 .deck .prompt::before { border-color: #b58d50; border-radius: 9px; }
-.card-index {
-  position: absolute;
-  top: 10px;
-  left: 13px;
-  font: 1.1rem Georgia, serif;
-}
-.card-index-opposite { inset: auto 13px 10px auto; transform: rotate(180deg); }
-.warm-suit { color: #9e302c; }
-
 @media (max-width: 730px) {
   .site-header { padding-top: max(25px, calc(env(safe-area-inset-top) + 10px)); }
   .hero { padding-top: 30px; gap: 24px; }
