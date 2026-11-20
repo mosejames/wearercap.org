@@ -91,13 +91,14 @@ function App() {
         <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setStep('create')}/>
       </section>
     </main>
-    {screen === 'create' && <main className="finishing capture-choice">
+    {screen === 'create' && <main className="finishing capture-choice share-screen">
       <button className="text-link" type="button" onClick={() => { setError(''); setStep('deck'); }}>
         <ArrowLeft size={16}/> Back to cards
       </button>
       <h1 ref={heading} tabIndex={-1}>Share your gratitude</h1>
       <div className="capture-prompt">
-        <div className="capture-prompt-label"><strong>{card[0]}</strong><span>Prompt</span></div>
+        <span className="small">Thankful at RCA</span>
+        <h2>{card[0]}</h2>
         <p>{card[1]}</p>
       </div>
       <section className="share-option" aria-labelledby="share-video-title">

@@ -1,5 +1,10 @@
 :root {
   color-scheme:dark;
+  --deck-pattern:
+    repeating-radial-gradient(ellipse at center, transparent 0 4px, #edc98236 5px 6px, transparent 7px 10px),
+    repeating-conic-gradient(from 45deg, #c38a4d22 0deg 25deg, transparent 25deg 90deg),
+    linear-gradient(135deg, #22355a, #0d192e 53%, #22355a);
+  --deck-pattern-size: 45px 32px, 16px 16px, 100% 100%;
   --navy:#111e36;
   --night:#0b1528;
   --paper:#faf1dc;
@@ -978,11 +983,8 @@ footer a {
   padding: 12% 9%;
   border: 9px solid #f8efd9;
   background-color: #162542;
-  background-image:
-    repeating-radial-gradient(ellipse at center, transparent 0 4px, #edc98236 5px 6px, transparent 7px 10px),
-    repeating-conic-gradient(from 45deg, #c38a4d22 0deg 25deg, transparent 25deg 90deg),
-    linear-gradient(135deg, #22355a, #0d192e 53%, #22355a);
-  background-size: 45px 32px, 16px 16px, 100% 100%;
+  background-image: var(--deck-pattern);
+  background-size: var(--deck-pattern-size);
   box-shadow: inset 0 0 0 2px #192944, inset 0 0 0 4px #dcb579, 0 12px 26px #03071285;
 }
 
@@ -1256,8 +1258,6 @@ footer a {
 
 .moderation-card > .gratitude-card { margin-block: 12px; }
 
-.capture-prompt-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.capture-prompt-label span { font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; color: #675d4c; }
 .share-option {
   display: grid;
   gap: 10px;
@@ -1297,3 +1297,42 @@ footer a {
   height: 1px;
   background: var(--line);
 }
+
+body:has(.share-screen) {
+  background-image: linear-gradient(180deg, #0b1528ba, #0b1528eb 66%, #0b1528), var(--deck-pattern);
+  background-size: 100% 100%, var(--deck-pattern-size);
+  background-repeat: no-repeat, repeat, repeat, no-repeat;
+}
+
+.share-screen {
+  isolation: isolate;
+}
+
+.share-screen .capture-prompt {
+  position: relative;
+  margin: 5px 6px -22px;
+  padding: 20px 22px 44px;
+  border: 1px solid #d4bb88;
+  border-radius: 15px 15px 9px 9px;
+  background: linear-gradient(180deg, #fbf4e3 62%, #d7bf92);
+  box-shadow: 0 12px 28px #0307126b;
+}
+
+.share-screen .capture-prompt::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid #b58d50;
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.share-screen .capture-prompt .small { color: #6b501e; }
+.share-screen .capture-prompt h2 {
+  margin: 6px 0 4px;
+  font-size: clamp(1.65rem, 6vw, 2.15rem);
+}
+.share-screen .capture-prompt p {
+  font: 1.06rem/1.35 Georgia, serif;
+}
+.share-screen .share-option { position: relative; }
