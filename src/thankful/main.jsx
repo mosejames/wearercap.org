@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-import { ArrowDown, Camera, Mic, Smartphone, Sun, Shuffle } from 'lucide-react';
+import { Camera } from 'lucide-react';
+import CardDeck from './CardDeck.jsx';
+import CameraRecorder from './CameraRecorder.jsx';
 import VideoEditor from './VideoEditor.jsx';
 import './style.css';
 
@@ -22,18 +24,23 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 }) : null;
 
 function App() {
-  const [deck, setDeck] = useState(cards);
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
   const [fileRevision, setFileRevision] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
 
-  function draw() {
-    const available = deck.length ? deck : cards.filter((item) => item !== card);
-    const next = available[Math.floor(Math.random() * available.length)];
-    setCard(next);
-    setDeck(available.filter((item) => item !== next));
+  function useFile(selected) {
+    setError('');
+    setFile(selected);
+    setFileRevision((version) => version + 1);
+  }
+
+  function recordingReady(selected) {
+    setCameraOpen(false);
+    useFile(selected);
+    requestAnimationFrame(() => document.getElementById('record').scrollIntoView());
   }
 
   function chooseFile(event) {
@@ -45,9 +52,7 @@ function App() {
       setError('Choose an MP4, MOV or WebM video up to 150 MB.');
       return;
     }
-    setError('');
-    setFile(selected);
-    setFileRevision((version) => version + 1);
+    useFile(selected);
   }
 
   return <>
@@ -61,43 +66,19 @@ function App() {
           <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
           <h1>Thankful <em>at RCA.</em></h1>
           <p>A moment. A lesson. A little growth you almost missed. Pull a card and share one thing you’re thankful for.</p>
-          <a className="text-link" href="#record">How to record <ArrowDown size={16}/></a>
         </div>
-        <div className="deck-area">
-          <div className="deck" aria-live="polite">
-            <div className="stack one"></div><div className="stack two"></div>
-            {card ? <div className="face prompt" key={card[0]}>
-              <span className="small">✦ &nbsp; Thankful at RCA</span>
-              <h2>{card[0]}</h2><p>{card[1]}</p><em>I’m thankful for…</em>
-            </div> : <button className="face back" onClick={draw} aria-label="Pull a card">
-              <span className="small">The gratitude deck</span>
-              <span className="orbit" aria-hidden="true"><span>✦</span></span>
-              <strong>Pick a card</strong><span className="tap">Tap to reveal your prompt</span>
-            </button>}
-          </div>
-          {card ? <div className="deck-actions">
-            <button className="text-link" onClick={draw} disabled={busy}><Shuffle size={16}/> Pull another</button>
-            <a className="button" href="#record">Use this prompt <ArrowDown size={16}/></a>
-          </div> : <div className="deck-caption">✧ &nbsp; Every card starts a different story &nbsp; ✧</div>}
-        </div>
+        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onRecord={() => setCameraOpen(true)}/>
       </section>
       <section className="record" id="record">
-        <div className="guide">
-          <div className="eyebrow"><span>✦</span> Your turn</div>
-          <h2>Make it a moment.</h2>
-          <p>Record a short video with your phone’s camera. Aim for about 30 seconds and answer in your own words.</p>
-          <ul>
-            <li><Sun/><div><strong>Find good light</strong><span>Face a window or a lamp so we can see you clearly.</span></div></li>
-            <li><Mic/><div><strong>Find a quiet spot</strong><span>Turn off music and background noise so we can hear you.</span></div></li>
-            <li><Smartphone/><div><strong>Hold your phone upright</strong><span>Record in portrait with the camera at eye level.</span></div></li>
-          </ul>
-        </div>
         <div className="submission">
           <Camera size={25}/><h2>Make your video</h2>
-          <p>{card ? <>Your prompt is <strong>{card[0]}</strong>. Choose a clip to preview, trim and send.</> :
-            'Pull a card to get your prompt, then come back here with your video.'}</p>
-          {!card ? <button className="button" type="button" onClick={() => { draw(); document.querySelector('.hero').scrollIntoView(); }}>Pull a card</button> :
+          <p>{card ? <>Your prompt is <strong>{card[0]}</strong>. Record here or upload a clip, then preview, trim and send.</> :
+            'Pull a card above to get started.'}</p>
+          {card &&
             <>
+              <button type="button" className="button camera-launch" disabled={busy} onClick={() => setCameraOpen(true)}>
+                <Camera size={18}/> {file ? 'Record a new take' : 'Open camera'}
+              </button>
               <label htmlFor="video">Choose a video <span className="hint">MP4, MOV or WebM · Up to 150 MB</span></label>
               <input id="video" type="file" accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" disabled={busy} onChange={chooseFile}/>
               {error && <p className="error" role="alert">{error}</p>}
@@ -106,6 +87,7 @@ function App() {
         </div>
       </section>
     </main>
+    {cameraOpen && <CameraRecorder card={card} onClose={() => setCameraOpen(false)} onRecorded={recordingReady}/>}
     <footer><a href="/">We Are RCAP</a><span>Ron Clark Academy Parents</span></footer>
   </>;
 }
