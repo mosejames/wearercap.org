@@ -10,10 +10,12 @@ function makePortraitStream(video, source, session) {
   if (!canvas.captureStream) throw new Error('Hold your phone upright and try opening the camera again.');
   const context = canvas.getContext('2d', { alpha: false });
   function paint() {
-    const cropWidth = Math.min(video.videoWidth, video.videoHeight * 9 / 16);
-    const cropHeight = Math.min(video.videoHeight, video.videoWidth * 16 / 9);
-    context.drawImage(video, (video.videoWidth - cropWidth) / 2, (video.videoHeight - cropHeight) / 2,
-      cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+    const width = video.videoWidth * scale;
+    const height = video.videoHeight * scale;
+    context.fillStyle = '#0b1528';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(video, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
     session.frame = requestAnimationFrame(paint);
   }
   paint();
@@ -63,7 +65,7 @@ export default function CameraRecorder({ card, onClose, onRecorded }) {
           throw new Error('This browser can’t record here. You can still upload a video from your camera roll.');
         }
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } },
+          video: { facingMode: 'user' },
           audio: { echoCancellation: true, noiseSuppression: true },
         });
         if (disposed) {
