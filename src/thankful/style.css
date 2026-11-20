@@ -1254,3 +1254,5 @@ footer a {
 .moderation-actions { justify-content: space-between; margin-bottom: 0; }
 .moderation-preview { display: block; width: 100%; max-height: 375px; object-fit: contain; margin-block: 10px; background: #0b1528; }
 .gallery-videos { margin-top: 16px; }
+
+.moderation-card > .gratitude-card { margin-block: 12px; }

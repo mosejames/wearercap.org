@@ -12,10 +12,10 @@ function messageSize(message) {
   return { '--message-size': length > 210 ? '4.1cqi' : length > 125 ? '4.8cqi' : length > 75 ? '5.8cqi' : '7cqi' };
 }
 
-function GratitudeCard({ photo, author, message, prompt }) {
+export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) {
   return <article className="gratitude-card live-card">
     {photo && <div className="gratitude-image">
-      <img className="gratitude-photo" src={photo} alt="" loading="lazy"/>
+      <img className="gratitude-photo" src={photo} alt="" loading="lazy" onError={onPhotoError}/>
       <img className="gratitude-logo" src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="42"/>
     </div>}
     <div className="gratitude-copy">

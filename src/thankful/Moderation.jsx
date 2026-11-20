@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { GratitudeCard } from './MessageGallery.jsx';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -143,9 +144,10 @@ export default function Moderation() {
         <h2>{item.author || 'Submission'}</h2>
         <p>{[item.prompt, item.family_name].filter(Boolean).join(' · ')}</p>
         <p className="hint">{[item.houses, item.class_years].filter(Array.isArray).flat().filter(value => typeof value === 'string').join(' · ')}</p>
-        {item.message && <p>{item.message}</p>}
+        {item.message && !previews[item.path] && <p>{item.message}</p>}
         {previews[item.path] && (item.kind === 'photo'
-          ? <img className="moderation-preview" src={previews[item.path]} alt="Submitted gratitude photo" onError={() => clearPreview(item.path)}/>
+          ? <GratitudeCard photo={previews[item.path]} author={item.author} message={item.message} prompt={item.prompt}
+              onPhotoError={() => clearPreview(item.path)}/>
           : <video className="moderation-preview" src={previews[item.path] + '#t=0.001'} controls playsInline preload="metadata" onError={() => clearPreview(item.path)}/>)}
         <div className="moderation-actions">
           {!previews[item.path] && <button className="text-link" disabled={busy !== null}
