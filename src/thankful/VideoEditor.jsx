@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Download, Share2, Upload } from 'lucide-react';
-import SharingDetails from './SharingDetails.jsx';
+import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import TrimTimeline from './TrimTimeline.jsx';
 import { renderVideo } from './render-video.js';
 
@@ -78,15 +78,8 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
 
   async function create(event) {
     event.preventDefault();
-    const fields = new FormData(event.currentTarget);
-    const speakerName = fields.get('speakerName').trim();
-    if (!speakerName) return setError('Enter your name before continuing.');
-    const sharing = {
-      speakerName,
-      studentOrFamilyName: fields.get('studentOrFamilyName').trim(),
-      houses: fields.getAll('houses'),
-      classYears: fields.getAll('classYears'),
-    };
+    const sharing = readSharingDetails(event.currentTarget);
+    if (!sharing.speakerName) return setError('Enter your name before continuing.');
     if (!storage) return setError('Video submissions are temporarily unavailable. Please try again later.');
     if (!duration || end <= start || end - start > MAX_LENGTH + .01) return;
     preview.current.pause();
