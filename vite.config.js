@@ -33,6 +33,7 @@ export default defineConfig({
         postthepeach: resolve(__dirname, "post-the-peach/index.html"),
         peachreview: resolve(__dirname, "post-the-peach/review/index.html"),
         main: resolve(__dirname, "index.html"),
+        thankful: resolve(__dirname, "thankful/index.html"),
         privacy: resolve(__dirname, "privacy/index.html"),
         rcapapp: resolve(__dirname, "app/index.html"),
         georgiagoal: resolve(__dirname, "georgia-goal/index.html"),
