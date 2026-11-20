@@ -590,44 +590,76 @@ footer a {
   background: #27364f;
 }
 
-.is-shuffling .stack {
-  animation: shuffle-card .72s cubic-bezier(.36,.04,.25,1) both;
-  --spread: 26%;
-  --spin: 17deg;
-  --rest: rotate(9deg) scale(.94);
+.back .tap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
 }
 
-.is-shuffling .one {
-  --spread: -30%;
-  --spin: -21deg;
-  --rest: rotate(-10deg) scale(.94);
+.shuffle-deck {
+  position: absolute;
+  inset: 0;
+  perspective: 1000px;
+  pointer-events: none;
 }
 
-.is-shuffling .three {
-  --spread: -13%;
-  --spin: -12deg;
-  --rest: rotate(3deg) scale(.96);
-  animation-delay: 45ms;
+.shuffle-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e9c57894;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at center, #3d4e6e, #18253e 72%);
+  box-shadow: 0 12px 28px #03071296;
+  color: var(--gold);
+  z-index: calc(var(--order) + 1);
+  animation: deck-cut 1.05s cubic-bezier(.28,.04,.32,1) both;
+  animation-delay: calc(var(--order) * 12ms);
 }
 
-.is-shuffling .deck-top {
-  animation: shuffle-face .76s ease-in-out both;
+.shuffle-card::before, .shuffle-card::after {
+  position: absolute;
+  content: '';
+  inset: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
 }
 
-.is-shuffling .back:disabled {
-  opacity: 1;
+.shuffle-card::after {
+  inset: 31% 25%;
+  border-radius: 50%;
+  transform: rotate(20deg);
 }
 
-@keyframes shuffle-card {
-  0%, 100% { transform: var(--rest); }
-  34% { transform: translateX(calc(var(--spread) * var(--sweep))) rotate(calc(var(--spin) * var(--sweep))); }
-  70% { transform: translateX(calc(var(--spread) * var(--sweep) * -.5)) rotate(calc(var(--spin) * var(--sweep) * -.6)); }
+.shuffle-card span { font-size: 3rem; }
+
+.shuffle-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
-@keyframes shuffle-face {
-  0%, 100% { transform: translate(0) rotate(0); }
-  32% { transform: translate(calc(31% * var(--sweep)), -8%) rotate(calc(14deg * var(--sweep))); }
-  66% { transform: translate(calc(-17% * var(--sweep)), 5%) rotate(calc(-10deg * var(--sweep))); }
+@keyframes deck-cut {
+  0% {
+    transform: translateY(0) rotate(calc(var(--spread) * 2deg)) scale(.98);
+  }
+  28% {
+    transform: translate(calc(var(--spread) * 13% * var(--sweep)), calc(-12% + var(--order) * 1.5%))
+      rotate(calc(var(--spread) * 14deg * var(--sweep))) scale(.9);
+  }
+  53% {
+    transform: translate(calc(var(--packet) * 25% * var(--sweep)), calc(var(--packet) * 11%))
+      rotate(calc(var(--packet) * -19deg * var(--sweep))) rotateY(calc(var(--packet) * 28deg)) scale(.93);
+  }
+  78% {
+    transform: translate(calc(var(--spread) * -4% * var(--sweep)), calc(-5% + var(--order) * 1%))
+      rotate(calc(var(--spread) * -6deg * var(--sweep))) scale(.98);
+  }
+  100% { transform: none; }
 }
 
 .deck-actions > * {
