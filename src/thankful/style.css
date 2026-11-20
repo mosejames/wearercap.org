@@ -1201,3 +1201,41 @@ footer a {
 .sharing-chip i { width: 9px; height: 9px; border: 1px solid #aaa; border-radius: 50%; }
 .sharing-chip input:checked + span { background: var(--gold); color: #111e36; }
 .sharing-chip input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.capture-choice > .written-choice { margin-top: 18px; }
+.capture-choice.message-choice { max-width: 560px; width: min(100% - 24px, 560px); }
+.message-form .photo-pick { min-height: 56px; }
+.photo-pick-hint { margin: 0; text-align: center; }
+.live-card { container-type: inline-size; }
+.live-card .gratitude-copy .gratitude-message,
+.live-card .gratitude-compose {
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: clamp(.94rem, var(--message-size, 6cqi), 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.live-card .gratitude-compose { padding-inline: clamp(12px, 5cqi, 25px); }
+.message-writing { display: grid; margin-top: 7px; }
+.message-writing > * {
+  grid-area: 1 / 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  padding: 5px 0;
+}
+.message-writing > span { visibility: hidden; }
+.message-form .message-writing textarea {
+  align-self: stretch;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid #efbd6180;
+  padding: 5px 0;
+  color: inherit;
+  line-height: inherit;
+  min-height: 1.6em;
+}
+.message-form .message-writing textarea::placeholder { color: #f4d396aa; }
