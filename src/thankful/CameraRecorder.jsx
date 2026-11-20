@@ -2,18 +2,28 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Mic, Smartphone, Sun, X } from 'lucide-react';
 
 const SECONDS = 30;
+const PROMPT_STARTERS = {
+  Growth: 'I’m thankful for the growth I’ve seen…',
+  Moment: 'I’m thankful for the moment when…',
+  Surprise: 'I’m thankful RCA surprised us with…',
+  People: 'I’m thankful for someone who…',
+  Belonging: 'I’m thankful we felt like we belonged when…',
+  Lesson: 'I’m thankful my child learned…',
+};
 const MIME_TYPES = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 
 function makePortraitStream(video, source, session) {
-  if (video.videoWidth < video.videoHeight) return source;
+  if (video.videoWidth * 16 === video.videoHeight * 9) return source;
   const canvas = Object.assign(document.createElement('canvas'), { width: 540, height: 960 });
   if (!canvas.captureStream) throw new Error('Hold your phone upright and try opening the camera again.');
   const context = canvas.getContext('2d', { alpha: false });
   function paint() {
-    const cropWidth = Math.min(video.videoWidth, video.videoHeight * 9 / 16);
-    const cropHeight = Math.min(video.videoHeight, video.videoWidth * 16 / 9);
-    context.drawImage(video, (video.videoWidth - cropWidth) / 2, (video.videoHeight - cropHeight) / 2,
-      cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+    const width = video.videoWidth * scale;
+    const height = video.videoHeight * scale;
+    context.fillStyle = '#0b1528';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(video, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
     session.frame = requestAnimationFrame(paint);
   }
   paint();
@@ -63,7 +73,7 @@ export default function CameraRecorder({ card, onClose, onRecorded }) {
           throw new Error('This browser can’t record here. You can still upload a video from your camera roll.');
         }
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } },
+          video: { facingMode: 'user' },
           audio: { echoCancellation: true, noiseSuppression: true },
         });
         if (disposed) {
@@ -163,7 +173,7 @@ export default function CameraRecorder({ card, onClose, onRecorded }) {
     <div className="camera-stage">
       <video ref={video} className="camera-feed" autoPlay muted playsInline/>
       <div className="camera-top">
-        <span>{card[0]}</span>
+        <span className="camera-prompt">{PROMPT_STARTERS[card[0]] ?? card[1]}</span>
         <button type="button" className="camera-close" onClick={onClose} aria-label="Close camera"><X size={22}/></button>
       </div>
       {phase === 'opening' && <p className="camera-message" role="status">Opening camera and microphone…</p>}
