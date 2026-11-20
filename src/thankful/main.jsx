@@ -30,6 +30,7 @@ function App() {
   const heading = useRef(null);
   const [step, setStep] = useState('deck');
   const screen = file ? 'finish' : step;
+  const previousScreen = useRef(screen);
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +46,8 @@ function App() {
   }
 
   useEffect(() => {
+    if (previousScreen.current === screen) return;
+    previousScreen.current = screen;
     window.scrollTo({ top: 0, behavior: 'instant' });
     heading.current?.focus({ preventScroll: true });
   }, [screen]);
