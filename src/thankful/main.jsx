@@ -26,6 +26,46 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
 }) : null;
 
+function SharePrompt({ card, onSelect }) {
+  const swipe = useRef(null);
+  const [direction, setDirection] = useState(0);
+  const index = cards.indexOf(card);
+  function neighbor(direction) {
+    return cards[(index + direction + cards.length) % cards.length];
+  }
+
+  function changePrompt(direction) {
+    setDirection(direction);
+    onSelect(neighbor(direction));
+  }
+
+  return <div className="share-prompt-deck">
+    {[-1, 1].map(direction => <button key={direction} type="button"
+      className={`share-prompt-peek ${direction < 0 ? 'previous' : 'next'}`}
+      aria-label={`${direction < 0 ? 'Previous' : 'Next'} prompt: ${neighbor(direction)[0]}`}
+      onClick={() => changePrompt(direction)}>
+      <span aria-hidden="true">{direction < 0 ? '‹' : '›'}</span>
+    </button>)}
+    <div key={card[0]} className="capture-prompt" aria-live="polite"
+      data-slide={direction || undefined} onPointerDown={event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      swipe.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }} onPointerUp={event => {
+      const down = swipe.current;
+      swipe.current = null;
+      if (!down || down.id !== event.pointerId) return;
+      const x = event.clientX - down.x;
+      const y = event.clientY - down.y;
+      if (Math.abs(x) >= 40 && Math.abs(x) > Math.abs(y)) changePrompt(x < 0 ? 1 : -1);
+    }} onLostPointerCapture={() => { swipe.current = null; }}>
+      <span className="small">Thankful at RCA</span>
+      <h2>{card[0]}</h2>
+      <p>{card[1]}</p>
+    </div>
+  </div>;
+}
+
 function App() {
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
@@ -91,15 +131,12 @@ function App() {
         <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setStep('create')}/>
       </section>
     </main>
-    {screen === 'create' && <main className="finishing capture-choice">
+    {screen === 'create' && <main className="finishing capture-choice share-screen">
       <button className="text-link" type="button" onClick={() => { setError(''); setStep('deck'); }}>
         <ArrowLeft size={16}/> Back to cards
       </button>
       <h1 ref={heading} tabIndex={-1}>Share your gratitude</h1>
-      <div className="capture-prompt">
-        <div className="capture-prompt-label"><strong>{card[0]}</strong><span>Prompt</span></div>
-        <p>{card[1]}</p>
-      </div>
+      <SharePrompt card={card} onSelect={setCard}/>
       <section className="share-option" aria-labelledby="share-video-title">
         <div className="share-option-heading">
           <span className="share-option-icon"><Video size={19} aria-hidden="true"/></span>
