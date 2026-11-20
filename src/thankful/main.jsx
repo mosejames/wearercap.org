@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-import { ArrowLeft, Camera, Upload } from 'lucide-react';
+import { ArrowLeft, Camera, PenLine, Upload } from 'lucide-react';
 import CardDeck from './CardDeck.jsx';
 import CameraRecorder from './CameraRecorder.jsx';
+import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
 import VideoEditor from './VideoEditor.jsx';
 import './style.css';
 
@@ -27,8 +28,8 @@ function App() {
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
   const heading = useRef(null);
-  const [creating, setCreating] = useState(false);
-  const screen = file ? 'finish' : creating ? 'create' : 'deck';
+  const [step, setStep] = useState('deck');
+  const screen = file ? 'finish' : step;
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
@@ -80,16 +81,16 @@ function App() {
         <div className="intro">
           <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
           <h1 ref={screen === 'deck' ? heading : null} tabIndex={-1}>Thankful <em>at RCA.</em></h1>
-          <p>Shuffle the cards to reveal a prompt. Then record or upload a short video about what you’re thankful for at RCA.</p>
+          <p>Shuffle the cards to reveal a prompt. Then share what you’re thankful for in a short video or a message with a photo.</p>
         </div>
-        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setCreating(true)}/>
+        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setStep('create')}/>
       </section>
     </main>
     {screen === 'create' && <main className="finishing capture-choice">
-      <button className="text-link" type="button" onClick={() => { setError(''); setCreating(false); }}>
+      <button className="text-link" type="button" onClick={() => { setError(''); setStep('deck'); }}>
         <ArrowLeft size={16}/> Back to cards
       </button>
-      <h1 ref={heading} tabIndex={-1}>Create your video</h1>
+      <h1 ref={heading} tabIndex={-1}>Share your gratitude</h1>
       <div className="capture-prompt">
         <strong>{card[0]}</strong>
         <p>{card[1]}</p>
@@ -100,10 +101,26 @@ function App() {
           accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
       </label>
       <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
+      <button type="button" className="button upload-choice" onClick={() => { setError(''); setStep('message'); }}>
+        <PenLine size={18}/> Write a message
+      </button>
       {error && <p className="error" role="alert">{error}</p>}
     </main>}
+    {screen === 'message' && <main className="finishing capture-choice">
+      <button className="text-link" type="button" disabled={busy} onClick={() => setStep('create')}><ArrowLeft size={16}/> Back</button>
+      <h1 ref={heading} tabIndex={-1}>Write a gratitude card</h1>
+      <div className="capture-prompt"><strong>{card[0]}</strong><p>{card[1]}</p></div>
+      <MessageComposer card={card} client={supabase} onBusy={setBusy} onGallery={() => setStep('gallery')}/>
+    </main>}
+    {screen === 'gallery' && <main className="finishing gallery-page">
+      <button className="text-link" type="button" onClick={() => setStep('deck')}><ArrowLeft size={16}/> Back to cards</button>
+      <h1 ref={heading} tabIndex={-1}>Gratitude gallery</h1>
+      <MessageGallery client={supabase}/>
+    </main>}
     {cameraOpen && <CameraRecorder card={card} onClose={() => setCameraOpen(false)} onRecorded={recordingReady}/>}
-    <footer><a href="/">We Are RCAP</a><span>Ron Clark Academy Parents</span></footer>
+    <footer><a href="/">We Are RCAP</a>
+      {screen === 'deck' && <button className="text-link" type="button" onClick={() => setStep('gallery')}>View gallery</button>}
+    </footer>
   </>;
 }
 createRoot(document.getElementById('root')).render(<App />);

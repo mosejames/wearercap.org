@@ -57,9 +57,9 @@ export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
   return <div className="deck-area">
     <button type="button" className="shuffle-hint" id="shuffle-hint" onClick={() => draw()}
       disabled={disabled || shuffling} aria-label="Shuffle cards, or swipe left or right on the deck">
-      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 3Q20 2 4 13m2-7-2 7 8-1"/></svg>
+      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 8.5H4m6-5-6 5 6 5"/></svg>
       Shuffle
-      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 3Q20 2 4 13m2-7-2 7 8-1"/></svg>
+      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 8.5H4m6-5-6 5 6 5"/></svg>
     </button>
     <div className={`deck ${shuffling ? 'is-shuffling' : ''}`}
       style={{ '--drag': `${drag}px`, '--tilt': `${drag / 8}deg`, '--sweep': sweep }}
@@ -85,7 +85,7 @@ export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
       </div>
     </div>
     <div className="deck-actions">
-      {card && <button className="button" type="button" onClick={onCreate} disabled={disabled || shuffling}>Create video</button>}
+      {card && <button className="button" type="button" onClick={onCreate} disabled={disabled || shuffling}>Share gratitude</button>}
     </div>
   </div>;
 }

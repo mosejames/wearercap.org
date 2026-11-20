@@ -1088,3 +1088,41 @@ footer a {
 @media (max-width: 730px) {
   .deck-area { padding-top: 0; }
 }
+
+.message-form fieldset label > input:not([type=checkbox]), .message-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+}
+.message-form textarea {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #18243a;
+  color: var(--paper);
+  font: inherit;
+  resize: vertical;
+}
+.message-form small { color: var(--muted); text-align: right; }
+.card-preview h2 { margin: 10px 0; font-size: 1.2rem; }
+.gallery-page { width: min(100% - 36px, 1000px); }
+.gallery-page h1 { margin-top: 12px; }
+.gratitude-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 18px; }
+.gratitude-card {
+  overflow: hidden;
+  border: 1px solid #d4bb88;
+  border-radius: 15px;
+  background: #fbf4e3;
+  color: #111e36;
+}
+.gratitude-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.gratitude-copy { padding: 18px; overflow-wrap: anywhere; }
+.gratitude-copy p { white-space: pre-wrap; font: 1.16rem/1.48 Georgia, serif; }
+.gratitude-copy footer {
+  background: #111e36;
+  color: #fbf4e3;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.gratitude-copy footer img { width: 30px; }
