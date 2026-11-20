@@ -69,7 +69,7 @@ function App() {
 
   return <>
     <header className="site-header">
-      <a href="/" className="mark"><span>WE ARE</span><strong>RCAP<span>.</span></strong></a>
+      <a href="/" className="mark"><img src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="46" height="41"/></a>
       <span className="occasion">Thanksgiving 2026</span>
     </header>
     {file ? <main className="finishing">
