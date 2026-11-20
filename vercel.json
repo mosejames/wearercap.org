@@ -62,6 +62,10 @@
       "destination": "/api/m3-link?vault=nyc&slug=:slug"
     },
     {
+      "source": "/thankful",
+      "destination": "/thankful/index.html"
+    },
+    {
       "source": "/api/london-activity",
       "destination": "/api/m3-sign?vault=london-activity"
     },
