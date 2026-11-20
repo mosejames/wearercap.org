@@ -1,5 +1,3 @@
-import { fitVideo } from '../vault/optimize-video.js';
-
 export async function renderVideo(file, { start, end, onProgress }) {
   if (!globalThis.VideoEncoder || !globalThis.VideoDecoder) {
     throw new Error('Open this page in an up-to-date Safari or Chrome to finish your video.');
@@ -13,7 +11,8 @@ export async function renderVideo(file, { start, end, onProgress }) {
   try {
     const videoTrack = await input.getPrimaryVideoTrack();
     if (!videoTrack) throw new Error('That file doesn’t contain a video.');
-    const { width, height } = fitVideo(videoTrack.displayWidth, videoTrack.displayHeight, 1280);
+    const width = 720;
+    const height = 1280;
     const canvas = Object.assign(document.createElement('canvas'), { width, height });
     const ctx = canvas.getContext('2d', { alpha: false });
     const output = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() });

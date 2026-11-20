@@ -5,7 +5,7 @@ const SECONDS = 30;
 const MIME_TYPES = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 
 function makePortraitStream(video, source, session) {
-  if (video.videoWidth < video.videoHeight) return source;
+  if (video.videoWidth * 16 === video.videoHeight * 9) return source;
   const canvas = Object.assign(document.createElement('canvas'), { width: 540, height: 960 });
   if (!canvas.captureStream) throw new Error('Hold your phone upright and try opening the camera again.');
   const context = canvas.getContext('2d', { alpha: false });

@@ -660,7 +660,7 @@ footer a {
 }
 
 .camera-dialog {
-  width: min(100% - 20px, 430px, (100dvh - 20px) * .63);
+  width: min(100% - 20px, 430px, (100dvh - 24px) * 9 / 16);
   max-width: none;
   max-height: calc(100dvh - 20px);
   padding: 0;
@@ -680,8 +680,7 @@ footer a {
   display: grid;
   place-items: center;
   aspect-ratio: 9 / 16;
-  max-height: calc(100dvh - 22px);
-  min-height: 320px;
+  background: #0b1528;
   isolation: isolate;
 }
 
@@ -692,7 +691,6 @@ footer a {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transform: scaleX(-1);
 }
 
 .camera-top, .camera-controls {
@@ -822,12 +820,6 @@ footer a {
 }
 
 @media (max-width: 620px) {
-  .camera-dialog {
-    width: min(100% - 12px, 430px);
-  }
-  .camera-stage {
-    min-height: min(570px, 100dvh - 18px);
-  }
   .deck-area {
     padding: 22px 0 0;
   }
