@@ -8,11 +8,21 @@ function Choice({ name, value, color }) {
   </label>;
 }
 
-export default function SharingDetails() {
+export function readSharingDetails(form) {
+  const fields = new FormData(form);
+  return {
+    speakerName: String(fields.get('speakerName') ?? '').trim(),
+    studentOrFamilyName: String(fields.get('studentOrFamilyName') ?? '').trim(),
+    houses: fields.getAll('houses'),
+    classYears: fields.getAll('classYears'),
+  };
+}
+
+export default function SharingDetails({ photo = false }) {
   return <section className="sharing-details" aria-labelledby="sharing-title">
     <h2 id="sharing-title">Who’s sharing?</h2>
     <label className="sharing-name">Your name
-      <input name="speakerName" autoComplete="name" maxLength={100} placeholder="Name of the person in the video" required/>
+      <input name="speakerName" autoComplete="name" maxLength={photo ? 60 : 100} placeholder={photo ? "Name of the person writing the card" : "Name of the person in the video"} required/>
     </label>
     <details>
       <summary>Add your RCA crew <span className="hint">Optional</span></summary>

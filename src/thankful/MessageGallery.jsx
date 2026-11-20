@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 
+import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
 import { promptStarters } from './prompt-starters.js';
 
@@ -50,7 +51,8 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
 
   async function submit(event) {
     event.preventDefault();
-    if (busy || !client || !photo || !author.trim() || !message.trim()) {
+    const sharing = readSharingDetails(event.currentTarget);
+    if (busy || !client || !photo || !sharing.speakerName || !message.trim()) {
       setError(client ? 'Add a photo, your name and a message.' : 'Submissions are temporarily unavailable.');
       return;
     }
@@ -70,9 +72,13 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
         draft.uploaded = true;
       }
       const { error: writeError } = await client.from('thankful_messages').insert({
-        id: draft.id, prompt: card[0], author: author.trim(), message: `${starter} ${message.trim()}`,
+        id: draft.id, prompt: card[0], author: sharing.speakerName, message: `${starter} ${message.trim()}`,
+        student_or_family_name: sharing.studentOrFamilyName || null,
+        houses: sharing.houses,
+        class_years: sharing.classYears,
       });
       if (writeError && writeError.code !== '23505') throw writeError;
+      setAuthor(sharing.speakerName);
       setSavedPhoto(draft.photo);
       setSent(true);
     } catch {
@@ -131,7 +137,7 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
                   setCrop(current => limitCrop(imageRef.current, { ...current, zoom }));
                 }}/>
             </label>
-            <label>Your name<input required value={author} maxLength={60} onChange={event => setAuthor(event.target.value)}/></label>
+            <SharingDetails photo/>
           <label className="consent"><input type="checkbox" required/><span>I have permission to share this photo publicly, including a parent or guardian’s permission for any child shown.</span></label>
           <button type="submit" className="button">{busy ? 'Submitting…' : 'Submit card for review'}</button>
           </>}
