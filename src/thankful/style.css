@@ -1030,3 +1030,61 @@ footer a {
   .deck .prompt h2 { font-size: clamp(1.7rem, 8.5vw, 2.3rem); }
   .deck .prompt p { font-size: clamp(.99rem, 4.6vw, 1.15rem); }
 }
+
+.deck-area > .shuffle-hint {
+  border: none;
+  background: transparent;
+  padding: 6px 4px 12px;
+  min-height: 44px;
+  color: #ddc393;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .7rem;
+}
+
+.shuffle-hint svg {
+  width: 40px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.shuffle-hint svg:last-child { transform: scaleX(-1); }
+.playing-back { align-content: center; }
+
+.capture-choice {
+  display: grid;
+  max-width: 430px;
+  gap: 12px;
+}
+.capture-choice > .text-link { justify-self: start; min-height: 44px; }
+.capture-choice h1 { margin: 0; }
+.capture-choice > .button { min-height: 48px; }
+.capture-prompt {
+  background: #fbf4e3;
+  color: #111e36;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 2px 0 8px;
+}
+.capture-prompt p { margin: 4px 0 0; line-height: 1.4; }
+.capture-choice .upload-choice {
+  position: relative;
+  background: transparent;
+  color: var(--gold);
+  border-color: var(--line);
+}
+.upload-choice:focus-within { outline: 2px solid var(--gold); outline-offset: 3px; }
+.upload-choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.capture-choice > .hint { margin: 0; text-align: center; }
+
+@media (max-width: 730px) {
+  .deck-area { padding-top: 0; }
+}

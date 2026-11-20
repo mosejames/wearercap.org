@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-import { Camera } from 'lucide-react';
+import { ArrowLeft, Camera, Upload } from 'lucide-react';
 import CardDeck from './CardDeck.jsx';
 import CameraRecorder from './CameraRecorder.jsx';
 import VideoEditor from './VideoEditor.jsx';
@@ -26,7 +26,9 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 function App() {
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
-  const finishHeading = useRef(null);
+  const heading = useRef(null);
+  const [creating, setCreating] = useState(false);
+  const screen = file ? 'finish' : creating ? 'create' : 'deck';
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
@@ -34,25 +36,21 @@ function App() {
   function useFile(selected) {
     setError('');
     setFile(selected);
-
   }
 
   function recordingReady(selected) {
     setCameraOpen(false);
     useFile(selected);
-
   }
 
   useEffect(() => {
-    if (!file) return;
     window.scrollTo({ top: 0, behavior: 'instant' });
-    finishHeading.current?.focus({ preventScroll: true });
-  }, [file]);
+    heading.current?.focus({ preventScroll: true });
+  }, [screen]);
 
   function startOver() {
     setFile(null);
     setError('');
-    requestAnimationFrame(() => document.getElementById('record')?.scrollIntoView({ behavior: 'instant' }));
   }
 
   function chooseFile(event) {
@@ -72,35 +70,37 @@ function App() {
       <a href="/" className="mark"><img src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="46" height="41"/></a>
       <span className="occasion">Thanksgiving 2026</span>
     </header>
-    {file ? <main className="finishing">
-      <h1 ref={finishHeading} tabIndex={-1}>Finish your video</h1>
+    {screen === 'finish' && <main className="finishing">
+      <h1 ref={heading} tabIndex={-1}>Finish your video</h1>
       <VideoEditor file={file} card={card} storage={supabase?.storage} onBusy={setBusy}/>
       <button className="start-over" type="button" onClick={startOver} disabled={busy}>Start over</button>
-    </main> : <main>
+    </main>}
+    <main hidden={screen !== 'deck'}>
       <section className="hero">
         <div className="intro">
           <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
-          <h1>Thankful <em>at RCA.</em></h1>
-          <p>A moment. A lesson. A little growth you almost missed. Pull a card and share one thing you’re thankful for.</p>
+          <h1 ref={screen === 'deck' ? heading : null} tabIndex={-1}>Thankful <em>at RCA.</em></h1>
+          <p>Shuffle the cards to reveal a prompt. Then record or upload a short video about what you’re thankful for at RCA.</p>
         </div>
-        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onRecord={() => setCameraOpen(true)}/>
+        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setCreating(true)}/>
       </section>
-      <section className="record" id="record">
-        <div className="submission">
-          <Camera size={25}/><h2>Make your video</h2>
-          <p>{card ? <>Your prompt is <strong>{card[0]}</strong>. Record here or upload a clip, then preview, trim and send.</> :
-            'Pull a card above to get started.'}</p>
-          {card &&
-            <>
-              <button type="button" className="button camera-launch" disabled={busy} onClick={() => setCameraOpen(true)}>
-                <Camera size={18}/> Open camera
-              </button>
-              <label htmlFor="video">Choose a video <span className="hint">MP4, MOV or WebM · Up to 150 MB</span></label>
-              <input id="video" type="file" accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" disabled={busy} onChange={chooseFile}/>
-              {error && <p className="error" role="alert">{error}</p>}
-            </>}
-        </div>
-      </section>
+    </main>
+    {screen === 'create' && <main className="finishing capture-choice">
+      <button className="text-link" type="button" onClick={() => { setError(''); setCreating(false); }}>
+        <ArrowLeft size={16}/> Back to cards
+      </button>
+      <h1 ref={heading} tabIndex={-1}>Create your video</h1>
+      <div className="capture-prompt">
+        <strong>{card[0]}</strong>
+        <p>{card[1]}</p>
+      </div>
+      <button type="button" className="button" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
+      <label className="button upload-choice"><Upload size={18}/> Upload a video
+        <input aria-describedby="upload-formats" type="file"
+          accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
+      </label>
+      <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
+      {error && <p className="error" role="alert">{error}</p>}
     </main>}
     {cameraOpen && <CameraRecorder card={card} onClose={() => setCameraOpen(false)} onRecorded={recordingReady}/>}
     <footer><a href="/">We Are RCAP</a><span>Ron Clark Academy Parents</span></footer>

@@ -1,17 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MoveHorizontal, Shuffle } from 'lucide-react';
 
 const suits = ['♠', '♥', '♣', '♦', '♠', '♥'];
 
 function CardBack() {
   return <div className="playing-back" aria-hidden="true">
-    <span className="back-suits">♠ ♥ ♣ ♦</span>
     <span className="back-medallion"><img src="/images/we-are-rcap-logo.png" alt="" draggable={false}/></span>
-    <span className="back-suits back-suits-reversed">♠ ♥ ♣ ♦</span>
   </div>;
 }
 
-export default function CardDeck({ cards, card, onDraw, disabled, onRecord }) {
+export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
   const suit = suits[cards.indexOf(card)];
   const [remaining, setRemaining] = useState(cards);
   const [shuffling, setShuffling] = useState(false);
@@ -58,6 +55,12 @@ export default function CardDeck({ cards, card, onDraw, disabled, onRecord }) {
   }
 
   return <div className="deck-area">
+    <button type="button" className="shuffle-hint" id="shuffle-hint" onClick={() => draw()}
+      disabled={disabled || shuffling} aria-label="Shuffle cards, or swipe left or right on the deck">
+      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 3Q20 2 4 13m2-7-2 7 8-1"/></svg>
+      Shuffle
+      <svg viewBox="0 0 44 17" aria-hidden="true"><path d="M42 3Q20 2 4 13m2-7-2 7 8-1"/></svg>
+    </button>
     <div className={`deck ${shuffling ? 'is-shuffling' : ''}`}
       style={{ '--drag': `${drag}px`, '--tilt': `${drag / 8}deg`, '--sweep': sweep }}
       onPointerDown={startSwipe} onPointerMove={moveSwipe} onPointerUp={endSwipe}
@@ -82,10 +85,7 @@ export default function CardDeck({ cards, card, onDraw, disabled, onRecord }) {
       </div>
     </div>
     <div className="deck-actions">
-      {card ? <>
-        <button className="text-link" onClick={() => draw()} disabled={disabled || shuffling}><Shuffle size={16}/> Pull another</button>
-        <button className="button" type="button" onClick={onRecord} disabled={disabled || shuffling}>Record this prompt</button>
-      </> : <span className="shuffle-hint" id="shuffle-hint"><MoveHorizontal size={15}/> Swipe to shuffle</span>}
+      {card && <button className="button" type="button" onClick={onCreate} disabled={disabled || shuffling}>Create video</button>}
     </div>
   </div>;
 }
