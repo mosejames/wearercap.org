@@ -112,7 +112,6 @@ function App() {
     {screen === 'message' && <main className="finishing capture-choice">
       <button className="text-link" type="button" disabled={busy} onClick={() => setStep('create')}><ArrowLeft size={16}/> Back</button>
       <h1 ref={heading} tabIndex={-1}>Write a gratitude card</h1>
-      <div className="capture-prompt"><strong>{card[0]}</strong><p>{card[1]}</p></div>
       <MessageComposer card={card} client={supabase} onBusy={setBusy} onGallery={() => setStep('gallery')}/>
     </main>}
     {screen === 'gallery' && <main className="finishing gallery-page">
