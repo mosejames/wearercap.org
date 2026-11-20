@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import SubmissionThanks from './SubmissionThanks.jsx';
 import { Check, Download, Share2, Upload } from 'lucide-react';
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import TrimTimeline from './TrimTimeline.jsx';
@@ -122,6 +123,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
         delivery === 'sending' ? 'Sending your finished clip to RCAP. Keep this page open.' :
           'Your video is ready to keep. The copy for RCAP still needs to be sent.'}
     </p>
+    {delivery === 'sent' && <SubmissionThanks/>}
     {delivery === 'failed' && <button className="text-link" type="button" onClick={() => { onBusy(true); void deliver(result); }}>Retry submission</button>}
     {error && <p className="error" role="alert">{error}</p>}
   </div>;

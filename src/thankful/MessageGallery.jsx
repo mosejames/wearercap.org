@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import SubmissionThanks from './SubmissionThanks.jsx';
 import { ImagePlus } from 'lucide-react';
 
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
@@ -91,7 +92,8 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
 
   return <>
     {sent ? <><p role="status">Your card was submitted. It will appear in the gallery after RCAP reviews it.</p>
-      <button type="button" className="button" onClick={onGallery}>View gallery</button></> :
+      <SubmissionThanks/>
+      <button type="button" className="text-link" onClick={onGallery}>View gallery</button></> :
       <form className="message-form" onSubmit={submit}>
         <fieldset disabled={busy}>
           {!photoUrl && <label className="button upload-choice photo-pick">
