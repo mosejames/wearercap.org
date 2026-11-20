@@ -1118,11 +1118,5 @@ footer a {
 .gratitude-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
 .gratitude-copy { padding: 18px; overflow-wrap: anywhere; }
 .gratitude-copy p { white-space: pre-wrap; font: 1.16rem/1.48 Georgia, serif; }
-.gratitude-copy footer {
-  background: #111e36;
-  color: #fbf4e3;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-.gratitude-copy footer img { width: 30px; }
+.gratitude-image { position: relative; }
+.gratitude-logo { position: absolute; top: 12px; left: 12px; display: block; }
