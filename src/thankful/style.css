@@ -1202,7 +1202,6 @@ footer a {
 .sharing-chip input:checked + span { background: var(--gold); color: #111e36; }
 .sharing-chip input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
 
-.capture-choice > .written-choice { margin-top: 18px; }
 .capture-choice.message-choice { max-width: 560px; width: min(100% - 24px, 560px); }
 .message-form .photo-pick { min-height: 56px; }
 .photo-pick-hint { margin: 0; text-align: center; }
@@ -1256,3 +1255,45 @@ footer a {
 .gallery-videos { margin-top: 16px; }
 
 .moderation-card > .gratitude-card { margin-block: 12px; }
+
+.capture-prompt-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.capture-prompt-label span { font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; color: #675d4c; }
+.share-option {
+  display: grid;
+  gap: 10px;
+  padding: clamp(13px, 4vw, 19px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(155deg, #172541, #101a2d);
+}
+.share-option-heading { display: flex; align-items: start; gap: 11px; margin-bottom: 4px; }
+.share-option-heading h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.share-option-heading p { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.4; }
+.share-option-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 37px;
+  height: 37px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #efbd611c;
+  color: var(--gold);
+}
+.share-option > .button { min-height: 48px; text-align: center; }
+.share-option > .hint { margin: 2px 0 0; text-align: center; }
+.share-option-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  text-align: center;
+}
+.share-option-divider::before, .share-option-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}

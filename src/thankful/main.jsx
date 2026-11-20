@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-import { ArrowLeft, Camera, PenLine, Upload } from 'lucide-react';
+import { ArrowLeft, Camera, Image, PenLine, Upload, Video } from 'lucide-react';
 import CardDeck from './CardDeck.jsx';
 import CameraRecorder from './CameraRecorder.jsx';
 import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
@@ -97,19 +97,32 @@ function App() {
       </button>
       <h1 ref={heading} tabIndex={-1}>Share your gratitude</h1>
       <div className="capture-prompt">
-        <strong>{card[0]}</strong>
+        <div className="capture-prompt-label"><strong>{card[0]}</strong><span>Prompt</span></div>
         <p>{card[1]}</p>
       </div>
-      <button type="button" className="button" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
-      <label className="button upload-choice"><Upload size={18}/> Upload a video
-        <input aria-describedby="upload-formats" type="file"
-          accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
-      </label>
-      <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
-      <button type="button" className="button upload-choice written-choice" onClick={() => { setError(''); setStep('message'); }}>
-        <PenLine size={18}/> Write a message
-      </button>
-      {error && <p className="error" role="alert">{error}</p>}
+      <section className="share-option" aria-labelledby="share-video-title">
+        <div className="share-option-heading">
+          <span className="share-option-icon"><Video size={19} aria-hidden="true"/></span>
+          <div><h2 id="share-video-title">Share a video</h2><p>Record a short clip or upload one from your device.</p></div>
+        </div>
+        <button type="button" className="button" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
+        <label className="button upload-choice"><Upload size={18}/> Upload a video
+          <input aria-describedby="upload-formats" type="file"
+            accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
+        </label>
+        <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
+        {error && <p className="error" role="alert">{error}</p>}
+      </section>
+      <div className="share-option-divider">or</div>
+      <section className="share-option" aria-labelledby="share-photo-title">
+        <div className="share-option-heading">
+          <span className="share-option-icon"><Image size={19} aria-hidden="true"/></span>
+          <div><h2 id="share-photo-title">Share a message &amp; photo</h2><p>Write what you’re thankful for and add a photo.</p></div>
+        </div>
+        <button type="button" className="button upload-choice" onClick={() => { setError(''); setStep('message'); }}>
+          <PenLine size={18}/> Write a message &amp; add photo
+        </button>
+      </section>
     </main>}
     {screen === 'message' && <main className="finishing capture-choice message-choice">
       <button className="text-link" type="button" disabled={busy} onClick={() => setStep('create')}><ArrowLeft size={16}/> Back</button>
