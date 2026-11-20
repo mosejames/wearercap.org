@@ -2,6 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Mic, Smartphone, Sun, X } from 'lucide-react';
 
 const SECONDS = 30;
+const PROMPT_STARTERS = {
+  Growth: 'I’m thankful for the growth I’ve seen…',
+  Moment: 'I’m thankful for the moment when…',
+  Surprise: 'I’m thankful RCA surprised us with…',
+  People: 'I’m thankful for someone who…',
+  Belonging: 'I’m thankful we felt like we belonged when…',
+  Lesson: 'I’m thankful my child learned…',
+};
 const MIME_TYPES = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 
 function makePortraitStream(video, source, session) {
@@ -165,7 +173,7 @@ export default function CameraRecorder({ card, onClose, onRecorded }) {
     <div className="camera-stage">
       <video ref={video} className="camera-feed" autoPlay muted playsInline/>
       <div className="camera-top">
-        <span>{card[0]}</span>
+        <span className="camera-prompt">{PROMPT_STARTERS[card[0]] ?? card[1]}</span>
         <button type="button" className="camera-close" onClick={onClose} aria-label="Close camera"><X size={22}/></button>
       </div>
       {phase === 'opening' && <p className="camera-message" role="status">Opening camera and microphone…</p>}
