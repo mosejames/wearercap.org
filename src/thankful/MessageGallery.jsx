@@ -6,7 +6,7 @@ function GratitudeCard({ photo, author, message, prompt }) {
   return <article className="gratitude-card">
     {photo && <div className="gratitude-image">
       <img className="gratitude-photo" src={photo} alt="" loading="lazy"/>
-      <img className="gratitude-logo" src="/app-assets/we-are-rcap-180.png" alt="We Are RCAP" width="42" height="42"/>
+      <img className="gratitude-logo" src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="42"/>
     </div>}
     <div className="gratitude-copy">
       <span className="small">{prompt}</span>

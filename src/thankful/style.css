@@ -514,8 +514,6 @@ footer a {
   bottom:52px;
   width:29%;
   padding:2%;
-  background:var(--navy);
-  border-radius:5px;
   pointer-events:none;
 }
 

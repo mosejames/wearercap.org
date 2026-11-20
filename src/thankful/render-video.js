@@ -28,10 +28,6 @@ export async function renderVideo(file, { start, end, onProgress }) {
         forceTranscode: true, allowRotationMetadata: false,
         process(sample) {
           sample.draw(ctx, 0, 0, width, height);
-          ctx.beginPath();
-          ctx.roundRect(inset, height - inset - badgeHeight - pad * 2, badgeWidth + pad * 2, badgeHeight + pad * 2, pad);
-          ctx.fillStyle = '#111e36';
-          ctx.fill();
           ctx.drawImage(logo, inset + pad, height - inset - badgeHeight - pad, badgeWidth, badgeHeight);
           return canvas;
         },
