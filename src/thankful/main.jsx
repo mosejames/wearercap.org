@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
 import { ArrowLeft, Camera, PenLine, Upload } from 'lucide-react';
@@ -7,6 +7,8 @@ import CameraRecorder from './CameraRecorder.jsx';
 import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
 import VideoEditor from './VideoEditor.jsx';
 import './style.css';
+
+const Moderation = lazy(() => import('./Moderation.jsx'));
 
 const cards = [
   ['Growth', 'What growth have you seen in your child at RCA that you’re thankful for?'],
@@ -125,4 +127,7 @@ function App() {
     </footer>
   </>;
 }
-createRoot(document.getElementById('root')).render(<App />);
+const admin = new URLSearchParams(location.search).has('moderate');
+createRoot(document.getElementById('root')).render(admin
+  ? <Suspense fallback={<p role="status">Loading moderation…</p>}><Moderation/></Suspense>
+  : <App/>);

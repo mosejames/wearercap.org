@@ -1239,3 +1239,18 @@ footer a {
   min-height: 1.6em;
 }
 .message-form .message-writing textarea::placeholder { color: #f4d396aa; }
+
+.moderation { padding-block: 24px; }
+.moderation-header { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.moderation-login { max-width: 400px; display: grid; gap: 10px; }
+.moderation-login label { display: grid; gap: 6px; }
+.moderation-filters, .moderation-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 14px; }
+.moderation-filters .button { text-transform: capitalize; }
+.moderation-filters [aria-pressed=false] { background: transparent; color: var(--gold); border-color: var(--line); }
+.moderation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 16px; }
+.moderation-card { padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: #111e36; overflow-wrap: anywhere; }
+.moderation-card h2 { margin: 0; font-size: 1.35rem; }
+.moderation-card p { margin: 7px 0; white-space: pre-wrap; }
+.moderation-actions { justify-content: space-between; margin-bottom: 0; }
+.moderation-preview { display: block; width: 100%; max-height: 375px; object-fit: contain; margin-block: 10px; background: #0b1528; }
+.gallery-videos { margin-top: 16px; }

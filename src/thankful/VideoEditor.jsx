@@ -65,7 +65,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     try {
       const { error: uploadError } = await storage.from('thankful-at-rca').upload(clip.path, clip.file, {
         contentType: 'video/mp4',
-        metadata: { ...clip.sharing, family: clip.sharing.speakerName, prompt: clip.prompt, consent: true },
+        metadata: { ...clip.sharing, family: clip.sharing.speakerName, prompt: clip.prompt, consent: true, galleryConsent: true },
       });
       if (uploadError && Number(uploadError.statusCode) !== 409) throw uploadError;
       setDelivery('sent');
@@ -146,7 +146,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
           seek(value);
         }}/>}
       <SharingDetails/>
-      <label className="consent"><input type="checkbox" required/><span>I have permission from everyone shown, including a parent or guardian for any child, and I give RCAP permission to use this clip in its Thanksgiving video.</span></label>
+      <label className="consent"><input type="checkbox" required/><span>I have permission from everyone shown, including a parent or guardian for any child, and I give RCAP permission to use this clip in its Thanksgiving video and public Gratitude gallery.</span></label>
       <button className="button" type="submit" disabled={!duration}><Upload size={17}/>{rendering ? 'Creating your video…' : 'Finish and send'}</button>
       {rendering && <progress aria-label="Creating your video" max="1" value={progress} />}
       {error && <p className="error" role="alert">{error}</p>}
