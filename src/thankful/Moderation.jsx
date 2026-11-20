@@ -5,6 +5,19 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const client = url && key ? createClient(url, key) : null;
 
+const buckets = { photo: 'thankful-message-photos', video: 'thankful-at-rca' };
+
+async function loadPreviews(items) {
+  const batches = await Promise.allSettled(Object.entries(buckets).map(async ([kind, bucket]) => {
+    const paths = items.filter(item => item.kind === kind).map(item => item.path);
+    if (!paths.length) return [];
+    const { data, error } = await client.storage.from(bucket).createSignedUrls(paths, 900);
+    if (error) throw error;
+    return data.filter(item => item.signedUrl).map(item => [item.path, item.signedUrl]);
+  }));
+  return Object.fromEntries(batches.flatMap(batch => batch.status === 'fulfilled' ? batch.value : []));
+}
+
 function SignIn({ onError }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -40,6 +53,9 @@ export default function Moderation() {
   const [denied, setDenied] = useState(false);
   const [filter, setFilter] = useState('pending');
   const [previews, setPreviews] = useState({});
+  function clearPreview(path) {
+    setPreviews(current => ({ ...current, [path]: undefined }));
+  }
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -53,6 +69,8 @@ export default function Moderation() {
   async function load(before) {
     const { data, error: loadError } = await client.rpc('thankful_moderation_queue', { before_time: before ?? null });
     if (loadError) throw loadError;
+    const urls = await loadPreviews(data);
+    setPreviews(previous => ({ ...previous, ...urls }));
     setItems(previous => before ? [...previous, ...data] : data);
     setMore(data.length === 40);
   }
@@ -63,12 +81,15 @@ export default function Moderation() {
     setItems(null);
     setDenied(false);
     setPreviews({});
-    if (session) client.rpc('thankful_moderation_queue', { before_time: null }).then(({ data, error: loadError }) => {
+    if (session) client.rpc('thankful_moderation_queue', { before_time: null }).then(async ({ data, error: loadError }) => {
       if (!active) return;
       if (loadError) {
         if (loadError.code === '42501') setDenied(true);
         else setError('The review queue couldn’t load.');
       } else {
+        const urls = await loadPreviews(data);
+        if (!active) return;
+        setPreviews(urls);
         setItems(data);
         setMore(data.length === 40);
       }
@@ -83,7 +104,7 @@ export default function Moderation() {
     try {
       if (action === 'preview') {
         const { data, error: previewError } = await client.storage
-          .from(item.kind === 'photo' ? 'thankful-message-photos' : 'thankful-at-rca').createSignedUrl(item.path, 900);
+          .from(buckets[item.kind]).createSignedUrl(item.path, 900);
         if (previewError) throw previewError;
         setPreviews(current => ({ ...current, [item.path]: data.signedUrl }));
       } else {
@@ -124,10 +145,11 @@ export default function Moderation() {
         <p className="hint">{[item.houses, item.class_years].filter(Array.isArray).flat().filter(value => typeof value === 'string').join(' · ')}</p>
         {item.message && <p>{item.message}</p>}
         {previews[item.path] && (item.kind === 'photo'
-          ? <img className="moderation-preview" src={previews[item.path]} alt="Submitted gratitude photo"/>
-          : <video className="moderation-preview" src={previews[item.path]} controls playsInline preload="metadata"/>)}
+          ? <img className="moderation-preview" src={previews[item.path]} alt="Submitted gratitude photo" onError={() => clearPreview(item.path)}/>
+          : <video className="moderation-preview" src={previews[item.path] + '#t=0.001'} controls playsInline preload="metadata" onError={() => clearPreview(item.path)}/>)}
         <div className="moderation-actions">
-          <button className="text-link" disabled={busy !== null} onClick={() => act(item, 'preview')}>{previews[item.path] ? 'Refresh preview' : 'Preview'}</button>
+          {!previews[item.path] && <button className="text-link" disabled={busy !== null}
+            onClick={() => act(item, 'preview')}>Retry preview</button>}
           <button className="button" disabled={busy !== null || (!item.published && !previews[item.path])}
             onClick={() => act(item, 'publish')}>{item.published ? 'Hide' : 'Publish'}</button>
         </div>
