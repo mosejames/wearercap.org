@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
 import { Camera } from 'lucide-react';
@@ -26,7 +26,7 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 function App() {
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
-  const [fileRevision, setFileRevision] = useState(0);
+  const finishHeading = useRef(null);
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [error, setError] = useState('');
@@ -34,13 +34,25 @@ function App() {
   function useFile(selected) {
     setError('');
     setFile(selected);
-    setFileRevision((version) => version + 1);
+
   }
 
   function recordingReady(selected) {
     setCameraOpen(false);
     useFile(selected);
-    requestAnimationFrame(() => document.getElementById('record').scrollIntoView());
+
+  }
+
+  useEffect(() => {
+    if (!file) return;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    finishHeading.current?.focus({ preventScroll: true });
+  }, [file]);
+
+  function startOver() {
+    setFile(null);
+    setError('');
+    requestAnimationFrame(() => document.getElementById('record')?.scrollIntoView({ behavior: 'instant' }));
   }
 
   function chooseFile(event) {
@@ -60,7 +72,11 @@ function App() {
       <a href="/" className="mark"><span>WE ARE</span><strong>RCAP<span>.</span></strong></a>
       <span className="occasion">Thanksgiving 2026</span>
     </header>
-    <main>
+    {file ? <main className="finishing">
+      <h1 ref={finishHeading} tabIndex={-1}>Finish your video</h1>
+      <VideoEditor file={file} card={card} storage={supabase?.storage} onBusy={setBusy}/>
+      <button className="start-over" type="button" onClick={startOver} disabled={busy}>Start over</button>
+    </main> : <main>
       <section className="hero">
         <div className="intro">
           <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
@@ -77,16 +93,15 @@ function App() {
           {card &&
             <>
               <button type="button" className="button camera-launch" disabled={busy} onClick={() => setCameraOpen(true)}>
-                <Camera size={18}/> {file ? 'Record a new take' : 'Open camera'}
+                <Camera size={18}/> Open camera
               </button>
               <label htmlFor="video">Choose a video <span className="hint">MP4, MOV or WebM · Up to 150 MB</span></label>
               <input id="video" type="file" accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" disabled={busy} onChange={chooseFile}/>
               {error && <p className="error" role="alert">{error}</p>}
-              {file && <VideoEditor key={fileRevision} file={file} card={card} storage={supabase?.storage} onBusy={setBusy}/>}
             </>}
         </div>
       </section>
-    </main>
+    </main>}
     {cameraOpen && <CameraRecorder card={card} onClose={() => setCameraOpen(false)} onRecorded={recordingReady}/>}
     <footer><a href="/">We Are RCAP</a><span>Ron Clark Academy Parents</span></footer>
   </>;

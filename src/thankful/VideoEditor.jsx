@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Download, Share2, Upload } from 'lucide-react';
+import TrimTimeline from './TrimTimeline.jsx';
 import { renderVideo } from './render-video.js';
 
 const MAX_LENGTH = 30;
@@ -19,6 +20,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
   const [duration, setDuration] = useState(0);
   const [start, setStart] = useState(0);
   const [end, setEnd] = useState(0);
+  const [time, setTime] = useState(0);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -54,6 +56,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
   function seek(time) {
     preview.current.pause();
     preview.current.currentTime = time;
+    setTime(time);
   }
 
   async function deliver(clip) {
@@ -126,31 +129,21 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
   return <form className="editor" onSubmit={create}>
     <fieldset disabled={rendering}>
       <div className="preview-frame">
-        <video ref={preview} className="preview" src={sourceUrl} playsInline controls preload="metadata"
+        <video ref={preview} className="preview" src={sourceUrl} playsInline controls preload="auto"
           onLoadedMetadata={loadPreview} onError={() => { if (sourceUrl) setError('This video couldn’t be opened. Try saving a copy as an MP4.'); }}
           onPlay={() => { if (preview.current.currentTime < start || preview.current.currentTime >= end) preview.current.currentTime = start; }}
-          onTimeUpdate={() => { if (end && preview.current.currentTime >= end) preview.current.pause(); }} />
+          onTimeUpdate={() => {
+            const video = preview.current;
+            setTime(video.currentTime);
+            if (end && video.currentTime >= end) video.pause();
+          }} />
         <img src="/images/we-are-rcap-logo.png" alt="We Are RCAP" />
       </div>
-      {duration > 0 && <div className="trim">
-        <h3>Trim your clip</h3>
-        <p className="hint">Drag to set the start and end. Keep up to 30 seconds.</p>
-        <label>Start <output>{start.toFixed(1)}s</output>
-          <input type="range" min="0" max={Math.max(0, duration - .1)} step="any" value={start} onChange={(event) => {
-            const next = Number(event.target.value);
-            setStart(next);
-            if (end <= next || end - next > MAX_LENGTH) setEnd(Math.min(duration, next + MAX_LENGTH));
-            seek(next);
-          }}/>
-        </label>
-        <label>End <output>{end.toFixed(1)}s</output>
-          <input type="range" min={start + Math.min(.1, duration - start)} max={Math.min(duration, start + MAX_LENGTH)} step="any" value={end} onChange={(event) => {
-            const next = Number(event.target.value);
-            setEnd(next);
-            seek(next);
-          }}/>
-        </label>
-      </div>}
+      {duration > 0 && <TrimTimeline file={file} duration={duration} start={start} end={end} time={time}
+        limit={MAX_LENGTH} onSeek={seek} onTrim={(edge, value) => {
+          (edge === 'start' ? setStart : setEnd)(value);
+          seek(value);
+        }}/>}
       <label htmlFor="family">Your name</label>
       <input id="family" name="family" autoComplete="name" maxLength={100} required />
       <label className="consent"><input type="checkbox" required/><span>I have permission from everyone shown, including a parent or guardian for any child, and I give RCAP permission to use this clip in its Thanksgiving video.</span></label>
