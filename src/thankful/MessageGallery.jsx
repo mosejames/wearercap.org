@@ -12,10 +12,10 @@ function messageSize(message) {
   return { '--message-size': length > 210 ? '4.1cqi' : length > 125 ? '4.8cqi' : length > 75 ? '5.8cqi' : '7cqi' };
 }
 
-function GratitudeCard({ photo, author, message, prompt }) {
+export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) {
   return <article className="gratitude-card live-card">
     {photo && <div className="gratitude-image">
-      <img className="gratitude-photo" src={photo} alt="" loading="lazy"/>
+      <img className="gratitude-photo" src={photo} alt="" loading="lazy" onError={onPhotoError}/>
       <img className="gratitude-logo" src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="42"/>
     </div>}
     <div className="gratitude-copy">
@@ -148,7 +148,7 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
   </>;
 }
 
-export function MessageGallery({ client }) {
+function PhotoGallery({ client }) {
   const [cards, setCards] = useState(null);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -174,6 +174,48 @@ export function MessageGallery({ client }) {
 
   if (error) return <p role="alert">The gallery couldn’t load. Please try again later.</p>;
   if (!cards) return <p role="status">Loading cards…</p>;
-  if (!cards.length) return <p>No published cards yet.</p>;
+  if (!cards.length) return <p>No published photo cards yet.</p>;
   return <div className="gratitude-grid">{cards.map(card => <GratitudeCard key={card.id} {...card}/>)}</div>;
+}
+
+function VideoGallery({ client }) {
+  const [videos, setVideos] = useState([]);
+  const [playing, setPlaying] = useState({});
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const { data, error: queryError } = await client.from('thankful_published_videos')
+          .select('path').order('published_at', { ascending: false }).limit(60);
+        if (queryError) throw queryError;
+        if (active) setVideos(data);
+      } catch {
+        if (active) setError('Published videos couldn’t load.');
+      }
+    }
+    void load();
+    return () => { active = false; };
+  }, [client]);
+
+  async function play(path) {
+    setError('');
+    const { data, error: signError } = await client.storage.from('thankful-at-rca').createSignedUrl(path, 300);
+    if (signError) setError('This video is unavailable. Refresh the gallery to try again.');
+    else setPlaying(current => ({ ...current, [path]: data.signedUrl }));
+  }
+
+  return <>
+    {videos.length > 0 && <div className="gratitude-grid gallery-videos">
+      {videos.map(({ path }, index) => <article key={path} className="moderation-card">
+        {playing[path] ? <video className="moderation-preview" src={playing[path]} controls autoPlay playsInline/> :
+          <button className="button" onClick={() => play(path)}>Play gratitude video {index + 1}</button>}
+      </article>)}
+    </div>}
+    {error && <p role="alert">{error}</p>}
+  </>;
+}
+
+export function MessageGallery({ client }) {
+  return <><PhotoGallery client={client}/><VideoGallery client={client}/></>;
 }
