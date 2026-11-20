@@ -28,19 +28,26 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 
 function SharePrompt({ card, onSelect }) {
   const swipe = useRef(null);
+  const [direction, setDirection] = useState(0);
   const index = cards.indexOf(card);
   function neighbor(direction) {
     return cards[(index + direction + cards.length) % cards.length];
+  }
+
+  function changePrompt(direction) {
+    setDirection(direction);
+    onSelect(neighbor(direction));
   }
 
   return <div className="share-prompt-deck">
     {[-1, 1].map(direction => <button key={direction} type="button"
       className={`share-prompt-peek ${direction < 0 ? 'previous' : 'next'}`}
       aria-label={`${direction < 0 ? 'Previous' : 'Next'} prompt: ${neighbor(direction)[0]}`}
-      onClick={() => onSelect(neighbor(direction))}>
+      onClick={() => changePrompt(direction)}>
       <span aria-hidden="true">{direction < 0 ? '‹' : '›'}</span>
     </button>)}
-    <div className="capture-prompt" aria-live="polite" onPointerDown={event => {
+    <div key={card[0]} className="capture-prompt" aria-live="polite"
+      data-slide={direction || undefined} onPointerDown={event => {
       if (!event.isPrimary || event.button !== 0) return;
       swipe.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -50,7 +57,7 @@ function SharePrompt({ card, onSelect }) {
       if (!down || down.id !== event.pointerId) return;
       const x = event.clientX - down.x;
       const y = event.clientY - down.y;
-      if (Math.abs(x) >= 40 && Math.abs(x) > Math.abs(y)) onSelect(neighbor(x < 0 ? 1 : -1));
+      if (Math.abs(x) >= 40 && Math.abs(x) > Math.abs(y)) changePrompt(x < 0 ? 1 : -1);
     }} onLostPointerCapture={() => { swipe.current = null; }}>
       <span className="small">Thankful at RCA</span>
       <h2>{card[0]}</h2>

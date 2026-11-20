@@ -1374,3 +1374,20 @@ body:has(.share-screen) {
 .share-prompt-peek.next { right: 0; justify-items: end; }
 .share-prompt-peek:focus-visible { z-index: 1; }
 .share-prompt-peek:hover { background: #fbf4e3; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .share-prompt-deck .capture-prompt[data-slide] {
+    animation: prompt-settle 240ms cubic-bezier(.2, .72, .32, 1) both;
+  }
+
+  .capture-prompt[data-slide="1"] { --prompt-slide: 16px; --prompt-tilt: 2deg; }
+  .capture-prompt[data-slide="-1"] { --prompt-slide: -16px; --prompt-tilt: -2deg; }
+
+  @keyframes prompt-settle {
+    from {
+      transform: translateX(var(--prompt-slide)) rotate(var(--prompt-tilt)) scale(.97);
+      opacity: .8;
+    }
+    to { transform: none; opacity: 1; }
+  }
+}
