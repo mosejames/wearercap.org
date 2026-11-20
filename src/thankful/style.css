@@ -824,3 +824,114 @@ footer a {
     padding: 16px 10px 0;
   }
 }
+
+.finishing {
+  width: min(100% - 36px, 540px);
+  margin: 0 auto;
+  padding: 4px 0 18px;
+}
+
+.finishing h1 {
+  font-size: clamp(1.85rem, 7vw, 2.5rem);
+  line-height: 1.1;
+  margin: 0 0 14px;
+}
+
+.finishing h1:focus { outline: none; }
+.finishing .preview-frame { width: min(100%, 220px, 25svh); margin-inline: auto; }
+.finishing .preview-frame .preview { max-height: none; }
+.finishing .editor > .preview { max-height: 52svh; }
+
+.start-over {
+  display: block;
+  min-height: 44px;
+  margin: 6px auto 0;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: .85rem;
+  text-decoration: underline;
+}
+
+.timeline { margin: 0 0 8px; }
+.timeline-heading, .timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.timeline-heading { margin-bottom: 8px; }
+.timeline-heading output, .timeline-labels {
+  font-size: .78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.timeline-labels { margin-top: 6px; }
+.filmstrip {
+  position: relative;
+  height: 58px;
+  margin: 0 22px;
+  touch-action: none;
+  user-select: none;
+  cursor: ew-resize;
+  isolation: isolate;
+}
+.filmstrip-frames, .trim-selection {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.filmstrip-frames {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  background: #0f1729;
+}
+.filmstrip-frames img, .filmstrip-frames span {
+  width: 100%;
+  height: 58px;
+  object-fit: cover;
+  background: #30415c;
+}
+.trim-selection {
+  right: auto;
+  border-block: 3px solid var(--gold);
+  box-shadow: 0 0 0 550px #0b15288c;
+}
+.trim-mask { position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: 6px; }
+.trim-playhead {
+  position: absolute;
+  inset: -4px auto;
+  width: 2px;
+  background: white;
+  pointer-events: none;
+}
+.trim-handle {
+  position: absolute;
+  top: 0;
+  width: 44px;
+  height: 58px;
+  display: grid;
+  align-items: stretch;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.trim-start { translate: -100% 0; justify-items: end; }
+.trim-end { justify-items: start; }
+.trim-handle span {
+  width: 15px;
+  display: grid;
+  place-items: center;
+  background: var(--gold);
+}
+.trim-start span { border-radius: 6px 0 0 6px; }
+.trim-end span { border-radius: 0 6px 6px 0; }
+.trim-handle span::after {
+  content: '';
+  width: 4px;
+  height: 19px;
+  border-inline: 1px solid #171f30;
+}
