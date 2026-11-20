@@ -104,15 +104,14 @@ function App() {
           accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
       </label>
       <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
-      <button type="button" className="button upload-choice" onClick={() => { setError(''); setStep('message'); }}>
+      <button type="button" className="button upload-choice written-choice" onClick={() => { setError(''); setStep('message'); }}>
         <PenLine size={18}/> Write a message
       </button>
       {error && <p className="error" role="alert">{error}</p>}
     </main>}
-    {screen === 'message' && <main className="finishing capture-choice">
+    {screen === 'message' && <main className="finishing capture-choice message-choice">
       <button className="text-link" type="button" disabled={busy} onClick={() => setStep('create')}><ArrowLeft size={16}/> Back</button>
       <h1 ref={heading} tabIndex={-1}>Write a gratitude card</h1>
-      <div className="capture-prompt"><strong>{card[0]}</strong><p>{card[1]}</p></div>
       <MessageComposer card={card} client={supabase} onBusy={setBusy} onGallery={() => setStep('gallery')}/>
     </main>}
     {screen === 'gallery' && <main className="finishing gallery-page">

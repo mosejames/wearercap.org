@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Download, Share2, Upload } from 'lucide-react';
+import SharingDetails from './SharingDetails.jsx';
 import TrimTimeline from './TrimTimeline.jsx';
 import { renderVideo } from './render-video.js';
 
@@ -64,7 +65,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     try {
       const { error: uploadError } = await storage.from('thankful-at-rca').upload(clip.path, clip.file, {
         contentType: 'video/mp4',
-        metadata: { family: clip.family, prompt: clip.prompt, consent: true },
+        metadata: { ...clip.sharing, family: clip.sharing.speakerName, prompt: clip.prompt, consent: true },
       });
       if (uploadError && Number(uploadError.statusCode) !== 409) throw uploadError;
       setDelivery('sent');
@@ -77,8 +78,15 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
 
   async function create(event) {
     event.preventDefault();
-    const family = new FormData(event.currentTarget).get('family').trim();
-    if (!family) return setError('Enter your name before continuing.');
+    const fields = new FormData(event.currentTarget);
+    const speakerName = fields.get('speakerName').trim();
+    if (!speakerName) return setError('Enter your name before continuing.');
+    const sharing = {
+      speakerName,
+      studentOrFamilyName: fields.get('studentOrFamilyName').trim(),
+      houses: fields.getAll('houses'),
+      classYears: fields.getAll('classYears'),
+    };
     if (!storage) return setError('Video submissions are temporarily unavailable. Please try again later.');
     if (!duration || end <= start || end - start > MAX_LENGTH + .01) return;
     preview.current.pause();
@@ -88,7 +96,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     try {
       const finished = await renderVideo(file, { start, end, onProgress: setProgress });
       const clip = {
-        file: finished, family, prompt: card[0],
+        file: finished, sharing, prompt: card[0],
         path: `2026/${card[0].toLowerCase()}/${crypto.randomUUID()}.mp4`,
       };
       setResult(clip);
@@ -144,8 +152,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
           (edge === 'start' ? setStart : setEnd)(value);
           seek(value);
         }}/>}
-      <label htmlFor="family">Your name</label>
-      <input id="family" name="family" autoComplete="name" maxLength={100} required />
+      <SharingDetails/>
       <label className="consent"><input type="checkbox" required/><span>I have permission from everyone shown, including a parent or guardian for any child, and I give RCAP permission to use this clip in its Thanksgiving video.</span></label>
       <button className="button" type="submit" disabled={!duration}><Upload size={17}/>{rendering ? 'Creating your video…' : 'Finish and send'}</button>
       {rendering && <progress aria-label="Creating your video" max="1" value={progress} />}

@@ -1,16 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ImagePlus } from 'lucide-react';
+
+import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
+import { promptStarters } from './prompt-starters.js';
 
 const BUCKET = 'thankful-message-photos';
 
+function messageSize(message) {
+  const length = message.length + (message.split('\n').length - 1) * 18;
+  return { '--message-size': length > 210 ? '4.1cqi' : length > 125 ? '4.8cqi' : length > 75 ? '5.8cqi' : '7cqi' };
+}
+
 function GratitudeCard({ photo, author, message, prompt }) {
-  return <article className="gratitude-card">
+  return <article className="gratitude-card live-card">
     {photo && <div className="gratitude-image">
       <img className="gratitude-photo" src={photo} alt="" loading="lazy"/>
       <img className="gratitude-logo" src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="42"/>
     </div>}
     <div className="gratitude-copy">
-      <span className="small">{prompt}</span>
-      <p>{message}</p>
+      {prompt && <span className="small">{prompt}</span>}
+      <p className="gratitude-message" style={messageSize(message)}>{message}</p>
       <strong>{author}</strong>
     </div>
   </article>;
@@ -23,15 +32,21 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [savedPhoto, setSavedPhoto] = useState(null);
   const [error, setError] = useState('');
   const submission = useRef(null);
+  const imageRef = useRef(null);
+  const [crop, setCrop] = useState(initialCrop);
+  const starter = promptStarters[card[0]];
+  const limit = 299 - starter.length;
 
   useEffect(() => {
-    if (!photo) return;
-    const url = URL.createObjectURL(photo);
+    const display = savedPhoto || photo;
+    if (!display) return;
+    const url = URL.createObjectURL(display);
     setPhotoUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [photo]);
+  }, [photo, savedPhoto]);
 
   async function submit(event) {
     event.preventDefault();
@@ -43,19 +58,22 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
     onBusy(true);
     setError('');
     try {
-      const draft = submission.current ??= { id: crypto.randomUUID(), uploaded: false };
+      if (submission.current?.crop !== crop) submission.current = { id: crypto.randomUUID(), crop, uploaded: false };
+      const draft = submission.current;
       const photoPath = `${draft.id}/photo`;
       if (!draft.uploaded) {
-        const { error: uploadError } = await client.storage.from(BUCKET).upload(photoPath, photo);
+        draft.photo = await exportPhoto(imageRef.current, crop);
+        const { error: uploadError } = await client.storage.from(BUCKET).upload(photoPath, draft.photo, { contentType: 'image/jpeg' });
         if (uploadError && String(uploadError.statusCode) !== '409' && !['Duplicate', 'ResourceAlreadyExists', 'KeyAlreadyExists'].includes(uploadError.code)) {
           throw uploadError;
         }
         draft.uploaded = true;
       }
       const { error: writeError } = await client.from('thankful_messages').insert({
-        id: draft.id, prompt: card[0], author: author.trim(), message: message.trim(),
+        id: draft.id, prompt: card[0], author: author.trim(), message: `${starter} ${message.trim()}`,
       });
       if (writeError && writeError.code !== '23505') throw writeError;
+      setSavedPhoto(draft.photo);
       setSent(true);
     } catch {
       setError('Your card couldn’t be submitted. Please try again.');
@@ -70,33 +88,57 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
       <button type="button" className="button" onClick={onGallery}>View gallery</button></> :
       <form className="message-form" onSubmit={submit}>
         <fieldset disabled={busy}>
-          <label>Your name<input required value={author} maxLength={60} onChange={event => setAuthor(event.target.value)}/></label>
-          <label>Your message<textarea required value={message} maxLength={300} rows={4} onChange={event => setMessage(event.target.value)}/></label>
-          <small>{message.length}/300</small>
-          <label>Add a photo <span className="hint">JPEG, PNG or WebP · Up to 8 MB</span>
-            <input type="file" accept="image/jpeg,image/png,image/webp" required onChange={event => {
+          {!photoUrl && <label className="button upload-choice photo-pick">
+            <ImagePlus size={22} aria-hidden="true"/> Start with a photo
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
               const file = event.target.files[0];
               if (!file) return;
-              if (!['image/jpeg','image/png','image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024) {
+              if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024) {
                 event.target.value = '';
-                setPhoto(null);
-                setPhotoUrl('');
                 setError('Choose a JPEG, PNG or WebP photo under 8 MB.');
                 return;
               }
               submission.current = null;
+              setCrop(initialCrop);
               setPhoto(file);
               setError('');
             }}/>
-          </label>
+          </label>}
+          {!photoUrl && <p className="photo-pick-hint hint">Choose a family picture or a photo of your child.</p>}
+          {photoUrl && <>
+            <div className="gratitude-card live-card">
+              <PhotoFrame photo={photoUrl} imageRef={imageRef} crop={crop} onCrop={setCrop} disabled={busy}/>
+              <img className="gratitude-logo" src="/images/we-are-rcap-logo.png" alt="We Are RCAP" width="42"/>
+              <div className="gratitude-copy gratitude-compose" style={messageSize(`${starter} ${message}`)}>
+                <label htmlFor="gratitude-message">{starter}…</label>
+                <div className="message-writing">
+                  <span aria-hidden="true">{message || 'Finish the thought'}{' '}</span>
+                  <textarea id="gratitude-message" required value={message} maxLength={limit} rows={1} placeholder="Finish the thought" onChange={event => setMessage(event.target.value)}/>
+                </div>
+              </div>
+            </div>
+            <div className="photo-tools">
+              <p className="hint">Drag to move · Pinch to zoom</p>
+              <button type="button" className="text-link" onClick={() => {
+                setPhoto(null);
+                setPhotoUrl('');
+              }}>Change photo</button>
+            </div>
+            <label className="photo-zoom">Zoom
+              <input type="range" min="1" max="4" step=".01" value={crop.zoom}
+                onChange={event => {
+                  const zoom = Number(event.target.value);
+                  setCrop(current => limitCrop(imageRef.current, { ...current, zoom }));
+                }}/>
+            </label>
+            <label>Your name<input required value={author} maxLength={60} onChange={event => setAuthor(event.target.value)}/></label>
           <label className="consent"><input type="checkbox" required/><span>I have permission to share this photo publicly, including a parent or guardian’s permission for any child shown.</span></label>
           <button type="submit" className="button">{busy ? 'Submitting…' : 'Submit card for review'}</button>
+          </>}
         </fieldset>
       </form>}
     {error && <p className="error" role="alert">{error}</p>}
-    {(author || message || photoUrl) && <div className="card-preview"><h2>Your card</h2>
-      <GratitudeCard photo={photoUrl} author={author || 'Your name'} message={message || 'Your message will appear here.'} prompt={card[0]}/>
-    </div>}
+    {sent && <GratitudeCard photo={photoUrl} author={author} message={`${starter} ${message.trim()}`}/> }
   </>;
 }
 
