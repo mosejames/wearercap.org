@@ -1154,3 +1154,50 @@ footer a {
 .photo-zoom input { accent-color: var(--gold); padding: 0 !important; }
 .camera-prompt { display: grid; gap: 4px; }
 .camera-prompt span { color: #f4d396; }
+
+.sharing-details {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: #111e36;
+}
+.sharing-details h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+.sharing-name {
+  display: grid;
+  gap: 5px;
+  font-size: .9rem;
+}
+.sharing-name input { margin-bottom: 0; }
+.sharing-details summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--gold);
+  cursor: pointer;
+}
+.sharing-details summary .hint { margin-left: 5px; }
+.sharing-details details > p { margin: 10px 0; }
+.sharing-details .sharing-choices { margin-top: 12px; }
+.sharing-choices legend { margin-bottom: 5px; font-size: .84rem; }
+.sharing-choices > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.sharing-chip { position: relative; cursor: pointer; }
+.sharing-chip input { position: absolute; opacity: 0; }
+.sharing-chip span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: #1b2a46;
+  font-size: .8rem;
+}
+.sharing-chip i { width: 9px; height: 9px; border: 1px solid #aaa; border-radius: 50%; }
+.sharing-chip input:checked + span { background: var(--gold); color: #111e36; }
+.sharing-chip input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
