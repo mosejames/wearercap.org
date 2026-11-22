@@ -15,6 +15,8 @@
   color:var(--paper);
   background:var(--night);
   scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
 }
 
 * {
@@ -374,6 +376,11 @@ fieldset {
   min-width:0;
 }
 
+/* iOS auto-zooms focused text fields below 16 CSS pixels. */
+input:not([type]), input[type=text], input[type=email] {
+  font-size:max(16px, 1rem);
+}
+
 fieldset>label {
   font-weight:700;
 }
@@ -564,6 +571,8 @@ footer a {
   justify-content:center;
   flex-wrap:wrap;
 }
+
+.file-actions .button { max-inline-size: 100%; }
 
 .editor [role=status] svg {
   vertical-align:middle;
@@ -832,9 +841,10 @@ footer a {
 }
 
 .finishing {
-  width: min(100% - 36px, 540px);
+  width: min(100%, 576px);
   margin: 0 auto;
-  padding: 4px 0 18px;
+  padding: 4px max(18px, env(safe-area-inset-right)) 18px max(18px, env(safe-area-inset-left));
+  overflow-wrap: anywhere;
 }
 
 .finishing h1 {
@@ -1212,7 +1222,7 @@ footer a {
 .live-card .gratitude-compose {
   color: var(--gold);
   font-family: Georgia, serif;
-  font-size: clamp(.94rem, var(--message-size, 6cqi), 2.35rem);
+  font-size: clamp(max(16px, 1rem), var(--message-size, 6cqi), 2.35rem);
   font-weight: 600;
   line-height: 1.15;
   overflow-wrap: anywhere;
