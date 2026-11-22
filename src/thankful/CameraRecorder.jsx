@@ -12,11 +12,9 @@ function makePortraitStream(video, source, session) {
   if (!canvas.captureStream) throw new Error('Hold your phone upright and try opening the camera again.');
   const context = canvas.getContext('2d', { alpha: false });
   function paint() {
-    const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+    const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
     const width = video.videoWidth * scale;
     const height = video.videoHeight * scale;
-    context.fillStyle = '#0b1528';
-    context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(video, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
     session.frame = requestAnimationFrame(paint);
   }

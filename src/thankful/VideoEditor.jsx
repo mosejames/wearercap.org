@@ -103,11 +103,18 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     }
   }
 
-  async function share() {
+  const canShareVideo = result && navigator.canShare?.({ files: [result.file] });
+  const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const canSaveToPhotos = canShareVideo && isAppleMobile;
+
+  async function share(saveToPhotos = false) {
+    setError('');
     try {
-      await navigator.share({ files: [result.file], title: 'Thankful at RCA' });
+      const files = [result.file];
+      await navigator.share(saveToPhotos ? { files } : { files, title: 'Thankful at RCA' });
     } catch (cause) {
-      if (cause.name !== 'AbortError') setError('Sharing didn’t open. Download the video to share it from your phone.');
+      if (cause.name !== 'AbortError') setError('The share menu didn’t open. You can still download the video file.');
     }
   }
 
@@ -115,9 +122,12 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     <h3>Your finished video</h3>
     <video className="preview" src={outputUrl} controls playsInline/>
     <div className="file-actions">
-      <a className="button" href={outputUrl || undefined} download={result.file.name}><Download size={16}/> Download</a>
-      {navigator.canShare?.({ files: [result.file] }) && <button className="button" type="button" onClick={share}><Share2 size={16}/> Share</button>}
+      {canSaveToPhotos
+        ? <button className="button" type="button" onClick={() => share(true)}><Download size={16}/> Save to Photos</button>
+        : <a className="button" href={outputUrl || undefined} download={result.file.name}><Download size={16}/> Download</a>}
+      {canShareVideo && <button className="button" type="button" onClick={() => share()}><Share2 size={16}/> Share</button>}
     </div>
+    {canSaveToPhotos && <p className="hint">Choose Save Video to add it to Photos. <a href={outputUrl || undefined} download={result.file.name}>Download file</a></p>}
     <p className="hint" role="status">
       {delivery === 'sent' ? <><Check size={14}/> RCAP received your clip.</> :
         delivery === 'sending' ? 'Sending your finished clip to RCAP. Keep this page open.' :
