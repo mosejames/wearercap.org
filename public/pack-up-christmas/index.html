@@ -7,13 +7,13 @@
 <meta property="og:url" content="https://wearercap.org/pack-up-christmas/">
 <meta property="og:title" content="Help Me Pack Up Christmas at RCA">
 <meta property="og:description" content="Sponsor a storage bag to help protect RCA’s Christmas trees.">
-<meta property="og:image" content="https://wearercap.org/pack-up-christmas/help-pack-up-christmas-og.jpg">
+<meta property="og:image" content="https://wearercap.org/pack-up-christmas/christmas-5-of-32-og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:alt" content="Help Pack Up Christmas. Purchase heavy-duty storage bags for RCA’s Christmas trees.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://wearercap.org/pack-up-christmas/help-pack-up-christmas-og.jpg">
+<meta name="twitter:image" content="https://wearercap.org/pack-up-christmas/christmas-5-of-32-og.jpg">
 <title>Help Me Pack Up Christmas at RCA</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap">
 <style>
@@ -40,8 +40,8 @@ h1 span{display:block;color:#f5cf77}
 .ornament:nth-child(5){--left:80%;--drop:2.85rem;--size:1.6rem}
 .ornament:nth-child(6){--left:91%;--drop:1.45rem;--size:1rem}
 svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visible}
-.count{margin:.35rem 0 1rem;color:#adbfdf;font-size:clamp(1.15rem,4.5vw,1.6rem);font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
-.count strong{color:white;font-size:clamp(2.9rem,10vw,4.25rem);font-weight:850;line-height:1}
+.count{margin:.35rem 0 1rem;color:#adbfdf;font-size:clamp(1.4rem,5vw,2rem);font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.count strong{color:white;font-size:clamp(3.6rem,13vw,5.5rem);font-weight:850;line-height:1}
 
 .action{display:block;width:min(100%,20rem);margin:auto;padding:.85rem;border-radius:2rem;background:#f5cf77;color:#0a1938;font-weight:800;text-decoration:none}
 .action[aria-disabled=true]{background:#233f70;color:#fff}
@@ -51,6 +51,7 @@ svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visibl
 <div class="ornaments" aria-hidden="true"><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span></div>
 <h1>Help Me Pack Up <span>Christmas at RCA</span></h1>
 <p class="intro">I’m putting some of my own money toward storage bags for RCA’s Christmas trees. If you’d like to grab a bag or two, I’d appreciate the help. I’ll collect them and bring them to the school. <strong>– Mose James IV</strong></p>
+<p class="count"><strong id="count">5</strong> / 32 bags funded</p>
 <svg viewBox="0 0 625 257" aria-hidden="true">
 <defs>
 <linearGradient id="glass" x2="0%" y2="100%"><stop stop-color="#9cb6e0" stop-opacity=".24"/><stop offset="1" stop-color="#7e9dcc" stop-opacity=".06"/></linearGradient>
@@ -77,23 +78,22 @@ svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visibl
 <path d="M379 140l18-1" stroke="#ffda54"/>
 <path d="M379 146l15-1m-15 7 12-.5" stroke="#91a8cb" opacity=".55"/>
 <path d="M27 52 439 23 583 55V219L161 244 27 212Z M27 52 161 73 583 55 M161 73V244" fill="none" stroke="#c4d2eb" stroke-width="1.55"/>
-<path d="M599 55v164m-4-164h9m-9 55h9m-9 54h9m-9 55h9" fill="none" stroke="#91abcf" stroke-opacity=".68"/>
+<path d="M599 55v164m-4-164h9m-9 41h9m-9 41h9m-9 41h9m-9 41h9" fill="none" stroke="#91abcf" stroke-opacity=".68"/>
 <g fill="#b6cbee" font-size="14" font-family="system-ui">
-<text x="609" y="60">30</text><text x="609" y="115">20</text><text x="609" y="169">10</text><text x="609" y="224">0</text>
+<text x="609" y="60">32</text><text x="609" y="101">24</text><text x="609" y="142">16</text><text x="609" y="183">8</text><text x="609" y="224">0</text>
 </g>
 <circle id="level" cx="599" cy="219" r="4.5" fill="#ffd53d" stroke="#ffd53d" stroke-opacity=".3" stroke-width="4"/>
 </svg>
-<p class="count"><strong id="count">0</strong> / 30 bags funded</p>
 <a id="buy" class="action" aria-disabled="true">Amazon wish list coming soon</a>
 <p class="note"><strong>Add as many bags as you’d like from the wish list, then select Mose’s gift address at checkout.</strong></p>
 <p id="thanks" class="note" hidden>That’s a wrap, RCA! Thank you for helping us reach the goal.</p>
 <footer><strong>Organized by Mose and Brandy.</strong> A personal gift drive for RCA, hosted on wearercap.org. No RCAP funds are being used.</footer>
 </main>
 <script>
-const confirmedBags = 0;
+const confirmedBags = 5;
 const amazonWishList = "https://www.amazon.com/hz/wishlist/ls/3DGZRLTKDLNRW?ref_=wl_share";
-const funded = Math.min(30, Math.max(0, confirmedBags));
-const fraction = funded / 30;
+const funded = Math.min(32, Math.max(0, confirmedBags));
+const fraction = funded / 32;
 const left = 212 - 160 * fraction;
 const corner = 244 - 171 * fraction;
 const right = 219 - 164 * fraction;
@@ -105,8 +105,8 @@ document.querySelector("#end").setAttribute("d", `M27 ${left} 161 ${corner}V244L
 document.querySelector("#surface").setAttribute("d", `M27 ${left} 439 ${back} 583 ${right} 161 ${corner}Z`);
 if (funded > 0) document.querySelector("#fill").removeAttribute("visibility");
 const buy = document.querySelector("#buy");
-if (funded === 30) {
-  buy.textContent = "All 30 bags funded";
+if (funded === 32) {
+  buy.textContent = "All 32 bags funded";
   document.querySelector("#thanks").hidden = false;
 } else if (amazonWishList) {
   buy.href = amazonWishList;
