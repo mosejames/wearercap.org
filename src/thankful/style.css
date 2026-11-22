@@ -515,7 +515,7 @@ footer a {
 .preview-frame img {
   position:absolute;
   left:7%;
-  top:3.9375%;
+  bottom:14%;
   width:24%;
   pointer-events:none;
 }

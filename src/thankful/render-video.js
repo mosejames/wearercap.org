@@ -11,23 +11,24 @@ export async function renderVideo(file, { start, end, onProgress }) {
   try {
     const videoTrack = await input.getPrimaryVideoTrack();
     if (!videoTrack) throw new Error('That file doesn’t contain a video.');
-    const width = 720;
-    const height = 1280;
+    const width = 1080;
+    const height = 1920;
     const canvas = Object.assign(document.createElement('canvas'), { width, height });
     const ctx = canvas.getContext('2d', { alpha: false });
     const badgeWidth = Math.round(width * .24);
     const badgeHeight = Math.round(badgeWidth * logo.naturalHeight / logo.naturalWidth);
-    const inset = Math.round(width * .07);
+    const leftInset = Math.round(width * .07);
+    const bottomInset = Math.round(height * .14);
 
     const createConversion = () => Conversion.init({
       input, output: new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() }),
       trim: { start, end }, tags: {}, showWarnings: false,
       video: {
-        width, height, fit: 'cover', frameRate: 30, codec: 'avc', bitrate: 2_500_000,
+        width, height, fit: 'cover', frameRate: 30, codec: 'avc', bitrate: 5_500_000,
         forceTranscode: true, allowRotationMetadata: false,
         process(sample) {
           sample.draw(ctx, 0, 0, width, height);
-          ctx.drawImage(logo, inset, inset, badgeWidth, badgeHeight);
+          ctx.drawImage(logo, leftInset, height - bottomInset - badgeHeight, badgeWidth, badgeHeight);
           return canvas;
         },
       },
