@@ -1,11 +1,10 @@
+import { loadVideoWordmark } from './video-wordmark.js';
+
 export async function renderVideo(file, { start, end, onProgress }) {
   if (!globalThis.VideoEncoder || !globalThis.VideoDecoder) {
     throw new Error('Open this page in an up-to-date Safari or Chrome to finish your video.');
   }
 
-  const logo = new Image();
-  logo.src = '/images/we-are-rcap-logo.png';
-  await logo.decode();
   const { Input, BlobSource, ALL_FORMATS, Output, Mp4OutputFormat, BufferTarget, Conversion } = await import('mediabunny');
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   try {
@@ -15,10 +14,8 @@ export async function renderVideo(file, { start, end, onProgress }) {
     const height = 1920;
     const canvas = Object.assign(document.createElement('canvas'), { width, height });
     const ctx = canvas.getContext('2d', { alpha: false });
-    const badgeWidth = Math.round(width * .24);
-    const badgeHeight = Math.round(badgeWidth * logo.naturalHeight / logo.naturalWidth);
-    const leftInset = Math.round(width * .07);
-    const bottomInset = Math.round(height * .14);
+    const drawWordmark = await loadVideoWordmark(ctx, width, height, end - start);
+    let firstFrameTime;
 
     const createConversion = () => Conversion.init({
       input, output: new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() }),
@@ -28,7 +25,8 @@ export async function renderVideo(file, { start, end, onProgress }) {
         forceTranscode: true, allowRotationMetadata: false,
         process(sample) {
           sample.draw(ctx, 0, 0, width, height);
-          ctx.drawImage(logo, leftInset, height - bottomInset - badgeHeight, badgeWidth, badgeHeight);
+          firstFrameTime ??= sample.timestamp;
+          drawWordmark(sample.timestamp - firstFrameTime);
           return canvas;
         },
       },
