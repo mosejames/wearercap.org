@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import SubmissionThanks from './SubmissionThanks.jsx';
 import { Check, Download, Share2, Upload } from 'lucide-react';
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
@@ -32,6 +33,10 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
 
   async function loadPreview() {
     const video = preview.current;
+    if (duration) {
+      video.currentTime = time;
+      return;
+    }
     if (video.videoWidth >= video.videoHeight) {
       setError('Please choose a video recorded with your phone upright in portrait.');
       return;
@@ -85,7 +90,9 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
     if (!duration || end <= start || end - start > MAX_LENGTH + .01) return;
     preview.current.pause();
     setError('');
-    setProgress(0);
+    // Release the preview and filmstrip decoders before starting the export.
+    flushSync(() => setProgress(0));
+    preview.current.load();
     onBusy(true);
     try {
       const finished = await renderVideo(file, { start, end, onProgress: setProgress });
@@ -142,8 +149,8 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
   return <form className="editor" onSubmit={create}>
     <fieldset disabled={rendering}>
       <div className="preview-frame">
-        <video ref={preview} className="preview" src={sourceUrl} playsInline controls preload="auto"
-          onLoadedMetadata={loadPreview} onError={() => { if (sourceUrl) setError('This video couldn’t be opened. Try saving a copy as an MP4.'); }}
+        <video ref={preview} className="preview" src={rendering ? undefined : sourceUrl} playsInline controls preload="auto"
+          onLoadedMetadata={loadPreview} onError={() => { if (sourceUrl && !rendering) setError('This video couldn’t be opened. Try saving a copy as an MP4.'); }}
           onPlay={() => { if (preview.current.currentTime < start || preview.current.currentTime >= end) preview.current.currentTime = start; }}
           onTimeUpdate={() => {
             const video = preview.current;
@@ -152,7 +159,7 @@ export default function VideoEditor({ file, card, storage, onBusy }) {
           }} />
         <img src="/images/we-are-rcap-logo.png" alt="We Are RCAP" />
       </div>
-      {duration > 0 && <TrimTimeline file={file} duration={duration} start={start} end={end} time={time}
+      {duration > 0 && <TrimTimeline active={!rendering} file={file} duration={duration} start={start} end={end} time={time}
         limit={MAX_LENGTH} onSeek={seek} onTrim={(edge, value) => {
           (edge === 'start' ? setStart : setEnd)(value);
           seek(value);
