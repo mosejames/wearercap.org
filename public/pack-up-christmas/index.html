@@ -44,13 +44,14 @@ svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visibl
 .count strong{color:white;font-size:clamp(3.6rem,13vw,5.5rem);font-weight:850;line-height:1}
 
 .action{display:block;width:min(100%,20rem);margin:auto;padding:.85rem;border-radius:2rem;background:#f5cf77;color:#0a1938;font-weight:800;text-decoration:none}
+.action[hidden]{display:none}
 .action[aria-disabled=true]{background:#233f70;color:#fff}
 .note{font-size:.9rem}
 </style>
 <main>
 <div class="ornaments" aria-hidden="true"><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span><span class="ornament"></span></div>
-<h1>Help Me Pack Up <span>Christmas at RCA</span></h1>
-<p class="intro">I’m putting some of my own money toward storage bags for RCA’s Christmas trees. If you’d like to grab a bag or two, I’d appreciate the help. I’ll collect them and bring them to the school. <strong>– Mose James IV</strong></p>
+<h1 id="campaign-title">Help Me Pack Up <span>Christmas at RCA</span></h1>
+<p id="campaign-intro" class="intro">I’m putting some of my own money toward storage bags for RCA’s Christmas trees. If you’d like to grab a bag or two, I’d appreciate the help. I’ll collect them and bring them to the school. <strong>– Mose James IV</strong></p>
 <p class="count"><strong id="count">5</strong> / 32 bags funded</p>
 <svg viewBox="0 0 625 257" aria-hidden="true">
 <defs>
@@ -85,8 +86,8 @@ svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visibl
 <circle id="level" cx="599" cy="219" r="4.5" fill="#ffd53d" stroke="#ffd53d" stroke-opacity=".3" stroke-width="4"/>
 </svg>
 <a id="buy" class="action" aria-disabled="true">Amazon wish list coming soon</a>
-<p class="note"><strong>Add as many bags as you’d like from the wish list, then select Mose’s gift address at checkout.</strong></p>
-<p id="thanks" class="note" hidden>That’s a wrap, RCA! Thank you for helping us reach the goal.</p>
+<p id="checkout-note" class="note"><strong>Add as many bags as you’d like from the wish list, then select Mose’s gift address at checkout.</strong></p>
+<p id="thanks" class="note" hidden>That’s a wrap, RCA! Thank you for helping us protect the school’s Christmas trees.</p>
 <footer><strong>Organized by Mose and Brandy.</strong> A personal gift drive for RCA, hosted on wearercap.org. No RCAP funds are being used.</footer>
 </main>
 <script>
@@ -106,7 +107,10 @@ document.querySelector("#surface").setAttribute("d", `M27 ${left} 439 ${back} 58
 if (funded > 0) document.querySelector("#fill").removeAttribute("visibility");
 const buy = document.querySelector("#buy");
 if (funded === 32) {
-  buy.textContent = "All 32 bags funded";
+  document.querySelector("#campaign-title").textContent = "We made it!";
+  document.querySelector("#campaign-intro").textContent = "Together, we funded all 32 storage bags for RCA’s Christmas trees.";
+  buy.hidden = true;
+  document.querySelector("#checkout-note").hidden = true;
   document.querySelector("#thanks").hidden = false;
 } else if (amazonWishList) {
   buy.href = amazonWishList;
