@@ -139,7 +139,7 @@ if (!funded || matchMedia("(prefers-reduced-motion: reduce)").matches) {
   let start;
   function animate(now) {
     start ??= now;
-    const progress = Math.min(1, (now - start) / 1450);
+    const progress = Math.min(1, (now - start) / 2450);
     const shown = funded * (progress * progress * (3 - 2 * progress));
     paintFill(shown);
     reel.style.transform = `translateY(${-shown}em)`;
