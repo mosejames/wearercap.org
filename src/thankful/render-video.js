@@ -5,6 +5,25 @@ export async function renderVideo(file, { start, end, onProgress }) {
     throw new Error('Open this page in an up-to-date Safari or Chrome to finish your video.');
   }
 
+  try {
+    return await encodeVideo(file, { start, end, onProgress });
+  } catch (error) {
+    if (!isDecoderFailure(error)) throw error;
+    onProgress?.(0);
+    try {
+      return await encodeVideo(file, { start, end, onProgress, hardwareAcceleration: 'prefer-software' });
+    } catch (retryError) {
+      if (!isDecoderFailure(retryError)) throw retryError;
+      throw new Error('This phone couldn’t export the uploaded clip. Try the same clip on a computer, upload an H.264 MP4 copy, or record directly on this page.');
+    }
+  }
+}
+
+function isDecoderFailure(error) {
+  return /decoder|decoding/i.test(error?.message ?? '');
+}
+
+async function encodeVideo(file, { start, end, onProgress, hardwareAcceleration }) {
   const { Input, BlobSource, ALL_FORMATS, Output, Mp4OutputFormat, BufferTarget, Conversion } = await import('mediabunny');
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   try {
@@ -22,7 +41,7 @@ export async function renderVideo(file, { start, end, onProgress }) {
       trim: { start, end }, tags: {}, showWarnings: false,
       video: {
         width, height, fit: 'cover', frameRate: 30, codec: 'avc', bitrate: 5_500_000,
-        forceTranscode: true, allowRotationMetadata: false,
+        forceTranscode: true, allowRotationMetadata: false, hardwareAcceleration,
         process(sample) {
           sample.draw(ctx, 0, 0, width, height);
           firstFrameTime ??= sample.timestamp;

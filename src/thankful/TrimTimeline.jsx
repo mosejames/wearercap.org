@@ -8,12 +8,13 @@ function format(time) {
 }
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-export default function TrimTimeline({ file, duration, start, end, time, limit, onTrim, onSeek }) {
+export default function TrimTimeline({ active: enabled, file, duration, start, end, time, limit, onTrim, onSeek }) {
   const strip = useRef(null);
   const drag = useRef(null);
   const [frames, setFrames] = useState([]);
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
     let input;
     async function readFrames() {
@@ -35,8 +36,8 @@ export default function TrimTimeline({ file, duration, start, end, time, limit, 
       finally { input?.dispose(); }
     }
     void readFrames();
-    return () => { active = false; };
-  }, [file, duration]);
+    return () => { active = false; input?.dispose(); };
+  }, [enabled, file, duration]);
 
   const minimum = Math.min(.2, duration);
   const bounds = {
