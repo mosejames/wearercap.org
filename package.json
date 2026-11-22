@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.1",
+    "@mediabunny/aac-encoder": "^1.66.2",
     "@supabase/supabase-js": "^2.110.7",
     "@vercel/og": "^0.6.8",
     "@vercel/queue": "0.8.0",
@@ -22,7 +23,7 @@
     "gifuct-js": "2.1.2",
     "heic-to": "^1.5.2",
     "lucide-react": "^0.555.0",
-    "mediabunny": "^1.55.7",
+    "mediabunny": "^1.66.2",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "^5.7.284",
     "qrcode-generator": "^2.0.4",

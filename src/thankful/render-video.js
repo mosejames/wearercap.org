@@ -15,31 +15,39 @@ export async function renderVideo(file, { start, end, onProgress }) {
     const height = 1280;
     const canvas = Object.assign(document.createElement('canvas'), { width, height });
     const ctx = canvas.getContext('2d', { alpha: false });
-    const output = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() });
     const badgeWidth = Math.round(width * .24);
     const badgeHeight = Math.round(badgeWidth * logo.naturalHeight / logo.naturalWidth);
-    const inset = Math.round(width * .05);
-    const pad = Math.round(width * .022);
+    const inset = Math.round(width * .07);
 
-    const conversion = await Conversion.init({
-      input, output, trim: { start, end }, tags: {},
+    const createConversion = () => Conversion.init({
+      input, output: new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() }),
+      trim: { start, end }, tags: {}, showWarnings: false,
       video: {
-        width, height, fit: 'contain', frameRate: 30, codec: 'avc', bitrate: 2_500_000,
+        width, height, fit: 'cover', frameRate: 30, codec: 'avc', bitrate: 2_500_000,
         forceTranscode: true, allowRotationMetadata: false,
         process(sample) {
           sample.draw(ctx, 0, 0, width, height);
-          ctx.drawImage(logo, inset + pad, height - inset - badgeHeight - pad, badgeWidth, badgeHeight);
+          ctx.drawImage(logo, inset, inset, badgeWidth, badgeHeight);
           return canvas;
         },
       },
-      audio: { codec: 'aac', bitrate: 128_000 },
+      audio: { codec: 'aac' },
     });
-    if (!conversion.isValid || conversion.discardedTracks.some(({ track }) => track.type === 'audio' || track.type === 'video')) {
-      throw new Error('This browser couldn’t process the clip with its sound. Try an MP4 in Safari or Chrome.');
+    let conversion = await createConversion();
+    if (conversion.discardedTracks.some(({ track, reason }) => track.type === 'audio' && reason === 'no_encodable_target_codec')) {
+      const { registerAacEncoder } = await import('@mediabunny/aac-encoder');
+      registerAacEncoder();
+      conversion = await createConversion();
+    }
+    if (conversion.discardedTracks.some(({ track }) => track.type === 'audio')) {
+      throw new Error('We couldn’t read the audio in this upload. Try uploading a copy with AAC audio, or record a video here.');
+    }
+    if (!conversion.isValid || conversion.discardedTracks.some(({ track }) => track.type === 'video')) {
+      throw new Error('We couldn’t process the video in this upload. Try uploading an MP4 or recording a video here.');
     }
     conversion.onProgress = onProgress;
     await conversion.execute();
-    return new File([output.target.buffer], 'Thankful-at-RCA.mp4', { type: 'video/mp4' });
+    return new File([conversion.output.target.buffer], 'Thankful-at-RCA.mp4', { type: 'video/mp4' });
   } finally {
     input.dispose();
   }
