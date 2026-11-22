@@ -42,6 +42,8 @@ h1 span{display:block;color:#f5cf77}
 .ornament:nth-child(6){--left:91%;--drop:1.45rem;--size:1rem}
 svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visible}
 .count{margin:.35rem 0 1rem;color:#adbfdf;font-size:clamp(1.4rem,5vw,2rem);font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.count-window{display:inline-block;height:1em;overflow:hidden;vertical-align:bottom;text-align:right}
+.count-reel,.count-reel span{display:block}
 .count strong{color:white;font-size:clamp(3.6rem,13vw,5.5rem);font-weight:850;line-height:1}
 
 .action{display:block;width:min(100%,20rem);margin:1.5rem auto 1.25rem;padding:1rem 1.25rem;border-radius:2rem;background:#f5cf77;color:#0a1938;font-weight:800;text-decoration:none}
@@ -95,17 +97,60 @@ svg{display:block;width:min(100%,35rem);margin:.75rem auto .2rem;overflow:visibl
 const confirmedBags = 22;
 const amazonWishList = "https://www.amazon.com/hz/wishlist/ls/3DGZRLTKDLNRW?ref_=wl_share";
 const funded = Math.min(32, Math.max(0, confirmedBags));
-const fraction = funded / 32;
-const left = 212 - 160 * fraction;
-const corner = 244 - 171 * fraction;
-const right = 219 - 164 * fraction;
-const back = 184 - 161 * fraction;
-document.querySelector("#count").textContent = funded;
-document.querySelector("#level").setAttribute("cy", right);
-document.querySelector("#front").setAttribute("d", `M161 ${corner} 583 ${right}V219L161 244Z`);
-document.querySelector("#end").setAttribute("d", `M27 ${left} 161 ${corner}V244L27 212Z`);
-document.querySelector("#surface").setAttribute("d", `M27 ${left} 439 ${back} 583 ${right} 161 ${corner}Z`);
+const count = document.querySelector("#count");
+const level = document.querySelector("#level");
+const front = document.querySelector("#front");
+const end = document.querySelector("#end");
+const surface = document.querySelector("#surface");
+
+function paintFill(shown) {
+  const fraction = shown / 32;
+  const left = 212 - 160 * fraction;
+  const corner = 244 - 171 * fraction;
+  const right = 219 - 164 * fraction;
+  const back = 184 - 161 * fraction;
+  level.setAttribute("cy", right);
+  front.setAttribute("d", `M161 ${corner} 583 ${right}V219L161 244Z`);
+  end.setAttribute("d", `M27 ${left} 161 ${corner}V244L27 212Z`);
+  surface.setAttribute("d", `M27 ${left} 439 ${back} 583 ${right} 161 ${corner}Z`);
+}
+
+count.textContent = funded;
 if (funded > 0) document.querySelector("#fill").removeAttribute("visibility");
+
+if (!funded || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  paintFill(funded);
+} else {
+  const windowEl = document.createElement("span");
+  windowEl.className = "count-window";
+  windowEl.setAttribute("aria-hidden", "true");
+  const reel = document.createElement("span");
+  reel.className = "count-reel";
+  for (let number = 0; number <= funded; number++) {
+    const row = document.createElement("span");
+    row.textContent = number;
+    reel.append(row);
+  }
+  windowEl.append(reel);
+  count.setAttribute("aria-label", String(funded));
+  count.replaceChildren(windowEl);
+  paintFill(0);
+
+  let start;
+  function animate(now) {
+    start ??= now;
+    const progress = Math.min(1, (now - start) / 1450);
+    const shown = funded * (progress * progress * (3 - 2 * progress));
+    paintFill(shown);
+    reel.style.transform = `translateY(${-shown}em)`;
+    if (progress < 1) requestAnimationFrame(animate);
+    else {
+      count.textContent = funded;
+      count.removeAttribute("aria-label");
+    }
+  }
+  requestAnimationFrame(animate);
+}
 const buy = document.querySelector("#buy");
 if (funded === 32) {
   document.querySelector("#campaign-title").textContent = "We made it!";
