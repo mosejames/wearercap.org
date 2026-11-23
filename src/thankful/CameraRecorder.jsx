@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Mic, Smartphone, Sun, X } from 'lucide-react';
 
-import { promptStarters } from './prompt-starters.js';
-
 const SECONDS = 30;
 const MIME_TYPES = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'];
 
@@ -165,7 +163,7 @@ export default function CameraRecorder({ card, onClose, onRecorded }) {
     <div className="camera-stage">
       <video ref={video} className="camera-feed" autoPlay muted playsInline/>
       <div className="camera-top">
-        <div className="camera-prompt"><strong>{card[1]}</strong><span>{promptStarters[card[0]]}…</span></div>
+        <div className="camera-prompt"><strong>{card[1]}…</strong></div>
         <button type="button" className="camera-close" onClick={onClose} aria-label="Close camera"><X size={22}/></button>
       </div>
       {phase === 'opening' && <p className="camera-message" role="status">Opening camera and microphone…</p>}

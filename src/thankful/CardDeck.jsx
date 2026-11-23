@@ -76,7 +76,7 @@ export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
       <div className="deck-top" aria-live="polite" aria-busy={shuffling}>
         {card && !shuffling ? <div className="face prompt" key={card[0]}>
           <span className="small">Thankful at RCA</span>
-          <h2>{card[0]}</h2><p>{card[1]}</p><em>I’m thankful for…</em>
+          <h2>{card[0]}</h2><p>{card[1]}…</p>
         </div> : shuffling ? <span className="shuffle-status" role="status">Shuffling cards</span> : <button className="face back" onClick={() => draw()} aria-label="Pull a card" aria-describedby="shuffle-hint" disabled={disabled || shuffling}>
           <CardBack/>
         </button>}

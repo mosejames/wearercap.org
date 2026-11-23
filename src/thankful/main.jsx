@@ -7,18 +7,12 @@ import CameraRecorder from './CameraRecorder.jsx';
 import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
 import PhotoPicker from './PhotoPicker.jsx';
 import VideoEditor from './VideoEditor.jsx';
+import { promptStarters } from './prompt-starters.js';
 import './style.css';
 
 const Moderation = lazy(() => import('./Moderation.jsx'));
 
-const cards = [
-  ['Growth', 'What growth have you seen in your child at RCA that you’re thankful for?'],
-  ['Moment', 'What’s one RCA memory you’re glad your family got to experience?'],
-  ['Surprise', 'What did RCA bring into your family’s life that you didn’t see coming?'],
-  ['People', 'Who at RCA made a difference for your family, and what did they do?'],
-  ['Belonging', 'When did you first feel like your family was part of the RCA community?'],
-  ['Lesson', 'What’s one lesson your child learned at RCA that you’re grateful they’ll carry with them?'],
-];
+const cards = Object.entries(promptStarters);
 const MAX_SOURCE_SIZE = 150 * 1024 * 1024;
 const types = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -62,7 +56,7 @@ function SharePrompt({ card, onSelect }) {
     }} onLostPointerCapture={() => { swipe.current = null; }}>
       <span className="small">Thankful at RCA</span>
       <h2>{card[0]}</h2>
-      <p>{card[1]}</p>
+      <p>{card[1]}…</p>
     </div>
   </div>;
 }
