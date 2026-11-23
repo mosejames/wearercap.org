@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
-import { ArrowLeft, Camera, Image, PenLine, Upload, Video } from 'lucide-react';
+import { ArrowLeft, Camera, Image, ImagePlus, Upload, Video } from 'lucide-react';
 import CardDeck from './CardDeck.jsx';
 import CameraRecorder from './CameraRecorder.jsx';
 import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
@@ -126,7 +126,7 @@ function App() {
         <div className="intro">
           <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
           <h1 ref={screen === 'deck' ? heading : null} tabIndex={-1}>Thankful <em>at RCA.</em></h1>
-          <p>Shuffle the cards to reveal a prompt. Then share what you’re thankful for in a short video or a message with a photo.</p>
+          <p>Shuffle the cards to reveal a prompt. Then share what you’re thankful for with a photo and a message or a short video.</p>
         </div>
         <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setStep('create')}/>
       </section>
@@ -137,28 +137,28 @@ function App() {
       </button>
       <h1 ref={heading} tabIndex={-1}>Share your gratitude</h1>
       <SharePrompt card={card} onSelect={setCard}/>
+      <section className="share-option" aria-labelledby="share-photo-title">
+        <div className="share-option-heading">
+          <span className="share-option-icon"><Image size={19} aria-hidden="true"/></span>
+          <div><h2 id="share-photo-title">Share a photo + message</h2><p>Pick a photo you already have and add a sentence about what you’re thankful for.</p></div>
+        </div>
+        <button type="button" className="button" onClick={() => { setError(''); setStep('message'); }}>
+          <ImagePlus size={18}/> Add a photo
+        </button>
+      </section>
+      <div className="share-option-divider">or</div>
       <section className="share-option" aria-labelledby="share-video-title">
         <div className="share-option-heading">
           <span className="share-option-icon"><Video size={19} aria-hidden="true"/></span>
-          <div><h2 id="share-video-title">Share a video</h2><p>Record a short clip or upload one from your device.</p></div>
+          <div><h2 id="share-video-title">Share a video</h2><p>Record a short clip or upload one from your phone.</p></div>
         </div>
-        <button type="button" className="button" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
+        <button type="button" className="button upload-choice" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
         <label className="button upload-choice"><Upload size={18}/> Upload a video
           <input aria-describedby="upload-formats" type="file"
             accept="video/mp4,video/quicktime,video/webm,.mov,.mp4,.webm" onChange={chooseFile}/>
         </label>
         <p className="hint" id="upload-formats">MP4, MOV or WebM · Up to 150 MB</p>
         {error && <p className="error" role="alert">{error}</p>}
-      </section>
-      <div className="share-option-divider">or</div>
-      <section className="share-option" aria-labelledby="share-photo-title">
-        <div className="share-option-heading">
-          <span className="share-option-icon"><Image size={19} aria-hidden="true"/></span>
-          <div><h2 id="share-photo-title">Share a message &amp; photo</h2><p>Write what you’re thankful for and add a photo.</p></div>
-        </div>
-        <button type="button" className="button upload-choice" onClick={() => { setError(''); setStep('message'); }}>
-          <PenLine size={18}/> Write a message &amp; add photo
-        </button>
       </section>
     </main>}
     {screen === 'message' && <main className="finishing capture-choice message-choice">
