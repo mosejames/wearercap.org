@@ -1,11 +1,15 @@
 import React, { useRef } from 'react';
 
+export const STORY_WIDTH = 1080;
+export const STORY_HEIGHT = 1920;
+const STORY_ASPECT = STORY_WIDTH / STORY_HEIGHT;
+
 export const initialCrop = { x: 0, y: 0, zoom: 1 };
 
-// Coordinates are relative to the 4:5 card, so the export matches the editor.
+// Coordinates are relative to the 9:16 card, so the export matches the editor.
 function cover(image) {
   const aspect = image.naturalWidth / image.naturalHeight;
-  return { width: Math.max(1, aspect / .8), height: Math.max(1, .8 / aspect) };
+  return { width: Math.max(1, aspect / STORY_ASPECT), height: Math.max(1, STORY_ASPECT / aspect) };
 }
 
 export function limitCrop(image, crop) {
@@ -23,7 +27,7 @@ export function limitCrop(image, crop) {
 
 export async function exportPhoto(image, crop) {
   await image.decode();
-  const canvas = Object.assign(document.createElement('canvas'), { width: 800, height: 1000 });
+  const canvas = Object.assign(document.createElement('canvas'), { width: STORY_WIDTH, height: STORY_HEIGHT });
   const context = canvas.getContext('2d');
   const base = cover(image);
   const width = base.width * crop.zoom * canvas.width;
