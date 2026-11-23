@@ -48,8 +48,11 @@ async function makeStory(photo, message, author) {
   ));
 }
 
+const STORY_FILENAME = 'Thankful-at-RCA-Story.jpg';
+
 export default function PhotoStory({ photo, message, author }) {
-  const [url, setUrl] = useState('');
+  const [story, setStory] = useState(null);
+  const [saveError, setSaveError] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -57,8 +60,9 @@ export default function PhotoStory({ photo, message, author }) {
     let objectUrl;
     makeStory(photo, message, author).then((blob) => {
       if (!active) return;
-      objectUrl = URL.createObjectURL(blob);
-      setUrl(objectUrl);
+      const file = new File([blob], STORY_FILENAME, { type: 'image/jpeg' });
+      objectUrl = URL.createObjectURL(file);
+      setStory({ file, url: objectUrl });
     }).catch(() => { if (active) setError(true); });
     return () => {
       active = false;
@@ -67,6 +71,26 @@ export default function PhotoStory({ photo, message, author }) {
   }, [photo, message, author]);
 
   if (error) return <p className="hint">Your card was submitted. The Story image couldn’t be saved on this device.</p>;
-  if (!url) return <p className="hint" role="status">Preparing your Story image…</p>;
-  return <a className="button" href={url} download="Thankful-at-RCA-Story.jpg">Download Story image</a>;
+  if (!story) return <p className="hint" role="status">Preparing your Story image…</p>;
+  const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const shareData = { files: [story.file] };
+  if (!isAppleMobile || !navigator.share || !navigator.canShare?.(shareData)) {
+    return <a className="button" href={story.url} download={STORY_FILENAME}>Download Story image</a>;
+  }
+
+  async function saveToPhotos() {
+    setSaveError(false);
+    try {
+      await navigator.share(shareData);
+    } catch (cause) {
+      if (cause.name !== 'AbortError') setSaveError(true);
+    }
+  }
+
+  return <>
+    <button className="button" type="button" onClick={saveToPhotos}>Save to Photos</button>
+    <p className="hint">Choose Save Image to add the card to Photos. <a href={story.url} download={STORY_FILENAME}>Download file</a></p>
+    {saveError && <p className="error" role="alert">The share menu couldn’t open. Try Download file.</p>}
+  </>;
 }
