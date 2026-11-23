@@ -127,7 +127,6 @@ function App() {
     <main hidden={screen !== 'deck'}>
       <section className="hero">
         <div className="intro">
-          <div className="eyebrow"><span>✦</span> The Ron Clark Academy</div>
           <h1 ref={screen === 'deck' ? heading : null} tabIndex={-1}>Thankful <em>at RCA.</em></h1>
           <p>Shuffle the cards to reveal a prompt. Then share what you’re thankful for with a photo and a message or a short video.</p>
         </div>
