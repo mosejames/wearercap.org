@@ -1415,3 +1415,47 @@ body:has(.share-screen) {
     to { transform: none; opacity: 1; }
   }
 }
+
+.photo-progress {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-block: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--navy);
+}
+
+.photo-progress progress {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  accent-color: var(--gold);
+}
+
+.photo-progress-deck {
+  position: relative;
+  height: 36px;
+  color: var(--gold);
+}
+
+.photo-progress-deck i {
+  position: absolute;
+  inset: 3px 11px;
+  border: 1px solid;
+  border-radius: 4px;
+  transform: translateX(var(--offset, 0px)) rotate(var(--angle, 0deg));
+}
+
+.photo-progress-deck i:first-child { --offset: -8px; --angle: -15deg; }
+.photo-progress-deck i:nth-child(2) { --offset: 8px; --angle: 15deg; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .photo-progress-deck i { animation: photo-progress-fan 1.15s ease-in-out infinite alternate; }
+  @keyframes photo-progress-fan {
+    from { transform: translateX(0) rotate(0); }
+    to { transform: translateX(var(--offset, 0px)) rotate(var(--angle, 0deg)); }
+  }
+}

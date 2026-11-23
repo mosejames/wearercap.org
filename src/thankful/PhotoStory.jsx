@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { wrapCardText } from '../london/textCard.js';
+import PhotoProgress from './PhotoProgress.jsx';
 import { loadVideoWordmark } from './video-wordmark.js';
 import { STORY_WIDTH, STORY_HEIGHT } from './PhotoFrame.jsx';
 
-async function makeStory(photo, message, author, credit, signal) {
+async function makeStory(photo, message, author, credit, signal, onProgress) {
   const image = await createImageBitmap(photo);
   const canvas = Object.assign(document.createElement('canvas'), { width: STORY_WIDTH, height: STORY_HEIGHT });
   const ctx = canvas.getContext('2d');
@@ -85,7 +86,9 @@ async function makeStory(photo, message, author, credit, signal) {
         drawWordmark(i / frameRate);
       }
       await source.add(i / frameRate, 1 / frameRate);
+      if (i % 6 === 0) onProgress((i + 1) / (duration * frameRate));
     }
+    onProgress(1);
     source.close();
     await output.finalize();
     return { file: new File([output.target.buffer], STORY_FILENAME, { type: 'video/mp4' }), poster };
@@ -98,6 +101,7 @@ async function makeStory(photo, message, author, credit, signal) {
 const STORY_FILENAME = 'Thankful-at-RCA-Story.mp4';
 
 export default function PhotoStory({ photo, message, author, credit, children }) {
+  const [progress, setProgress] = useState();
   const [story, setStory] = useState(null);
   const [saveError, setSaveError] = useState(false);
   const [error, setError] = useState(false);
@@ -106,7 +110,9 @@ export default function PhotoStory({ photo, message, author, credit, children })
     const controller = new AbortController();
     let objectUrl;
     let posterUrl;
-    makeStory(photo, message, author, credit, controller.signal).then(({ file, poster }) => {
+    makeStory(photo, message, author, credit, controller.signal, value => {
+      if (!controller.signal.aborted) setProgress(value);
+    }).then(({ file, poster }) => {
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(file);
       posterUrl = poster ? URL.createObjectURL(poster) : undefined;
@@ -120,7 +126,7 @@ export default function PhotoStory({ photo, message, author, credit, children })
   }, [photo, message, author, credit]);
 
   if (error) return <>{children}<p className="hint">Your card was submitted. The Story video couldn’t be created on this device.</p></>;
-  if (!story) return <>{children}<p className="hint" role="status">Preparing your Story video…</p></>;
+  if (!story) return <><PhotoProgress label={progress === 1 ? "Finishing your Story video…" : "Creating your Story video…"} progress={progress}/>{children}</>;
   const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const shareData = { files: [story.file] };

@@ -4,6 +4,7 @@ import PhotoPicker from './PhotoPicker.jsx';
 
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
+import PhotoProgress from './PhotoProgress.jsx';
 import PhotoStory from './PhotoStory.jsx';
 
 const BUCKET = 'thankful-message-photos';
@@ -35,7 +36,8 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
   const [photoUrl, setPhotoUrl] = useState('');
   const [sharingDetails, setSharingDetails] = useState(null);
   const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [submitStage, setSubmitStage] = useState('');
+  const busy = Boolean(submitStage);
   const [sent, setSent] = useState(false);
   const [savedPhoto, setSavedPhoto] = useState(null);
   const [error, setError] = useState('');
@@ -60,7 +62,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
       setError(client ? 'Add a photo, a signature and a message.' : 'Submissions are temporarily unavailable.');
       return;
     }
-    setBusy(true);
+    setSubmitStage('Preparing your photo…');
     onBusy(true);
     setError('');
     try {
@@ -69,12 +71,14 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
       const photoPath = `${draft.id}/photo`;
       if (!draft.uploaded) {
         draft.photo = await exportPhoto(imageRef.current, crop);
+        setSubmitStage('Uploading your photo…');
         const { error: uploadError } = await client.storage.from(BUCKET).upload(photoPath, draft.photo, { contentType: 'image/jpeg' });
         if (uploadError && String(uploadError.statusCode) !== '409' && !['Duplicate', 'ResourceAlreadyExists', 'KeyAlreadyExists'].includes(uploadError.code)) {
           throw uploadError;
         }
         draft.uploaded = true;
       }
+      setSubmitStage('Submitting your card for review…');
       const { error: writeError } = await client.from('thankful_messages').insert({
         id: draft.id, prompt: card[0], author: sharing.speakerName, message: `${starter} ${message.trim()}`,
         houses: sharing.houses,
@@ -87,7 +91,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
     } catch {
       setError('Your card couldn’t be submitted. Please try again.');
     } finally {
-      setBusy(false);
+      setSubmitStage('');
       onBusy(false);
     }
   }
@@ -134,6 +138,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
             <SharingDetails photo/>
           <label className="consent"><input type="checkbox" required/><span>I have permission to share this photo publicly, including a parent or guardian’s permission for any child shown.</span></label>
           <button type="submit" className="button">{busy ? 'Submitting…' : 'Submit card for review'}</button>
+          {busy && <PhotoProgress label={submitStage}/>}
           </>}
         </fieldset>
       </form>}
