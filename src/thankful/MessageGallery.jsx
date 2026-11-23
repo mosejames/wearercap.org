@@ -141,10 +141,10 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
         </fieldset>
       </form>}
     {error && <p className="error" role="alert">{error}</p>}
-    {sent && savedPhoto && <>
-      <GratitudeCard photo={photoUrl} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}/>
-      <div><PhotoStory photo={savedPhoto} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}/></div>
-    </>}
+    {sent && savedPhoto &&
+      <PhotoStory photo={savedPhoto} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}>
+        <GratitudeCard photo={photoUrl} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}/>
+      </PhotoStory>}
   </>;
 }
 
