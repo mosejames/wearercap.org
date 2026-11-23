@@ -64,7 +64,7 @@ a:focus-visible,button:focus-visible,input:focus-visible {
   line-height:1;
 }
 
-.mark>span,.occasion,.eyebrow,.small {
+.mark>span,.occasion,.small {
   font-size:.69rem;
   font-weight:700;
   letter-spacing:.21em;
@@ -81,7 +81,7 @@ a:focus-visible,button:focus-visible,input:focus-visible {
   letter-spacing:-.07em;
 }
 
-.mark strong span,.eyebrow span {
+.mark strong span {
   color:var(--gold);
 }
 
@@ -108,14 +108,6 @@ a:focus-visible,button:focus-visible,input:focus-visible {
   inset:0;
   z-index:-1;
   background:radial-gradient(ellipse at 74% 45%,#28354b 0,transparent 56%);
-}
-
-.eyebrow {
-  color:var(--gold);
-}
-
-.eyebrow span {
-  margin-right:7px;
 }
 
 h1,h2,.back strong {
@@ -189,11 +181,11 @@ h1 em {
 }
 
 .one {
-  transform:rotate(-10deg) scale(.94);
+  transform:translateX(-21%) rotate(-15deg) scale(.94);
 }
 
 .two {
-  transform:rotate(9deg) scale(.94);
+  transform:translateX(21%) rotate(15deg) scale(.94);
 }
 
 .face {
@@ -971,7 +963,7 @@ footer a {
   border: 1px solid #ab9469;
 }
 
-.deck .three { transform: rotate(3deg) scale(.96); }
+.deck .three { transform: translate(7%, -2%) rotate(7deg) scale(.96); }
 
 .deck .back {
   padding: 0;
@@ -1033,7 +1025,9 @@ footer a {
 .deck .prompt::before { border-color: #b58d50; border-radius: 9px; }
 @media (max-width: 730px) {
   .site-header { padding-top: max(25px, calc(env(safe-area-inset-top) + 10px)); }
-  .hero { padding-top: 30px; gap: 24px; }
+  .hero { padding-top: 30px; gap: 8px; min-height: auto; }
+  .intro > h1 { margin-top: 0; }
+  .intro > p { margin-bottom: 0; }
   .deck { width: min(58vw, 245px); }
 }
 
