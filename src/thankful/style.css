@@ -651,6 +651,17 @@ footer a {
   min-height: 44px;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .deck-actions > .button:enabled {
+    animation: gratitude-pulse 700ms ease-in-out 2;
+  }
+
+  @keyframes gratitude-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+    50% { transform: scale(1.06); box-shadow: 0 0 0 6px #efbd6140; }
+  }
+}
+
 .record {
   grid-template-columns: minmax(0, 560px);
   justify-content: center;
