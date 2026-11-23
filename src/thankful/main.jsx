@@ -5,6 +5,7 @@ import { ArrowLeft, Camera, Image, ImagePlus, Upload, Video } from 'lucide-react
 import CardDeck from './CardDeck.jsx';
 import CameraRecorder from './CameraRecorder.jsx';
 import { MessageComposer, MessageGallery } from './MessageGallery.jsx';
+import PhotoPicker from './PhotoPicker.jsx';
 import VideoEditor from './VideoEditor.jsx';
 import './style.css';
 
@@ -70,6 +71,8 @@ function App() {
   const [card, setCard] = useState(null);
   const [file, setFile] = useState(null);
   const heading = useRef(null);
+  const [photo, setPhoto] = useState(null);
+  const [photoError, setPhotoError] = useState('');
   const [step, setStep] = useState('deck');
   const screen = file ? 'finish' : step;
   const previousScreen = useRef(screen);
@@ -128,7 +131,7 @@ function App() {
           <h1 ref={screen === 'deck' ? heading : null} tabIndex={-1}>Thankful <em>at RCA.</em></h1>
           <p>Shuffle the cards to reveal a prompt. Then share what you’re thankful for with a photo and a message or a short video.</p>
         </div>
-        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => setStep('create')}/>
+        <CardDeck cards={cards} card={card} onDraw={setCard} disabled={busy} onCreate={() => { setPhotoError(''); setStep('create'); }}/>
       </section>
     </main>
     {screen === 'create' && <main className="finishing capture-choice share-screen">
@@ -142,9 +145,15 @@ function App() {
           <span className="share-option-icon"><Image size={19} aria-hidden="true"/></span>
           <div><h2 id="share-photo-title">Share a photo + message</h2><p>Pick a photo you already have and add a sentence about what you’re thankful for.</p></div>
         </div>
-        <button type="button" className="button" onClick={() => { setError(''); setStep('message'); }}>
-          <ImagePlus size={18}/> Add a photo
-        </button>
+        <PhotoPicker className="button" onError={setPhotoError} onPick={selected => {
+          setPhoto(selected);
+          setPhotoError('');
+          setError('');
+          setStep('message');
+        }}>
+          <ImagePlus size={18} aria-hidden="true"/> Add a photo
+        </PhotoPicker>
+        {photoError && <p className="error" role="alert">{photoError}</p>}
       </section>
       <div className="share-option-divider">or</div>
       <section className="share-option" aria-labelledby="share-video-title">
@@ -162,9 +171,9 @@ function App() {
       </section>
     </main>}
     {screen === 'message' && <main className="finishing capture-choice message-choice">
-      <button className="text-link" type="button" disabled={busy} onClick={() => setStep('create')}><ArrowLeft size={16}/> Back</button>
+      <button className="text-link" type="button" disabled={busy} onClick={() => { setPhoto(null); setStep('create'); }}><ArrowLeft size={16}/> Back</button>
       <h1 ref={heading} tabIndex={-1}>Write a gratitude card</h1>
-      <MessageComposer card={card} client={supabase} onBusy={setBusy} onGallery={() => setStep('gallery')}/>
+      <MessageComposer initialPhoto={photo} card={card} client={supabase} onBusy={setBusy} onGallery={() => { setPhoto(null); setStep('gallery'); }}/>
     </main>}
     {screen === 'gallery' && <main className="finishing gallery-page">
       <button className="text-link" type="button" onClick={() => setStep('deck')}><ArrowLeft size={16}/> Back to cards</button>

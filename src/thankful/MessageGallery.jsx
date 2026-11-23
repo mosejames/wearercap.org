@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import SubmissionThanks from './SubmissionThanks.jsx';
-import { ImagePlus } from 'lucide-react';
+import PhotoPicker from './PhotoPicker.jsx';
 
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
@@ -28,8 +28,8 @@ export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) 
   </article>;
 }
 
-export function MessageComposer({ card, client, onBusy, onGallery }) {
-  const [photo, setPhoto] = useState(null);
+export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery }) {
+  const [photo, setPhoto] = useState(initialPhoto);
   const [photoUrl, setPhotoUrl] = useState('');
   const [author, setAuthor] = useState('');
   const [message, setMessage] = useState('');
@@ -97,23 +97,6 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
       <button type="button" className="text-link" onClick={onGallery}>View gallery</button></> :
       <form className="message-form" onSubmit={submit}>
         <fieldset disabled={busy}>
-          {!photoUrl && <label className="button upload-choice photo-pick">
-            <ImagePlus size={22} aria-hidden="true"/> Start with a photo
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
-              const file = event.target.files[0];
-              if (!file) return;
-              if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024) {
-                event.target.value = '';
-                setError('Choose a JPEG, PNG or WebP photo under 8 MB.');
-                return;
-              }
-              submission.current = null;
-              setCrop(initialCrop);
-              setPhoto(file);
-              setError('');
-            }}/>
-          </label>}
-          {!photoUrl && <p className="photo-pick-hint hint">Choose a family picture or a photo of your child.</p>}
           {photoUrl && <>
             <div className="gratitude-card live-card">
               <PhotoFrame photo={photoUrl} imageRef={imageRef} crop={crop} onCrop={setCrop} disabled={busy}/>
@@ -128,10 +111,12 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
             </div>
             <div className="photo-tools">
               <p className="hint">Drag to move · Pinch to zoom</p>
-              <button type="button" className="text-link" onClick={() => {
-                setPhoto(null);
-                setPhotoUrl('');
-              }}>Change photo</button>
+              <PhotoPicker className="text-link" onError={setError} onPick={file => {
+                submission.current = null;
+                setCrop(initialCrop);
+                setPhoto(file);
+                setError('');
+              }}>Change photo</PhotoPicker>
             </div>
             <label className="photo-zoom">Zoom
               <input type="range" min="1" max="4" step=".01" value={crop.zoom}

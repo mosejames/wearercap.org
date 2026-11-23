@@ -1082,13 +1082,15 @@ footer a {
   color: var(--gold);
   border-color: var(--line);
 }
-.upload-choice:focus-within { outline: 2px solid var(--gold); outline-offset: 3px; }
-.upload-choice input {
+.photo-picker { position: relative; }
+.upload-choice:focus-within, .photo-picker:focus-within { outline: 2px solid var(--gold); outline-offset: 3px; }
+.upload-choice input, .photo-picker input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
 }
+.photo-picker input { height: 100%; margin: 0; }
 .capture-choice > .hint { margin: 0; text-align: center; }
 
 @media (max-width: 730px) {
@@ -1215,8 +1217,6 @@ footer a {
 .sharing-chip input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .capture-choice.message-choice { max-width: 560px; width: min(100% - 24px, 560px); }
-.message-form .photo-pick { min-height: 56px; }
-.photo-pick-hint { margin: 0; text-align: center; }
 .live-card { container-type: inline-size; }
 .live-card .gratitude-copy .gratitude-message,
 .live-card .gratitude-compose {
