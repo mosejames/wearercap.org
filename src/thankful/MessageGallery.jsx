@@ -5,7 +5,6 @@ import PhotoPicker from './PhotoPicker.jsx';
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
 import PhotoStory from './PhotoStory.jsx';
-import { promptStarters } from './prompt-starters.js';
 
 const BUCKET = 'thankful-message-photos';
 
@@ -43,7 +42,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
   const submission = useRef(null);
   const imageRef = useRef(null);
   const [crop, setCrop] = useState(initialCrop);
-  const starter = promptStarters[card[0]];
+  const starter = card[1];
   const limit = 299 - starter.length;
 
   useEffect(() => {
@@ -112,7 +111,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
                 <label htmlFor="gratitude-message">{starter}…</label>
                 <div className="message-writing">
                   <span aria-hidden="true">{message || 'Finish the thought'}{' '}</span>
-                  <textarea id="gratitude-message" required value={message} maxLength={limit} rows={1} placeholder="Finish the thought" onChange={event => setMessage(event.target.value)}/>
+                  <textarea id="gratitude-message" autoCapitalize="none" required value={message} maxLength={limit} rows={1} placeholder="Finish the thought" onChange={event => setMessage(event.target.value)}/>
                 </div>
               </div>
             </div>
