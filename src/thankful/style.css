@@ -1158,6 +1158,8 @@ footer a {
 }
 .live-card .gratitude-copy p { margin: 4px 0 8px; font-size: 1rem; }
 .live-card .gratitude-logo { z-index: 1; pointer-events: none; }
+.gratitude-credit { display: grid; gap: 4px; margin-top: 14px; }
+.gratitude-credit small { color: #e4e7ed; }
 .photo-gesture { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; }
 .photo-gesture:active { cursor: grabbing; }
 .photo-gesture img { pointer-events: none; user-select: none; }

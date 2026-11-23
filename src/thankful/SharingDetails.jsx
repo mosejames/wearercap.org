@@ -25,9 +25,10 @@ export default function SharingDetails({ photo = false }) {
       <input name="speakerName" autoComplete="name" maxLength={photo ? 60 : 100} placeholder={photo ? "Name of the person writing the card" : "Name of the person in the video"} required/>
     </label>
     <details>
-      <summary>Add your RCA crew <span className="hint">Optional</span></summary>
-      <label className="sharing-name">Student or family name
-        <input name="studentOrFamilyName" maxLength={100} placeholder="Whatever name works for your family"/>
+      <summary>{photo ? "Add details to your saved card" : "Add your RCA crew"} <span className="hint">Optional</span></summary>
+      {photo && <p className="hint">Add a family name, House, or class year if you’d like them on the image you save.</p>}
+      <label className="sharing-name">{photo ? "Family name" : "Student or family name"}
+        <input name="studentOrFamilyName" maxLength={100} placeholder={photo ? "e.g. The James family" : "Whatever name works for your family"}/>
       </label>
       <p className="hint">Tap all that apply.</p>
       <fieldset className="sharing-choices">

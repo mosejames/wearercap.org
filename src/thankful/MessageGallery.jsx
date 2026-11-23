@@ -14,7 +14,7 @@ function messageSize(message) {
   return { '--message-size': length > 210 ? '4.1cqi' : length > 125 ? '4.8cqi' : length > 75 ? '5.8cqi' : '7cqi' };
 }
 
-export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) {
+export function GratitudeCard({ photo, author, credit, message, prompt, onPhotoError }) {
   return <article className="gratitude-card live-card">
     {photo && <div className="gratitude-image">
       <img className="gratitude-photo" src={photo} alt="" loading="lazy" onError={onPhotoError}/>
@@ -23,7 +23,10 @@ export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) 
     <div className="gratitude-copy">
       {prompt && <span className="small">{prompt}</span>}
       <p className="gratitude-message" style={messageSize(message)}>{message}</p>
-      <strong>{author}</strong>
+      <div className="gratitude-credit">
+        <strong>{author}</strong>
+        {credit && <small>{credit}</small>}
+      </div>
     </div>
   </article>;
 }
@@ -31,7 +34,7 @@ export function GratitudeCard({ photo, author, message, prompt, onPhotoError }) 
 export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery }) {
   const [photo, setPhoto] = useState(initialPhoto);
   const [photoUrl, setPhotoUrl] = useState('');
-  const [author, setAuthor] = useState('');
+  const [sharingDetails, setSharingDetails] = useState(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -80,7 +83,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
         class_years: sharing.classYears,
       });
       if (writeError && writeError.code !== '23505') throw writeError;
-      setAuthor(sharing.speakerName);
+      setSharingDetails(sharing);
       setSavedPhoto(draft.photo);
       setSent(true);
     } catch {
@@ -90,6 +93,12 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
       onBusy(false);
     }
   }
+
+  const credit = sharingDetails ? [
+    sharingDetails.studentOrFamilyName,
+    ...sharingDetails.houses,
+    sharingDetails.classYears.length && `Class of ${sharingDetails.classYears.join(', ')}`,
+  ].filter(Boolean).join(' · ') : '';
 
   return <>
     {sent ? <><p role="status">Your card was submitted. It will appear in the gallery after RCAP reviews it.</p>
@@ -133,8 +142,8 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
       </form>}
     {error && <p className="error" role="alert">{error}</p>}
     {sent && savedPhoto && <>
-      <GratitudeCard photo={photoUrl} author={author} message={`${starter} ${message.trim()}`}/>
-      <div><PhotoStory photo={savedPhoto} author={author} message={`${starter} ${message.trim()}`}/></div>
+      <GratitudeCard photo={photoUrl} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}/>
+      <div><PhotoStory photo={savedPhoto} author={sharingDetails.speakerName} credit={credit} message={`${starter} ${message.trim()}`}/></div>
     </>}
   </>;
 }
