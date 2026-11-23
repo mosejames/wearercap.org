@@ -4,6 +4,7 @@ import { ImagePlus } from 'lucide-react';
 
 import SharingDetails, { readSharingDetails } from './SharingDetails.jsx';
 import PhotoFrame, { exportPhoto, initialCrop, limitCrop } from './PhotoFrame.jsx';
+import PhotoStory from './PhotoStory.jsx';
 import { promptStarters } from './prompt-starters.js';
 
 const BUCKET = 'thankful-message-photos';
@@ -146,7 +147,10 @@ export function MessageComposer({ card, client, onBusy, onGallery }) {
         </fieldset>
       </form>}
     {error && <p className="error" role="alert">{error}</p>}
-    {sent && <GratitudeCard photo={photoUrl} author={author} message={`${starter} ${message.trim()}`}/> }
+    {sent && savedPhoto && <>
+      <GratitudeCard photo={photoUrl} author={author} message={`${starter} ${message.trim()}`}/>
+      <div><PhotoStory photo={savedPhoto} author={author} message={`${starter} ${message.trim()}`}/></div>
+    </>}
   </>;
 }
 
