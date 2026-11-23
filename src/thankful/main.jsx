@@ -150,7 +150,7 @@ function App() {
       <section className="share-option" aria-labelledby="share-video-title">
         <div className="share-option-heading">
           <span className="share-option-icon"><Video size={19} aria-hidden="true"/></span>
-          <div><h2 id="share-video-title">Share a video</h2><p>Record a short clip or upload one from your phone.</p></div>
+          <div><h2 id="share-video-title">Share a video</h2><p>Record a short clip, up to 30 seconds, or upload one from your phone.</p></div>
         </div>
         <button type="button" className="button upload-choice" onClick={() => setCameraOpen(true)}><Camera size={18}/> Record live</button>
         <label className="button upload-choice"><Upload size={18}/> Upload a video
