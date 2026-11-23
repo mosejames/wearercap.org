@@ -64,7 +64,9 @@ export default function CardDeck({ cards, card, onDraw, disabled, onCreate }) {
       onPointerDown={startSwipe} onPointerMove={moveSwipe} onPointerUp={endSwipe}
       onPointerLeave={() => { gesture.current = null; if (!shuffling) setDrag(0); }}
       onPointerCancel={() => { gesture.current = null; setDrag(0); }}>
-      <div className="stack one"/><div className="stack two"/><div className="stack three"/>
+      <div className="stack one"><CardBack/></div>
+      <div className="stack two"><CardBack/></div>
+      <div className="stack three"><CardBack/></div>
       {shuffling && <div className="shuffle-deck" aria-hidden="true">
         {cards.map(([name], index) => <div className="shuffle-card" key={name}
           style={{ '--spread': index - 2.5, '--order': index, '--packet': index < 3 ? -1 : 1 }}>
