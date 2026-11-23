@@ -73,16 +73,22 @@ async function makeStory(photo, message, author, credit, signal) {
   output.addVideoTrack(source, { frameRate });
   try {
     signal.throwIfAborted();
+    frameContext.drawImage(canvas, 0, 0);
+    drawWordmark(0);
+    const poster = await new Promise(resolve => frame.toBlob(resolve, 'image/jpeg', .88));
+    signal.throwIfAborted();
     await output.start();
     for (let i = 0; i < duration * frameRate; i++) {
       signal.throwIfAborted();
-      frameContext.drawImage(canvas, 0, 0);
-      drawWordmark(i / frameRate);
+      if (i > 0) {
+        frameContext.drawImage(canvas, 0, 0);
+        drawWordmark(i / frameRate);
+      }
       await source.add(i / frameRate, 1 / frameRate);
     }
     source.close();
     await output.finalize();
-    return new File([output.target.buffer], STORY_FILENAME, { type: 'video/mp4' });
+    return { file: new File([output.target.buffer], STORY_FILENAME, { type: 'video/mp4' }), poster };
   } finally {
     if (output.state !== 'finalized') await output.cancel().catch(() => {});
     frame.width = canvas.width = 0;
@@ -99,14 +105,17 @@ export default function PhotoStory({ photo, message, author, credit, children })
   useEffect(() => {
     const controller = new AbortController();
     let objectUrl;
-    makeStory(photo, message, author, credit, controller.signal).then((file) => {
+    let posterUrl;
+    makeStory(photo, message, author, credit, controller.signal).then(({ file, poster }) => {
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(file);
-      setStory({ file, url: objectUrl });
+      posterUrl = poster ? URL.createObjectURL(poster) : undefined;
+      setStory({ file, url: objectUrl, posterUrl });
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (posterUrl) URL.revokeObjectURL(posterUrl);
     };
   }, [photo, message, author, credit]);
 
@@ -127,7 +136,7 @@ export default function PhotoStory({ photo, message, author, credit, children })
   }
 
   return <>
-    <video className="photo-story-preview" src={story.url} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>
+    <video className="photo-story-preview" src={story.url} poster={story.posterUrl} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>
     {canSaveToPhotos ? <>
       <button className="button" type="button" onClick={saveToPhotos}>Save to Photos</button>
       <p className="hint">Choose Save Video to add the card to Photos. <a href={story.url} download={STORY_FILENAME}>Download file</a></p>
