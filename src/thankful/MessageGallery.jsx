@@ -58,7 +58,7 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
     event.preventDefault();
     const sharing = readSharingDetails(event.currentTarget);
     if (busy || !client || !photo || !sharing.speakerName || !message.trim()) {
-      setError(client ? 'Add a photo, your name and a message.' : 'Submissions are temporarily unavailable.');
+      setError(client ? 'Add a photo, a signature and a message.' : 'Submissions are temporarily unavailable.');
       return;
     }
     setBusy(true);
@@ -78,7 +78,6 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
       }
       const { error: writeError } = await client.from('thankful_messages').insert({
         id: draft.id, prompt: card[0], author: sharing.speakerName, message: `${starter} ${message.trim()}`,
-        student_or_family_name: sharing.studentOrFamilyName || null,
         houses: sharing.houses,
         class_years: sharing.classYears,
       });
@@ -95,10 +94,9 @@ export function MessageComposer({ initialPhoto, card, client, onBusy, onGallery 
   }
 
   const credit = sharingDetails ? [
-    sharingDetails.studentOrFamilyName,
-    ...sharingDetails.houses,
-    sharingDetails.classYears.length && `Class of ${sharingDetails.classYears.join(', ')}`,
-  ].filter(Boolean).join(' · ') : '';
+    sharingDetails.houses.join(' & '),
+    sharingDetails.classYears.length && `Class of ${sharingDetails.classYears.join(' & ')}`,
+  ].filter(Boolean).join(' • ') : '';
 
   return <>
     {sent ? <><p role="status">Your card was submitted. It will appear in the gallery after RCAP reviews it.</p>
