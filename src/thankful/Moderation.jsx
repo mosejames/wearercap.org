@@ -163,7 +163,7 @@ export default function Moderation() {
         {['pending', 'published', 'all'].map(value => <button type="button" key={value} className="button"
           aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}</button>)}
       </nav>
-      {!visible.length && <p>No {filter === 'all' ? '' : filter + ' '}submissions on this page.</p>}
+      {!visible.length && <p className="moderation-empty">No {filter === 'all' ? '' : filter + ' '}submissions on this page.</p>}
       <div className="moderation-grid">{visible.map(item => <article className="moderation-card" key={item.path}>
         <p className="hint">{item.kind === 'photo' ? 'Photo card' : 'Video'} · {item.published ? 'Published' : 'Pending'} · {new Date(item.created_at).toLocaleDateString()}</p>
         <h2>{item.author || 'Submission'}</h2>
