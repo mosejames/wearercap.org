@@ -23,7 +23,6 @@ async function loadPreviews(items) {
 function SignIn({ onError }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const [story, setStory] = useState(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
   return <form className="moderation-login" onSubmit={async event => {
@@ -59,6 +58,7 @@ export default function Moderation() {
   function clearPreview(path) {
     setPreviews(current => ({ ...current, [path]: undefined }));
   }
+  const [story, setStory] = useState(null);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
