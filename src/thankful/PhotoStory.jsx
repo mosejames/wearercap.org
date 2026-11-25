@@ -150,8 +150,13 @@ export default function PhotoStory({ photo, message, author, credit, children, c
     }
   }
 
+  if (compact) return <div className="story-download-files">
+    <a className="button" href={story.url} download={STORY_FILENAME}>Download MP4</a>
+    {thumbnail && <a className="button" href={thumbnail} download="Thankful-at-RCA-Story.jpg">Download JPEG</a>}
+  </div>;
+
   return <>
-    {!compact && <video className="photo-story-preview" src={story.url} poster={thumbnail || undefined} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>}
+    <video className="photo-story-preview" src={story.url} poster={thumbnail || undefined} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>
     {canSaveToPhotos ? <>
       <button className="button" type="button" onClick={saveToPhotos}>Save to Photos</button>
       <p className="hint">Choose Save Video to add the card to Photos. <a href={story.url} download={STORY_FILENAME}>Download file</a></p>
