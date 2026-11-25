@@ -1317,11 +1317,22 @@ footer a {
 }
 .moderation-actions .moderation-delete { color: #ffb4a5; }
 .moderation-download {
-  margin: -8px 0 14px;
-  padding: 10px;
+  width: min(420px, calc(100% - 32px));
+  padding: 20px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 14px;
+  background: var(--navy);
+  color: var(--paper);
 }
+.moderation-download::backdrop { background: #050b16b8; }
+.moderation-download header, .story-download-files {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.moderation-download header { justify-content: space-between; margin-bottom: 16px; }
+.moderation-download h2 { margin: 0; font-size: 1.35rem; }
 .moderation-preview { display: block; width: 100%; max-height: 375px; object-fit: contain; margin-block: 10px; background: #0b1528; }
 .gallery-videos { margin-top: 16px; }
 
