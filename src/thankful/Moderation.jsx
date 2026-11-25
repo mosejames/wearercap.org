@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import PhotoStory from './PhotoStory.jsx';
 import { GratitudeCard } from './MessageGallery.jsx';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -22,6 +23,7 @@ async function loadPreviews(items) {
 function SignIn({ onError }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [story, setStory] = useState(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
   return <form className="moderation-login" onSubmit={async event => {
@@ -82,6 +84,7 @@ export default function Moderation() {
     setItems(null);
     setDenied(false);
     setPreviews({});
+    setStory(null);
     if (session) client.rpc('thankful_moderation_queue', { before_time: null }).then(async ({ data, error: loadError }) => {
       if (!active) return;
       if (loadError) {
@@ -99,6 +102,7 @@ export default function Moderation() {
   }, [session?.user.id]);
 
   async function act(item, action) {
+    if (action === 'delete' && !window.confirm('Permanently delete this submission and remove it from the gallery?')) return;
     setBusy(item.path);
     setError('');
     setNotice('');
@@ -108,6 +112,26 @@ export default function Moderation() {
           .from(buckets[item.kind]).createSignedUrl(item.path, 900);
         if (previewError) throw previewError;
         setPreviews(current => ({ ...current, [item.path]: data.signedUrl }));
+      } else if (action === 'delete') {
+        const { data, error: deleteError } = await client.storage.from(buckets[item.kind]).remove([item.path]);
+        if (deleteError || !data?.length) throw deleteError || new Error('Submission unavailable');
+        setItems(current => current.filter(entry => entry.path !== item.path));
+        clearPreview(item.path);
+        setStory(current => current?.path === item.path ? null : current);
+        setNotice('Submission deleted.');
+      } else if (action === 'download') {
+        const bucket = client.storage.from(buckets[item.kind]);
+        if (item.kind === 'photo') {
+          const { data, error: downloadError } = await bucket.download(item.path);
+          if (downloadError) throw downloadError;
+          setStory({ path: item.path, photo: data });
+        } else {
+          const { data, error: downloadError } = await bucket.createSignedUrl(item.path, 120, { download: true });
+          if (downloadError) throw downloadError;
+          const link = document.createElement('a');
+          link.href = data.signedUrl;
+          link.click();
+        }
       } else {
         const needsPermission = !item.published && item.kind === 'video' && !item.gallery_consent;
         const confirmed = needsPermission && window.confirm('Confirm you have permission to publish this clip in the public Gratitude gallery.');
@@ -144,17 +168,27 @@ export default function Moderation() {
         <h2>{item.author || 'Submission'}</h2>
         <p>{[item.prompt, item.family_name].filter(Boolean).join(' · ')}</p>
         <p className="hint">{[item.houses, item.class_years].filter(Array.isArray).flat().filter(value => typeof value === 'string').join(' · ')}</p>
-        {item.message && !previews[item.path] && <p>{item.message}</p>}
-        {previews[item.path] && (item.kind === 'photo'
-          ? <GratitudeCard photo={previews[item.path]} author={item.author} message={item.message} prompt={item.prompt}
-              onPhotoError={() => clearPreview(item.path)}/>
-          : <video className="moderation-preview" src={previews[item.path] + '#t=0.001'} controls playsInline preload="metadata" onError={() => clearPreview(item.path)}/>)}
         <div className="moderation-actions">
           {!previews[item.path] && <button className="text-link" disabled={busy !== null}
             onClick={() => act(item, 'preview')}>Retry preview</button>}
           <button className="button" disabled={busy !== null || (!item.published && !previews[item.path])}
             onClick={() => act(item, 'publish')}>{item.published ? 'Hide' : 'Publish'}</button>
+          <button className="text-link" type="button" disabled={busy !== null}
+            onClick={() => act(item, 'download')}>{item.kind === 'photo' ? 'Prepare Story download' : 'Download video'}</button>
+          <button className="text-link" type="button" disabled={busy !== null}
+            onClick={() => act(item, 'delete')}>Delete</button>
         </div>
+        {story?.path === item.path && <PhotoStory key={item.path} photo={story.photo} author={item.author || ''}
+          message={item.message || ''} credit={[
+            item.houses?.join(' & '),
+            item.class_years?.length && `Class of ${item.class_years.join(' & ')}`,
+          ].filter(Boolean).join(' • ')} compact/>}
+
+        {item.message && !previews[item.path] && <p>{item.message}</p>}
+        {previews[item.path] && (item.kind === 'photo'
+          ? <GratitudeCard photo={previews[item.path]} author={item.author} message={item.message} prompt={item.prompt}
+              onPhotoError={() => clearPreview(item.path)}/>
+          : <video className="moderation-preview" src={previews[item.path] + '#t=0.001'} controls playsInline preload="metadata" onError={() => clearPreview(item.path)}/>)}
       </article>)}</div>
       {more && <button className="text-link" disabled={busy !== null} onClick={async () => {
         setBusy('page');
