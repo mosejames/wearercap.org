@@ -4,12 +4,15 @@ import PhotoProgress from './PhotoProgress.jsx';
 import { loadVideoWordmark } from './video-wordmark.js';
 import { STORY_WIDTH, STORY_HEIGHT } from './PhotoFrame.jsx';
 
-async function makeStory(photo, message, author, credit, signal, onProgress) {
+async function makeStory(photo, message, author, credit, signal, onProgress, onPoster) {
   const image = await createImageBitmap(photo);
   const canvas = Object.assign(document.createElement('canvas'), { width: STORY_WIDTH, height: STORY_HEIGHT });
   const ctx = canvas.getContext('2d');
   try {
-    ctx.drawImage(image, 0, 0, STORY_WIDTH, STORY_HEIGHT);
+    const scale = Math.max(STORY_WIDTH / image.width, STORY_HEIGHT / image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    ctx.drawImage(image, (STORY_WIDTH - width) / 2, (STORY_HEIGHT - height) / 2, width, height);
   } finally {
     image.close();
   }
@@ -78,6 +81,7 @@ async function makeStory(photo, message, author, credit, signal, onProgress) {
     drawWordmark(0);
     const poster = await new Promise(resolve => frame.toBlob(resolve, 'image/jpeg', .88));
     signal.throwIfAborted();
+    if (poster) onPoster(poster);
     await output.start();
     for (let i = 0; i < duration * frameRate; i++) {
       signal.throwIfAborted();
@@ -91,7 +95,7 @@ async function makeStory(photo, message, author, credit, signal, onProgress) {
     onProgress(1);
     source.close();
     await output.finalize();
-    return { file: new File([output.target.buffer], STORY_FILENAME, { type: 'video/mp4' }), poster };
+    return new File([output.target.buffer], STORY_FILENAME, { type: 'video/mp4' });
   } finally {
     if (output.state !== 'finalized') await output.cancel().catch(() => {});
     frame.width = canvas.width = 0;
@@ -100,8 +104,9 @@ async function makeStory(photo, message, author, credit, signal, onProgress) {
 
 const STORY_FILENAME = 'Thankful-at-RCA-Story.mp4';
 
-export default function PhotoStory({ photo, message, author, credit, children }) {
+export default function PhotoStory({ photo, message, author, credit, children, compact = false }) {
   const [progress, setProgress] = useState();
+  const [thumbnail, setThumbnail] = useState('');
   const [story, setStory] = useState(null);
   const [saveError, setSaveError] = useState(false);
   const [error, setError] = useState(false);
@@ -112,11 +117,14 @@ export default function PhotoStory({ photo, message, author, credit, children })
     let posterUrl;
     makeStory(photo, message, author, credit, controller.signal, value => {
       if (!controller.signal.aborted) setProgress(value);
-    }).then(({ file, poster }) => {
+    }, poster => {
+      if (controller.signal.aborted) return;
+      posterUrl = URL.createObjectURL(poster);
+      setThumbnail(posterUrl);
+    }).then(file => {
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(file);
-      posterUrl = poster ? URL.createObjectURL(poster) : undefined;
-      setStory({ file, url: objectUrl, posterUrl });
+      setStory({ file, url: objectUrl });
     }).catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => {
       controller.abort();
@@ -125,8 +133,9 @@ export default function PhotoStory({ photo, message, author, credit, children })
     };
   }, [photo, message, author, credit]);
 
-  if (error) return <>{children}<p className="hint">Your card was submitted. The Story video couldn’t be created on this device.</p></>;
-  if (!story) return <><PhotoProgress label={progress === 1 ? "Finishing your Story video…" : "Creating your Story video…"} progress={progress}/>{children}</>;
+  const imageDownload = thumbnail && <a className="text-link" href={thumbnail} download="Thankful-at-RCA-Story.jpg">Download still image</a>;
+  if (error) return <>{children}<p className="hint" role="alert">This device couldn’t create the Story video.</p>{imageDownload}</>;
+  if (!story) return <><PhotoProgress label={progress === 1 ? "Finishing your Story video…" : "Creating your Story video…"} progress={progress}/>{children}{imageDownload}</>;
   const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const shareData = { files: [story.file] };
@@ -142,11 +151,12 @@ export default function PhotoStory({ photo, message, author, credit, children })
   }
 
   return <>
-    <video className="photo-story-preview" src={story.url} poster={story.posterUrl} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>
+    {!compact && <video className="photo-story-preview" src={story.url} poster={thumbnail || undefined} aria-label="Animated gratitude card" controls playsInline preload="metadata"/>}
     {canSaveToPhotos ? <>
       <button className="button" type="button" onClick={saveToPhotos}>Save to Photos</button>
       <p className="hint">Choose Save Video to add the card to Photos. <a href={story.url} download={STORY_FILENAME}>Download file</a></p>
     </> : <a className="button" href={story.url} download={STORY_FILENAME}>Download Story video</a>}
+    <div>{imageDownload}</div>
     {saveError && <p className="error" role="alert">The share menu couldn’t open. Try Download file.</p>}
   </>;
 }
