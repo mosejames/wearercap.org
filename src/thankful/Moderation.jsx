@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Download, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import PhotoStory from './PhotoStory.jsx';
 import { GratitudeCard } from './MessageGallery.jsx';
@@ -168,21 +169,28 @@ export default function Moderation() {
         <h2>{item.author || 'Submission'}</h2>
         <p>{[item.prompt, item.family_name].filter(Boolean).join(' · ')}</p>
         <p className="hint">{[item.houses, item.class_years].filter(Array.isArray).flat().filter(value => typeof value === 'string').join(' · ')}</p>
-        <div className="moderation-actions">
-          {!previews[item.path] && <button className="text-link" disabled={busy !== null}
-            onClick={() => act(item, 'preview')}>Retry preview</button>}
-          <button className="button" disabled={busy !== null || (!item.published && !previews[item.path])}
-            onClick={() => act(item, 'publish')}>{item.published ? 'Hide' : 'Publish'}</button>
-          <button className="text-link" type="button" disabled={busy !== null}
-            onClick={() => act(item, 'download')}>{item.kind === 'photo' ? 'Prepare Story download' : 'Download video'}</button>
-          <button className="text-link" type="button" disabled={busy !== null}
-            onClick={() => act(item, 'delete')}>Delete</button>
+        <div className="moderation-actions" role="group" aria-label="Submission actions">
+          <button className="button" type="button" disabled={busy !== null || (!item.published && !previews[item.path])}
+            onClick={() => act(item, 'publish')}>
+            {item.published ? <><EyeOff size={16} aria-hidden="true"/> Hide</> : <><Eye size={16} aria-hidden="true"/> Publish</>}
+          </button>
+          <button className="button" type="button" disabled={busy !== null}
+            aria-expanded={item.kind === 'photo' ? story?.path === item.path : undefined}
+            onClick={() => story?.path === item.path ? setStory(null) : act(item, 'download')}>
+            <Download size={16} aria-hidden="true"/> {item.kind === 'photo' ? 'Download Story' : 'Download video'}
+          </button>
+          <button className="button moderation-delete" type="button" disabled={busy !== null}
+            onClick={() => act(item, 'delete')}><Trash2 size={16} aria-hidden="true"/> Delete</button>
         </div>
-        {story?.path === item.path && <PhotoStory key={item.path} photo={story.photo} author={item.author || ''}
-          message={item.message || ''} credit={[
-            item.houses?.join(' & '),
-            item.class_years?.length && `Class of ${item.class_years.join(' & ')}`,
-          ].filter(Boolean).join(' • ')} compact/>}
+        {story?.path === item.path && <div className="moderation-download">
+          <PhotoStory key={item.path} photo={story.photo} author={item.author || ''}
+            message={item.message || ''} credit={[
+              item.houses?.join(' & '),
+              item.class_years?.length && `Class of ${item.class_years.join(' & ')}`,
+            ].filter(Boolean).join(' • ')} compact/>
+        </div>}
+        {!previews[item.path] && <button className="text-link" type="button" disabled={busy !== null}
+          onClick={() => act(item, 'preview')}>Retry preview</button>}
 
         {item.message && !previews[item.path] && <p>{item.message}</p>}
         {previews[item.path] && (item.kind === 'photo'

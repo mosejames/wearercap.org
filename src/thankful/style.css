@@ -1280,7 +1280,30 @@ footer a {
 .moderation-card { padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: #111e36; overflow-wrap: anywhere; }
 .moderation-card h2 { margin: 0; font-size: 1.35rem; }
 .moderation-card p { margin: 7px 0; white-space: pre-wrap; }
-.moderation-actions { justify-content: space-between; margin-bottom: 0; }
+.moderation-actions {
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--night);
+}
+.moderation-actions .button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--paper);
+}
+.moderation-actions .button:hover, .moderation-actions .button[aria-expanded="true"] {
+  background: #ffffff12;
+}
+.moderation-actions .moderation-delete { color: #ffb4a5; }
+.moderation-download {
+  margin: -8px 0 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
 .moderation-preview { display: block; width: 100%; max-height: 375px; object-fit: contain; margin-block: 10px; background: #0b1528; }
 .gallery-videos { margin-top: 16px; }
 
